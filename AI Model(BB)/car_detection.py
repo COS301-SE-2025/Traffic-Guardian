@@ -1,21 +1,27 @@
-from video_processor import VideoProcessor
-from car_detection import detect_cars
+import cv2
+import numpy as np
 
-def main():
-    # Replace with your traffic video file path
-    video_path = "path/to/your/traffic_video.mp4"
+def detect_cars(frame):
+    """
+    This is Basic car detection using Haar Cascades
+    This is a simple method - we will use a TensorFlow models later
+    """
+    # Convert frame to grayscale
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
-    # Initialize the video processor
-    processor = VideoProcessor(video_path)
+    # Load car detection classifier
+    car_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_car.xml')
     
-    # Process video with car detection
-    frames_processed = processor.process_video(
-        display=True, 
-        save_frames=True,
-        process_frame_func=detect_cars
-    )
+    # Detect cars
+    cars = car_cascade.detectMultiScale(gray, 1.1, 3)
     
-    print(f"Processed {frames_processed} frames")
-
-if __name__ == "__main__":
-    main()
+    # Draw rectangles around detected cars
+    for (x, y, w, h) in cars:
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.putText(frame, 'Car', (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    
+    # Add frame info
+    cv2.putText(frame, f'Vehicles detected: {len(cars)}', (20, 30), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+    
+    return frame
