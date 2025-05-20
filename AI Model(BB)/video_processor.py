@@ -88,8 +88,8 @@ class VideoProcessor:
 
 
 if __name__ == "__main__":
-    # Change to your video file path
-    video_path = "path/to/your/traffic_video.mp4"
+    # Change path here
+    video_path = ".\Videos\trainingVid.mp4"
     
     processor = VideoProcessor(video_path)
     processor.process_video(display=True, save_frames=True)
