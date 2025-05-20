@@ -1,14 +1,42 @@
 <p align="center">
-  <img src="assets/QuantumQuenchersLogo.PNG" alt="Quantum Quenchers Logo" width="150" style="margin-right: 10px;">
-  <img src="assets/Amazon_Web_Services_Logo.png" alt="AWS Logo" width="100">
+  <img src="assets/TrafficGuardianLogo1_LightFinal.PNG" alt="Traffic Guardian Logo" width="300"/>
 </p>
 
+<p align="center">
+  <img src="assets/QuantumQuenchersLogo.PNG" alt="Quantum Quenchers Logo" width="80" style="margin-right: 10px;">
+  <img src="assets/Amazon_Web_Services_Logo.png" alt="AWS Logo" width="60">
+</p>
+
+<p align="center">
+  <a href="https://github.com/ShaylinGovender/Capstone/actions/workflows/ci-cd.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/ShaylinGovender/Capstone/ci-cd.yml?label=CI%2FCD%20Pipeline&logo=githubactions&style=flat-square" alt="CI/CD Status">
+  </a>
+  <img src="https://img.shields.io/github/commit-activity/m/ShaylinGovender/Capstone?label=Commits&logo=github&style=flat-square" alt="Commit Activity">
+</p>
+
+---
+
 # Traffic Guardian - COS301 Capstone Project
+
+## 📑 Table of Contents
+<details>
+  <summary>Click to expand</summary>
+
+- [Project Overview](#project-overview)
+- [Meet the Quantum Quenchers](#meet-the-quantum-quenchers)
+- [Team Profiles](#team-profiles)
+- [Contact Us](#contact-us)
+
+</details>
+
+---
 
 ## Project Overview
 Traffic Guardian is an innovative solution designed to enhance road safety and efficiency across Gauteng’s busy highways. As a COS301 Capstone Project at the University of Pretoria, our goal is to develop a real-time traffic incident detection system that leverages existing traffic camera feeds to identify accidents, congestion, and road hazards. By automating incident detection and enabling rapid response, Traffic Guardian aims to reduce human monitoring load, shorten response times, and improve overall road safety.
 
 This project is undertaken by the **Quantum Quenchers**, a team of dedicated final-year Computer Science students passionate about applying their skills to solve real-world challenges.
+
+---
 
 ## Meet the Quantum Quenchers
 The Quantum Quenchers bring a diverse and complementary skill set, combining expertise in full-stack development, backend systems, AI, DevOps, and UI/UX design. Each member is committed to delivering a high-quality, impactful solution. Below is an overview of our team, their roles, and their technical strengths.
@@ -21,19 +49,40 @@ The Quantum Quenchers bring a diverse and complementary skill set, combining exp
 | Lonwabo Kwitshana | Frontend Developer, UI/UX         | JavaScript (React), HTML/CSS, Java, Figma        | [<img src="assets/github-icon.svg" alt="GitHub" width="50"/>](https://github.com/7onwabo) | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/lonwabo-kwitshana-b483831a6) |
 | Aryan Mohanlall   | Backend Developer, System Integration | C++, Java, PHP, TypeScript, Angular, Assembly x86 | [<img src="assets/github-icon.svg" alt="GitHub" width="50"/>](https://github.com/AryanMohanlall) | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/aryan-mohanlall-a45a89355) |
 
+---
+## Technologies Used
 
+#### - Frontend
 
-### Team Profiles
-- **Nicholas Dobson**: A versatile full-stack developer with a knack for system design and data analytics. Nicholas excels in building robust CI/CD pipelines and cloud-native solutions, ensuring high-quality deliverables. His determination and attention to detail make him a key contributor to Traffic Guardian’s development.
-- **Mpho Tsotetsi**: A backend specialist with over a year of industry experience at APPsolve Pty Ltd, Mpho is certified in Oracle Cloud ERP database management. His expertise in API development, cloud computing, and database systems ensures a scalable and reliable backend for Traffic Guardian.
-- **Shaylin Govender**: A full-stack developer and team lead with a Golden Key International Honour Society membership, Shaylin combines technical prowess with strong leadership. His experience in DevOps and database management drives the team’s focus on scalable, maintainable codebases.
-- **Lonwabo Kwitshana**: A frontend expert passionate about crafting intuitive user interfaces. Lonwabo’s skills in React and Figma enable rapid prototyping and user-focused design, ensuring Traffic Guardian’s dashboard is both functional and user-friendly.
-- **Aryan Mohanlall**: A backend developer with a focus on system integration, Aryan brings versatility and a collaborative spirit. His proficiency in building efficient systems guarantees that Traffic Guardian will be a secure and innovative solution.
+<p align="center">
+  <img src="assets/react-svgrepo-com.svg" alt="React" width="60" style="margin: 10px;"/>
+  <img src="assets/typescript-official-svgrepo-com.svg" alt="TypeScript" width="60" style="margin: 10px;"/>
+</p>
 
-## Conclusion
-The Quantum Quenchers are ready to transform Traffic Guardian into a reality, combining technical expertise, industry experience, and a passion for innovation. We are committed to delivering a solution that enhances road safety and operational efficiency in Gauteng.
+#### - Backend
 
-For more details about our proposal, visit our project website: [Traffic Guardian Proposal](https://shaylingovender.github.io/Capstone/).
+<p align="center">
+  <img src="assets/python-svgrepo-com.svg" alt="Python" width="60" style="margin: 10px;"/>
+  <img src="assets/postgresql-svgrepo-com.svg" alt="PostgreSQL" width="60" style="margin: 10px;"/>
+  <img src="assets/opencv-svgrepo-com.svg" alt="OpenCV" width="60" style="margin: 10px;"/>
+</p>
+
+<p align="right">
+   <a href="#traffic-guardian---cos301-capstone-project">Back to top</a>
+</p>
 
 ---
-**Contact Us**: [quantumquenchers@gmail.com](mailto:quantumquenchers@gmail.com)
+
+## More Information
+
+For more details about our proposal, visit our project website:  
+🔗 [**Traffic Guardian Proposal**](https://shaylingovender.github.io/Capstone/)
+
+##  Contact Us
+
+Have questions, ideas, or collaboration opportunities?  
+ Email us at: [quantumquenchers@gmail.com](mailto:quantumquenchers@gmail.com)
+
+<p align="right">
+   <a href="#traffic-guardian---cos301-capstone-project">Back to top</a>
+</p>
