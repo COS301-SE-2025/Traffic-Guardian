@@ -1,0 +1,65 @@
+.navbar {
+  width: 100%;
+  background: #1e1e1e;
+  padding: 1rem 2rem;
+}
+
+.navbar-content {
+  max-width: 2000px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 4.5rem;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-links li {
+font-family: 'Merge One', sans-serif;  
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 0; /* remove padding that caused layout issues */
+}
+
+/* Only pad the logo */
+.logo-container {
+  padding-left: 75px;
+  padding-right: 75px;
+}
+
+.navbar-logo {
+  height: 80px;
+  width: auto;
+}
+
+.search-icon {
+  height: 20px;
+  width: 20px;
+  cursor: pointer;
+}
+
+
+.nav-item:hover {
+  color: #ffae36;
+}
+
+.nav-item.active {
+  color: #ffae36;
+}
+
+.nav-item {
+  font-family: 'Merge One', sans-serif;  
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 0;
+  transition: color 0.2s ease-in; 
+}
