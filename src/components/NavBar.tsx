@@ -1,32 +1,33 @@
-import React, { useState } from "react";
-import "./NavBar.css";
+import React from "react";
+import { Link, useLocation } from "react-router-dom"; // ⬅️ import Link and useLocation
+import "./NavBar.css"
 
 import logo from "../assets/TrafficGuardianLogo1_LightFinal.png";
 import searchIcon from "../assets/thin-white-search.png";
 
+const navItems = [
+  { label: "Dashboard", path: "/dashboard" },
+  { label: "Live Feed", path: "/live-feed" },
+  { label: "Incidents", path: "/incidents" },
+  { label: "Archives", path: "/archives" },
+  { label: "Analytics", path: "/analytics" },
+  { label: "Account", path: "/account" },
+];
+
 const Navbar = () => {
-  const [active, setActive] = useState("Dashboard");
-
-  const navItems = [
-    "Dashboard",
-    "Live Feed",
-    "Incidents",
-    "Archives",
-    "Analytics",
-    "Account",
-  ];
-
+  const location = useLocation();
   return (
     <nav className="navbar">
       <div className="navbar-content">
         <ul className="nav-links">
           {navItems.slice(0, 3).map((item) => (
             <li
-              key={item}
-              className={active === item ? "nav-item active" : "nav-item"}
-              onClick={() => setActive(item)}
+              key={item.label}
+              className={`nav-item ${
+                location.pathname === item.path ? "active" : ""
+              }`}
             >
-              {item}
+              <Link to={item.path}>{item.label}</Link>
             </li>
           ))}
 
@@ -36,11 +37,12 @@ const Navbar = () => {
 
           {navItems.slice(3).map((item) => (
             <li
-              key={item}
-              className={active === item ? "nav-item active" : "nav-item"}
-              onClick={() => setActive(item)}
+              key={item.label}
+              className={`nav-item ${
+                location.pathname === item.path ? "active" : ""
+              }`}
             >
-              {item}
+              <Link to={item.path}>{item.label}</Link>
             </li>
           ))}
 

@@ -2,6 +2,7 @@
   width: 100%;
   background: #1e1e1e;
   padding: 1rem 2rem;
+  z-index: 1000;
 }
 
 .navbar-content {
@@ -21,12 +22,41 @@
   margin: 0;
 }
 
-.nav-links li {
-font-family: 'Merge One', sans-serif;  
-  color: white;
-  cursor: pointer;
+/* Nav item container */
+.nav-item {
+  font-family: 'Merge One', sans-serif;
   font-weight: 500;
-  padding: 0; /* remove padding that caused layout issues */
+  cursor: pointer;
+  transition: color 0.2s ease-in;
+  position: relative;
+}
+
+/* Style the anchor tag inside the nav item */
+.nav-item a {
+  text-decoration: none;
+  color: white;
+  transition: color 0.2s ease-in;
+}
+
+/* Hover state */
+.nav-item:hover a {
+  color: #ffae36;
+}
+
+/* Active state */
+.nav-item.active a {
+  color: #ffae36;
+}
+
+.nav-item.active::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #ffae36;
+  transition: width 0.3s ease-in;
 }
 
 /* Only pad the logo */
@@ -45,21 +75,43 @@ font-family: 'Merge One', sans-serif;
   width: 20px;
   cursor: pointer;
 }
-
-
-.nav-item:hover {
-  color: #ffae36;
-}
-
-.nav-item.active {
-  color: #ffae36;
-}
-
 .nav-item {
-  font-family: 'Merge One', sans-serif;  
-  color: white;
-  cursor: pointer;
+  font-family: 'Merge One', sans-serif;
   font-weight: 500;
-  padding: 0;
-  transition: color 0.2s ease-in; 
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease-in;
+}
+
+.nav-item a {
+  text-decoration: none;
+  color: white;
+  transition: color 0.2s ease-in;
+  position: relative;
+  display: inline-block;
+}
+
+
+.nav-item:hover a,
+.nav-item.active a {
+  color: #ffae36;
+}
+
+
+.nav-item a::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0.5px; /* <- fixed thickness */
+  background-color: #ffae36;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Animate underline only on hover and active */
+.nav-item:hover a::after,
+.nav-item.active a::after {
+  width: 100%;
 }
