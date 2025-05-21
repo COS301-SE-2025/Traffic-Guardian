@@ -7,6 +7,7 @@ import LiveFeed from './pages/LiveFeed';
 import Incidents from './pages/Incidents';
 import Account from './pages/Account';
 import SignUp from './pages/SignUp';
+import Profile from './pages/Profile';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';  
 
 const App: React.FC = () => {
@@ -20,6 +21,7 @@ const App: React.FC = () => {
         <Route path="/incidents" element={<Incidents />} />
         <Route path="/account" element={<Account/>} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes> 
     </Router>
   );

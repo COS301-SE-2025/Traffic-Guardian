@@ -22,7 +22,7 @@ const navigate = useNavigate();
             <input type="password" id="password" name="password" required />
           </div>
 
-          <button type="submit">Login</button>
+          <button type="submit" onClick={() => navigate("/profile")}>Login</button>
         </form>
 
         <div className="signup-text">
