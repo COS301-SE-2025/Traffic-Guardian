@@ -1,7 +1,4 @@
 
----
-
-````markdown
 # 🚦 Traffic Guardian Frontend
 
 This guide outlines how to set up and run the Traffic Guardian's current React frontend locally.
