@@ -1,0 +1,15 @@
+{
+  "name": "traffic-guardian",
+  "version": "1.0.0",
+  "description": "<p align=\"center\">\r   <img src=\"assets/QuantumQuenchersLogo.PNG\" alt=\"Quantum Quenchers Logo\" width=\"150\" style=\"margin-right: 10px;\">\r   <img src=\"assets/Amazon_Web_Services_Logo.png\" alt=\"AWS Logo\" width=\"100\">\r </p>",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pg": "^8.16.0"
+  }
+}

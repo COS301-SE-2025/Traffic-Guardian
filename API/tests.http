@@ -1,0 +1,100 @@
+// Traffic Guardian API Test Requests
+
+//===========================
+// Auth Tests
+//===========================
+
+### Register a new user
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "User_Username": "testuser",
+  "User_Password": "password123",
+  "User_Email": "testuser@gmail.com",
+  "User_Role": "user",
+  "User_Preferences": "{}"
+}
+
+### Login
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "User_Email": "testuser@gmail.com",
+  "User_Password": "password123"
+}
+
+//===========================
+// Incident Tests
+//===========================
+
+### Get all incidents
+GET http://localhost:5000/api/incidents
+
+### Get a specific incident
+GET http://localhost:5000/api/incidents/1
+
+### Create a new incident
+POST http://localhost:5000/api/incidents
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "Incident_Date": "2025-05-21",
+  "Incident_Location": "Highway 101, Mile 45",
+  "Incident_CarID": 1,
+  "Incident_Severity": "high",
+  "Incident_Status": "open"
+}
+
+### Update an incident
+PUT http://localhost:5000/api/incidents/1
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "Incident_Severity": "medium",
+  "Incident_Status": "in-progress"
+}
+
+//===========================
+// Alert Tests
+//===========================
+
+### Get alerts for an incident
+GET http://localhost:5000/api/incidents/1/alerts
+
+### Create a new alert
+POST http://localhost:5000/api/alerts
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "Alert_IncidentID": 1,
+  "Alert_Message": "Traffic incident reported",
+  "Alert_Type": "notification",
+  "Alert_Severity": "high",
+  "Alert_Recipients": [1, 2, 3]
+}
+
+### Update alert status
+PUT http://localhost:5000/api/alerts/1
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "Alert_Status": "sent"
+}
+
+//===========================
+// User Tests
+//===========================
+
+### Get user profile
+GET http://localhost:5000/api/user/profile
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Get user alerts
+GET http://localhost:5000/api/user/alerts
+Authorization: Bearer YOUR_TOKEN_HERE
