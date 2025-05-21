@@ -1,37 +1,33 @@
-import { Pool } from 'pg';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config({
+const path = require('path');
+require('dotenv').config({
   override: true,
   path: path.join(__dirname, 'development.env'),
 });
-
+const {Pool, Client} = require('pg');
 const pool = new Pool({
-  user: process.env.DB_USER,
-(async ()=> {
-  let client;
+  user: process.env.USER,
+  host: process.env.HOST,
+  database: process.env.DATABASE,
+  password: process.env.PASSWORD,
+  port: process.env.PORT,
+});
+
+(async () => {
+  // const client = await pool.connect();
   try {
-    client = await pool.connect();
-    console.log('Connected to the database');
-    const {rows} = await client.query('SELECT * FROM Car');
-    // const res = await client.query('SELECT * FROM Car');
-    console.log(rows);
+    const {rows} = await pool.query('SELECT current_user');
+    // const res = await pool.query('SELECT * FROM Car');
+    const currentUser = rows[0]['current_user'];
+    console.log(currentUser);
+    const cars= await pool.query('SELECT * FROM "TrafficGuardian"."Incidents"');//SELECT * FROM TrafficGuardian.Car
+    const car = cars.rows[0];
+    console.log(car);
+    // console.log(rows);
   } catch (err) {
     console.error(err);
-  } finally {
-    if (client) client.release();
-  }
-})();
-  } catch (err) {
-    console.error(err);
-  } finally {
-    client.release();
-  }
+   }// finally {
+  //   client.release();
+  // }
 })();
 
 // // Middleware to parse JSON
