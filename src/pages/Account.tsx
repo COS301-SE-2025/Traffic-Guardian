@@ -1,12 +1,15 @@
 import React from 'react';
 import './Account.css';
+import { useNavigate } from "react-router-dom";
 
 const Account: React.FC = () => {
+const navigate = useNavigate();
   return (
     <div className="dashboard">
       <div className="login-container">
         <h2>Welcome Back</h2>
         <p>Welcome to Traffic Guardian - Sign in</p>
+        <div className="divider" />
         <form>
           <div className="form-group">
             <label htmlFor="username">Username:</label>
@@ -23,7 +26,9 @@ const Account: React.FC = () => {
         </form>
 
         <div className="signup-text">
-          Don’t have an account? <span className="signup-link">Sign up</span>
+          Don’t have an account? <span className="signup-link" onClick={() => navigate("/signup")}>
+      Sign up
+    </span>
         </div>
       </div>
 
