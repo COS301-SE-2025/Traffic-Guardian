@@ -57,7 +57,7 @@ yarn dev
 The app will be available at:
 
 ```
-http://localhost:5173
+http://localhost:3000
 ```
 
 > If you're using Vite (which is recommended), it will hot reload on file changes.
