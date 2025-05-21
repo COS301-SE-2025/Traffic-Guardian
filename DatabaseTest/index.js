@@ -15,10 +15,10 @@ const pool = new Pool({
 (async () => {
   // const client = await pool.connect();
   try {
-    const {rows} = await pool.query('SELECT current_user');
+    // const {rows} = await pool.query('SELECT current_user');
     // const res = await pool.query('SELECT * FROM Car');
-    const currentUser = rows[0]['current_user'];
-    console.log(currentUser);
+    // const currentUser = rows[0]['current_user'];
+    // console.log(currentUser);
     const cars= await pool.query('SELECT * FROM "TrafficGuardian"."Incidents"');//SELECT * FROM TrafficGuardian.Car
     const car = cars.rows[0];
     console.log(car);
