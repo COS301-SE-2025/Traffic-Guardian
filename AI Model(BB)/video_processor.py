@@ -1,95 +1,87 @@
 import cv2
 import os
-from datetime import datetime
+import numpy as np
 
 class VideoProcessor:
-    def __init__(self, source_path=None, output_dir="processed_frames"):
-        self.source_path = source_path
-        self.output_dir = output_dir
+    def __init__(self, video_path):
+        """Initialize with video path"""
+        self.video_path = video_path
         self.cap = None
+        self.output_dir = "output_frames"
         
         # Create output directory if it doesn't exist
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-    
-    def connect_to_source(self, source_path=None):
-        """Connect to video source - file or camera"""
-        if source_path:
-            self.source_path = source_path
-        
-        # Try to open the video source
-        if self.source_path:
-            self.cap = cv2.VideoCapture(self.source_path)
-        else:
-            # Default to first webcam if no source specified
-            self.cap = cv2.VideoCapture(0)
-        
-        if not self.cap.isOpened():
-            raise Exception(f"Failed to open video source: {self.source_path}")
-        
-        # Get video properties
-        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
-        self.frame_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.frame_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        
-        print(f"Connected to video source: {self.source_path}")
-        print(f"Resolution: {self.frame_width}x{self.frame_height}, FPS: {self.fps}")
-        
-        return self.cap
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
     
     def process_video(self, display=True, save_frames=False, process_frame_func=None):
-        """Process video frames from the source"""
-        if not self.cap or not self.cap.isOpened():
-            self.connect_to_source()
+        """Process video frames with optional function and saving"""
+        # Check if file exists
+        if not os.path.exists(self.video_path):
+            print(f"Error: File '{self.video_path}' not found")
+            return 0
         
-        frame_count = 0
+        # Open video file
+        self.cap = cv2.VideoCapture(self.video_path)
+        if not self.cap.isOpened():
+            print(f"Error: Could not open video file '{self.video_path}'")
+            return 0
+        
+        # Get video properties
+        fps = self.cap.get(cv2.CAP_PROP_FPS)
+        frame_count = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+        print(f"Video loaded: {self.video_path}")
+        print(f"FPS: {fps}, Total frames: {frame_count}")
+        print(f"Resolution: {width}x{height}")
+        
+        # Process video frame by frame
+        frame_number = 0
         
         while True:
-            # Read frame
             ret, frame = self.cap.read()
-            
             if not ret:
-                print("End of video stream")
                 break
-            
-            # Apply custom processing function if provided
+                
+            # Process frame if function provided
             if process_frame_func:
-                processed_frame = process_frame_func(frame)
+                processed_frame, results = process_frame_func(frame)
             else:
                 processed_frame = frame
-            
-            # Display the frame
+                results = {}
+                
+            # Add frame number
+            cv2.putText(processed_frame, f"Frame: {frame_number}", 
+                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                
+            # Display frame if requested
             if display:
-                cv2.imshow('Traffic Guardian Video Feed', processed_frame)
+                cv2.imshow('Video Processing', processed_frame)
+                
+                # Control playback speed based on FPS
+                wait_time = int(1000/fps) if fps > 0 else 30
+                
+                # Press 'q' to quit, 'p' to pause
+                key = cv2.waitKey(wait_time) & 0xFF
+                if key == ord('q'):
+                    break
+                elif key == ord('p'):
+                    cv2.waitKey(0)  # Wait until any key is pressed
             
             # Save frame if requested
-            if save_frames and frame_count % 30 == 0:  # Save every 30th frame
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                filename = os.path.join(self.output_dir, f"frame_{timestamp}.jpg")
-                cv2.imwrite(filename, processed_frame)
+            if save_frames:
+                output_path = os.path.join(self.output_dir, f"frame_{frame_number:04d}.jpg")
+                cv2.imwrite(output_path, processed_frame)
+                
+            frame_number += 1
             
-            frame_count += 1
-            
-            # Press 'q' to exit
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        
-        # Release resources
-        self.release()
-        
-        return frame_count
+        # Clean up
+        self.cleanup()
+        return frame_number
     
-    def release(self):
-        """Release video capture resources"""
+    def cleanup(self):
+        """Release resources"""
         if self.cap:
             self.cap.release()
         cv2.destroyAllWindows()
-        print("Video processing resources released")
-
-
-if __name__ == "__main__":
-    # Change path here
-    video_path = ".\Videos\trainingVid.mp4"
-    
-    processor = VideoProcessor(video_path)
-    processor.process_video(display=True, save_frames=True)
