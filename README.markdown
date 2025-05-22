@@ -8,10 +8,44 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ShaylinGovender/Capstone/actions/workflows/ci-cd.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/ShaylinGovender/Capstone/ci-cd.yml?label=CI%2FCD%20Pipeline&logo=githubactions&style=flat-square" alt="CI/CD Status">
-  </a>
+ 
   <img src="https://img.shields.io/github/commit-activity/m/ShaylinGovender/Capstone?label=Commits&logo=github&style=flat-square" alt="Commit Activity">
+</p>
+
+<p align="center">
+
+ <a href="https://github.com/JadynTuks/test301/actions/workflows/Mock.yml">
+  <img src="https://github.com/JadynTuks/test301/actions/workflows/Mock.yml/badge.svg?branch=main" alt="Build Status Badge">
+</a>
+
+  
+<a>
+  <img src="https://img.shields.io/maintenance/maintained/2025?label=Status" alt="Maintenance Status">
+</a>
+
+  <a href="https://github.com/COS301-SE-2025/MP6/issues">
+  <img src="https://img.shields.io/badge/Open%20Issues-21-blue" alt="Open Issues">
+</a>
+
+  <a href="https://github.com/COS301-SE-2025/MP6/issues?q=is%3Aissue%20state%3Aclosed">
+  <img src="https://img.shields.io/badge/Closed%20Issues-78-blue" alt="Closed Issues">
+</a>
+
+</p>
+
+  
+<a>
+  <img src="https://img.shields.io/maintenance/maintained/2025?label=Status" alt="Maintenance Status">
+</a>
+
+  <a href="https://github.com/COS301-SE-2025/MP6/issues">
+  <img src="https://img.shields.io/badge/Open%20Issues-21-blue" alt="Open Issues">
+</a>
+
+  <a href="https://github.com/COS301-SE-2025/MP6/issues?q=is%3Aissue%20state%3Aclosed">
+  <img src="https://img.shields.io/badge/Closed%20Issues-78-blue" alt="Closed Issues">
+</a>
+
 </p>
 
 ---
