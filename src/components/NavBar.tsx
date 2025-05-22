@@ -1,9 +1,9 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom"; // ⬅️ import Link and useLocation
-import "./NavBar.css"
+import { Link, useLocation } from "react-router-dom";
+import SearchIcon from "@mui/icons-material/Search"; // Import MUI Search icon
+import "./NavBar.css";
 
 import logo from "../assets/TrafficGuardianLogo1_LightFinal.png";
-import searchIcon from "../assets/thin-white-search.png";
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard" },
@@ -46,8 +46,8 @@ const Navbar = () => {
             </li>
           ))}
 
-          <li>
-            <img src={searchIcon} alt="Search" className="search-icon" />
+          <li className="search-icon-container">
+            <SearchIcon className="search-icon" />
           </li>
         </ul>
       </div>

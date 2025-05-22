@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 const Account: React.FC = () => {
 const navigate = useNavigate();
   return (
-    <div className="dashboard">
+    <div className="account-page">
       <div className="login-container">
         <h2>Welcome Back</h2>
         <p>Welcome to Traffic Guardian - Sign in</p>
@@ -22,7 +22,7 @@ const navigate = useNavigate();
             <input type="password" id="password" name="password" required />
           </div>
 
-          <button type="submit" onClick={() => navigate("/profile")}>Login</button>
+          <button className='signup-btn' type="submit" onClick={() => navigate("/profile")}>Login</button>
         </form>
 
         <div className="signup-text">

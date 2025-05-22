@@ -1,4 +1,5 @@
 import React from 'react';
+import './Incidents.css'; // Import your CSS file for styling
 const Incidents: React.FC = () => {
       return (
     <div className="dashboard">

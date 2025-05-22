@@ -1,4 +1,4 @@
-.dashboard {
+.account-page {
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -6,7 +6,7 @@
   padding-left: 29px;
   gap: 2rem;
   min-height: 100vh;
- /* background-color: #121212; /* dark mode */
+  /* background-color: #121212; /* dark mode */
 }
 
 .login-container,
@@ -15,7 +15,7 @@
   border-radius: 15px;
   padding: 2rem;
   width: 500px;
-  height: auto; 
+  height: auto;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
@@ -48,10 +48,12 @@ input {
   background-color: #2a2a2a;
   color: white;
   font-size: 1rem;
+  width: 100%; /* Ensure inputs take full container width minus padding */
+  box-sizing: border-box; /* Prevent padding from affecting width */
 }
 
-button[type="submit"] {
-  width: 500px;
+.signup-btn {
+  width: 100%; /* Match input width */
   height: 55px;
   border: none;
   border-radius: 10px;
@@ -64,7 +66,7 @@ button[type="submit"] {
   transition: background 0.3s ease;
 }
 
-button[type="submit"]:hover {
+.signup-btn:hover {
   background: #e89c2f;
 }
 
@@ -112,4 +114,3 @@ button[type="submit"]:hover {
   background-color: #FFAE36;
   margin: 1rem 0;
 }
-
