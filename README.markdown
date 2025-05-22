@@ -33,21 +33,6 @@
 
 </p>
 
-  
-<a>
-  <img src="https://img.shields.io/maintenance/maintained/2025?label=Status" alt="Maintenance Status">
-</a>
-
-  <a href="https://github.com/COS301-SE-2025/MP6/issues">
-  <img src="https://img.shields.io/badge/Open%20Issues-21-blue" alt="Open Issues">
-</a>
-
-  <a href="https://github.com/COS301-SE-2025/MP6/issues?q=is%3Aissue%20state%3Aclosed">
-  <img src="https://img.shields.io/badge/Closed%20Issues-78-blue" alt="Closed Issues">
-</a>
-
-</p>
-
 ---
 
 # Traffic Guardian - COS301 Capstone Project
