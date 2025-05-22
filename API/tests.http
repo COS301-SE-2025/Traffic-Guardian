@@ -4,7 +4,7 @@
 // Auth Tests
 //===========================
 
-### Register a new user
+### Register a new user (Works)
 POST http://localhost:5000/api/auth/register
 Content-Type: application/json
 
@@ -16,7 +16,7 @@ Content-Type: application/json
   "User_Preferences": "{}"
 }
 
-### Login
+### Login (Works)
 POST http://localhost:5000/api/auth/login
 Content-Type: application/json
 
@@ -29,16 +29,18 @@ Content-Type: application/json
 // Incident Tests
 //===========================
 
-### Get all incidents
+### Get all incidents (WORKS!)
 GET http://localhost:5000/api/incidents
+X-API-Key: YOUR_API_KEY_HERE
 
-### Get a specific incident
+### Get a specific incident(WORKS!)
 GET http://localhost:5000/api/incidents/1
+X-API-Key: YOUR_API_KEY_HERE
 
-### Create a new incident
+### Create a new incident (WORKS!)
 POST http://localhost:5000/api/incidents
 Content-Type: application/json
-Authorization: Bearer YOUR_TOKEN_HERE
+X-API-Key: YOUR_API_KEY_HERE
 
 {
   "Incident_Date": "2025-05-21",
@@ -48,10 +50,10 @@ Authorization: Bearer YOUR_TOKEN_HERE
   "Incident_Status": "open"
 }
 
-### Update an incident
+### Update an incident (DOENST WORK)
 PUT http://localhost:5000/api/incidents/1
 Content-Type: application/json
-Authorization: Bearer YOUR_TOKEN_HERE
+X-API-Key: YOUR_API_KEY_HERE
 
 {
   "Incident_Severity": "medium",
@@ -64,24 +66,26 @@ Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Get alerts for an incident
 GET http://localhost:5000/api/incidents/1/alerts
+X-API-Key: YOUR_API_KEY_HERE
 
-### Create a new alert
+### Create a new alert (works)
 POST http://localhost:5000/api/alerts
 Content-Type: application/json
-Authorization: Bearer YOUR_TOKEN_HERE
+X-API-Key: YOUR_API_KEY_HERE
 
 {
   "Alert_IncidentID": 1,
   "Alert_Message": "Traffic incident reported",
   "Alert_Type": "notification",
   "Alert_Severity": "high",
-  "Alert_Recipients": [1, 2, 3]
+  "Alert_Recipients": [1, 2, 3],
+  "Alert_Status": "pending"
 }
 
-### Update alert status
-PUT http://localhost:5000/api/alerts/1
+### Update alert status (Works)
+PUT http://localhost:5000/api/alerts/1/status
 Content-Type: application/json
-Authorization: Bearer YOUR_TOKEN_HERE
+X-API-Key: YOUR_API_KEY_HERE
 
 {
   "Alert_Status": "sent"
@@ -91,10 +95,23 @@ Authorization: Bearer YOUR_TOKEN_HERE
 // User Tests
 //===========================
 
-### Get user profile
-GET http://localhost:5000/api/user/profile
-Authorization: Bearer YOUR_TOKEN_HERE
+### Get user preferences (Works)
+GET http://localhost:5000/api/user/preferences
+X-API-Key: YOUR_API_KEY_HERE
 
-### Get user alerts
+### Update user preferences (Works)
+PUT http://localhost:5000/api/user/preferences
+Content-Type: application/json
+X-API-Key: YOUR_API_KEY_HERE
+
+{
+  "preferences": {
+    "notifications": true,
+    "alertLevel": "high",
+    "theme": "dark"
+  }
+}
+
+### Get user alerts (Works?)
 GET http://localhost:5000/api/user/alerts
-Authorization: Bearer YOUR_TOKEN_HERE
+X-API-Key: YOUR_API_KEY_HERE

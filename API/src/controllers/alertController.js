@@ -44,10 +44,9 @@ const alertController = {
       console.error('Create alert error:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
-  },
-    getAlertsByIncident: async (req, res) => {
+  },    getAlertsByIncident: async (req, res) => {
     try {
-      const Alert_IncidentID = req.params.incidentId;
+      const Alert_IncidentID = req.params.id;
       
       // Check if incident exists
       const incident = await incidentModel.getIncidentById(Alert_IncidentID);
@@ -64,10 +63,9 @@ const alertController = {
       console.error('Get alerts error:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
-  },
-    updateAlertStatus: async (req, res) => {
+  },updateAlertStatus: async (req, res) => {
     try {
-      const alertId = req.params.id;
+      const Alert_ID = req.params.id;
       const { Alert_Status } = req.body;
       
       if (!Alert_Status) {
@@ -75,7 +73,7 @@ const alertController = {
       }
       
       // Update alert status
-      const updatedAlert = await alertModel.updateAlertStatus(alertId, Alert_Status);
+      const updatedAlert = await alertModel.updateAlertStatus(Alert_ID, Alert_Status);
       
       if (!updatedAlert) {
         return res.status(404).json({ error: 'Alert not found' });
@@ -90,10 +88,9 @@ const alertController = {
       return res.status(500).json({ error: 'Internal server error' });
     }
   },
-  
-  getUserAlerts: async (req, res) => {
+    getUserAlerts: async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.User_ID;
       
       // Get active alerts for the user
       const alerts = await alertModel.getActiveAlerts(userId);

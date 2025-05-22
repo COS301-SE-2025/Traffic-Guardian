@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const userModel = require('../models/user');
 
@@ -15,44 +14,32 @@ const authController = {  login: async (req, res) => {
       if (!user) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
-        const isMatch = await bcrypt.compare(User_Password, user.User_Password);
+      
+      const isMatch = await bcrypt.compare(User_Password, user.User_Password);
       
       if (!isMatch) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
       
-      // Generate JWT token
-      const token = jwt.sign(
-        { id: user.User_ID, username: user.User_Username, role: user.User_Role },
-        process.env.JWT_SECRET,
-        { expiresIn: '8h' }
-      );
-      
-      // Set token as HTTP-only cookie
-      res.cookie('token', token, {
-        httpOnly: true,
-        maxAge: 8 * 60 * 60 * 1000, // 8 hours
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
-      });
-      
-      // Return user data (excluding password)
-      const { password: _, ...userData } = user;
-      return res.status(200).json({ 
+      // Generate or retrieve API key
+      let userWithKey = user;
+      if (!user.User_APIKey) {
+        userWithKey = await userModel.generateAPIKey(user.User_ID);
+      }
+        // Return user data with API key (excluding password)
+      const { User_Password: _, ...userData } = userWithKey;      return res.status(200).json({
         message: 'Login successful',
         user: userData,
-        token
+        apiKey: userData.User_APIKey
       });
     } catch (error) {
       console.error('Login error:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   },
-  
-  logout: (req, res) => {
-    // Clear the auth cookie
-    res.clearCookie('token');
-    return res.status(200).json({ message: 'Logout successful' });
+    logout: (req, res) => {
+    // API keys don't need to be cleared server-side
+    return res.status(200).json({ message: 'Logout successful. Please discard the API key on the client side.' });
   },
     register: async (req, res) => {
     try {
@@ -72,30 +59,30 @@ const authController = {  login: async (req, res) => {
       if (existingUserByEmail) {
         return res.status(409).json({ error: 'Email is already in use' });
       }
-      
-      // Create new user
+        // Create new user with API key
       const newUser = await userModel.createUser({
         User_Username,
         User_Password,
         User_Email,
         User_Role: User_Role || 'user', // Default role
         User_Preferences: User_Preferences || '{}'
+        // API key will be generated automatically
       });
       
       return res.status(201).json({ 
         message: 'User registered successfully',
-        user: newUser
+        user: newUser,
+        apiKey: newUser.User_APIKey
       });
     } catch (error) {
       console.error('Registration error:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   },
-  
-  getProfile: async (req, res) => {
+    getProfile: async (req, res) => {
     try {
       // req.user is set by the authenticate middleware
-      const { password, ...userData } = req.user;
+      const { User_Password, ...userData } = req.user;
       return res.status(200).json(userData);
     } catch (error) {
       console.error('Get profile error:', error);

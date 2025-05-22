@@ -1,7 +1,6 @@
 const db = require('../config/db');
 
-const incidentModel = {
-  async createIncident(incidentData) {
+const incidentModel = {  async createIncident(incidentData) {
     const { 
       Incident_Date, 
       Incident_Location, 
@@ -12,15 +11,15 @@ const incidentModel = {
     } = incidentData;
     
     const query = `
-      INSERT INTO incidents (
-        Incident_Date, 
-      Incident_Location, 
-      Incident_CarID, 
-      Incident_Severity, 
-      Incident_Status, 
-      Incident_Reporter
+      INSERT INTO "TrafficGuardian"."Incidents" (
+        "Incident_Date", 
+        "Incident_Location", 
+        "Incident_CarID", 
+        "Incident_Severity", 
+        "Incident_Status", 
+        "Incident_Reporter"
       ) 
-      VALUES ($1, NOW(), $3, $4, $5, $6) 
+      VALUES ($1, $2, $3, $4, $5, $6) 
       RETURNING *
     `;
     
@@ -36,14 +35,12 @@ const incidentModel = {
     const { rows } = await db.query(query, values);
     return rows[0];
   },
-
   async getIncidentById(Incident_ID) {
-    const query = 'SELECT * FROM "TrafficGuardian"."Incidents" WHERE id = $1';
-    const { rows } = await db.query(query, [id]);
+    const query = 'SELECT * FROM "TrafficGuardian"."Incidents" WHERE "Incident_ID" = $1';
+    const { rows } = await db.query(query, [Incident_ID]);
     return rows[0];
   },
-
-  async updateIncident(id, incidentData) {
+  async updateIncident(Incident_ID, incidentData) {
     const allowedFields = [
       'Incident_Date', 
       'Incident_Location', 
@@ -56,7 +53,7 @@ const incidentModel = {
     // Filter out undefined fields and only include allowed fields
     const updates = Object.keys(incidentData)
       .filter(key => allowedFields.includes(key) && incidentData[key] !== undefined)
-      .map(key => `${key} = '${incidentData[key]}'`)
+      .map(key => `"${key}" = '${incidentData[key]}'`)
       .join(', ');
     
     if (!updates) {
@@ -66,11 +63,11 @@ const incidentModel = {
     const query = `
       UPDATE "TrafficGuardian"."Incidents"
       SET ${updates}
-      WHERE Incident_ID = $1 
+      WHERE "Incident_ID" = $1 
       RETURNING *
     `;
     
-    const { rows } = await db.query(query, [id]);
+    const { rows } = await db.query(query, [Incident_ID]);
     return rows[0];
   },
 
