@@ -112,6 +112,6 @@ X-API-Key: YOUR_API_KEY_HERE
   }
 }
 
-### Get user alerts (Works?)
+### Get user alerts (Works?) alerts for the specific user called "user"
 GET http://localhost:5000/api/user/alerts
 X-API-Key: YOUR_API_KEY_HERE
