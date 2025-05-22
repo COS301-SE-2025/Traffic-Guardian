@@ -64,7 +64,7 @@ X-API-Key: YOUR_API_KEY_HERE
 // Alert Tests
 //===========================
 
-### Get alerts for an incident
+### Get alerts for an incident (Works)
 GET http://localhost:5000/api/incidents/1/alerts
 X-API-Key: YOUR_API_KEY_HERE
 
