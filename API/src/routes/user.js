@@ -9,4 +9,8 @@ router.use(authMiddleware.authenticate);
 router.put('/preferences', userController.updatePreferences);
 router.get('/preferences', userController.getPreferences);
 
+// Import alertController to handle user alerts
+const alertController = require('../controllers/alertController');
+router.get('/alerts', alertController.getUserAlerts);
+
 module.exports = router;

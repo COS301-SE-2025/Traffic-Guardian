@@ -35,11 +35,10 @@ const incidentController = {
       return res.status(500).json({ error: 'Internal server error' });
     }
   },
-  
-  getIncident: async (req, res) => {
+    getIncident: async (req, res) => {
     try {
-      const incidentId = req.params.id;
-      const incident = await incidentModel.getIncidentById(incidentId);
+      const Incident_ID = req.params.id;
+      const incident = await incidentModel.getIncidentById(Incident_ID);
       
       if (!incident) {
         return res.status(404).json({ error: 'Incident not found' });
@@ -51,21 +50,20 @@ const incidentController = {
       return res.status(500).json({ error: 'Internal server error' });
     }
   },
-  
-  updateIncident: async (req, res) => {
+    updateIncident: async (req, res) => {
     try {
-      const incidentId = req.params.id;
+      const Incident_ID = req.params.id;
       const incidentData = req.body;
       
       // First check if incident exists
-      const existingIncident = await incidentModel.getIncidentById(incidentId);
+      const existingIncident = await incidentModel.getIncidentById(Incident_ID);
       
       if (!existingIncident) {
         return res.status(404).json({ error: 'Incident not found' });
       }
       
       // Update the incident
-      const updatedIncident = await incidentModel.updateIncident(incidentId, incidentData);
+      const updatedIncident = await incidentModel.updateIncident(Incident_ID, incidentData);
       
       return res.status(200).json({
         message: 'Incident updated successfully',

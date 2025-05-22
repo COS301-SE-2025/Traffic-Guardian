@@ -1,9 +1,8 @@
 const userModel = require('../models/user');
 
-const userController = {
-  updatePreferences: async (req, res) => {
+const userController = {  updatePreferences: async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.User_ID;
       const preferences = req.body.preferences;
       
       if (!preferences) {
@@ -25,10 +24,9 @@ const userController = {
       return res.status(500).json({ error: 'Internal server error' });
     }
   },
-  
-  getPreferences: async (req, res) => {
+    getPreferences: async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.User_ID;
       const preferences = await userModel.getPreferences(userId);
       
       return res.status(200).json({ preferences });

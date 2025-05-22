@@ -1,30 +1,28 @@
-const jwt = require('jsonwebtoken');
 const userModel = require('../models/user');
 
 const authMiddleware = {
   authenticate: async (req, res, next) => {
     try {
-      const token = req.cookies.token || req.header('Authorization')?.replace('Bearer ', '');
+      // Get API key from header
+      const apiKey = req.header('X-API-Key');
       
-      if (!token) {
-        return res.status(401).json({ error: 'Authentication required' });
+      if (!apiKey) {
+        return res.status(401).json({ error: 'API key required' });
       }
       
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await userModel.findById(decoded.id);
+      // Validate API key
+      const user = await userModel.validateAPIKey(apiKey);
       
       if (!user) {
-        return res.status(401).json({ error: 'User not found' });
+        return res.status(401).json({ error: 'Invalid API key' });
       }
       
       // Attach user to request for use in route handlers
       req.user = user;
       next();
     } catch (error) {
-      if (error.name === 'TokenExpiredError') {
-        return res.status(401).json({ error: 'Token expired' });
-      }
-      return res.status(401).json({ error: 'Invalid token' });
+      console.error('Authentication error:', error);
+      return res.status(500).json({ error: 'Authentication failed' });
     }
   },
   
