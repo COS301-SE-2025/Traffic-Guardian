@@ -7,11 +7,11 @@ const { Pool } = require('pg');
 
 // Create a connection pool to efficiently manage database connections
 const pool = new Pool({
-  user: process.env.USER,
-  host: process.env.HOST,
-  database: process.env.DATABASE,
-  password: process.env.PASSWORD,
-  port: process.env.PORT,
+  user: process.env.USER || "postgres",
+  host: process.env.HOST || "localhost",
+  database: process.env.DATABASE || "TrafficGaurdian",
+  password: process.env.PASSWORD || "Admin",
+  port: process.env.PORT || "5432",
   // Connection pool settings
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
