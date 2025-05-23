@@ -3,7 +3,6 @@ import numpy as np
 
 class CarDetector:
     def __init__(self):
-        # Create background subtractor
         self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(
             detectShadows=True, 
             varThreshold=16,
@@ -34,8 +33,8 @@ class CarDetector:
         for contour in contours:
             area = cv2.contourArea(contour)
             
-            #
-            if 5000 < area < 30000:  # We are going to adjust based on the thresholds of the video
+            
+            if 1000 < area < 50000:  # We are going to adjust based on the thresholds of the video
                 x, y, w, h = cv2.boundingRect(contour)
                 
                 # Filter by aspect ratio and dimensions
@@ -58,16 +57,14 @@ class CarDetector:
         results = {
             "car_count": car_count,
             "car_locations": car_locations,
-            "fg_mask": fg_mask  # Include mask for debugging
+            "fg_mask": fg_mask  
         }
         
         return output_frame, results
 
-# Global detector instance
+
 detector = CarDetector()
 
 def detect_cars(frame):
-    """
-    Wrapper function to maintain compatibility with your existing code
-    """
+   
     return detector.detect_cars(frame)

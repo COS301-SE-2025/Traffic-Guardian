@@ -69,10 +69,10 @@ class VideoProcessor:
                 elif key == ord('p'):
                     cv2.waitKey(0)  
 
-          
-            if save_frames:
-                output_path = os.path.join(self.output_dir, f"frame_{frame_number:04d}.jpg")
-                cv2.imwrite(output_path, processed_frame)
+            # uncomment when you want to break down the frames
+            # if save_frames: 
+            #     output_path = os.path.join(self.output_dir, f"frame_{frame_number:04d}.jpg")
+            #     cv2.imwrite(output_path, processed_frame)
                 
             frame_number += 1
             
