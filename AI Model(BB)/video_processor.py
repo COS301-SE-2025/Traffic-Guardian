@@ -44,18 +44,18 @@ class VideoProcessor:
             if not ret:
                 break
                 
-            # Process frame if function provided
+            # Process frame based if a function provided
             if process_frame_func:
                 processed_frame, results = process_frame_func(frame)
             else:
                 processed_frame = frame
                 results = {}
                 
-            # Add frame number
+           
             cv2.putText(processed_frame, f"Frame: {frame_number}", 
                        (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
                 
-            # Display frame if requested
+           
             if display:
                 cv2.imshow('Video Processing', processed_frame)
                 
@@ -67,9 +67,9 @@ class VideoProcessor:
                 if key == ord('q'):
                     break
                 elif key == ord('p'):
-                    cv2.waitKey(0)  # Wait until any key is pressed
-            
-            # Save frame if requested
+                    cv2.waitKey(0)  
+
+          
             if save_frames:
                 output_path = os.path.join(self.output_dir, f"frame_{frame_number:04d}.jpg")
                 cv2.imwrite(output_path, processed_frame)
