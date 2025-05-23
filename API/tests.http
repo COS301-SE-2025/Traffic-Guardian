@@ -58,7 +58,7 @@ X-API-Key: YOUR_API_KEY_HERE
 
 {
   "Incident_Severity": "medium",
-  "Incident_Status": "in-progress"
+  "Incident_Status": "in-progess-ongoing"
 }
 
 //===========================
