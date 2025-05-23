@@ -1,0 +1,117 @@
+// Traffic Guardian API Test Requests
+
+//===========================
+// Auth Tests
+//===========================
+
+### Register a new user (Works)
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "User_Username": "testuser",
+  "User_Password": "password123",
+  "User_Email": "testuser@gmail.com",
+  "User_Role": "user",
+  "User_Preferences": "{}"
+}
+
+### Login (Works)
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "User_Email": "user@gmail.com",
+  "User_Password": "user"
+}
+
+//===========================
+// Incident Tests
+//===========================
+
+### Get all incidents (WORKS!)
+GET http://localhost:5000/api/incidents
+X-API-Key: YOUR_API_KEY_HERE
+
+### Get a specific incident(WORKS!)
+GET http://localhost:5000/api/incidents/1
+X-API-Key: YOUR_API_KEY_HERE
+
+### Create a new incident (WORKS!)
+POST http://localhost:5000/api/incidents
+Content-Type: application/json
+X-API-Key: YOUR_API_KEY_HERE
+
+{
+  "Incident_Date": "2025-05-21",
+  "Incident_Location": "Highway 101, Mile 45",
+  "Incident_CarID": 1,
+  "Incident_Severity": "high",
+  "Incident_Status": "open"
+}
+
+### Update an incident (DOENST WORK)
+PUT http://localhost:5000/api/incidents/1
+Content-Type: application/json
+X-API-Key: YOUR_API_KEY_HERE
+
+{
+  "Incident_Severity": "medium",
+  "Incident_Status": "in-progress"
+}
+
+//===========================
+// Alert Tests
+//===========================
+
+### Get alerts for an incident (Works)
+GET http://localhost:5000/api/incidents/1/alerts
+X-API-Key: YOUR_API_KEY_HERE
+
+### Create a new alert (works)
+POST http://localhost:5000/api/alerts
+Content-Type: application/json
+X-API-Key: YOUR_API_KEY_HERE
+
+{
+  "Alert_IncidentID": 1,
+  "Alert_Message": "Traffic incident reported",
+  "Alert_Type": "notification",
+  "Alert_Severity": "high",
+  "Alert_Recipients": [1, 2, 3],
+  "Alert_Status": "pending"
+}
+
+### Update alert status (Works)
+PUT http://localhost:5000/api/alerts/1/status
+Content-Type: application/json
+X-API-Key: YOUR_API_KEY_HERE
+
+{
+  "Alert_Status": "sent"
+}
+
+//===========================
+// User Tests
+//===========================
+
+### Get user preferences (Works)
+GET http://localhost:5000/api/user/preferences
+X-API-Key: YOUR_API_KEY_HERE
+
+### Update user preferences (Works)
+PUT http://localhost:5000/api/user/preferences
+Content-Type: application/json
+X-API-Key: YOUR_API_KEY_HERE
+
+{
+  "preferences": {
+    "notifications": true,
+    "alertLevel": "high",
+    "theme": "dark"
+  }
+}
+
+### Get user alerts (Works?) alerts for the specific user called "user"
+GET http://localhost:5000/api/user/alerts
+X-API-Key: YOUR_API_KEY_HERE
