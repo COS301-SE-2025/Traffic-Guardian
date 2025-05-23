@@ -51,7 +51,7 @@ X-API-Key: YOUR_API_KEY_HERE
   "Incident_Status": "open"
 }
 
-### Update an incident (DOENST WORK)
+### Update an incident (WORK)
 PUT http://localhost:5000/api/incidents/1
 Content-Type: application/json
 X-API-Key: YOUR_API_KEY_HERE

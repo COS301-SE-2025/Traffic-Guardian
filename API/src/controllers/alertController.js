@@ -90,7 +90,8 @@ const alertController = {
   },
     getUserAlerts: async (req, res) => {
     try {
-      const userId = req.user.User_ID;
+      const userId = req.user.User_ID || "user";
+      //console.log(req.query);
       
       // Get active alerts for the user
       const alerts = await alertModel.getActiveAlerts(userId);
