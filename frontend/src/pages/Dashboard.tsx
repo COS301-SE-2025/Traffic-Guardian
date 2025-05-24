@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 
+// Icon components (unchanged)
 const AlertTriangleIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -9,7 +10,7 @@ const AlertTriangleIcon = () => (
 
 const CameraIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764TIncidents764a1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
   </svg>
 );
 
@@ -103,8 +104,8 @@ const Dashboard: React.FC = () => {
   const [selectedIncident, setSelectedIncident] = useState<IncidentDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
-  
-const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
+
+  const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
     {
       id: 1,
       type: 'Vehicle Accident',
@@ -115,7 +116,7 @@ const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
       status: 'Active',
       duration: '45 min',
       reportedBy: 'AI Detection',
-      assignedTo: 'Response Team Alpha'
+      assignedTo: 'Response Team Alpha',
     },
     {
       id: 2,
@@ -127,7 +128,7 @@ const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
       status: 'Responding',
       duration: '1hr 15min',
       reportedBy: 'Public Report',
-      assignedTo: 'Response Team Beta'
+      assignedTo: 'Response Team Beta',
     },
     {
       id: 3,
@@ -139,8 +140,8 @@ const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
       status: 'Monitoring',
       duration: '1hr 40min',
       reportedBy: 'AI Detection',
-      assignedTo: 'Traffic Control'
-    }
+      assignedTo: 'Traffic Control',
+    },
   ]);
 
   const [cameraFeeds, setCameraFeeds] = useState<Camera[]>([
@@ -148,7 +149,7 @@ const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
     { id: 'CAM-M1-15', name: 'M1 Sandton Junction', status: 'Active', incidents: 1, lastUpdate: '12:14' },
     { id: 'CAM-R21-08', name: 'R21 OR Tambo', status: 'Active', incidents: 1, lastUpdate: '12:13' },
     { id: 'CAM-N3-12', name: 'N3 Johannesburg South', status: 'Active', incidents: 0, lastUpdate: '12:12' },
-    { id: 'CAM-M2-07', name: 'M2 Germiston East', status: 'Offline', incidents: 0, lastUpdate: '11:30' }
+    { id: 'CAM-M2-07', name: 'M2 Germiston East', status: 'Offline', incidents: 0, lastUpdate: '11:30' },
   ]);
 
   const [stats, setStats] = useState<Stats>({
@@ -158,5 +159,74 @@ const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
     totalCameras: 5,
     avgResponseTime: '4.2 min',
     incidentsToday: 8,
-    systemHealth: 'healthy'
+    systemHealth: 'healthy',
   });
+
+  // Example useEffect to update currentTime
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Render the dashboard
+  return (
+    <div className="dashboard">
+      <h1>Traffic Guardian Dashboard</h1>
+      <div className="stats">
+        <div className="stat-card">
+          <AlertTriangleIcon />
+          <h3>Total Incidents</h3>
+          <p>{stats.totalIncidents}</p>
+        </div>
+        <div className="stat-card">
+          <CameraIcon />
+          <h3>Cameras Online</h3>
+          <p>{stats.camerasOnline}/{stats.totalCameras}</p>
+        </div>
+        <div className="stat-card">
+          <ClockIcon />
+          <h3>Avg Response Time</h3>
+          <p>{stats.avgResponseTime}</p>
+        </div>
+        <div className="stat-card">
+          <TrendingUpIcon />
+          <h3>Incidents Today</h3>
+          <p>{stats.incidentsToday}</p>
+        </div>
+      </div>
+
+      <h2>Active Incidents</h2>
+      <div className="incidents">
+        {activeIncidents.map((incident) => (
+          <div key={incident.id} className="incident-card">
+            <h3>{incident.type}</h3>
+            <p><MapPinIcon /> {incident.location}</p>
+            <p><EyeIcon /> {incident.camera}</p>
+            <p><ClockIcon /> {incident.time} ({incident.duration})</p>
+            <p>Status: {incident.status}</p>
+            <p>Severity: {incident.severity}</p>
+            <p>Reported By: {incident.reportedBy}</p>
+            <p>Assigned To: {incident.assignedTo}</p>
+          </div>
+        ))}
+      </div>
+
+      <h2>Camera Feeds</h2>
+      <div className="camera-feeds">
+        {cameraFeeds.map((camera) => (
+          <div key={camera.id} className="camera-card">
+            <h3>{camera.name}</h3>
+            <p>Status: {camera.status}</p>
+            <p>Incidents: {camera.incidents}</p>
+            <p>Last Update: {camera.lastUpdate}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Export as default
+export default Dashboard;
