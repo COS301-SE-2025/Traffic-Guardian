@@ -1,45 +1,226 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './Profile.css';
-import Button from '../components/Button'; // ⬅️ Import reusable button
+import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
+
+interface User {
+  name: string;
+  email: string;
+  role?: string;
+}
+
+interface Preferences {
+  receiveAlerts: boolean;
+  darkMode: boolean;
+  alertLevel?: string;
+}
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState<User>({ name: '', email: '' });
+  const [preferences, setPreferences] = useState<Preferences>({ 
+    receiveAlerts: true, 
+    darkMode: false,
+    alertLevel: 'medium'
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [incidentCount, setIncidentCount] = useState(0);
+  const [alertCount, setAlertCount] = useState(0);
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const apiKey = localStorage.getItem('apiKey');
+        if (!apiKey) {
+          throw new Error('No API key found. Please log in.');
+        }
+
+        // Fetch user profile
+        const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/profile`, {
+          headers: { 
+            'X-API-Key': apiKey,
+            'Content-Type': 'application/json'
+          },
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('Failed to fetch profile data');
+        }
+
+        const userData = await userResponse.json();
+        setUser({
+          name: userData.User_Username || 'Unknown',
+          email: userData.User_Email || '',
+          role: userData.User_Role
+        });
+
+        // Fetch user preferences
+        const prefsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
+          headers: { 
+            'X-API-Key': apiKey,
+            'Content-Type': 'application/json'
+          },
+        });
+
+        if (prefsResponse.ok) {
+          const prefsData = await prefsResponse.json();
+          setPreferences(prefsData.preferences || {
+            receiveAlerts: true,
+            darkMode: false,
+            alertLevel: 'medium'
+          });
+        }
+
+        // Fetch incident stats (if user is admin)
+        if (userData.User_Role === 'admin') {
+          const incidentsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents/stats`, {
+            headers: { 
+              'X-API-Key': apiKey,
+              'Content-Type': 'application/json'
+            },
+          });
+          if (incidentsResponse.ok) {
+            const stats = await incidentsResponse.json();
+            setIncidentCount(stats.totalIncidents || 0);
+            setAlertCount(stats.totalAlerts || 0);
+          }
+        }
+
+      } catch (err: any) {
+        setError(err.message);
+        // If unauthorized, redirect to login
+        if (err.message.includes('unauthorized') || err.message.includes('API key')) {
+          navigate('/account');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [navigate]);
+
+  const handlePreferenceChange = async (key: keyof Preferences, value: any) => {
+    const updatedPrefs = { ...preferences, [key]: value };
+    setPreferences(updatedPrefs);
+
+    try {
+      const apiKey = localStorage.getItem('apiKey');
+      if (!apiKey) throw new Error('No API key found');
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
+        method: 'PUT',
+        headers: {
+          'X-API-Key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ preferences: updatedPrefs }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update preferences');
+      }
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
 
   const handleSignOut = () => {
-    // Future: clear auth state, tokens, etc.
-    navigate('/');
+    localStorage.removeItem('apiKey');
+    localStorage.removeItem('user');
+    navigate('/account');
   };
+
+  if (loading) return <div className="loading-spinner">Loading profile data...</div>;
+  if (error) return <div className="error-message">Error: {error}</div>;
 
   return (
     <div className="profile-page">
+      <div className="profile-header">
+        <div className="welcome-message">
+          Welcome back, <strong>{user.name}</strong>
+          {user.role === 'admin' && <span className="admin-badge">Admin</span>}
+        </div>
+      </div>
 
       <div className="profile-container">
-        <div className="section">
-          <h3>Account Info</h3>
-          <p><strong>Name:</strong> John Doe</p>
-          <p><strong>Email:</strong> johndoe@example.com</p>
+        <div className="profile-section">
+          <h3>Account Information</h3>
+          <div className="info-item">
+            <span className="info-label">Username:</span>
+            <span className="info-value">{user.name}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Email:</span>
+            <span className="info-value">{user.email}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Account Type:</span>
+            <span className="info-value">{user.role || 'Standard User'}</span>
+          </div>
         </div>
 
-        <div className="section">
-          <h3>Preferences</h3>
-          <label>
-            <input type="checkbox" checked />
-            Receive incident alerts
-          </label>
-          <label>
-            <input type="checkbox" />
-            Enable dark mode
-          </label>
+        <div className="profile-section">
+          <h3>Notification Preferences</h3>
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.receiveAlerts}
+                onChange={(e) => handlePreferenceChange('receiveAlerts', e.target.checked)}
+              />
+              Receive incident alerts
+            </label>
+          </div>
+          <div className="preference-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={preferences.darkMode}
+                onChange={(e) => handlePreferenceChange('darkMode', e.target.checked)}
+              />
+              Enable dark mode
+            </label>
+          </div>
+          <div className="preference-item">
+            <label>Alert Level:</label>
+            <select
+              value={preferences.alertLevel}
+              onChange={(e) => handlePreferenceChange('alertLevel', e.target.value)}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
         </div>
 
-        <div className="section">
-          <h3>Security</h3>
-          <Button label="Change Password" onClick={() => alert('Coming soon')} />
-        </div>
+        {user.role === 'admin' && (
+          <div className="profile-section">
+            <h3>Admin Dashboard</h3>
+            <div className="stats-container">
+              <div className="stat-card">
+                <div className="stat-value">{incidentCount}</div>
+                <div className="stat-label">Total Incidents</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">{alertCount}</div>
+                <div className="stat-label">Alerts Sent</div>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <div className="section">
-          <Button label="Sign Out" onClick={handleSignOut} />
+        <div className="profile-actions">
+          <Button 
+            label="Change Password" 
+            onClick={() => navigate('/change-password')} 
+          />
+          <Button 
+            label="Sign Out" 
+            onClick={handleSignOut}
+          />
         </div>
       </div>
     </div>
