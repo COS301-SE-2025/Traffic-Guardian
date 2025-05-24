@@ -1,7 +1,7 @@
 const app = require('./app');
 const db = require('./config/db');
 
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 // Test database connection before starting server
