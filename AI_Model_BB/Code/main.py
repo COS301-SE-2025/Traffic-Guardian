@@ -2,10 +2,9 @@ from video_processor import VideoProcessor
 from car_detection import detect_cars
 
 def main():
-    # Use the correct path to your video file
     video_path = "Videos/CarTrainingVideo.mp4"
     
-    # Initialize the video processor
+    # Initialize the video 
     processor = VideoProcessor(video_path)
     
     # Process video with car detection
