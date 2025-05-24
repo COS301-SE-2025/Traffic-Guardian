@@ -1,4 +1,5 @@
 // Traffic Guardian API Test Requests
+//default api-key = 19da0e4d94f8aad
 
 //===========================
 // Auth Tests
@@ -50,14 +51,14 @@ X-API-Key: YOUR_API_KEY_HERE
   "Incident_Status": "open"
 }
 
-### Update an incident (DOENST WORK)
+### Update an incident (WORK)
 PUT http://localhost:5000/api/incidents/1
 Content-Type: application/json
 X-API-Key: YOUR_API_KEY_HERE
 
 {
   "Incident_Severity": "medium",
-  "Incident_Status": "in-progress"
+  "Incident_Status": "in-progess-ongoing"
 }
 
 //===========================

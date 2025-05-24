@@ -54,13 +54,17 @@ const alertModel = {  async createAlert(alertData) {
   },
   async getActiveAlerts(userId) {
     // Get alerts where the user is in the recipients array and status is not 'resolved'
-    const query = `
+    /* const query0 = `
       SELECT * FROM "TrafficGuardian"."Alerts"
       WHERE $1 = ANY("Alert_Recipients") 
       AND "Alert_Status" != 'resolved' 
-    `;
+    `; */
+
+    const query = `SELECT * FROM "TrafficGuardian"."Alerts"`;
+
+
     
-    const { rows } = await db.query(query, [userId]);
+    const { rows } = await db.query(query/* , [userId] */);
     return rows;
   }
 };
