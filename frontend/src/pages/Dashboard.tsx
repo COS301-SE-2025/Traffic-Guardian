@@ -104,3 +104,59 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   
+const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
+    {
+      id: 1,
+      type: 'Vehicle Accident',
+      location: 'N1 Western Bypass Southbound',
+      severity: 'Critical',
+      time: '12:13',
+      camera: 'CAM-N1-03',
+      status: 'Active',
+      duration: '45 min',
+      reportedBy: 'AI Detection',
+      assignedTo: 'Response Team Alpha'
+    },
+    {
+      id: 2,
+      type: 'Vehicle Breakdown',
+      location: 'M1 North - Sandton Junction',
+      severity: 'Medium',
+      time: '11:45',
+      camera: 'CAM-M1-15',
+      status: 'Responding',
+      duration: '1hr 15min',
+      reportedBy: 'Public Report',
+      assignedTo: 'Response Team Beta'
+    },
+    {
+      id: 3,
+      type: 'Traffic Congestion',
+      location: 'R21 - OR Tambo Approach',
+      severity: 'Low',
+      time: '11:20',
+      camera: 'CAM-R21-08',
+      status: 'Monitoring',
+      duration: '1hr 40min',
+      reportedBy: 'AI Detection',
+      assignedTo: 'Traffic Control'
+    }
+  ]);
+
+  const [cameraFeeds, setCameraFeeds] = useState<Camera[]>([
+    { id: 'CAM-N1-03', name: 'N1 Western Bypass', status: 'Active', incidents: 1, lastUpdate: '12:15' },
+    { id: 'CAM-M1-15', name: 'M1 Sandton Junction', status: 'Active', incidents: 1, lastUpdate: '12:14' },
+    { id: 'CAM-R21-08', name: 'R21 OR Tambo', status: 'Active', incidents: 1, lastUpdate: '12:13' },
+    { id: 'CAM-N3-12', name: 'N3 Johannesburg South', status: 'Active', incidents: 0, lastUpdate: '12:12' },
+    { id: 'CAM-M2-07', name: 'M2 Germiston East', status: 'Offline', incidents: 0, lastUpdate: '11:30' }
+  ]);
+
+  const [stats, setStats] = useState<Stats>({
+    totalIncidents: 24,
+    activeIncidents: 3,
+    camerasOnline: 4,
+    totalCameras: 5,
+    avgResponseTime: '4.2 min',
+    incidentsToday: 8,
+    systemHealth: 'healthy'
+  });
