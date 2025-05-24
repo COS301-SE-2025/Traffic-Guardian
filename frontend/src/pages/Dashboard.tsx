@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 
-// Icon components (you can replace these with your preferred icon library)
 const AlertTriangleIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -51,3 +50,57 @@ const UsersIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a4 4 0 11-8 0 4 4 0 018 0z" />
   </svg>
 );
+
+interface Incident {
+  id: number;
+  type: string;
+  location: string;
+  severity: 'Critical' | 'Medium' | 'Low';
+  time: string;
+  camera: string;
+  status: 'Active' | 'Responding' | 'Monitoring';
+  duration?: string;
+  reportedBy?: string;
+  assignedTo?: string;
+}
+
+interface Camera {
+  id: string;
+  name: string;
+  status: 'Active' | 'Offline';
+  incidents: number;
+  lastUpdate?: string;
+}
+
+interface Stats {
+  totalIncidents: number;
+  activeIncidents: number;
+  camerasOnline: number;
+  totalCameras: number;
+  avgResponseTime: string;
+  incidentsToday: number;
+  systemHealth: 'healthy' | 'warning' | 'error';
+}
+
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'critical';
+  timestamp: Date;
+}
+
+interface IncidentDetail extends Incident {
+  description: string;
+  images?: string[];
+  responders?: string[];
+  timeline?: { time: string; event: string }[];
+}
+
+const Dashboard: React.FC = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [selectedIncident, setSelectedIncident] = useState<IncidentDetail | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+  
