@@ -1,9 +1,5 @@
 [
     {
-        "Content-Type": "application/json"
-    },
-
-    {
     "User_Username": "testuser",
     "User_Password": "password123",
     "User_Email": "testuser@gmail.com",
@@ -21,5 +17,12 @@
         "alertLevel": "high",
         "theme": "dark"
     }
+    },
+    {
+    "Incident_Date": "2025-05-21",
+    "Incident_Location": "Highway 101, Mile 45",
+    "Incident_CarID": 1,
+    "Incident_Severity": "high",
+    "Incident_Status": "open"
     }
 ]
