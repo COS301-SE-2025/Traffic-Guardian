@@ -70,20 +70,16 @@ const SignUp: React.FC = () => {
       });
 
       const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
+      if (contentType?.includes('application/json')) {
         const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || 'Registration failed');
-        }
+        if (!response.ok) throw new Error(data.message || 'Registration failed');
       } else {
         const text = await response.text();
-        if (!response.ok) {
-          throw new Error(text || 'Registration failed');
-        }
+        if (!response.ok) throw new Error(text || 'Registration failed');
       }
 
       setSuccess(true);
-      setTimeout(() => navigate('/account'), 2000); // Redirect to login page
+      setTimeout(() => navigate('/account'), 2000);
 
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration');
@@ -111,7 +107,7 @@ const SignUp: React.FC = () => {
         <div className="divider" />
         
         {error && (
-          <div className="alert alert-error">
+          <div className="alert alert-error" data-testid="error-message">
             <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -119,13 +115,14 @@ const SignUp: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} data-testid="signup-form" noValidate>
           <div className="form-group">
             <label htmlFor="username">Username</label>
             <input
               type="text"
               id="username"
               name="username"
+              data-testid="username-input"
               value={formData.username}
               onChange={handleChange}
               required
@@ -140,6 +137,7 @@ const SignUp: React.FC = () => {
               type="email"
               id="email"
               name="email"
+              data-testid="email-input"
               value={formData.email}
               onChange={handleChange}
               required
@@ -152,6 +150,7 @@ const SignUp: React.FC = () => {
               type="password"
               id="password"
               name="password"
+              data-testid="password-input"
               value={formData.password}
               onChange={handleChange}
               required
@@ -165,6 +164,7 @@ const SignUp: React.FC = () => {
               type="password"
               id="confirmPassword"
               name="confirmPassword"
+              data-testid="confirm-password-input"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
@@ -175,6 +175,7 @@ const SignUp: React.FC = () => {
           <button
             type="submit"
             className="signup-btn"
+            data-testid="submit-button"
             disabled={loading}
           >
             {loading ? (
@@ -198,7 +199,7 @@ const SignUp: React.FC = () => {
           </span>
         </div>
       </div>
-       <div className="showcase-container">
+      <div className="showcase-container">
         {/* Add image or animation later */}
       </div>
     </div>
