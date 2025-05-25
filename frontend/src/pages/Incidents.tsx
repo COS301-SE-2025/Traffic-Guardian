@@ -268,3 +268,23 @@ const Incidents: React.FC = () => {
       setFormErrors(prev => ({ ...prev, [key]: undefined }));
     }
   };
+
+  const validateForm = (): boolean => {
+    const errors: Partial<Record<keyof ManualIncidentForm, string>> = {};
+
+    if (!manualIncident.Incident_Location.trim()) {
+      errors.Incident_Location = 'Location is required';
+    }
+    if (!manualIncident.Incident_CameraID.trim()) {
+      errors.Incident_CameraID = 'Camera ID is required';
+    }
+    if (!manualIncident.Incident_Description.trim()) {
+      errors.Incident_Description = 'Description is required';
+    }
+    if (!manualIncident.reporterName.trim()) {
+      errors.reporterName = 'Reporter name is required';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
