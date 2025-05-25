@@ -140,3 +140,73 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     throw error;
   }
 };
+
+const Incidents: React.FC = () => {
+  const [incidents, setIncidents] = useState<DisplayIncident[]>([]);
+  const [filteredIncidents, setFilteredIncidents] = useState<DisplayIncident[]>([]);
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    status: '',
+    severity: '',
+    type: '',
+    dateFrom: '',
+    dateTo: ''
+  });
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [manualIncident, setManualIncident] = useState<ManualIncidentForm>({
+    Incident_Date: new Date().toISOString().split('T')[0],
+    Incident_Location: '',
+    Incident_CameraID: '',
+    Incident_Type: 'Vehicle Accident',
+    Incident_Severity: 'medium',
+    Incident_Status: 'open',
+    Incident_Description: '',
+    reporterName: '',
+    reporterContact: '',
+    coordinates: { lat: '', lng: '' },
+    weatherConditions: '',
+    trafficImpact: 'minor',
+    injuriesReported: 'unknown',
+    images: []
+  });
+
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof ManualIncidentForm, string>>>({});
+
+  const loadIncidents = async () => {
+    try {
+      setIsLoading(true);
+      const data = await apiRequest('/incidents');
+      
+      const transformedIncidents: DisplayIncident[] = data.map((incident: ApiIncident) => ({
+        id: incident.Incident_ID || 0,
+        date: incident.Incident_Date,
+        location: incident.Incident_Location,
+        cameraId: incident.Incident_CameraID,
+        type: incident.Incident_Type,
+        severity: incident.Incident_Severity,
+        status: incident.Incident_Status,
+        description: incident.Incident_Description,
+        createdAt: incident.created_at || incident.Incident_Date,
+        updatedAt: incident.updated_at || incident.Incident_Date
+      }));
+
+      setIncidents(transformedIncidents);
+      setFilteredIncidents(transformedIncidents);
+    } catch (error) {
+      setError('Failed to load incidents. Please check your connection.');
+      console.error('Load incidents error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadIncidents();
+  }, []);
