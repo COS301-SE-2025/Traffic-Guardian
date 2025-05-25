@@ -4,11 +4,6 @@
     },
 
     {
-        "Content-Type": "application/json",
-        "X-API-Key": "19da0e4d94f8aad"
-    },
-
-    {
     "User_Username": "testuser",
     "User_Password": "password123",
     "User_Email": "testuser@gmail.com",
@@ -19,5 +14,12 @@
     {
     "User_Email": "user@gmail.com",
     "User_Password": "user"
+    },
+    {
+    "preferences": {
+        "notifications": true,
+        "alertLevel": "high",
+        "theme": "dark"
+    }
     }
 ]
