@@ -2,3 +2,6 @@
 AI Model(BB)/__pycache__/
 AI Model(BB)/output_frames/
 AI Model(BB)/processed_frames/
+
+.DS_Store
+**/*.env
