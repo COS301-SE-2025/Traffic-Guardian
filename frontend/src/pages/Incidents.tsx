@@ -115,3 +115,28 @@ interface FilterState {
   dateFrom: string;
   dateTo: string;
 }
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+const API_KEY = process.env.REACT_APP_API_KEY || 'YOUR_API_KEY_HERE';
+
+const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-API-Key': API_KEY,
+    ...options.headers,
+  };
+
+  try {
+    const response = await fetch(url, { ...options, headers });
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API request error:', error);
+    throw error;
+  }
+};
