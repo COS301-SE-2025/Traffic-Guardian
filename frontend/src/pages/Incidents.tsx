@@ -288,3 +288,50 @@ const Incidents: React.FC = () => {
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
+
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files) return;
+
+    const newFiles = Array.from(files).filter(file => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        setError('Only image files (JPEG, PNG, GIF, WebP) are allowed');
+        return false;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB');
+        return false;
+      }
+
+      return true;
+    });
+
+    setManualIncident(prev => ({
+      ...prev,
+      images: [...prev.images, ...newFiles]
+    }));
+  };
+
+  const removeFile = (index: number) => {
+    setManualIncident(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    handleFileUpload(e.dataTransfer.files);
+  };
