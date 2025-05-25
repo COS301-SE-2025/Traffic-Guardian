@@ -16,4 +16,12 @@
     },
     "apiKey": "19da0e4d94f8aad"
     }
+    ,
+    {
+  "preferences": {
+    "notifications": true,
+    "alertLevel": "high",
+    "theme": "dark"
+  }
+    }
 ]

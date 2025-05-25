@@ -20,11 +20,22 @@ test('Login User', async ()=>{
     expect(response.status).toBe(200);
 });
 
-test('Get all Incidents', async ()=>{
+test('Get User preferences', async ()=>{
     const payload = artifacts[3];
-    const headers = artifacts[0];
-    const response = await axios.post('GET http://localhost:5000/api/incidents', payload, headers);
+    const headers = artifacts[1];
+    const response = await axios.get('http://localhost:5000/api/user/preferences', headers);
+
+    expect(response.data).toMatchObject(seeding[1]);
+    expect(response.status).toBe(200);
+});
+
+
+test('Update user preferences', async ()=>{
+    const payload = artifacts[3];
+    const headers = artifacts[1];
+    const response = await axios.get('http://localhost:5000/api/incidents', headers);
 
     expect(response.data).toMatchObject(seeding[0]);
     expect(response.status).toBe(200);
 });
+
