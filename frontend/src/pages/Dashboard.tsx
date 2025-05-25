@@ -584,7 +584,7 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <h4 style={{ color: '#ff8c00', marginBottom: '0.5rem' }}>Location</h4>
+                <h4 style={{ color: '#ffaa33', marginBottom: '0.5rem' }}>Location</h4>
                 <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <MapPinIcon />
                   {selectedIncident.location}
@@ -592,13 +592,13 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <h4 style={{ color: '#ff8c00', marginBottom: '0.5rem' }}>Description</h4>
+                <h4 style={{ color: '#ffaa33', marginBottom: '0.5rem' }}>Description</h4>
                 <p>{selectedIncident.description}</p>
               </div>
 
               {selectedIncident.responders && (
                 <div style={{ marginBottom: '1.5rem' }}>
-                  <h4 style={{ color: '#ff8c00', marginBottom: '0.5rem' }}>Response Teams</h4>
+                  <h4 style={{ color: '#ffaa33', marginBottom: '0.5rem' }}>Response Teams</h4>
                   <ul style={{ listStyle: 'none', padding: 0 }}>
                     {selectedIncident.responders.map((responder, index) => (
                       <li key={index} style={{ 
@@ -616,8 +616,8 @@ const Dashboard: React.FC = () => {
 
               {selectedIncident.timeline && (
                 <div>
-                  <h4 style={{ color: '#ff8c00', marginBottom: '0.5rem' }}>Timeline</h4>
-                  <div style={{ borderLeft: '2px solid #ff8c00', paddingLeft: '1rem' }}>
+                  <h4 style={{ color: '#ffaa33', marginBottom: '0.5rem' }}>Timeline</h4>
+                  <div style={{ borderLeft: '2px solid #ffaa33', paddingLeft: '1rem' }}>
                     {selectedIncident.timeline.map((event, index) => (
                       <div key={index} style={{ marginBottom: '1rem', position: 'relative' }}>
                         <div style={{ 
@@ -626,7 +626,7 @@ const Dashboard: React.FC = () => {
                           top: '0.25rem',
                           width: '8px', 
                           height: '8px', 
-                          backgroundColor: '#ff8c00', 
+                          backgroundColor: '#ffaa33', 
                           borderRadius: '50%' 
                         }}></div>
                         <div style={{ fontSize: '0.8rem', color: '#999999', marginBottom: '0.25rem' }}>

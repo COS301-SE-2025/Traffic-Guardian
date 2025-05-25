@@ -23,7 +23,7 @@
 }
 
 .incidents-title h2 {
-  color: #ff8c00;
+  color: #ffaa33;
   font-size: 1.8rem;
   font-weight: 600;
   margin: 0;
@@ -42,7 +42,7 @@
 }
 
 .btn-primary {
-  background-color: #ff8c00;
+  background-color: #ffaa33;
   color: #000000;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -75,7 +75,7 @@
 }
 
 .btn-secondary:hover {
-  border-color: #ff8c00;
+  border-color: #ffaa33;
   color: #ffffff;
   background-color: rgba(255, 140, 0, 0.1);
 }
@@ -123,7 +123,7 @@
 .filter-input:focus,
 .filter-select:focus {
   outline: none;
-  border-color: #ff8c00;
+  border-color: #ffaa33;
 }
 
 .filter-input::placeholder {
@@ -159,7 +159,7 @@
 
 .incidents-count {
   background-color: rgba(255, 140, 0, 0.2);
-  color: #ff8c00;
+  color: #ffaa33;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.8rem;
@@ -194,7 +194,7 @@
 }
 
 .incident-id {
-  color: #ff8c00;
+  color: #ffaa33;
   font-weight: 600;
 }
 
@@ -208,7 +208,7 @@
 .incident-type svg {
   width: 16px;
   height: 16px;
-  color: #ff8c00;
+  color: #ffaa33;
 }
 
 .incident-location {
@@ -291,7 +291,7 @@
 .action-btn {
   background: none;
   border: none;
-  color: #ff8c00;
+  color: #ffaa33;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -330,7 +330,7 @@
 }
 
 .modal-header {
-  background-color: #ff8c00;
+  background-color: #ffaa33;
   color: #000000;
   padding: 1.5rem;
   display: flex;
@@ -380,7 +380,7 @@
 }
 
 .section-title {
-  color: #ff8c00;
+  color: #ffaa33;
   font-size: 1.1rem;
   font-weight: 600;
   margin: 0 0 0.5rem 0;
@@ -434,7 +434,7 @@
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #ff8c00;
+  border-color: #ffaa33;
 }
 
 .form-input::placeholder,
@@ -491,7 +491,7 @@
   width: 16px;
   height: 16px;
   margin: 0;
-  accent-color: #ff8c00;
+  accent-color: #ffaa33;
 }
 
 .checkbox-label,
@@ -511,11 +511,11 @@
 }
 
 .file-upload:hover {
-  border-color: #ff8c00;
+  border-color: #ffaa33;
 }
 
 .file-upload.drag-over {
-  border-color: #ff8c00;
+  border-color: #ffaa33;
   background-color: rgba(255, 140, 0, 0.05);
 }
 
@@ -541,8 +541,8 @@
 
 .file-upload-btn {
   background-color: transparent;
-  color: #ff8c00;
-  border: 1px solid #ff8c00;
+  color: #ffaa33;
+  border: 1px solid #ffaa33;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
@@ -596,7 +596,7 @@
 }
 
 .btn-submit {
-  background-color: #ff8c00;
+  background-color: #ffaa33;
   color: #000000;
   border: none;
   padding: 0.75rem 2rem;
@@ -696,9 +696,9 @@
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: #ff8c00;
+  background-color: #ffaa33;
   color: #000000;
-  border-color: #ff8c00;
+  border-color: #ffaa33;
 }
 
 .pagination-btn:disabled {
@@ -707,9 +707,9 @@
 }
 
 .pagination-btn.active {
-  background-color: #ff8c00;
+  background-color: #ffaa33;
   color: #000000;
-  border-color: #ff8c00;
+  border-color: #ffaa33;
 }
 
 .pagination-info {

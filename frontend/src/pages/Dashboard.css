@@ -21,7 +21,7 @@
 }
 
 .dashboard-title h2 {
-  color: #ff8c00;
+  color: #ffaa33;
   font-size: 1.8rem;
   font-weight: 600;
   margin: 0;
@@ -66,7 +66,7 @@
   background-color: #3a3a3a;
   border-radius: 8px;
   padding: 1.5rem;
-  border-left: 4px solid #ff8c00;
+  border-left: 4px solid #ffaa33;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -92,7 +92,7 @@
 .stat-card-icon svg {
   width: 24px;
   height: 24px;
-  color: #ff8c00;
+  color: #ffaa33;
 }
 
 .stat-card-title {
@@ -127,7 +127,7 @@
 }
 
 .incidents-header {
-  background-color: #ff8c00;
+  background-color: #ffaa33;
   color: #000000;
   padding: 1rem 1.5rem;
   display: flex;
@@ -199,7 +199,7 @@
 .incident-type svg {
   width: 16px;
   height: 16px;
-  color: #ff8c00;
+  color: #ffaa33;
 }
 
 .severity-badge {
@@ -254,7 +254,7 @@
 .incident-action {
   background: none;
   border: none;
-  color: #ff8c00;
+  color: #ffaa33;
   font-size: 0.8rem;
   cursor: pointer;
   padding: 0.25rem 0;
@@ -359,7 +359,7 @@
 }
 
 .camera-incidents {
-  color: #ff8c00;
+  color: #ffaa33;
   font-size: 0.7rem;
 }
 
@@ -398,7 +398,7 @@
 }
 
 .action-button:hover {
-  border-color: #ff8c00;
+  border-color: #ffaa33;
   background-color: rgba(255, 140, 0, 0.1);
 }
 
@@ -409,7 +409,7 @@
 }
 
 .action-button:hover svg {
-  color: #ff8c00;
+  color: #ffaa33;
 }
 
 .action-button span {
