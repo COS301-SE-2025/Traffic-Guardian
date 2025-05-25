@@ -24,5 +24,9 @@
     "Incident_CarID": 1,
     "Incident_Severity": "high",
     "Incident_Status": "open"
+    },
+    {
+    "Incident_Severity": "medium",
+    "Incident_Status": "in-progess-ongoing"
     }
 ]

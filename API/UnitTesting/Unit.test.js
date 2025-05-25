@@ -29,29 +29,35 @@ test('Login User', async ()=>{
     expect(response.status).toBe(200);
 });
 
-/* test('Get User preferences', async ()=>{
+test('Get User preferences', async ()=>{
     const headers = artifacts[1];
-    const response = await axios.get('http://localhost:5000/api/user/preferences',{
-        "Content-Type": "application/json",
-        "X-API-KEY": apikey
+    const response = await axios.get('http://localhost:5000/api/user/preferences', {
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apikey
+        }
     });
+
 
     //expect(response.data).toMatchObject(seeding[1]);
     expect(response.status).toBe(200);
-}); */
+}); 
 
 
-/* test('Update user preferences', async ()=>{
+
+test('Update user preferences', async ()=>{
     const payload = artifacts[3];
     const headers = artifacts[1];
     const response = await axios.get('http://localhost:5000/api/incidents',{
-        "Content-Type": "application/json",
-        "X-API-KEY": apikey
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apikey
+        }
     });
 
     //expect(response.data).toMatchObject(seeding[0]);
     expect(response.status).toBe(200);
-}); */
+});
 
 /* test('Get specific incident', async ()=>{
     const payload = artifacts[3];
@@ -80,7 +86,7 @@ test('Create incident', async ()=>{
 
 
 test('Update incident', async ()=>{
-    const payload = artifacts[3];
+    const payload = artifacts[4];
     const headers = artifacts[1];
     const response = await axios.post('http://localhost:5000/api/incidents/1', payload ,{
         "Content-Type": "application/json",
@@ -89,4 +95,16 @@ test('Update incident', async ()=>{
 
     //expect(response.data).toMatchObject(seeding[0]);
     expect(response.status).toBe(200);
-}); 
+});
+
+test('Get specific alert', async ()=>{
+    const payload = artifacts[4];
+    const headers = artifacts[1];
+    const response = await axios.get('http://localhost:5000/api/incidents/1/alerts', {
+        "Content-Type": "application/json",
+        "X-API-KEY": apikey
+    });
+
+    //expect(response.data).toMatchObject(seeding[0]);
+    expect(response.status).toBe(200);
+});
