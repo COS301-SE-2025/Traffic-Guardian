@@ -72,24 +72,40 @@ const Profile: React.FC = () => {
           });
         }
 
-        // Fetch incident stats (if user is admin)
+        // Fetch incident and alert counts for admins
         if (userData.User_Role === 'admin') {
-          const incidentsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents/stats`, {
+          // Fetch all incidents
+          const incidentsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents`, {
             headers: { 
               'X-API-Key': apiKey,
               'Content-Type': 'application/json'
             },
           });
-          if (incidentsResponse.ok) {
-            const stats = await incidentsResponse.json();
-            setIncidentCount(stats.totalIncidents || 0);
-            setAlertCount(stats.totalAlerts || 0);
+          if (!incidentsResponse.ok) {
+            throw new Error('Failed to fetch incidents');
           }
+          const incidents = await incidentsResponse.json();
+          setIncidentCount(incidents.length);
+
+          // Fetch alerts for each incident and sum them
+          let totalAlerts = 0;
+          for (const incident of incidents) {
+            const alertsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents/${incident.Incident_ID}/alerts`, {
+              headers: { 
+                'X-API-Key': apiKey,
+                'Content-Type': 'application/json'
+              },
+            });
+            if (alertsResponse.ok) {
+              const alerts = await alertsResponse.json();
+              totalAlerts += alerts.length;
+            }
+          }
+          setAlertCount(totalAlerts);
         }
 
       } catch (err: any) {
         setError(err.message);
-        // If unauthorized, redirect to login
         if (err.message.includes('unauthorized') || err.message.includes('API key')) {
           navigate('/account');
         }
@@ -209,6 +225,10 @@ const Profile: React.FC = () => {
                 <div className="stat-label">Alerts Sent</div>
               </div>
             </div>
+            <Button 
+              label="Manage Incidents" 
+              onClick={() => navigate('/incident-management')} 
+            />
           </div>
         )}
 
