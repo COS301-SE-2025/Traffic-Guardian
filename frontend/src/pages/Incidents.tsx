@@ -401,3 +401,45 @@ const Incidents: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  const handleIncidentAction = async (incidentId: number, action: string) => {
+    switch (action) {
+      case 'view':
+        try {
+          const incident = await apiRequest(`/incidents/${incidentId}`);
+          console.log('Viewing incident:', incident);
+        } catch (error) {
+          setError('Failed to load incident details');
+        }
+        break;
+      
+      case 'edit':
+        console.log(`Editing incident ${incidentId}`);
+        break;
+      
+      case 'resolve':
+        try {
+          await apiRequest(`/incidents/${incidentId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              Incident_Status: 'resolved'
+            })
+          });
+          
+          setIncidents(prev => 
+            prev.map(inc => 
+              inc.id === incidentId 
+                ? { ...inc, status: 'resolved' }
+                : inc
+            )
+          );
+          
+          setSuccessMessage('Incident marked as resolved');
+          setTimeout(() => setSuccessMessage(''), 3000);
+        } catch (error) {
+          setError('Failed to update incident status');
+          console.error('Update incident error:', error);
+        }
+        break;
+    }
+  };
