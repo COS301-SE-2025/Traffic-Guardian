@@ -335,3 +335,69 @@ const Incidents: React.FC = () => {
     e.currentTarget.classList.remove('drag-over');
     handleFileUpload(e.dataTransfer.files);
   };
+
+  const handleSubmitManualIncident = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      setError('Please correct the errors below');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+
+      const apiPayload: Omit<ApiIncident, 'Incident_ID' | 'created_at' | 'updated_at'> = {
+        Incident_Date: manualIncident.Incident_Date,
+        Incident_Location: manualIncident.Incident_Location,
+        Incident_CameraID: manualIncident.Incident_CameraID,
+        Incident_Type: manualIncident.Incident_Type,
+        Incident_Severity: manualIncident.Incident_Severity,
+        Incident_Status: manualIncident.Incident_Status,
+        Incident_Description: manualIncident.Incident_Description
+      };
+
+
+      const response = await apiRequest('/incidents', {
+        method: 'POST',
+        body: JSON.stringify(apiPayload)
+      });
+
+      console.log('Incident created:', response);
+
+
+      await loadIncidents();
+      
+
+      setManualIncident({
+        Incident_Date: new Date().toISOString().split('T')[0],
+        Incident_Location: '',
+        Incident_CameraID: '',
+        Incident_Type: 'Vehicle Accident',
+        Incident_Severity: 'medium',
+        Incident_Status: 'open',
+        Incident_Description: '',
+        reporterName: '',
+        reporterContact: '',
+        coordinates: { lat: '', lng: '' },
+        weatherConditions: '',
+        trafficImpact: 'minor',
+        injuriesReported: 'unknown',
+        images: []
+      });
+
+      setSuccessMessage('Incident reported successfully!');
+      setShowManualForm(false);
+
+
+      setTimeout(() => setSuccessMessage(''), 5000);
+
+    } catch (error) {
+      setError('Failed to submit incident. Please try again.');
+      console.error('Submit incident error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
