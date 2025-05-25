@@ -12,7 +12,12 @@ const apikey = process.env.APIKEY;
     const payload = artifacts[2];
     console.log(artifacts[0]);
     console.log(payload);
-    const response = await axios.post('http://localhost:5000/api/auth/register', payload, artifacts[0]);
+    const response = await axios.post('http://localhost:5000/api/auth/register', payload, {
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apikey
+        }
+    });
     console.log(response);
 
     expect(1).toBe(1);
@@ -59,38 +64,44 @@ test('Update user preferences', async ()=>{
     expect(response.status).toBe(200);
 });
 
-/* test('Get specific incident', async ()=>{
+test('Get specific incident', async ()=>{
     const payload = artifacts[3];
     const headers = artifacts[1];
     const response = await axios.get('http://localhost:5000/api/incidents/1',{
-        "Content-Type": "application/json",
-        "X-API-KEY": apikey
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apikey
+        }
     });
 
     //expect(response.data).toMatchObject(seeding[0]);
     expect(response.status).toBe(200);
-}); */
+});
 
 
 test('Create incident', async ()=>{
     const payload = artifacts[3];
     const headers = artifacts[1];
     const response = await axios.post('http://localhost:5000/api/incidents', payload ,{
-        "Content-Type": "application/json",
-        "X-API-KEY": apikey
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apikey
+        }
     });
 
     //expect(response.data).toMatchObject(seeding[0]);
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(201);
 }); 
 
 
 test('Update incident', async ()=>{
     const payload = artifacts[4];
     const headers = artifacts[1];
-    const response = await axios.post('http://localhost:5000/api/incidents/1', payload ,{
-        "Content-Type": "application/json",
-        "X-API-KEY": apikey
+    const response = await axios.put('http://localhost:5000/api/incidents/1', payload ,{
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apikey
+        }
     });
 
     //expect(response.data).toMatchObject(seeding[0]);
@@ -101,10 +112,38 @@ test('Get specific alert', async ()=>{
     const payload = artifacts[4];
     const headers = artifacts[1];
     const response = await axios.get('http://localhost:5000/api/incidents/1/alerts', {
-        "Content-Type": "application/json",
-        "X-API-KEY": apikey
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apikey
+        }
     });
 
     //expect(response.data).toMatchObject(seeding[0]);
     expect(response.status).toBe(200);
+});
+
+test('Create alert', async ()=>{
+    const payload = artifacts[5];
+    const response = await axios.post('http://localhost:5000/api/alerts',payload, {
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apikey
+        }
+    });
+
+    //expect(response.data).toMatchObject(seeding[0]);
+    expect(response.status).toBe(201);
+});
+
+test('Create alert', async ()=>{
+    const payload = artifacts[5];
+    const response = await axios.post('http://localhost:5000/api/alerts',payload, {
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apikey
+        }
+    });
+
+    //expect(response.data).toMatchObject(seeding[0]);
+    expect(response.status).toBe(201);
 });

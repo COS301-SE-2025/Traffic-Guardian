@@ -28,5 +28,13 @@
     {
     "Incident_Severity": "medium",
     "Incident_Status": "in-progess-ongoing"
+    },
+    {
+    "Alert_IncidentID": 1,
+    "Alert_Message": "Traffic incident reported",
+    "Alert_Type": "notification",
+    "Alert_Severity": "high",
+    "Alert_Recipients": [1, 2, 3],
+    "Alert_Status": "pending"
     }
 ]
