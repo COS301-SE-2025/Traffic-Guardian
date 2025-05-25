@@ -135,9 +135,9 @@ test('Create alert', async ()=>{
     expect(response.status).toBe(201);
 });
 
-test('Create alert', async ()=>{
-    const payload = artifacts[5];
-    const response = await axios.post('http://localhost:5000/api/alerts',payload, {
+test('Update alert', async ()=>{
+    const payload = artifacts[6];
+    const response = await axios.put('http://localhost:5000/api/alerts/1/status',payload, {
     headers: {
         'Content-Type': 'application/json',
         'X-API-KEY': apikey
@@ -145,5 +145,18 @@ test('Create alert', async ()=>{
     });
 
     //expect(response.data).toMatchObject(seeding[0]);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
+});
+
+test('Get all alerts', async ()=>{
+    const payload = artifacts[6];
+    const response = await axios.get('http://localhost:5000/api/user/alerts',{
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': apikey
+        }
+    });
+
+    //expect(response.data).toMatchObject(seeding[0]);
+    expect(response.status).toBe(200);
 });

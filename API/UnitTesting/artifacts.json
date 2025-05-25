@@ -36,5 +36,8 @@
     "Alert_Severity": "high",
     "Alert_Recipients": [1, 2, 3],
     "Alert_Status": "pending"
+    },
+    {
+    "Alert_Status": "sent"
     }
 ]
