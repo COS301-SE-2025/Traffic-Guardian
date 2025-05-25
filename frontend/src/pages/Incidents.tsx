@@ -210,3 +210,61 @@ const Incidents: React.FC = () => {
   useEffect(() => {
     loadIncidents();
   }, []);
+
+  useEffect(() => {
+    let filtered = incidents;
+
+    if (filters.search) {
+      filtered = filtered.filter(incident =>
+        incident.location.toLowerCase().includes(filters.search.toLowerCase()) ||
+        incident.type.toLowerCase().includes(filters.search.toLowerCase()) ||
+        incident.id.toString().includes(filters.search)
+      );
+    }
+
+    if (filters.status) {
+      filtered = filtered.filter(incident => incident.status === filters.status);
+    }
+
+    if (filters.severity) {
+      filtered = filtered.filter(incident => incident.severity === filters.severity);
+    }
+
+    if (filters.type) {
+      filtered = filtered.filter(incident => incident.type === filters.type);
+    }
+
+    if (filters.dateFrom) {
+      filtered = filtered.filter(incident => incident.date >= filters.dateFrom);
+    }
+
+    if (filters.dateTo) {
+      filtered = filtered.filter(incident => incident.date <= filters.dateTo);
+    }
+
+    setFilteredIncidents(filtered);
+    setCurrentPage(1);
+  }, [filters, incidents]);
+
+  const handleFilterChange = (key: keyof FilterState, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      status: '',
+      severity: '',
+      type: '',
+      dateFrom: '',
+      dateTo: ''
+    });
+  };
+
+  const handleManualIncidentChange = (key: keyof ManualIncidentForm, value: any) => {
+    setManualIncident(prev => ({ ...prev, [key]: value }));
+    
+    if (formErrors[key]) {
+      setFormErrors(prev => ({ ...prev, [key]: undefined }));
+    }
+  };
