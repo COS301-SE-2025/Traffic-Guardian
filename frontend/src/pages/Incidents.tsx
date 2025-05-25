@@ -63,3 +63,55 @@ const CameraIcon = () => (
   </svg>
 );
 
+interface ApiIncident {
+  Incident_ID?: number;
+  Incident_Date: string;
+  Incident_Location: string;
+  Incident_CameraID: string;
+  Incident_Type: string;
+  Incident_Severity: 'high' | 'medium' | 'low';
+  Incident_Status: 'open' | 'in-progress' | 'resolved';
+  Incident_Description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface DisplayIncident {
+  id: number;
+  date: string;
+  location: string;
+  cameraId: string;
+  type: string;
+  severity: 'high' | 'medium' | 'low';
+  status: 'open' | 'in-progress' | 'resolved';
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ManualIncidentForm {
+  Incident_Date: string;
+  Incident_Location: string;
+  Incident_CameraID: string;
+  Incident_Type: string;
+  Incident_Severity: 'high' | 'medium' | 'low';
+  Incident_Status: 'open' | 'in-progress' | 'resolved';
+  Incident_Description: string;
+  
+  reporterName: string;
+  reporterContact: string;
+  coordinates: { lat: string; lng: string };
+  weatherConditions: string;
+  trafficImpact: 'none' | 'minor' | 'moderate' | 'severe';
+  injuriesReported: 'yes' | 'no' | 'unknown';
+  images: File[];
+}
+
+interface FilterState {
+  search: string;
+  status: string;
+  severity: string;
+  type: string;
+  dateFrom: string;
+  dateTo: string;
+}
