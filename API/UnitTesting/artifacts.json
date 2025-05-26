@@ -1,0 +1,43 @@
+[
+    {
+    "User_Username": "testuser",
+    "User_Password": "password123",
+    "User_Email": "testuser@gmail.com",
+    "User_Role": "user",
+    "User_Preferences": "{}"
+    },
+
+    {
+    "User_Email": "user@gmail.com",
+    "User_Password": "user"
+    },
+    {
+    "preferences": {
+        "notifications": true,
+        "alertLevel": "high",
+        "theme": "dark"
+    }
+    },
+    {
+    "Incident_Date": "2025-05-21",
+    "Incident_Location": "Highway 101, Mile 45",
+    "Incident_CarID": 1,
+    "Incident_Severity": "high",
+    "Incident_Status": "open"
+    },
+    {
+    "Incident_Severity": "medium",
+    "Incident_Status": "in-progess-ongoing"
+    },
+    {
+    "Alert_IncidentID": 1,
+    "Alert_Message": "Traffic incident reported",
+    "Alert_Type": "notification",
+    "Alert_Severity": "high",
+    "Alert_Recipients": [1, 2, 3],
+    "Alert_Status": "pending"
+    },
+    {
+    "Alert_Status": "sent"
+    }
+]
