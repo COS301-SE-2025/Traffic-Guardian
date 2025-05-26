@@ -49,6 +49,11 @@ const incidentModel = {  async createIncident(incidentData) {
       'Incident_Status', 
       'Incident_Reporter'
     ];
+
+        for (let v in incidentData){
+        if(incidentData[v].length > 10) incidentData[v] = incidentData[v].substring(0, 10);
+        //console.log(incidentData);
+      }
     
     // Filter out undefined fields and only include allowed fields
     const updates = Object.keys(incidentData)
@@ -60,6 +65,7 @@ const incidentModel = {  async createIncident(incidentData) {
       throw new Error('No valid fields to update');
     }
     
+
     const query = `
       UPDATE "TrafficGuardian"."Incidents"
       SET ${updates}
