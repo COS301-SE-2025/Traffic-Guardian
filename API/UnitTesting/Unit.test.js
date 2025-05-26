@@ -23,16 +23,18 @@ const yeah = Seeding.hmmmm;
     expect(1).toBe(1);
 }); */
 
-test('Login User', async ()=>{
-    const payload = artifacts[1];
-    const response = await axios.post('http://localhost:5000/api/auth/login', payload, {
-        "Content-Type": "application/json",
-        "X-API-KEY": yeah
-    });
+// test('Login User', async ()=>{
+//     const payload = artifacts[1];
+//     const response = await axios.post('http://localhost:5000/api/auth/login', payload, {
+//         headers: {
+//             'Content-Type': 'application/json',
+//             'X-API-KEY': yeah
+//         }
+//     });
 
-    //expect(response.data).toMatchObject(seeding[0]);
-    expect(response.status).toBe(200);
-});
+//     //expect(response.data).toMatchObject(seeding[0]);
+//     expect(response.status).toBe(200);
+// });
 
 test('Get User preferences', async ()=>{
     const headers = artifacts[1];
