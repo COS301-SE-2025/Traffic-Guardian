@@ -1,44 +1,142 @@
 .profile-page {
   padding: 2rem;
-  color: white;
-  /* background-color: #1e1e1e; */
-  font-family: 'Merge One', sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #000000;
+  min-height: 100vh;
 }
 
 .profile-container {
-  background-color: #2a2a2a;
-  border-radius: 15px;
+  background-color: #1e1e1e;
+  border-radius: 16px;
   padding: 2rem;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
-.section {
+.profile-header {
+  text-align: center;
   margin-bottom: 2rem;
 }
 
-.section h3 {
-  color: #FFAE36;
-  margin-bottom: 1rem;
+.profile-header h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
 }
 
-.section label {
-  display: block;
-  margin-bottom: 0.5rem;
+.welcome-message {
+  font-size: 1.1rem;
+  color: #1e1e1e;
+}
+
+.admin-badge {
+  background-color: #FFAE36;
+  color: #000;
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  margin-left: 0.5rem;
+}
+
+.profile-section {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 1.5rem;
+}
+
+.profile-section h3 {
+  font-size: 1.4rem;
+  color: #FFAE36;
+  margin-bottom: 1rem;
+  border-left: 4px solid #FFAE36;
+  padding-left: 0.5rem;
+}
+
+.info-item, .preference-item {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-label {
+  font-weight: bold;
+  color: #aaa;
+}
+
+.info-value {
+  color: #f0f0f0;
+}
+
+.preference-item label, .preference-item select {
+  font-size: 1rem;
+  color: #ddd;
+}
+
+select {
+  background-color: #2a2a2a;
+  color: white;
+  border: 1px solid #444;
+  padding: 0.4rem;
+  border-radius: 6px;
+}
+
+.stats-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background-color: #252525;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  flex: 1;
+  min-width: 120px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #FFAE36;
+}
+
+.stat-label {
   color: #ccc;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
 }
 
 button {
   background-color: #FFAE36;
-  color: black;
-  padding: 0.75rem 1.5rem;
+  color: #000;
+  padding: 0.8rem 1.6rem;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
 }
 
 button:hover {
   background-color: #e89c2f;
+}
+
+.loading-spinner,
+.error-message {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-top: 2rem;
+  color: #ccc;
 }
