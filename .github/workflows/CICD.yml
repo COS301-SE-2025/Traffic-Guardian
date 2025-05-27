@@ -27,7 +27,6 @@ jobs:
           # Lint all relevant extensions
           VALIDATE_JAVASCRIPT_ES: true
           VALIDATE_TYPESCRIPT_ES: true
-          VALIDATE_TYPESCRIPT_STANDARD: false
           # Optionally, set FILTER_REGEX_INCLUDE/FILTER_REGEX_EXCLUDE if needed
           # FILTER_REGEX_INCLUDE: 'src/|models/|controllers/|routes/|frontend/'
           # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
