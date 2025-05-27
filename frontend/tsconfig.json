@@ -21,8 +21,10 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "src/**/*",
+     "src/**/*",
     "cypress/**/*",
-    "*.ts"
+    "*.ts",
+    "**/*.ts",
+    "**/*.tsx"
   ]
 }
