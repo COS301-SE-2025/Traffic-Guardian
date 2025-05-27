@@ -8,25 +8,16 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/commit-activity/m/ShaylinGovender/Capstone?label=Commits&logo=github&style=flat-square" alt="Commit Activity">
-</p>
-
-<p align="center">
- <a href="https://github.com/JadynTuks/test301/actions/workflows/Mock.yml">
-  <img src="https://github.com/JadynTuks/test301/actions/workflows/Mock.yml/badge.svg?branch=main" alt="Build Status Badge">
-</a>
+ [![CI/CD Pipeline](https://github.com/NicholasDobson/CapstoneCICD/actions/workflows/CICD.yml/badge.svg)](https://github.com/NicholasDobson/CapstoneCICD/actions/workflows/CICD.yml)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/COS301-SE-2025/Traffic-Guardian)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-raw/COS301-SE-2025/Traffic-Guardian?color=blue)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-closed-raw/COS301-SE-2025/Traffic-Guardian?color=blue)
+![Website](https://img.shields.io/website?url=https%3A%2F%2Fshaylingovender.github.io%2FCapstone%2F)
 
 <a>
   <img src="https://img.shields.io/maintenance/maintained/2025?label=Status" alt="Maintenance Status">
 </a>
 
-<a href="https://github.com/COS301-SE-2025/MP6/issues">
-  <img src="https://img.shields.io/badge/Open%20Issues-21-blue" alt="Open Issues">
-</a>
-
-<a href="https://github.com/COS301-SE-2025/MP6/issues?q=is%3Aissue%20state%3Aclosed">
-  <img src="https://img.shields.io/badge/Closed%20Issues-78-blue" alt="Closed Issues">
-</a>
 </p>
 
 ---
