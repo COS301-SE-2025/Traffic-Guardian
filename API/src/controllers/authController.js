@@ -9,10 +9,11 @@ const authController = {  login: async (req, res) => {
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
-      const validEmail = User_Email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/);
-      const validPassword = User_Password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/);
+      const validEmail = User_Email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
+      const validPassword = User_Password.match(/^(?=.*[a-z])(?=.*\d).+$/);
 
-      if(!validEmail || !validPassword){
+      if(validEmail === null){
+        console.log(validEmail);
         return res.status(400).json({error: 'Invalid password and/or email'});
       }
 
