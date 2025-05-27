@@ -1,11 +1,12 @@
-import unittest
-import cv2
-import numpy as np
 import os
-import tempfile
 import shutil
 import sys
-from unittest.mock import patch, MagicMock, mock_open
+import tempfile
+import unittest
+from unittest.mock import MagicMock, mock_open, patch
+
+import cv2
+import numpy as np
 
 
 # Setup imports for Code folder structure
@@ -26,8 +27,8 @@ CODE_FOLDER = setup_imports()
 
 # Import your modules from the Code folder
 try:
-    from video_processor import VideoProcessor
     from car_detection import detect_cars
+    from video_processor import VideoProcessor
 
     # Try to import CarDetector if it exists in your code
     try:
