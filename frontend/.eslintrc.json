@@ -1,5 +1,15 @@
 {
   "parserOptions": {
-    "project": "./tsconfig.json"
-  }
+    "project": "./tsconfig.json",
+    "tsconfigRootDir": "__dirname"
+  },
+  "include": [
+    "src",
+    "cypress",
+    "cypress.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
