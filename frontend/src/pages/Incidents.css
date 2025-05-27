@@ -1,6 +1,6 @@
 body {
   background: #fff;
-  font-family: Roboto, Arial, sans-serif;
+  font-family: 'Segoe UI', Arial, sans-serif;
 }
 
 .incidents-page {
@@ -827,4 +827,12 @@ body {
     /* Example: Change background color */
     background-color: #f0f0f0;
   }
+}
+
+.card {
+  background: #fa3;
+}
+
+.shadow {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }

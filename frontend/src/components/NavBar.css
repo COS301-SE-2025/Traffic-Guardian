@@ -121,6 +121,6 @@
   }
 }
 
-@media (width >= 600px) and (height >= 400px) and (update: context) {
+@media (width >= 600px) and (height >= 400px) and (update = context) {
   /* Add any additional styles needed for this context here */
 }
