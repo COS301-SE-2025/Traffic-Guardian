@@ -20,6 +20,7 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TYPESCRIPT_DEFAULT_CONFIG: ./frontend/tsconfig.json
 
   test-ui:
     name: UI Tests
