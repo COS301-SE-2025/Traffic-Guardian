@@ -8,16 +8,24 @@
 </p>
 
 <p align="center">
- [![CI/CD Pipeline](https://github.com/NicholasDobson/CapstoneCICD/actions/workflows/CICD.yml/badge.svg)](https://github.com/NicholasDobson/CapstoneCICD/actions/workflows/CICD.yml)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/COS301-SE-2025/Traffic-Guardian)
-![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-raw/COS301-SE-2025/Traffic-Guardian?color=blue)
-![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-closed-raw/COS301-SE-2025/Traffic-Guardian?color=blue)
-![Website](https://img.shields.io/website?url=https%3A%2F%2Fshaylingovender.github.io%2FCapstone%2F)
-
-<a>
-  <img src="https://img.shields.io/maintenance/maintained/2025?label=Status" alt="Maintenance Status">
-</a>
-
+  <a href="https://github.com/NicholasDobson/CapstoneCICD/actions/workflows/CICD.yml">
+    <img src="https://github.com/NicholasDobson/CapstoneCICD/actions/workflows/CICD.yml/badge.svg" alt="CI/CD Pipeline">
+  </a>
+  <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/graphs/commit-activity">
+    <img src="https://img.shields.io/github/commit-activity/m/COS301-SE-2025/Traffic-Guardian" alt="GitHub commit activity">
+  </a>
+  <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/issues">
+    <img src="https://img.shields.io/github/issues-raw/COS301-SE-2025/Traffic-Guardian?color=blue" alt="Open GitHub Issues">
+  </a>
+  <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/issues?q=is%3Aissue+is%3Aclosed">
+    <img src="https://img.shields.io/github/issues-closed-raw/COS301-SE-2025/Traffic-Guardian?color=blue" alt="Closed GitHub Issues">
+  </a>
+  <a href="https://shaylingovender.github.io/Capstone/">
+    <img src="https://img.shields.io/website?url=https%3A%2F%2Fshaylingovender.github.io%2FCapstone%2F" alt="Website Status">
+  </a>
+  <a>
+    <img src="https://img.shields.io/maintenance/maintained/2025?label=Status" alt="Maintenance Status">
+  </a>
 </p>
 
 ---
