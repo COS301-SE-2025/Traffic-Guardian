@@ -65,9 +65,12 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
 Access our project documentation and presentation below:
 
 [Project Documentation](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+
 [Capstone Presentation](https://docs.google.com/presentation/d/1T2n6cvEM1R53_EVtz3X3i9e1gyPBak5JNixFbSFJEyE/edit?usp=sharing)
 
 <p align="right"> <a href="#table-of-contents">Back to top</a> </p>
+
+---
 
 <a id="meet-the-quantum-quenchers"></a>
 <p align="left">
