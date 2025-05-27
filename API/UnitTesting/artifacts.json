@@ -43,7 +43,7 @@
     {
     "User_Username": "testuser",
     "User_Password": "password123",
-    "User_Email": "testuser@gmail.com",
+    "User_Email": ".com",
     "User_Role": "user",
     "User_Preferences": "{}"
     },
