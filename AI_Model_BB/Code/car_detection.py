@@ -33,7 +33,9 @@ class CarDetector:
         for contour in contours:
             area = cv2.contourArea(contour)
 
-            if 1000 < area < 50000:  # We are going to adjust based on the thresholds of the video
+            if (
+                1000 < area < 50000
+            ):  # We are going to adjust based on the thresholds of the video
                 x, y, w, h = cv2.boundingRect(contour)
 
                 # Filter by aspect ratio and dimensions
