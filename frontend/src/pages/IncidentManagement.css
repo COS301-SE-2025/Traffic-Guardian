@@ -1,3 +1,5 @@
+/* Incident Management styles */
+
 .incident-management-page {
   padding: 2rem;
   min-height: 100vh;
@@ -13,6 +15,7 @@
   justify-content: space-between; /* Keep this for now */
   margin-bottom: 2rem;
   position: relative; /* Add this to allow absolute positioning of h2 */
+  background: #000;
 }
 
 .header-container h2 {
@@ -111,6 +114,27 @@
   background: #e89c2f;
 }
 
+.incident-card {
+  background: rgb(255 255 255 / 30%);
+  border: none;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.incident-card h3 {
+  color: #000;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.incident-card p {
+  color: #333;
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+
 .loading-message,
 .error-message,
 .access-denied-message {
@@ -146,4 +170,8 @@
     width: 100%;
     text-align: center;
   }
+}
+
+@media (width >= 600px) and (height >= 400px) and (update = context) {
+  /* Add any additional styles for larger screens or specific conditions here */
 }

@@ -1071,4 +1071,50 @@ svg {
   .incidents-table td[data-label="Actions"]::before {
     align-self: flex-start;
   }
+
+  .incidents-table td > * {
+    flex: 0 0 65%;
+    text-align: right;
+  }
+
+  .status-update-group {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+  }
+
+  .status-select {
+    flex-grow: 1;
+    max-width: 120px;
+  }
+
+  .incidents-table td[data-label="Actions"] > div {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .incidents-table td[data-label="Actions"]::before {
+    align-self: flex-start;
+  }
+}
+
+::selection {
+  background: rgba(255, 140, 0, 0.3);
+  color: #000000;
+}
+
+@media (width >= 600px) and (height >= 400px) and (update: context) {
+  /* Custom styles for specific screen size and update context */
+  .incidents-page {
+    /* Example: Change background color */
+    background-color: #f0f0f0;
+  }
+}
+
+.card {
+  background: #fa3;
+}
+
+.shadow {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }
