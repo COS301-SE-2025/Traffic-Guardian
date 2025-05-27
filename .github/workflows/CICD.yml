@@ -21,7 +21,7 @@ jobs:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # TYPESCRIPT_DEFAULT_CONFIG: ./frontend/tsconfig.json
-          # # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
+          # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
 
       - name: Lint API with ESLint (require semicolons)
         working-directory: ./API
