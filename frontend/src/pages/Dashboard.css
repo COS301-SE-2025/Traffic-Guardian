@@ -1,3 +1,8 @@
+body {
+  background: #fff;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
 .dashboard {
   background-color: #2a2a2a;
   min-height: 100vh;
@@ -73,6 +78,7 @@
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgb(255 140 0 / 20%);
+  box-shadow: 0 4px 12px rgb(255 140 0 / 20%);
 }
 
 .stat-card-header {
@@ -83,6 +89,7 @@
 }
 
 .stat-card-icon {
+  background-color: rgb(255 140 0 / 20%);
   background-color: rgb(255 140 0 / 20%);
   padding: 0.75rem;
   border-radius: 6px;
@@ -476,4 +483,8 @@
     align-items: flex-start;
     gap: 0.5rem;
   }
+}
+
+@media (width >= 600px) and (height >= 400px) and (update: context) {
+  /* Add your styles here */
 }

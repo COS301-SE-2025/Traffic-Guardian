@@ -49,3 +49,7 @@
   justify-content: center;
   border-radius: 8px;
 }
+
+.live-feed-overlay {
+  background: rgb(0 0 0 / 50%);
+}
