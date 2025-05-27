@@ -1,5 +1,5 @@
-from video_processor import VideoProcessor
 from car_detection import detect_cars
+from video_processor import VideoProcessor
 
 
 def main():

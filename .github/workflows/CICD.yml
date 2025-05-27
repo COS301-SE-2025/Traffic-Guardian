@@ -30,6 +30,11 @@ jobs:
           npx eslint controllers/**/*.js
           npx eslint routes/**/*.js
 
+      - name: Lint Frontend with ESLint (TypeScript, Cypress, etc.)
+        working-directory: ./frontend
+        run: |
+          npx eslint . --ext .ts,.tsx --max-warnings=0
+
   test-ui:
     name: UI Tests
     runs-on: ubuntu-latest

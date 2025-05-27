@@ -1,6 +1,6 @@
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 
 def setup_environment():
