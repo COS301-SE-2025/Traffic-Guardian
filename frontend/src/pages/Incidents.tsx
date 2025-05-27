@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './Incidents.css';
 
+// SVG icon components
 const AlertTriangleIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -16,12 +20,6 @@ const PlusIcon = () => (
 const FilterIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-  </svg>
-);
-
-const SearchIcon = () => (
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
   </svg>
 );
 
@@ -97,7 +95,6 @@ interface ManualIncidentForm {
   Incident_Severity: 'high' | 'medium' | 'low';
   Incident_Status: 'open' | 'in-progress' | 'resolved';
   Incident_Description: string;
-  
   reporterName: string;
   reporterContact: string;
   coordinates: { lat: string; lng: string };
@@ -116,32 +113,10 @@ interface FilterState {
   dateTo: string;
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
-const API_KEY = process.env.REACT_APP_API_KEY || 'YOUR_API_KEY_HERE';
-
-const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const headers = {
-    'Content-Type': 'application/json',
-    'X-API-Key': API_KEY,
-    ...options.headers,
-  };
-
-  try {
-    const response = await fetch(url, { ...options, headers });
-    
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API request error:', error);
-    throw error;
-  }
-};
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const Incidents: React.FC = () => {
+  const navigate = useNavigate();
   const [incidents, setIncidents] = useState<DisplayIncident[]>([]);
   const [filteredIncidents, setFilteredIncidents] = useState<DisplayIncident[]>([]);
   const [filters, setFilters] = useState<FilterState>({
@@ -153,11 +128,11 @@ const Incidents: React.FC = () => {
     dateTo: ''
   });
   const [showManualForm, setShowManualForm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [selectedStatuses, setSelectedStatuses] = useState<Record<number, 'open' | 'in-progress' | 'resolved'>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [manualIncident, setManualIncident] = useState<ManualIncidentForm>({
@@ -179,10 +154,43 @@ const Incidents: React.FC = () => {
 
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof ManualIncidentForm, string>>>({});
 
+  const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+    const apiKey = localStorage.getItem('apiKey');
+    if (!apiKey) {
+      throw new Error('No API key found. Please log in.');
+    }
+
+    const url = `${API_BASE_URL}${endpoint}`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-API-Key': apiKey,
+      ...options.headers,
+    };
+
+    try {
+      const response = await fetch(url, { ...options, headers });
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthorized: Invalid or missing API key');
+        }
+        if (response.status === 404) {
+          throw new Error(`Endpoint not found: ${url}`);
+        }
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error: any) {
+      if (error.message.includes('Unauthorized') || error.message.includes('API key')) {
+        navigate('/account');
+      }
+      throw error;
+    }
+  };
+
   const loadIncidents = async () => {
     try {
       setIsLoading(true);
-      const data = await apiRequest('/incidents');
+      const data = await apiRequest('/api/incidents');
       
       const transformedIncidents: DisplayIncident[] = data.map((incident: ApiIncident) => ({
         id: incident.Incident_ID || 0,
@@ -199,17 +207,33 @@ const Incidents: React.FC = () => {
 
       setIncidents(transformedIncidents);
       setFilteredIncidents(transformedIncidents);
-    } catch (error) {
-      setError('Failed to load incidents. Please check your connection.');
-      console.error('Load incidents error:', error);
+    } catch (error: any) {
+      toast.error(`Failed to load incidents: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadIncidents();
-  }, []);
+    const fetchData = async () => {
+      try {
+        const apiKey = localStorage.getItem('apiKey');
+        if (!apiKey) {
+          toast.error('No API key found. Please log in.');
+          navigate('/account');
+          return;
+        }
+        await loadIncidents();
+      } catch (error: any) {
+        toast.error(`Error: ${error.message}`);
+        if (error.message.includes('Unauthorized')) {
+          navigate('/account');
+        }
+      }
+    };
+
+    fetchData();
+  }, [navigate]);
 
   useEffect(() => {
     let filtered = incidents;
@@ -246,19 +270,57 @@ const Incidents: React.FC = () => {
     setCurrentPage(1);
   }, [filters, incidents]);
 
-  const handleFilterChange = (key: keyof FilterState, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const handleStatusChange = (incidentId: number, newStatus: 'open' | 'in-progress' | 'resolved') => {
+    setSelectedStatuses(prev => ({ ...prev, [incidentId]: newStatus }));
   };
 
-  const clearFilters = () => {
-    setFilters({
-      search: '',
-      status: '',
-      severity: '',
-      type: '',
-      dateFrom: '',
-      dateTo: ''
-    });
+  const handleStatusUpdate = async (incidentId: number) => {
+    const newStatus = selectedStatuses[incidentId];
+    const currentStatus = incidents.find(i => i.id === incidentId)?.status;
+    
+    if (!newStatus || newStatus === currentStatus) return;
+
+    setIsLoading(true);
+    
+    try {
+      await apiRequest(`/api/incidents/${incidentId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ Incident_Status: newStatus })
+      });
+
+      setIncidents(prev =>
+        prev.map(inc => 
+          inc.id === incidentId ? { ...inc, status: newStatus } : inc
+        )
+      );
+
+      setSelectedStatuses(prev => {
+        const { [incidentId]: _, ...rest } = prev;
+        return rest;
+      });
+
+      toast.success('Status updated successfully');
+    } catch (error: any) {
+      toast.error(`Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleIncidentAction = async (incidentId: number, action: string) => {
+    try {
+      switch (action) {
+        case 'view':
+          const incident = await apiRequest(`/api/incidents/${incidentId}`);
+          console.log('Viewing incident:', incident);
+          break;
+        case 'edit':
+          console.log(`Editing incident ${incidentId}`);
+          break;
+      }
+    } catch (error: any) {
+      toast.error(`Error: ${error.message}`);
+    }
   };
 
   const handleManualIncidentChange = (key: keyof ManualIncidentForm, value: any) => {
@@ -295,12 +357,12 @@ const Incidents: React.FC = () => {
     const newFiles = Array.from(files).filter(file => {
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        setError('Only image files (JPEG, PNG, GIF, WebP) are allowed');
+        toast.error('Only image files (JPEG, PNG, GIF, WebP) are allowed');
         return false;
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        setError('File size must be less than 5MB');
+        toast.error('File size must be less than 5MB');
         return false;
       }
 
@@ -340,15 +402,13 @@ const Incidents: React.FC = () => {
     e.preventDefault();
     
     if (!validateForm()) {
-      setError('Please correct the errors below');
+      toast.error('Please correct the errors in the form');
       return;
     }
 
     setIsLoading(true);
-    setError('');
 
     try {
-
       const apiPayload: Omit<ApiIncident, 'Incident_ID' | 'created_at' | 'updated_at'> = {
         Incident_Date: manualIncident.Incident_Date,
         Incident_Location: manualIncident.Incident_Location,
@@ -359,17 +419,12 @@ const Incidents: React.FC = () => {
         Incident_Description: manualIncident.Incident_Description
       };
 
-
-      const response = await apiRequest('/incidents', {
+      await apiRequest('/api/incidents', {
         method: 'POST',
         body: JSON.stringify(apiPayload)
       });
 
-      console.log('Incident created:', response);
-
-
       await loadIncidents();
-      
 
       setManualIncident({
         Incident_Date: new Date().toISOString().split('T')[0],
@@ -388,59 +443,12 @@ const Incidents: React.FC = () => {
         images: []
       });
 
-      setSuccessMessage('Incident reported successfully!');
       setShowManualForm(false);
-
-
-      setTimeout(() => setSuccessMessage(''), 5000);
-
-    } catch (error) {
-      setError('Failed to submit incident. Please try again.');
-      console.error('Submit incident error:', error);
+      toast.success('Incident reported successfully!');
+    } catch (error: any) {
+      toast.error(`Failed to submit incident: ${error.message}`);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleIncidentAction = async (incidentId: number, action: string) => {
-    switch (action) {
-      case 'view':
-        try {
-          const incident = await apiRequest(`/incidents/${incidentId}`);
-          console.log('Viewing incident:', incident);
-        } catch (error) {
-          setError('Failed to load incident details');
-        }
-        break;
-      
-      case 'edit':
-        console.log(`Editing incident ${incidentId}`);
-        break;
-      
-      case 'resolve':
-        try {
-          await apiRequest(`/incidents/${incidentId}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-              Incident_Status: 'resolved'
-            })
-          });
-          
-          setIncidents(prev => 
-            prev.map(inc => 
-              inc.id === incidentId 
-                ? { ...inc, status: 'resolved' }
-                : inc
-            )
-          );
-          
-          setSuccessMessage('Incident marked as resolved');
-          setTimeout(() => setSuccessMessage(''), 3000);
-        } catch (error) {
-          setError('Failed to update incident status');
-          console.error('Update incident error:', error);
-        }
-        break;
     }
   };
 
@@ -475,16 +483,22 @@ const Incidents: React.FC = () => {
 
   return (
     <div className="incidents-page">
-      {}
       <div className="incidents-header">
         <div className="incidents-title">
           <div>
             <h2>Incident Management</h2>
-            <div className="incidents-subtitle">Monitor and manage traffic incidents across Gauteng</div>
+            <div className="incidents-sidebar">Monitor and manage traffic incidents across Gauteng</div>
           </div>
         </div>
         <div className="incidents-actions">
-          <button className="btn-secondary" onClick={clearFilters}>
+          <button className="btn-secondary" onClick={() => setFilters({
+            search: '',
+            status: '',
+            severity: '',
+            type: '',
+            dateFrom: '',
+            dateTo: ''
+          })}>
             <FilterIcon />
             Clear Filters
           </button>
@@ -495,31 +509,7 @@ const Incidents: React.FC = () => {
         </div>
       </div>
 
-      {}
       <div className="incidents-content">
-        {}
-        {successMessage && (
-          <div className="success-message">
-            <CheckIcon />
-            {successMessage}
-          </div>
-        )}
-
-        {}
-        {error && (
-          <div className="error-message">
-            <XIcon />
-            {error}
-            <button 
-              style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit' }}
-              onClick={() => setError('')}
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        {}
         <div className="incidents-filters">
           <div className="filter-group">
             <label className="filter-label">Search</label>
@@ -528,7 +518,7 @@ const Incidents: React.FC = () => {
               className="filter-input"
               placeholder="Search by ID, location, or type..."
               value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
+              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
             />
           </div>
           
@@ -537,7 +527,7 @@ const Incidents: React.FC = () => {
             <select
               className="filter-select"
               value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
+              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
             >
               <option value="">All Statuses</option>
               <option value="open">Active</option>
@@ -551,7 +541,7 @@ const Incidents: React.FC = () => {
             <select
               className="filter-select"
               value={filters.severity}
-              onChange={(e) => handleFilterChange('severity', e.target.value)}
+              onChange={(e) => setFilters(prev => ({ ...prev, severity: e.target.value }))}
             >
               <option value="">All Severities</option>
               <option value="high">Critical</option>
@@ -565,7 +555,7 @@ const Incidents: React.FC = () => {
             <select
               className="filter-select"
               value={filters.type}
-              onChange={(e) => handleFilterChange('type', e.target.value)}
+              onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
             >
               <option value="">All Types</option>
               <option value="Vehicle Accident">Vehicle Accident</option>
@@ -585,7 +575,7 @@ const Incidents: React.FC = () => {
               type="date"
               className="filter-input"
               value={filters.dateFrom}
-              onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+              onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
             />
           </div>
 
@@ -595,144 +585,151 @@ const Incidents: React.FC = () => {
               type="date"
               className="filter-input"
               value={filters.dateTo}
-              onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+              onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
             />
           </div>
         </div>
 
-        {}
-        <div className="incidents-list">
+        <div className={`incidents-list ${filteredIncidents.length <= itemsPerPage ? 'small-table' : ''}`}>
           <div className="incidents-list-header">
             <h3 className="incidents-list-title">Incidents</h3>
             <div className="incidents-count">{filteredIncidents.length} Total</div>
           </div>
 
-          {isLoading ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#cccccc' }}>
-              <div className="loading-spinner" style={{ margin: '0 auto 1rem' }}></div>
-              Loading incidents...
-            </div>
-          ) : (
-            <>
-              <table className="incidents-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Location</th>
-                    <th>Camera</th>
-                    <th>Severity</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentIncidents.map((incident) => (
-                    <tr key={incident.id}>
-                      <td data-label="ID">
-                        <span className="incident-id">#{incident.id}</span>
-                      </td>
-                      <td data-label="Date">
-                        <div className="incident-time">{formatDateTime(incident.date)}</div>
-                      </td>
-                      <td data-label="Type">
-                        <div className="incident-type">
-                          <AlertTriangleIcon />
-                          {incident.type}
-                        </div>
-                      </td>
-                      <td data-label="Location">
-                        <div className="incident-location">{incident.location}</div>
-                      </td>
-                      <td data-label="Camera">
-                        <div className="incident-camera">
-                          <CameraIcon />
-                          {incident.cameraId}
-                        </div>
-                      </td>
-                      <td data-label="Severity">
-                        <span className={`severity-badge ${getSeverityClass(incident.severity)}`}>
-                          {getSeverityDisplay(incident.severity)}
-                        </span>
-                      </td>
-                      <td data-label="Status">
-                        <span className={`status-badge ${getStatusClass(incident.status)}`}>
-                          {getStatusDisplay(incident.status)}
-                        </span>
-                      </td>
-                      <td data-label="Actions">
-                        <div className="incident-actions">
-                          <button 
-                            className="action-btn"
-                            onClick={() => handleIncidentAction(incident.id, 'view')}
-                            title="View Details"
-                          >
-                            <EyeIcon />
-                          </button>
-                          <button 
-                            className="action-btn"
-                            onClick={() => handleIncidentAction(incident.id, 'edit')}
-                            title="Edit"
-                          >
-                            <EditIcon />
-                          </button>
-                          {incident.status !== 'resolved' && (
-                            <button 
-                              className="action-btn"
-                              onClick={() => handleIncidentAction(incident.id, 'resolve')}
-                              title="Mark as Resolved"
-                            >
-                              <CheckIcon />
-                            </button>
+          <table className="incidents-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Camera</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentIncidents.map((incident) => (
+                <tr key={incident.id}>
+                  <td data-label="ID">
+                    <span className="incident-id">#{incident.id}</span>
+                  </td>
+                  <td data-label="Date">
+                    <div className="incident-time">{formatDateTime(incident.date)}</div>
+                  </td>
+                  <td data-label="Type">
+                    <div className="incident-type">
+                      <AlertTriangleIcon />
+                      {incident.type}
+                    </div>
+                  </td>
+                  <td data-label="Location">
+                    <div className="incident-location">{incident.location}</div>
+                  </td>
+                  <td data-label="Camera">
+                    <div className="incident-camera">
+                      <CameraIcon />
+                      {incident.cameraId}
+                    </div>
+                  </td>
+                  <td data-label="Severity">
+                    <span className={`severity-badge ${getSeverityClass(incident.severity)}`}>
+                      {getSeverityDisplay(incident.severity)}
+                    </span>
+                  </td>
+                  <td data-label="Status">
+                    <span className={`status-badge ${getStatusClass(incident.status)}`}>
+                      {getStatusDisplay(incident.status)}
+                    </span>
+                  </td>
+                  <td data-label="Actions">
+                    <div className="incident-actions">
+                      <button 
+                        className="action-btn"
+                        onClick={() => handleIncidentAction(incident.id, 'view')}
+                        title="View Details"
+                        disabled={isLoading}
+                      >
+                        <EyeIcon />
+                      </button>
+                      <button 
+                        className="action-btn"
+                        onClick={() => handleIncidentAction(incident.id, 'edit')}
+                        title="Edit"
+                        disabled={isLoading}
+                      >
+                        <EditIcon />
+                      </button>
+                      <div className="status-update-group">
+                        <select
+                          className="status-select"
+                          value={selectedStatuses[incident.id] || incident.status}
+                          onChange={(e) => handleStatusChange(
+                            incident.id, 
+                            e.target.value as 'open' | 'in-progress' | 'resolved'
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          disabled={isLoading}
+                        >
+                          <option value="open">Active</option>
+                          <option value="in-progress">In Progress</option>
+                          <option value="resolved">Resolved</option>
+                        </select>
+                        <button
+                          className="action-btn confirm-btn"
+                          onClick={() => handleStatusUpdate(incident.id)}
+                          title="Confirm Status Change"
+                          disabled={
+                            isLoading ||
+                            !selectedStatuses[incident.id] ||
+                            selectedStatuses[incident.id] === incident.status
+                          }
+                        >
+                          <CheckIcon />
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-              {}
-              {totalPages > 1 && (
-                <div className="pagination">
-                  <button 
-                    className="pagination-btn"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </button>
-                  
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  
-                  <button 
-                    className="pagination-btn"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </button>
-                  
-                  <div className="pagination-info">
-                    Showing {startIndex + 1}-{Math.min(endIndex, filteredIncidents.length)} of {filteredIncidents.length}
-                  </div>
-                </div>
-              )}
-            </>
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button 
+                className="pagination-btn"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+              
+              <button 
+                className="pagination-btn"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+              <div className="pagination-info">
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredIncidents.length)} of {filteredIncidents.length}
+              </div>
+            </div>
           )}
         </div>
       </div>
 
-      {}
       {showManualForm && (
         <div className="modal-overlay" onClick={() => setShowManualForm(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -747,15 +744,7 @@ const Incidents: React.FC = () => {
             </div>
             
             <div className="modal-body">
-              {error && (
-                <div className="error-message">
-                  <XIcon />
-                  {error}
-                </div>
-              )}
-
               <form className="incident-form" onSubmit={handleSubmitManualIncident}>
-                {}
                 <div className="form-section">
                   <h4 className="section-title">Incident Information</h4>
                   <div className="form-grid two-columns">
@@ -846,7 +835,6 @@ const Incidents: React.FC = () => {
                   </div>
                 </div>
 
-                {}
                 <div className="form-section">
                   <h4 className="section-title">Location Details</h4>
                   <div className="form-grid two-columns">
@@ -874,7 +862,6 @@ const Incidents: React.FC = () => {
                   </div>
                 </div>
 
-                {}
                 <div className="form-section">
                   <h4 className="section-title">Additional Details</h4>
                   <div className="form-grid three-columns">
@@ -924,7 +911,6 @@ const Incidents: React.FC = () => {
                   </div>
                 </div>
 
-                {}
                 <div className="form-section">
                   <h4 className="section-title">Reporter Information</h4>
                   <div className="form-grid two-columns">
@@ -954,7 +940,6 @@ const Incidents: React.FC = () => {
                   </div>
                 </div>
 
-                {}
                 <div className="form-section">
                   <h4 className="section-title">Photos & Documentation</h4>
                   <div 
@@ -1007,7 +992,6 @@ const Incidents: React.FC = () => {
                   )}
                 </div>
 
-                {}
                 <div className="form-actions">
                   <button
                     type="button"
@@ -1040,6 +1024,19 @@ const Incidents: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 };
