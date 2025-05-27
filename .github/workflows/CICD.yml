@@ -14,15 +14,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Super Linter
-        uses: github/super-linter@v5
-        env:
-          VALIDATE_ALL_CODEBASE: false
-          DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # TYPESCRIPT_DEFAULT_CONFIG: ./frontend/tsconfig.json
-          # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
-
       - name: Lint API with ESLint (require semicolons)
         working-directory: ./API
         run: |
@@ -35,6 +26,15 @@ jobs:
         working-directory: ./frontend
         run: |
           npx eslint . --ext .ts,.tsx --max-warnings=0
+
+      - name: Run Super Linter
+        uses: github/super-linter@v5
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # TYPESCRIPT_DEFAULT_CONFIG: ./frontend/tsconfig.json
+          # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
 
   test-ui:
     name: UI Tests
