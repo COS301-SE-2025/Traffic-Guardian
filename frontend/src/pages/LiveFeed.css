@@ -25,7 +25,7 @@
   border: 1px solid #333;
   border-radius: 12px;
   padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,4 +48,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
+}
+
+.live-feed-overlay {
+  background: rgb(0 0 0 / 50%);
 }

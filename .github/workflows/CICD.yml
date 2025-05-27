@@ -20,7 +20,16 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TYPESCRIPT_DEFAULT_CONFIG: ./frontend/tsconfig.json
+          # Use the API ESLint config for API JS files (enforces semicolons)
+          ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
+          # Use the frontend ESLint config for TS/TSX/Cypress files
+          ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
+          # Lint all relevant extensions
+          VALIDATE_JAVASCRIPT_ES: true
+          VALIDATE_TYPESCRIPT_ES: true
+          # Optionally, set FILTER_REGEX_INCLUDE/FILTER_REGEX_EXCLUDE if needed
+          # FILTER_REGEX_INCLUDE: 'src/|models/|controllers/|routes/|frontend/'
+          # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
 
   test-ui:
     name: UI Tests

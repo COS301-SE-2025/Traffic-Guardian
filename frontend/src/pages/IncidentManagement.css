@@ -1,16 +1,21 @@
+/* Incident Management styles */
+
 .incident-management-page {
   padding: 2rem;
   min-height: 100vh;
   color: #fff;
   font-family: 'Segoe UI', sans-serif;
+
   /* background-color: #121212; */
 }
+
 .header-container {
   display: flex;
   align-items: center;
   justify-content: space-between; /* Keep this for now */
   margin-bottom: 2rem;
   position: relative; /* Add this to allow absolute positioning of h2 */
+  background: #000;
 }
 
 .header-container h2 {
@@ -22,18 +27,12 @@
 
 
 .incident-management-page h2 {
-  color: #000000;
+  color: #000;
   font-size: 2rem;
   margin-bottom: 2rem;
   text-align: center;
 }
 
-.header-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-}
 
 .back-button {
   padding: 0.5rem 1rem;
@@ -57,7 +56,7 @@
   border-spacing: 0;
   background-color: #1e1e1e;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
   overflow: hidden;
 }
 
@@ -96,7 +95,7 @@
 
 .incident-table select:focus {
   outline: none;
-  box-shadow: 0 0 5px rgba(255, 174, 54, 0.5);
+  box-shadow: 0 0 5px rgb(255 174 54 / 50%);
 }
 
 .incident-table button {
@@ -115,6 +114,27 @@
   background: #e89c2f;
 }
 
+.incident-card {
+  background: rgb(255 255 255 / 30%);
+  border: none;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.incident-card h3 {
+  color: #000;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.incident-card p {
+  color: #333;
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+
 .loading-message,
 .error-message,
 .access-denied-message {
@@ -124,12 +144,12 @@
   font-size: 1.2rem;
   background-color: #1e1e1e;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
   margin: 2rem auto;
   max-width: 500px;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .incident-table {
     font-size: 0.9rem;
   }
@@ -150,4 +170,8 @@
     width: 100%;
     text-align: center;
   }
+}
+
+@media (width >= 600px) and (height >= 400px) and (update = context) {
+  /* Add any additional styles for larger screens or specific conditions here */
 }
