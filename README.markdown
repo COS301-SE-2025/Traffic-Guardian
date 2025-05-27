@@ -60,11 +60,9 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
 ---
 <a id="documentation"></a>
 
-<p align="left"> <img src="assets/documentation.PNG" alt="Documentation" width="250"/> </p>
 Access our project documentation and presentation below:
 
 [Project Documentation](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
-
 [Capstone Presentation](https://docs.google.com/presentation/d/1T2n6cvEM1R53_EVtz3X3i9e1gyPBak5JNixFbSFJEyE/edit?usp=sharing)
 
 <p align="right"> <a href="#table-of-contents">Back to top</a> </p>
