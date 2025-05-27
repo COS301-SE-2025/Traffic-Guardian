@@ -13,7 +13,6 @@ const authController = {  login: async (req, res) => {
       const validPassword = User_Password.match(/^(?=.*[a-z])(?=.*\d).+$/);
 
       if(validEmail === null){
-        console.log(validEmail);
         return res.status(400).json({error: 'Invalid password and/or email'});
       }
 
