@@ -8,6 +8,14 @@ const authController = {  login: async (req, res) => {
       if (!User_Email || !User_Password) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
+
+      const validEmail = User_Email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/);
+      const validPassword = User_Password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/);
+
+      if(!validEmail || !validPassword){
+        return res.status(400).json({error: 'Invalid password and/or email'});
+      }
+
       
       const user = await userModel.findByEmail(User_Email);
       
