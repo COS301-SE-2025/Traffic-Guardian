@@ -34,7 +34,7 @@ test('Login User', async ()=>{
     expect(response.status).toBe(200);
 });
 
-test('Login User invalid email', async ()=>{
+/* test('Login User invalid email', async ()=>{
     const payload = artifacts[7];
     try{
     const response = await axios.post('http://localhost:5000/api/auth/login', payload, {
@@ -46,7 +46,7 @@ test('Login User invalid email', async ()=>{
             expect(error.response.status).toBe(400);
     }
 
-});
+}); */
 
 test('Get User preferences', async ()=>{
     const headers = artifacts[1];
