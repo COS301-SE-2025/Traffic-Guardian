@@ -34,15 +34,26 @@ test('Login User', async ()=>{
     expect(response.status).toBe(200);
 });
 
-test('Login User invalid credentials', async ()=>{
-    const payload = artifacts[1];
+test('Login User invalid email', async ()=>{
+    const payload = artifacts[7];
     const response = await axios.post('http://localhost:5000/api/auth/login', payload, {
         "Content-Type": "application/json",
         "X-API-KEY": yeah
     });
 
     //expect(response.data).toMatchObject(seeding[0]);
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
+});
+
+test('Login User invalid password', async ()=>{
+    const payload = artifacts[8];
+    const response = await axios.post('http://localhost:5000/api/auth/login', payload, {
+        "Content-Type": "application/json",
+        "X-API-KEY": yeah
+    });
+
+    //expect(response.data).toMatchObject(seeding[0]);
+    expect(response.status).toBe(400);
 });
 
 test('Get User preferences', async ()=>{
