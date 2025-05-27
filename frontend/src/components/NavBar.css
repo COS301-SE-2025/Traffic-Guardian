@@ -97,7 +97,7 @@
 }
 
 /* Media query for smaller screens */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .nav-links {
     gap: 1rem; /* Smaller gap on mobile */
     justify-content: space-between; /* Spread items evenly */

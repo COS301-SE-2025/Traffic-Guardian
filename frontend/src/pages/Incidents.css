@@ -5,166 +5,168 @@ svg {
 }
 
 /* Light mode variables */
+
 /* Light mode variables */
 :root.light-mode {
-  --background-color: #ffffff;
-  --text-color: #333333;
+  --background-color: #fff;
+  --text-color: #333;
   --header-bg: #f5f5f5;
   --header-border: #d1d1d1;
   --title-color: #d97700; /* Darker accent */
-  --subtitle-color: #666666;
+  --subtitle-color: #666;
   --button-primary-bg: #d97700; /* Darker accent */
-  --button-primary-text: #ffffff;
+  --button-primary-text: #fff;
   --button-primary-hover: #c06800; /* Even darker for hover */
   --button-secondary-bg: transparent;
-  --button-secondary-text: #333333;
-  --button-secondary-border: #999999;
-  --button-secondary-hover-bg: rgba(217, 119, 0, 0.1); /* Adjusted for darker accent */
+  --button-secondary-text: #333;
+  --button-secondary-border: #999;
+  --button-secondary-hover-bg: rgb(217 119 0 / 10%); /* Adjusted for darker accent */
   --button-secondary-hover-border: #d97700; /* Darker accent */
   --content-bg: #f9f9f9;
   --filter-bg: #f0f0f0;
-  --filter-border: #cccccc;
-  --filter-input-bg: #ffffff;
-  --filter-placeholder: #999999;
-  --table-bg: #ffffff;
+  --filter-border: #ccc;
+  --filter-input-bg: #fff;
+  --filter-placeholder: #999;
+  --table-bg: #fff;
   --table-header-bg: #e5e5e5;
-  --table-header-text: #333333;
+  --table-header-text: #333;
   --table-border: #d1d1d1;
-  --table-hover-bg: rgba(217, 119, 0, 0.05); /* Adjusted for darker accent */
+  --table-hover-bg: rgb(217 119 0 / 5%); /* Adjusted for darker accent */
   --incident-id-color: #d97700; /* Darker accent */
-  --severity-critical-bg: rgba(255, 68, 68, 0.2);
-  --severity-critical-text: #ff4444;
-  --severity-medium-bg: rgba(217, 119, 0, 0.2); /* Adjusted for darker accent */
+  --severity-critical-bg: rgb(255 68 68 / 20%);
+  --severity-critical-text: #f44;
+  --severity-medium-bg: rgb(217 119 0 / 20%); /* Adjusted for darker accent */
   --severity-medium-text: #d97700; /* Darker accent */
-  --severity-low-bg: rgba(68, 255, 68, 0.2);
+  --severity-low-bg: rgb(68 255 68 / 20%);
   --severity-low-text: #199019;
-  --status-active-bg: rgba(255, 68, 68, 0.2);
-  --status-active-text: #ff4444;
-  --status-inprogress-bg: rgba(0, 123, 255, 0.2);
+  --status-active-bg: rgb(255 68 68 / 20%);
+  --status-active-text: #f44;
+  --status-inprogress-bg: rgb(0 123 255 / 20%);
   --status-inprogress-text: #007bff;
-  --status-resolved-bg: rgba(68, 255, 68, 0.2);
+  --status-resolved-bg: rgb(68 255 68 / 20%);
   --status-resolved-text: #199019;
   --action-btn-bg: none;
   --action-btn-text: #d97700; /* Darker accent */
-  --action-btn-hover-bg: rgba(217, 119, 0, 0.1); /* Adjusted for darker accent */
-  --modal-overlay-bg: rgba(0, 0, 0, 0.5);
-  --modal-content-bg: #ffffff;
+  --action-btn-hover-bg: rgb(217 119 0 / 10%); /* Adjusted for darker accent */
+  --modal-overlay-bg: rgb(0 0 0 / 50%);
+  --modal-content-bg: #fff;
   --modal-header-bg: #d97700; /* Darker accent */
-  --modal-header-text: #ffffff;
+  --modal-header-text: #fff;
   --form-section-title: #d97700; /* Darker accent */
   --form-section-border: #d1d1d1;
   --form-input-bg: #f5f5f5;
-  --form-input-border: #cccccc;
-  --form-input-text: #333333;
-  --form-error-text: #ff4444;
-  --form-help-text: #666666;
-  --file-upload-border: #cccccc;
+  --form-input-border: #ccc;
+  --form-input-text: #333;
+  --form-error-text: #f44;
+  --form-help-text: #666;
+  --file-upload-border: #ccc;
   --file-upload-hover-border: #d97700; /* Darker accent */
-  --file-upload-dragover-bg: rgba(217, 119, 0, 0.05); /* Adjusted for darker accent */
-  --file-upload-text: #666666;
+  --file-upload-dragover-bg: rgb(217 119 0 / 5%); /* Adjusted for darker accent */
+  --file-upload-text: #666;
   --file-upload-btn-bg: transparent;
   --file-upload-btn-text: #d97700; /* Darker accent */
   --file-upload-btn-border: #d97700; /* Darker accent */
-  --uploaded-file-bg: rgba(0, 0, 0, 0.05);
-  --file-remove-text: #ff4444;
+  --uploaded-file-bg: rgb(0 0 0 / 5%);
+  --file-remove-text: #f44;
   --pagination-bg: #f0f0f0;
-  --pagination-text: #333333;
-  --pagination-border: #cccccc;
+  --pagination-text: #333;
+  --pagination-border: #ccc;
   --pagination-active-bg: #d97700; /* Darker accent */
-  --pagination-active-text: #ffffff;
+  --pagination-active-text: #fff;
   --loading-spinner: #d97700; /* Darker accent */
-  --status-select-bg: #ffffff;
-  --status-select-border: #cccccc;
-  --status-select-text: #333333;
-  --confirm-btn-bg: rgba(68, 255, 68, 0.2);
+  --status-select-bg: #fff;
+  --status-select-border: #ccc;
+  --status-select-text: #333;
+  --confirm-btn-bg: rgb(68 255 68 / 20%);
   --confirm-btn-text: #199019;
-  --confirm-btn-border: rgba(68, 255, 68, 0.3);
-  --access-denied-bg: rgba(255, 68, 68, 0.1);
-  --access-denied-text: #ff4444;
+  --confirm-btn-border: rgb(68 255 68 / 30%);
+  --access-denied-bg: rgb(255 68 68 / 10%);
+  --access-denied-text: #f44;
 }
 
 :root.dark-mode {
   --background-color: #1e1e1e;
-  --text-color: #ffffff;
+  --text-color: #fff;
   --header-bg: #1a1a1a;
   --header-border: #404040;
-  --title-color: #ffaa33;
-  --subtitle-color: #cccccc;
-  --button-primary-bg: #ffaa33;
-  --button-primary-text: #000000;
-  --button-primary-hover: #ffaa33;
+  --title-color: #fa3;
+  --subtitle-color: #ccc;
+  --button-primary-bg: #fa3;
+  --button-primary-text: #000;
+  --button-primary-hover: #fa3;
   --button-secondary-bg: transparent;
-  --button-secondary-text: #cccccc;
-  --button-secondary-border: #666666;
-  --button-secondary-hover-bg: rgba(255, 140, 0, 0.1);
-  --button-secondary-hover-border: #ffaa33;
+  --button-secondary-text: #ccc;
+  --button-secondary-border: #666;
+  --button-secondary-hover-bg: rgb(255 140 0 / 10%);
+  --button-secondary-hover-border: #fa3;
   --content-bg: #1e1e1e;
   --filter-bg: #3a3a3a;
-  --filter-border: #666666;
+  --filter-border: #666;
   --filter-input-bg: #2a2a2a;
-  --filter-placeholder: #999999;
+  --filter-placeholder: #999;
   --table-bg: #3a3a3a;
   --table-header-bg: #404040;
-  --table-header-text: #cccccc;
-  --table-border: #555555;
-  --table-hover-bg: rgba(255, 140, 0, 0.05);
-  --incident-id-color: #ffaa33;
-  --severity-critical-bg: rgba(255, 68, 68, 0.2);
-  --severity-critical-text: #ff4444;
-  --severity-medium-bg: rgba(255, 170, 0, 0.2);
-  --severity-medium-text: #ffaa00;
-  --severity-low-bg: rgba(68, 255, 68, 0.2);
-  --severity-low-text: #44ff44;
-  --status-active-bg: rgba(255, 68, 68, 0.2);
-  --status-active-text: #ff4444;
-  --status-inprogress-bg: rgba(0, 123, 255, 0.2);
+  --table-header-text: #ccc;
+  --table-border: #555;
+  --table-hover-bg: rgb(255 140 0 / 5%);
+  --incident-id-color: #fa3;
+  --severity-critical-bg: rgb(255 68 68 / 20%);
+  --severity-critical-text: #f44;
+  --severity-medium-bg: rgb(255 170 0 / 20%);
+  --severity-medium-text: #fa0;
+  --severity-low-bg: rgb(68 255 68 / 20%);
+  --severity-low-text: #4f4;
+  --status-active-bg: rgb(255 68 68 / 20%);
+  --status-active-text: #f44;
+  --status-inprogress-bg: rgb(0 123 255 / 20%);
   --status-inprogress-text: #007bff;
-  --status-resolved-bg: rgba(68, 255, 68, 0.2);
-  --status-resolved-text: #44ff44;
+  --status-resolved-bg: rgb(68 255 68 / 20%);
+  --status-resolved-text: #4f4;
   --action-btn-bg: none;
-  --action-btn-text: #ffaa33;
-  --action-btn-hover-bg: rgba(255, 140, 0, 0.1);
-  --modal-overlay-bg: rgba(0, 0, 0, 0.8);
+  --action-btn-text: #fa3;
+  --action-btn-hover-bg: rgb(255 140 0 / 10%);
+  --modal-overlay-bg: rgb(0 0 0 / 80%);
   --modal-content-bg: #3a3a3a;
-  --modal-header-bg: #ffaa33;
-  --modal-header-text: #000000;
-  --form-section-title: #ffaa33;
-  --form-section-border: #555555;
+  --modal-header-bg: #fa3;
+  --modal-header-text: #000;
+  --form-section-title: #fa3;
+  --form-section-border: #555;
   --form-input-bg: #2a2a2a;
-  --form-input-border: #666666;
-  --form-input-text: #ffffff;
-  --form-error-text: #ff4444;
-  --form-help-text: #999999;
-  --file-upload-border: #666666;
-  --file-upload-hover-border: #ffaa33;
-  --file-upload-dragover-bg: rgba(255, 140, 0, 0.05);
-  --file-upload-text: #cccccc;
+  --form-input-border: #666;
+  --form-input-text: #fff;
+  --form-error-text: #f44;
+  --form-help-text: #999;
+  --file-upload-border: #666;
+  --file-upload-hover-border: #fa3;
+  --file-upload-dragover-bg: rgb(255 140 0 / 5%);
+  --file-upload-text: #ccc;
   --file-upload-btn-bg: transparent;
-  --file-upload-btn-text: #ffaa33;
-  --file-upload-btn-border: #ffaa33;
-  --uploaded-file-bg: rgba(255, 255, 255, 0.05);
-  --file-remove-text: #ff4444;
+  --file-upload-btn-text: #fa3;
+  --file-upload-btn-border: #fa3;
+  --uploaded-file-bg: rgb(255 255 255 / 5%);
+  --file-remove-text: #f44;
   --pagination-bg: #3a3a3a;
-  --pagination-text: #cccccc;
-  --pagination-border: #666666;
-  --pagination-active-bg: #ffaa33;
-  --pagination-active-text: #000000;
-  --loading-spinner: #ffaa33;
+  --pagination-text: #ccc;
+  --pagination-border: #666;
+  --pagination-active-bg: #fa3;
+  --pagination-active-text: #000;
+  --loading-spinner: #fa3;
   --status-select-bg: #2a2a2a;
-  --status-select-border: #666666;
-  --status-select-text: #ffffff;
-  --confirm-btn-bg: rgba(68, 255, 68, 0.2);
-  --confirm-btn-text: #44ff44;
-  --confirm-btn-border: rgba(68, 255, 68, 0.3);
-  --access-denied-bg: rgba(255, 68, 68, 0.1);
-  --access-denied-text: #ff4444;
+  --status-select-border: #666;
+  --status-select-text: #fff;
+  --confirm-btn-bg: rgb(68 255 68 / 20%);
+  --confirm-btn-text: #4f4;
+  --confirm-btn-border: rgb(68 255 68 / 30%);
+  --access-denied-bg: rgb(255 68 68 / 10%);
+  --access-denied-text: #f44;
 }
+
 /* Apply variables to styles */
 .incidents-page {
   background-color: var(--background-color);
   min-height: 100vh;
   color: var(--text-color);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .incidents-header {
@@ -321,7 +323,7 @@ svg {
   width: max-content;
   max-width: 100%;
   min-width: 100%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
   height: auto;
 }
 
@@ -503,10 +505,7 @@ svg {
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: var(--modal-overlay-bg);
   display: flex;
   align-items: center;
@@ -558,7 +557,7 @@ svg {
 }
 
 .modal-close:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgb(0 0 0 / 10%);
 }
 
 .modal-body {
@@ -579,7 +578,7 @@ svg {
   color: var(--form-section-title);
   font-size: 1.1rem;
   font-weight: 600;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.5rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--form-section-border);
 }
@@ -626,6 +625,11 @@ svg {
   transition: border-color 0.2s ease;
 }
 
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
 .form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
@@ -638,10 +642,6 @@ svg {
   color: var(--filter-placeholder);
 }
 
-.form-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
 
 .form-select option {
   background-color: var(--form-input-bg);
@@ -748,7 +748,7 @@ svg {
 }
 
 .file-remove:hover {
-  background-color: rgba(255, 68, 68, 0.1);
+  background-color: rgb(255 68 68 / 10%);
 }
 
 .form-actions {
@@ -779,15 +779,16 @@ svg {
   height: 20px;
 }
 
+.btn-submit:disabled {
+  opacity: 50%;
+  cursor: not-allowed;
+}
+
 .btn-submit:hover:not(:disabled) {
   background-color: var(--button-primary-hover);
   transform: translateY(-1px);
 }
 
-.btn-submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
 .btn-cancel {
   background-color: var(--button-secondary-bg);
@@ -843,16 +844,17 @@ svg {
   font-size: 0.9rem;
 }
 
+.pagination-btn:disabled {
+  opacity: 50%;
+  cursor: not-allowed;
+}
+
 .pagination-btn:hover:not(:disabled) {
   background-color: var(--pagination-active-bg);
   color: var(--pagination-active-text);
   border-color: var(--pagination-active-bg);
 }
 
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
 .pagination-btn.active {
   background-color: var(--pagination-active-bg);
@@ -926,21 +928,22 @@ svg {
   justify-content: center;
 }
 
+.confirm-btn:disabled {
+  opacity: 50%;
+  cursor: not-allowed;
+  background-color: transparent;
+  border-color: transparent;
+}
+
 .confirm-btn:hover:not(:disabled) {
   background-color: var(--confirm-btn-bg);
   color: var(--confirm-btn-text);
   transform: scale(1.05);
 }
 
-.confirm-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: transparent;
-  border-color: transparent;
-}
 
 /* Responsive Design */
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
   .incidents-header {
     flex-direction: column;
     align-items: flex-start;
@@ -961,7 +964,7 @@ svg {
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .incidents-content {
     padding: 1rem;
   }
@@ -1003,12 +1006,6 @@ svg {
     display: block;
   }
 
-  .incidents-table thead tr {
-    position: absolute;
-    top: -9999px;
-    left: -9999px;
-  }
-
   .incidents-table tr {
     border: 1px solid var(--table-border);
     border-radius: 6px;
@@ -1018,6 +1015,13 @@ svg {
     overflow: visible;
     height: auto;
   }
+
+  .incidents-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
 
   .incidents-table td {
     border: none;
@@ -1034,7 +1038,7 @@ svg {
     border-bottom: none;
   }
 
-  .incidents-table td:before {
+  .incidents-table td::before {
     content: attr(data-label);
     color: var(--subtitle-color);
     font-weight: 600;
@@ -1064,7 +1068,7 @@ svg {
     align-items: flex-end;
   }
 
-  .incidents-table td[data-label="Actions"]:before {
+  .incidents-table td[data-label="Actions"]::before {
     align-self: flex-start;
   }
 }
