@@ -14,26 +14,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Lint API with ESLint (require semicolons)
-        working-directory: ./API
-        run: |
-          npx eslint src/**/*.js
-          npx eslint models/**/*.js
-          npx eslint controllers/**/*.js
-          npx eslint routes/**/*.js
-
-      - name: Lint Frontend with ESLint (TypeScript, Cypress, etc.)
-        working-directory: ./frontend
-        run: |
-          npx eslint . --ext .ts,.tsx --max-warnings=0
-
       - name: Run Super Linter
         uses: github/super-linter@v5
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # TYPESCRIPT_DEFAULT_CONFIG: ./frontend/tsconfig.json
+          # Use the API ESLint config for API JS files (enforces semicolons)
+          ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
+          # Use the frontend ESLint config for TS/TSX/Cypress files
+          ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
+          # Lint all relevant extensions
+          VALIDATE_JAVASCRIPT_ES: true
+          VALIDATE_TYPESCRIPT_ES: true
+          VALIDATE_TYPESCRIPT_STANDARD: false
+          # Optionally, set FILTER_REGEX_INCLUDE/FILTER_REGEX_EXCLUDE if needed
+          # FILTER_REGEX_INCLUDE: 'src/|models/|controllers/|routes/|frontend/'
           # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
 
   test-ui:
