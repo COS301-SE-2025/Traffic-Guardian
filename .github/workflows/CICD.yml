@@ -22,6 +22,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
 
+      - name: Lint API with ESLint (require semicolons)
+        working-directory: ./API
+        run: |
+          npx eslint src/**/*.js
+          npx eslint models/**/*.js
+          npx eslint controllers/**/*.js
+          npx eslint routes/**/*.js
+
   test-ui:
     name: UI Tests
     runs-on: ubuntu-latest
