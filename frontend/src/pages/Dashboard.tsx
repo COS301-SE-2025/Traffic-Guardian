@@ -192,6 +192,10 @@ const Dashboard: React.FC = () => {
     return severity.toLowerCase();
   };
 
+  const getStatusClass = (status: string) => {
+    return status.toLowerCase();
+  };
+
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
       ...notification,
@@ -437,7 +441,7 @@ const Dashboard: React.FC = () => {
                   <div className="incident-metadata" data-cy="incident-metadata">
                     <div className="metadata-item" data-cy="metadata-status">
                       <div className="metadata-label">Status</div>
-                      <div className="metadata-value">{incident.status}</div>
+                      <div className={`status-badge ${getStatusClass(incident.status)}`} data-cy="metadata-value-status">{incident.status}</div>
                     </div>
                     <div className="metadata-item" data-cy="metadata-reported-by">
                       <div className="metadata-label">Reported By</div>
@@ -503,7 +507,7 @@ const Dashboard: React.FC = () => {
                         {camera.incidents} incident{camera.incidents > 1 ? 's' : ''}
                       </div>
                     )}
-                    <div style={{ color: '#999999', fontSize: '0.7rem', marginTop: '0.25rem' }} data-cy="camera-last-update">
+                    <div style={{ color: 'var(--form-help-text)', fontSize: '0.7rem', marginTop: '0.25rem' }} data-cy="camera-last-update">
                       Last: {camera.lastUpdate}
                     </div>
                   </div>
@@ -582,11 +586,11 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="metadata-item" data-cy="modal-metadata-severity">
                   <div className="metadata-label">Severity</div>
-                  <div className="metadata-value">{selectedIncident.severity}</div>
+                  <div className={`severity-badge ${getSeverityClass(selectedIncident.severity)}`}>{selectedIncident.severity}</div>
                 </div>
                 <div className="metadata-item" data-cy="modal-metadata-status">
                   <div className="metadata-label">Status</div>
-                  <div className="metadata-value">{selectedIncident.status}</div>
+                  <div className={`status-badge ${getStatusClass(selectedIncident.status)}`}>{selectedIncident.status}</div>
                 </div>
                 <div className="metadata-item" data-cy="modal-metadata-duration">
                   <div className="metadata-label">Duration</div>
@@ -595,7 +599,7 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div style={{ marginBottom: '1.5rem' }} data-cy="modal-location">
-                <h4 style={{ color: '#ffaa33', marginBottom: '0.5rem' }} data-cy="modal-location-title">Location</h4>
+                <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-location-title">Location</h4>
                 <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} data-cy="modal-location-content">
                   <MapPinIcon />
                   {selectedIncident.location}
@@ -603,20 +607,20 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div style={{ marginBottom: '1.5rem' }} data-cy="modal-description">
-                <h4 style={{ color: '#ffaa33', marginBottom: '0.5rem' }} data-cy="modal-description-title">Description</h4>
+                <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-description-title">Description</h4>
                 <p data-cy="modal-description-content">{selectedIncident.description}</p>
               </div>
 
               {selectedIncident.responders && (
                 <div style={{ marginBottom: '1.5rem' }} data-cy="modal-responders">
-                  <h4 style={{ color: '#ffaa33', marginBottom: '0.5rem' }} data-cy="modal-responders-title">Response Teams</h4>
+                  <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-responders-title">Response Teams</h4>
                   <ul style={{ listStyle: 'none', padding: 0 }} data-cy="modal-responders-list">
                     {selectedIncident.responders.map((responder, index) => (
                       <li 
                         key={index} 
                         style={{ 
                           padding: '0.5rem', 
-                          backgroundColor: 'rgba(255,255,255,0.05)', 
+                          backgroundColor: 'var(--uploaded-file-bg)', 
                           borderRadius: '4px',
                           marginBottom: '0.25rem'
                         }}
@@ -631,8 +635,8 @@ const Dashboard: React.FC = () => {
 
               {selectedIncident.timeline && (
                 <div data-cy="modal-timeline">
-                  <h4 style={{ color: '#ffaa33', marginBottom: '0.5rem' }} data-cy="modal-timeline-title">Timeline</h4>
-                  <div style={{ borderLeft: '2px solid #ffaa33', paddingLeft: '1rem' }} data-cy="modal-timeline-content">
+                  <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-timeline-title">Timeline</h4>
+                  <div style={{ borderLeft: '2px solid var(--form-section-title)', paddingLeft: '1rem' }} data-cy="modal-timeline-content">
                     {selectedIncident.timeline.map((event, index) => (
                       <div key={index} style={{ marginBottom: '1rem', position: 'relative' }} data-cy={`modal-timeline-event-${index}`}>
                         <div style={{ 
@@ -641,10 +645,10 @@ const Dashboard: React.FC = () => {
                           top: '0.25rem',
                           width: '8px', 
                           height: '8px', 
-                          backgroundColor: '#ffaa33', 
+                          backgroundColor: 'var(--form-section-title)', 
                           borderRadius: '50%' 
                         }} data-cy="timeline-indicator"></div>
-                        <div style={{ fontSize: '0.8rem', color: '#999999', marginBottom: '0.25rem' }} data-cy="timeline-time">
+                        <div style={{ fontSize: '0.8rem', color: 'var(--form-help-text)', marginBottom: '0.25rem' }} data-cy="timeline-time">
                           {event.time}
                         </div>
                         <div data-cy="timeline-event">{event.event}</div>
