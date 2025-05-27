@@ -1,15 +1,26 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useTheme } from "../consts/ThemeContext";
+import './Archives.css';
+import underConstructionIcon from '../assets/UnderCon_icon.png';
 
 const Archives: React.FC = () => {
-    return (
-        <div className="archives-page">
-        <h2>Archives</h2>
-        <p>This page will display archived data and incidents.</p>
-        {/* Placeholder for future content */}
-        <div className="archives-content">
-            <p>Content coming soon...</p>
-        </div>
-        </div>
-    );
-}
+  const { isDarkMode } = useTheme();
+
+  useEffect(() => {
+    document.body.classList.add('no-scroll');
+    return () => {
+      document.body.classList.remove('no-scroll');
+    };
+  }, []);
+
+  return (
+    <div className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+      <div className="under-construction">
+        <img src={underConstructionIcon} alt="Under Construction" />
+        <p>Archives Page is Under Construction</p>
+      </div>
+    </div>
+  );
+};
+
 export default Archives;

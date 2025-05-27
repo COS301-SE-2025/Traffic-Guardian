@@ -120,7 +120,7 @@
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
 }
 
 .incident-card h3 {
@@ -170,8 +170,4 @@
     width: 100%;
     text-align: center;
   }
-}
-
-@media (width >= 600px) and (height >= 400px) and (update = context) {
-  /* Add any additional styles for larger screens or specific conditions here */
 }
