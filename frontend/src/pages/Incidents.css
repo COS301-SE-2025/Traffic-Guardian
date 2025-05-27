@@ -780,7 +780,7 @@ svg {
 }
 
 .btn-submit:disabled {
-  opacity: 50%;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -845,7 +845,7 @@ svg {
 }
 
 .pagination-btn:disabled {
-  opacity: 50%;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -929,7 +929,7 @@ svg {
 }
 
 .confirm-btn:disabled {
-  opacity: 50%;
+  opacity: 0.5;
   cursor: not-allowed;
   background-color: transparent;
   border-color: transparent;
