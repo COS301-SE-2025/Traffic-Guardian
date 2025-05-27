@@ -39,6 +39,7 @@
   <summary>Click to expand</summary>
 
 - [Project Overview](#project-overview)
+- [Documentation](#documentation)
 - [Meet the Quantum Quenchers](#meet-the-quantum-quenchers)
 - [Technologies Used](#technologies-used)
 - [More Information](#more-information)
@@ -57,12 +58,23 @@
 Traffic Guardian is an innovative solution designed to enhance road safety and efficiency across Gauteng’s busy highways. As a COS301 Capstone Project at the University of Pretoria, our goal is to develop a real-time traffic incident detection system that leverages existing traffic camera feeds to identify accidents, congestion, and road hazards. By automating incident detection and enabling rapid response, Traffic Guardian aims to reduce human monitoring load, shorten response times, and improve overall road safety.
 
 ---
+<a id="documentation"></a>
+
+<p align="left"> <img src="assets/documentation.PNG" alt="Documentation" width="250"/> </p>
+Access our project documentation and presentation below:
+
+[Project Documentation](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+
+[Capstone Presentation](https://docs.google.com/presentation/d/1T2n6cvEM1R53_EVtz3X3i9e1gyPBak5JNixFbSFJEyE/edit?usp=sharing)
+
+<p align="right"> <a href="#table-of-contents">Back to top</a> </p>
 
 <a id="meet-the-quantum-quenchers"></a>
 <p align="left">
   <img src="assets/meettheqq.PNG" alt="Meet the Quantum Quenchers" width="500"/>
 </p>
 
+---
 
 | Name              | Role                              | Top Skills/Frameworks                              | GitHub Profile                              | LinkedIn Profile                              |
 |-------------------|-----------------------------------|--------------------------------------------------|---------------------------------------------|----------------------------------------------|
