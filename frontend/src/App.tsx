@@ -1,6 +1,7 @@
 // src/App.tsx
 import React from 'react';
 import './App.css';
+import { ThemeProvider } from './consts/ThemeContext'
 import NavBar from './components/NavBar';
 import Dashboard from './pages/Dashboard';
 import LiveFeed from './pages/LiveFeed';
@@ -13,6 +14,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 const App: React.FC = () => {
   return (
+    <ThemeProvider>
     <Router>
       <NavBar />
       <Routes>
@@ -26,6 +28,7 @@ const App: React.FC = () => {
         <Route path="/incident-management" element={<IncidentManagement />} />
       </Routes> 
     </Router>
+    </ThemeProvider>
   );
 };
 
