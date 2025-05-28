@@ -8,8 +8,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/NicholasDobson/CapstoneCICD/actions/workflows/CICD.yml">
-    <img src="https://github.com/NicholasDobson/CapstoneCICD/actions/workflows/CICD.yml/badge.svg" alt="CI/CD Pipeline">
+
+  <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CICD.yml">
+    <img src="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CICD.yml/badge.svg" alt="CI/CD Pipeline">
   </a>
   <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/graphs/commit-activity">
     <img src="https://img.shields.io/github/commit-activity/m/COS301-SE-2025/Traffic-Guardian" alt="GitHub commit activity">
