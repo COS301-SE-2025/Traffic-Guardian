@@ -1,0 +1,122 @@
+* {
+  box-sizing: border-box; /* Ensure padding/margins don’t cause overflow */
+}
+
+.navbar {
+  width: 100%;
+  background: #1e1e1e;
+  padding: 1rem 2rem;
+  z-index: 1000;
+}
+
+.navbar-content {
+  max-width: 2000px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: clamp(1.5rem, 3vw, 4.5rem); /* Responsive gap */
+  padding: 0;
+  margin: 0;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  min-width: 0; /* Prevent flex items from overflowing */
+}
+
+/* Nav item container */
+.nav-item {
+  font-family: "Merge One", sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  min-width: 0; /* Allow items to shrink */
+}
+
+.nav-item a {
+  text-decoration: none;
+  color: white;
+  transition: color 0.2s ease-in;
+  position: relative;
+  display: inline-block;
+}
+
+.nav-item:hover a,
+.nav-item.active a {
+  color: #ffae36;
+}
+
+.nav-item a::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0.5px;
+  background-color: #ffae36;
+  transition: width 0.3s ease-in-out;
+}
+
+.nav-item:hover a::after,
+.nav-item.active a::after {
+  width: 100%;
+}
+
+/* Logo container */
+.logo-container {
+  padding-left: clamp(1rem, 5vw, 75px); /* Responsive padding */
+  padding-right: clamp(1rem, 5vw, 75px);
+}
+
+.navbar-logo {
+  height: 80px;
+  width: auto;
+  max-width: 100%; /* Prevent logo overflow */
+}
+
+/* Search icon styles */
+.search-icon-container {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.search-icon {
+  font-size: 20px;
+  color: white;
+  cursor: pointer;
+  transition: color 0.2s ease-in;
+}
+
+.search-icon:hover {
+  color: #ffae36;
+}
+
+/* Media query for smaller screens */
+@media (width <= 768px) {
+  .nav-links {
+    gap: 1rem; /* Smaller gap on mobile */
+    justify-content: space-between; /* Spread items evenly */
+  }
+
+  .logo-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .navbar-logo {
+    height: 60px; /* Smaller logo on mobile */
+  }
+
+  .nav-item a {
+    font-size: 0.9rem; /* Slightly smaller text */
+  }
+
+  .search-icon {
+    font-size: 18px; /* Slightly smaller icon */
+  }
+}
