@@ -8,7 +8,6 @@
 </p>
 
 <p align="center">
-
   <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CICD.yml">
     <img src="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CICD.yml/badge.svg" alt="CI/CD Pipeline">
   </a>
@@ -32,6 +31,7 @@
 ---
 
 <a id="table-of-contents"></a>
+
 <p align="left">
   <img src="assets/tableofcontents.PNG" alt="Table of Contents" width="250"/>
 </p>
@@ -39,19 +39,21 @@
 <details>
   <summary>Click to expand</summary>
 
-- [Project Overview](#project-overview)
-- [Documentation](#documentation)
-- [Meet the Quantum Quenchers](#meet-the-quantum-quenchers)
-- [Technologies Used](#technologies-used)
-- [More Information](#more-information)
-- [Branching Strategy](#branching-strategy)
-- [Contact Us](#contact-us)
+* [Project Overview](#project-overview)
+* [Documentation](#documentation)
+* [Demo & Presentation](#demo--presentation)
+* [Meet the Quantum Quenchers](#meet-the-quantum-quenchers)
+* [Technologies Used](#technologies-used)
+* [More Information](#more-information)
+* [Branching Strategy](#branching-strategy)
+* [Contact Us](#contact-us)
 
 </details>
 
 ---
 
 <a id="project-overview"></a>
+
 <p align="left">
   <img src="assets/projectoverview.PNG" alt="Project Overview" width="250"/>
 </p>
@@ -61,34 +63,55 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
 ---
 
 <a id="documentation"></a>
+
 <p align="left">
   <img src="assets/Documentation.PNG" alt="Documentation" width="250"/>
 </p>
 
-[Project Documentation](https://drive.google.com/file/d/1mJ_4_7W-u5QB_z59zgAG6USvhqNvFe8U/view?usp=sharing)
+* [Project Documentation](https://drive.google.com/file/d/1mJ_4_7W-u5QB_z59zgAG6USvhqNvFe8U/view?usp=sharing)
+* [Capstone Presentation](https://docs.google.com/presentation/d/1T2n6cvEM1R53_EVtz3X3i9e1gyPBak5JNixFbSFJEyE/edit?usp=sharing)
 
-[Capstone Presentation](https://docs.google.com/presentation/d/1T2n6cvEM1R53_EVtz3X3i9e1gyPBak5JNixFbSFJEyE/edit?usp=sharing)
+<a id="demo--presentation"></a>
+
+### Demo & Presentation
+
+| Demo   | Slides                                                                                                           | Video                                                                                            |
+| ------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Demo 1 | [Slides 1](https://docs.google.com/presentation/d/1T2n6cvEM1R53_EVtz3X3i9e1gyPBak5JNixFbSFJEyE/edit?usp=sharing) | [Video 1](https://drive.google.com/file/d/1-gnaUe_Jy0LXcrNsWPk36aLiBa5n_IT7/view?usp=drive_link) |
+| Demo 2 | Slides 2 *(TBA)*                                                                                                 | Video 2 *(TBA)*                                                                                  |
+| Demo 3 | Slides 3 *(TBA)*                                                                                                 | Video 3 *(TBA)*                                                                                  |
+| Demo 4 | Slides 4 *(TBA)*                                                                                                 | Video 4 *(TBA)*                                                                                  |
+
+<p align="right">
+   <a href="#table-of-contents">Back to top</a>
+</p>
 
 ---
 
 <a id="meet-the-quantum-quenchers"></a>
+
 <p align="left">
   <img src="assets/meettheqq.PNG" alt="Meet the Quantum Quenchers" width="500"/>
 </p>
 
 ---
 
-| Name              | Role                              | Top Skills/Frameworks                              | GitHub Profile                              | LinkedIn Profile                              |
-|-------------------|-----------------------------------|--------------------------------------------------|---------------------------------------------|----------------------------------------------|
-| Nicholas Dobson   | Full-Stack Developer, DevOps      | Java, C++, SQL, JavaScript/TypeScript, Docker    | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/NicholasDobson) | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/nicholas-dobson-a64a84355) |
-| Mpho Tsotetsi     | Backend Developer, Database       | SQL, PL/SQL, .NET, JavaScript, C#, TypeScript    | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/u22668323) | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/mpho-tsotetsi-256375287/) |
-| Shaylin Govender  | Full-Stack Developer, Team Lead   | JavaScript (React), Python, Java, C++, MySQL, MongoDB, GitHub Actions | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/ShaylinGovender) | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/shaylin-govender-827347343) |
-| Lonwabo Kwitshana | Frontend Developer, UI/UX         | JavaScript (React), HTML/CSS, Java, Figma        | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/7onwabo) | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/lonwabo-kwitshana-b483831a6) |
-| Aryan Mohanlall   | Backend Developer, System Integration | C++, Java, PHP, TypeScript, Angular, Assembly x86 | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/AryanMohanlall) | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/aryan-mohanlall-a45a89355) |
+| Name              | Role                                  | Top Skills/Frameworks                                                 | GitHub Profile                                                                                    | LinkedIn Profile                                                                                                             |
+| ----------------- | ------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Nicholas Dobson   | Full-Stack Developer, DevOps          | Java, C++, SQL, JavaScript/TypeScript, Docker                         | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/NicholasDobson)  | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/nicholas-dobson-a64a84355)   |
+| Mpho Tsotetsi     | Backend Developer, Database           | SQL, PL/SQL, .NET, JavaScript, C#, TypeScript                         | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/u22668323)       | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/mpho-tsotetsi-256375287/)    |
+| Shaylin Govender  | Full-Stack Developer, Team Lead       | JavaScript (React), Python, Java, C++, MySQL, MongoDB, GitHub Actions | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/ShaylinGovender) | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/shaylin-govender-827347343)  |
+| Lonwabo Kwitshana | Frontend Developer, UI/UX             | JavaScript (React), HTML/CSS, Java, Figma                             | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/7onwabo)         | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/lonwabo-kwitshana-b483831a6) |
+| Aryan Mohanlall   | Backend Developer, System Integration | C++, Java, PHP, TypeScript, Angular, Assembly x86                     | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/AryanMohanlall)  | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/aryan-mohanlall-a45a89355)   |
+
+<p align="right">
+   <a href="#table-of-contents">Back to top</a>
+</p>
 
 ---
 
 <a id="technologies-used"></a>
+
 <p align="left">
   <img src="assets/technologies.PNG" alt="Technologies Used" width="220"/>
 </p>
@@ -124,33 +147,45 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
 ---
 
 <a id="more-information"></a>
+
 <p align="left">
   <img src="assets/moreinfo.PNG" alt="More Information" width="300"/>
 </p>
 
-For more details about our proposal, visit our project website:  
+For more details about our proposal, visit our project website:
 🔗 [**Traffic Guardian Proposal**](https://shaylingovender.github.io/Capstone/)
+
+<p align="right">
+   <a href="#table-of-contents">Back to top</a>
+</p>
 
 ---
 
 <a id="branching-strategy"></a>
+
 <p align="left">
   <img src="assets/BranchingStrategy.PNG" alt="Branching Strategy" width="350"/>
 </p>
 
 Git Flow branching strategy is used for this project.
-- Branches are named according to the feature or issue they address.
-- Once a feature is complete, it is merged into the `Dev` branch.
-- The `Dev` branch is then merged into the `Main` branch for production releases.
+
+* Branches are named according to the feature or issue they address.
+* Once a feature is complete, it is merged into the `Dev` branch.
+* The `Dev` branch is then merged into the `Main` branch for production releases.
+
+<p align="right">
+   <a href="#table-of-contents">Back to top</a>
+</p>
 
 ---
 
 <a id="contact-us"></a>
+
 <p align="left">
   <img src="assets/ContactUs.PNG" alt="Contact Us" width="200"/>
 </p>
 
-Have questions, ideas, or collaboration opportunities?  
+Have questions, ideas, or collaboration opportunities?
 Email us at: [quantumquenchers@gmail.com](mailto:quantumquenchers@gmail.com)
 
 <p align="right">
