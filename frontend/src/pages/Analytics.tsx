@@ -583,39 +583,35 @@ const Analytics: React.FC = () => {
           {}
           <div className="chart-container half-width">
             <h2>System Performance Metrics</h2>
-            <div style={{ padding: '60px 80px 60px 80px' }}>
-              <ResponsiveContainer width="100%" height={180}>
-                <RadarChart data={performanceMetrics}>
-                  <PolarGrid stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
-                  <PolarAngleAxis 
-                    dataKey="metric" 
-                    stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <PolarRadiusAxis 
-                    angle={90} 
-                    domain={[0, 100]} 
-                    stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
-                    tick={{ fontSize: 9 }}
-                    tickCount={5}
-                  />
-                  <Radar 
-                    name="Performance" 
-                    dataKey="value" 
-                    stroke={chartColors.primary}
-                    fill={chartColors.primary}
-                    fillOpacity={0.6}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-                      border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
-                      borderRadius: '8px'
-                    }}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <RadarChart data={performanceMetrics}>
+                <PolarGrid stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
+                <PolarAngleAxis 
+                  dataKey="metric" 
+                  stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
+                  tick={{ fontSize: 12 }}
+                />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 100]} 
+                  stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
+                />
+                <Radar 
+                  name="Performance" 
+                  dataKey="value" 
+                  stroke={chartColors.primary}
+                  fill={chartColors.primary}
+                  fillOpacity={0.6}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                    border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                    borderRadius: '8px'
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
