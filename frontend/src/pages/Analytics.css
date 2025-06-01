@@ -57,10 +57,10 @@
 
 .date-range-selector {
   display: flex;
-  gap: 1.75rem;
+  gap: 1rem;
   align-items: center;
   background: #ffffff;
-  padding: 1.5rem 1.75rem;
+  padding: 1rem 1rem;
   border-radius: 12px;
   border: 2px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -102,16 +102,21 @@
 }
 
 .date-input-group input[type="date"] {
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   border-radius: 8px;
   border: 1px solid #d1d5db;
   background: #ffffff;
-  font-size: 1.125rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
   color: #1f2937;
   font-weight: 500;
-  min-width: 175px;
+  min-width: 120px;
+}
+
+.date-input-group input[type="date"]::-webkit-datetime-edit,
+.date-input-group input[type="date"]::-webkit-calendar-picker-indicator {
+  font-size: 1.25rem; 
 }
 
 .light-mode .date-input-group input[type="date"] {
@@ -555,6 +560,7 @@
   text-anchor: middle;
   alignment-baseline: middle;
   fill: #6b7280;
+  transform: translateY(-4px);
 }
 
 .dark-mode .recharts-polar-angle-axis-tick text {
