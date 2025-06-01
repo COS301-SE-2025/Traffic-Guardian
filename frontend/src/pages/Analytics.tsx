@@ -463,4 +463,58 @@ useEffect(() => {
             </ResponsiveContainer>
           </div>
 
-         
+          {}
+          <div className="chart-container half-width">
+            <h2>Response Time Distribution</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={responseTimeData}>
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
+                <XAxis dataKey="range" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+                <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                    border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                    borderRadius: '8px'
+                  }}
+                />
+                <Bar dataKey="count" fill={chartColors.primary} radius={[8, 8, 0, 0]}>
+                  {responseTimeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={chartColors.primary} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {}
+          <div className="chart-container half-width">
+            <h2>Incident Categories</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={categoryBreakdown}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ category, percentage }) => `${category}: ${percentage}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="count"
+                >
+                  {categoryBreakdown.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                    border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                    borderRadius: '8px'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          
