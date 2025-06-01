@@ -517,4 +517,69 @@ useEffect(() => {
             </ResponsiveContainer>
           </div>
 
+          {}
+          <div className="chart-container full-width">
+            <h2>Hourly Incident Distribution</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={hourlyDistribution}>
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
+                <XAxis 
+                  dataKey="hour" 
+                  tickFormatter={formatHourTick}
+                  stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
+                />
+                <YAxis yAxisId="left" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+                <YAxis yAxisId="right" orientation="right" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                    border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                    borderRadius: '8px'
+                  }}
+                  labelFormatter={(value) => formatHourTick(value as number)}
+                />
+                <Legend />
+                <Line 
+                  yAxisId="left"
+                  type="monotone" 
+                  dataKey="incidents" 
+                  stroke={chartColors.primary}
+                  strokeWidth={2}
+                  dot={{ fill: chartColors.primary, r: 4 }}
+                  name="Incidents"
+                />
+                <Line 
+                  yAxisId="right"
+                  type="monotone" 
+                  dataKey="avgResponseTime" 
+                  stroke={chartColors.secondary}
+                  strokeWidth={2}
+                  dot={{ fill: chartColors.secondary, r: 4 }}
+                  name="Avg Response Time (min)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {}
+          <div className="chart-container half-width">
+            <h2>Top Incident Locations</h2>
+            <div className="location-list">
+              {locationHotspots.map((location, index) => (
+                <div key={index} className="location-item">
+                  <div className="location-info">
+                    <span className="location-rank">#{index + 1}</span>
+                    <span className="location-name">{location.location}</span>
+                  </div>
+                  <div className="location-stats">
+                    <span className="incident-count">{location.incidents} incidents</span>
+                    <span className={`severity-indicator severity-${location.avgSeverity >= 2 ? 'high' : location.avgSeverity >= 1.5 ? 'medium' : 'low'}`}>
+                      Avg Severity: {location.avgSeverity.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           
