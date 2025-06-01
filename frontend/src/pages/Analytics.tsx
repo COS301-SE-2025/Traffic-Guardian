@@ -335,4 +335,64 @@ useEffect(() => {
           </div>
         </div>
 
-       
+        {}
+        <div className="summary-cards">
+          <div className="summary-card">
+            <div className="card-icon incidents">
+              <ChartIcon />
+            </div>
+            <div className="card-content">
+              <h3>Total Incidents</h3>
+              <div className="card-value">{summaryStats.totalIncidents}</div>
+              <div className={`card-trend ${summaryStats.trendsComparison.incidents >= 0 ? 'up' : 'down'}`}>
+                {summaryStats.trendsComparison.incidents >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
+                {Math.abs(summaryStats.trendsComparison.incidents)}% vs last period
+              </div>
+            </div>
+          </div>
+
+          <div className="summary-card">
+            <div className="card-icon response">
+              <ClockIcon />
+            </div>
+            <div className="card-content">
+              <h3>Avg Response Time</h3>
+              <div className="card-value">{summaryStats.avgResponseTime} min</div>
+              <div className={`card-trend ${summaryStats.trendsComparison.responseTime <= 0 ? 'up' : 'down'}`}>
+                {summaryStats.trendsComparison.responseTime <= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
+                {Math.abs(summaryStats.trendsComparison.responseTime)}% vs last period
+              </div>
+            </div>
+          </div>
+
+          <div className="summary-card">
+            <div className="card-icon resolution">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="card-content">
+              <h3>Resolution Rate</h3>
+              <div className="card-value">{summaryStats.resolutionRate}%</div>
+              <div className={`card-trend ${summaryStats.trendsComparison.resolution >= 0 ? 'up' : 'down'}`}>
+                {summaryStats.trendsComparison.resolution >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
+                {Math.abs(summaryStats.trendsComparison.resolution)}% vs last period
+              </div>
+            </div>
+          </div>
+
+          <div className="summary-card">
+            <div className="card-icon critical">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <div className="card-content">
+              <h3>Critical Incidents</h3>
+              <div className="card-value">{summaryStats.criticalIncidents}</div>
+              <div className="card-subtitle">Requiring immediate attention</div>
+            </div>
+          </div>
+        </div>
+
+        
