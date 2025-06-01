@@ -59,16 +59,21 @@
   display: flex;
   gap: 1rem;
   align-items: center;
-  background: rgba(59, 130, 246, 0.15);
+  background: #ffffff;
   padding: 0.75rem 1rem;
   border-radius: 12px;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .light-mode .date-range-selector {
-  background: #e8f0fe;
-  border-color: #4285f4;
+  background: #ffffff;
+  border-color: #e5e7eb;
+}
+
+.dark-mode .date-range-selector {
+  background: rgba(31, 41, 55, 0.8);
+  border-color: rgba(55, 65, 81, 1);
 }
 
 .date-input-group {
@@ -83,6 +88,11 @@
   gap: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
+  color: #374151;
+}
+
+.dark-mode .date-input-group label {
+  color: #d1d5db;
 }
 
 .date-input-group svg {
@@ -537,10 +547,23 @@
 }
 
 .recharts-polar-angle-axis-tick {
-  font-size: 12px !important;
+  font-size: 11px !important;
 }
 
 .recharts-polar-angle-axis-tick text {
   text-anchor: middle;
   alignment-baseline: middle;
+  fill: #6b7280;
+}
+
+.dark-mode .recharts-polar-angle-axis-tick text {
+  fill: #9ca3af;
+}
+
+.recharts-polar-angle-axis-tick-value {
+  text-anchor: middle;
+}
+
+.recharts-text {
+  font-size: 11px;
 }
