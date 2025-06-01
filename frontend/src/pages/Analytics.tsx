@@ -584,17 +584,19 @@ const Analytics: React.FC = () => {
           <div className="chart-container half-width">
             <h2>System Performance Metrics</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={performanceMetrics}>
+              <RadarChart data={performanceMetrics} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
                 <PolarGrid stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
                 <PolarAngleAxis 
                   dataKey="metric" 
                   stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
                   tick={{ fontSize: 12 }}
+                  className="radar-axis-label"
                 />
                 <PolarRadiusAxis 
                   angle={90} 
                   domain={[0, 100]} 
                   stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
+                  tick={{ fontSize: 11 }}
                 />
                 <Radar 
                   name="Performance" 
