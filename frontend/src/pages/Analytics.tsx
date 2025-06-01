@@ -582,4 +582,86 @@ useEffect(() => {
             </div>
           </div>
 
-          
+          {}
+          <div className="chart-container half-width">
+            <h2>System Performance Metrics</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <RadarChart data={performanceMetrics}>
+                <PolarGrid stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
+                <PolarAngleAxis 
+                  dataKey="metric" 
+                  stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
+                  tick={{ fontSize: 12 }}
+                />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 100]} 
+                  stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
+                />
+                <Radar 
+                  name="Performance" 
+                  dataKey="value" 
+                  stroke={chartColors.primary}
+                  fill={chartColors.primary}
+                  fillOpacity={0.6}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                    border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                    borderRadius: '8px'
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {}
+        <div className="trends-table-container">
+          <h2>Category Trends</h2>
+          <table className="trends-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Incidents</th>
+                <th>Percentage</th>
+                <th>Trend</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categoryBreakdown.map((category, index) => (
+                <tr key={index}>
+                  <td>{category.category}</td>
+                  <td>{category.count}</td>
+                  <td>
+                    <div className="percentage-bar">
+                      <div 
+                        className="percentage-fill"
+                        style={{ 
+                          width: `${category.percentage}%`,
+                          backgroundColor: categoryColors[index % categoryColors.length]
+                        }}
+                      />
+                      <span>{category.percentage}%</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`trend-indicator ${category.trend}`}>
+                      {category.trend === 'up' && <TrendingUpIcon />}
+                      {category.trend === 'down' && <TrendingDownIcon />}
+                      {category.trend === 'stable' && '→'}
+                      {category.trend}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Analytics;
