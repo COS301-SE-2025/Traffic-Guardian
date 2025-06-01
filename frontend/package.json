@@ -17,18 +17,17 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.0",
-    "react-scripts": "^3.0.1",
+    "react-scripts": "^5.0.1",
     "react-toastify": "^11.0.5",
-    "recharts": "^2.15.3",
     "svgo": "^3.3.2",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-  "start": "NODE_OPTIONS=--openssl-legacy-provider react-app-rewired start",
-  "build": "NODE_OPTIONS=--openssl-legacy-provider react-app-rewired build",
-  "test": "NODE_OPTIONS=--openssl-legacy-provider react-app-rewired test",
-  "eject": "react-scripts eject"
-},
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -58,7 +57,6 @@
     "eslint": "^8.57.1",
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-import": "^2.31.0",
-    "react-app-rewired": "^2.2.1",
     "stylelint": "^16.19.1",
     "stylelint-config-standard": "^38.0.0",
     "tsconfig-paths": "^4.2.0",
