@@ -174,7 +174,6 @@ const Analytics: React.FC = () => {
 
   // Simulated data loaders - replace with actual API calls
   const loadIncidentTrends = async () => {
-    // Generate sample data for the selected date range
     const trends: IncidentTrend[] = [];
     const start = new Date(dateRange.startDate);
     const end = new Date(dateRange.endDate);
@@ -319,9 +318,7 @@ const Analytics: React.FC = () => {
               />
             </div>
             <div className="date-input-group">
-              <label>
-                To:
-              </label>
+              <label>To:</label>
               <input
                 type="date"
                 value={dateRange.endDate}
@@ -584,12 +581,15 @@ const Analytics: React.FC = () => {
           <div className="chart-container half-width">
             <h2>System Performance Metrics</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={performanceMetrics}>
+              <RadarChart
+                data={performanceMetrics}
+                outerRadius="80%"
+              >
                 <PolarGrid stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
                 <PolarAngleAxis 
                   dataKey="metric" 
                   stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, dy: -4 }}
                 />
                 <PolarRadiusAxis 
                   angle={90} 
