@@ -295,3 +295,44 @@ useEffect(() => {
       </div>
     );
   }  
+
+  return (
+    <div className={`analytics-container ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+      <div className="analytics-content">
+        {}
+        <div className="analytics-header">
+          <div className="analytics-title">
+            <h1>Analytics Dashboard</h1>
+            <p>Traffic incident insights and performance metrics</p>
+          </div>
+          
+          {}
+          <div className="date-range-selector">
+            <div className="date-input-group">
+              <label>
+                <CalendarIcon />
+                From:
+              </label>
+              <input
+                type="date"
+                value={dateRange.startDate}
+                onChange={(e) => handleDateChange('start', e.target.value)}
+                max={dateRange.endDate}
+              />
+            </div>
+            <div className="date-input-group">
+              <label>
+                To:
+              </label>
+              <input
+                type="date"
+                value={dateRange.endDate}
+                onChange={(e) => handleDateChange('end', e.target.value)}
+                min={dateRange.startDate}
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          </div>
+        </div>
+
+       
