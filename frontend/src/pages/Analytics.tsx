@@ -296,7 +296,7 @@ useEffect(() => {
     );
   }  
 
-  return (
+   return (
     <div className={`analytics-container ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
       <div className="analytics-content">
         {}
@@ -395,4 +395,72 @@ useEffect(() => {
           </div>
         </div>
 
-        
+        {}
+        <div className="charts-grid">
+          {}
+          <div className="chart-container full-width">
+            <h2>Incident Trends Over Time</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={incidentTrends}>
+                <defs>
+                  <linearGradient id="colorHigh" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={severityColors.high} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={severityColors.high} stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="colorMedium" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={severityColors.medium} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={severityColors.medium} stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="colorLow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={severityColors.low} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={severityColors.low} stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
+                <XAxis 
+                  dataKey="date" 
+                  tickFormatter={formatXAxisTick}
+                  stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
+                />
+                <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                    border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                    borderRadius: '8px'
+                  }}
+                  labelStyle={{ color: isDarkMode ? '#e5e7eb' : '#111827' }}
+                />
+                <Legend />
+                <Area 
+                  type="monotone" 
+                  dataKey="severity.high" 
+                  stackId="1"
+                  stroke={severityColors.high}
+                  fillOpacity={1}
+                  fill="url(#colorHigh)"
+                  name="High Severity"
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="severity.medium" 
+                  stackId="1"
+                  stroke={severityColors.medium}
+                  fillOpacity={1}
+                  fill="url(#colorMedium)"
+                  name="Medium Severity"
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="severity.low" 
+                  stackId="1"
+                  stroke={severityColors.low}
+                  fillOpacity={1}
+                  fill="url(#colorLow)"
+                  name="Low Severity"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+         
