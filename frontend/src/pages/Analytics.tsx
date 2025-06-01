@@ -55,3 +55,52 @@ const TrendingDownIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
   </svg>
 );
+
+interface IncidentTrend {
+  date: string;
+  count: number;
+  severity: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+}
+
+interface ResponseTimeData {
+  range: string;
+  count: number;
+  percentage: number;
+}
+
+interface CategoryBreakdown {
+  category: string;
+  count: number;
+  percentage: number;
+  trend: 'up' | 'down' | 'stable';
+}
+
+interface HourlyDistribution {
+  hour: number;
+  incidents: number;
+  avgResponseTime: number;
+}
+
+interface LocationHotspot {
+  location: string;
+  incidents: number;
+  avgSeverity: number;
+}
+
+interface PerformanceMetric {
+  metric: string;
+  value: number;
+  maxValue: number;
+}
+
+const Analytics: React.FC = () => {
+  const { isDarkMode } = useTheme();
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0]
+  });
+  const [isLoading, setIsLoading] = useState(true);
