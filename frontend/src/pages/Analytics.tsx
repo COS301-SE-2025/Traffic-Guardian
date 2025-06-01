@@ -17,8 +17,6 @@ import {
   Legend,
   ResponsiveContainer,
   RadarChart,
-  RadarAxisAngle,
-  RadarAxisTick,
   Radar,
   PolarGrid,
   PolarAngleAxis,
@@ -104,7 +102,7 @@ const Analytics: React.FC = () => {
     endDate: new Date().toISOString().split('T')[0]
   });
   const [isLoading, setIsLoading] = useState(true);
-
+  
   const [incidentTrends, setIncidentTrends] = useState<IncidentTrend[]>([]);
   const [responseTimeData, setResponseTimeData] = useState<ResponseTimeData[]>([]);
   const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([]);
@@ -150,7 +148,7 @@ const Analytics: React.FC = () => {
     '#f97316'
   ];
 
-useEffect(() => {
+  useEffect(() => {
     loadAnalyticsData();
   }, [dateRange]);
 
@@ -294,9 +292,9 @@ useEffect(() => {
         </div>
       </div>
     );
-  }  
+  }
 
-   return (
+  return (
     <div className={`analytics-container ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
       <div className="analytics-content">
         {}
