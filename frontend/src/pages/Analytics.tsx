@@ -104,3 +104,50 @@ const Analytics: React.FC = () => {
     endDate: new Date().toISOString().split('T')[0]
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  const [incidentTrends, setIncidentTrends] = useState<IncidentTrend[]>([]);
+  const [responseTimeData, setResponseTimeData] = useState<ResponseTimeData[]>([]);
+  const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([]);
+  const [hourlyDistribution, setHourlyDistribution] = useState<HourlyDistribution[]>([]);
+  const [locationHotspots, setLocationHotspots] = useState<LocationHotspot[]>([]);
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
+  
+  const [summaryStats, setSummaryStats] = useState({
+    totalIncidents: 0,
+    avgResponseTime: 0,
+    resolutionRate: 0,
+    criticalIncidents: 0,
+    trendsComparison: {
+      incidents: 0,
+      responseTime: 0,
+      resolution: 0
+    }
+  });
+
+  const chartColors = {
+    primary: isDarkMode ? '#3b82f6' : '#2563eb',
+    secondary: isDarkMode ? '#8b5cf6' : '#7c3aed',
+    success: isDarkMode ? '#10b981' : '#059669',
+    warning: isDarkMode ? '#f59e0b' : '#d97706',
+    danger: isDarkMode ? '#ef4444' : '#dc2626',
+    info: isDarkMode ? '#06b6d4' : '#0891b2'
+  };
+
+  const severityColors = {
+    high: chartColors.danger,
+    medium: chartColors.warning,
+    low: chartColors.success
+  };
+
+  const categoryColors = [
+    chartColors.primary,
+    chartColors.secondary,
+    chartColors.success,
+    chartColors.warning,
+    chartColors.danger,
+    chartColors.info,
+    '#ec4899',
+    '#f97316'
+  ];
+
+  
