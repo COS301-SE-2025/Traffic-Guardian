@@ -1,0 +1,23 @@
+{
+    "stream_settings": {
+        "youtube_url": "https://youtu.be/BPNJQqkla08",
+        "streamlink_port": 8080,
+        "local_stream_url": "http://127.0.0.1:8080/"
+    },
+    "detection_settings": {
+        "model_version": "yolov8s",
+        "confidence_threshold": 0.4,
+        "iou_threshold": 0.45,
+        "target_classes": [
+            "person",
+            "car",
+            "truck"
+        ]
+    },
+    "display_settings": {
+        "show_window": true,
+        "save_frames": false,
+        "log_detections": true,
+        "alert_threshold": 10
+    }
+}

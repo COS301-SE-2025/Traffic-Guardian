@@ -18,3 +18,18 @@ keep running terminal
 
 open another terminal and run 
 python3 NIC.py
+
+
+
+
+
+
+FOR YOVOL8
+
+streamlink https://youtu.be/BPNJQqkla08 best --player-external-http --player-external-http-port 8080
+
+# Use the working version
+python3 enhanced_nic_fixed.py
+
+# OR the simple version
+python3 NIC.py
