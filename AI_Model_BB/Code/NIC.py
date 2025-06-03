@@ -5,7 +5,7 @@ import torch
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
 
 # Connect to the video stream served by streamlink
-cap = cv2.VideoCapture("http://127.0.1.1:45071/")
+cap = cv2.VideoCapture("http://127.0.1.1:8080/")
 
 if not cap.isOpened():
     print("Failed to open stream.")
