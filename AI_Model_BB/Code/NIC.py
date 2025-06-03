@@ -5,7 +5,7 @@ import torch
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
 
 # Connect to the video stream served by streamlink
-cap = cv2.VideoCapture("http://127.0.1.1:45969/")
+cap = cv2.VideoCapture("http://127.0.1.1:45071/")
 
 if not cap.isOpened():
     print("Failed to open stream.")
@@ -18,13 +18,11 @@ while True:
         break
 
     # Inference
-    results = model(frame)
-
-    # Optionally filter just vehicles
+    results = model(frame)    # Filter for cars, trucks, and humans only
     df = results.pandas().xyxy[0]
-    vehicles = df[df['name'].isin(['car', 'truck', 'bus', 'motorbike'])]
+    targets = df[df['name'].isin(['car', 'truck', 'person'])]
 
-    print(f"Detected {len(vehicles)} vehicles")
+    print(f"Detected {len(targets)} objects (cars, trucks, people)")
 
     # Draw results on image
     annotated = results.render()[0]
