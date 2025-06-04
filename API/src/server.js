@@ -1,6 +1,6 @@
 const app = require('./app');
 const db = require('./config/db');
-
+require('dotenv').config();
 const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 

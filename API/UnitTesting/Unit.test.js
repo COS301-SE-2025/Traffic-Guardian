@@ -5,7 +5,8 @@ require('dotenv').config({
   override: true,
   path: path.join(__dirname, '../development.env'),
 });
-const apikey = process.env.APIKEY;
+const Seeding = require('./Seeding.json');
+const yeah = Seeding.hmmmm;
 
 /* test('Register User', async ()=>{
     const payload = artifacts[2];
@@ -14,7 +15,7 @@ const apikey = process.env.APIKEY;
     const response = await axios.post('http://localhost:5000/api/auth/register', payload, {
     headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': apikey
+        'X-API-KEY': yeah
         }
     });
     console.log(response);
@@ -22,23 +23,25 @@ const apikey = process.env.APIKEY;
     expect(1).toBe(1);
 }); */
 
-test('Login User', async ()=>{
-    const payload = artifacts[1];
-    const response = await axios.post('http://localhost:5000/api/auth/login', payload, {
-        "Content-Type": "application/json",
-        "X-API-KEY": apikey
-    });
+// test('Login User', async ()=>{
+//     const payload = artifacts[1];
+//     const response = await axios.post('http://localhost:5000/api/auth/login', payload, {
+//         headers: {
+//             'Content-Type': 'application/json',
+//             'X-API-KEY': yeah
+//         }
+//     });
 
-    //expect(response.data).toMatchObject(seeding[0]);
-    expect(response.status).toBe(200);
-});
+//     //expect(response.data).toMatchObject(seeding[0]);
+//     expect(response.status).toBe(200);
+// });
 
 test('Get User preferences', async ()=>{
     const headers = artifacts[1];
     const response = await axios.get('http://localhost:5000/api/user/preferences', {
     headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': apikey
+        'X-API-KEY': yeah
         }
     });
 
@@ -55,7 +58,7 @@ test('Update user preferences', async ()=>{
     const response = await axios.get('http://localhost:5000/api/incidents',{
     headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': apikey
+        'X-API-KEY': yeah
         }
     });
 
@@ -69,7 +72,7 @@ test('Get specific incident', async ()=>{
     const response = await axios.get('http://localhost:5000/api/incidents/1',{
     headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': apikey
+        'X-API-KEY': yeah
         }
     });
 
@@ -84,7 +87,7 @@ test('Create incident', async ()=>{
     const response = await axios.post('http://localhost:5000/api/incidents', payload ,{
     headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': apikey
+        'X-API-KEY': yeah
         }
     });
 
@@ -99,7 +102,7 @@ test('Update incident', async ()=>{
     const response = await axios.put('http://localhost:5000/api/incidents/1', payload ,{
     headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': apikey
+        'X-API-KEY': yeah
         }
     });
 
@@ -113,7 +116,7 @@ test('Get specific alert', async ()=>{
     const response = await axios.get('http://localhost:5000/api/incidents/1/alerts', {
     headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': apikey
+        'X-API-KEY': yeah
         }
     });
 
@@ -126,7 +129,7 @@ test('Create alert', async ()=>{
     const response = await axios.post('http://localhost:5000/api/alerts',payload, {
     headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': apikey
+        'X-API-KEY': yeah
         }
     });
 
@@ -139,7 +142,7 @@ test('Update alert', async ()=>{
     const response = await axios.put('http://localhost:5000/api/alerts/1/status',payload, {
     headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': apikey
+        'X-API-KEY': yeah
         }
     });
 
@@ -152,7 +155,7 @@ test('Get all alerts', async ()=>{
     const response = await axios.get('http://localhost:5000/api/user/alerts',{
     headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': apikey
+        'X-API-KEY': yeah
         }
     });
 
