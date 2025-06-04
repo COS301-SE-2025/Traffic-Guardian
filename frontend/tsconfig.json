@@ -16,12 +16,5 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": [
-    "src/**/*",
-    "cypress/**/*",
-    "cypress.config.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src/**/*", "cypress/**/*", "*.ts", "**/*.ts", "**/*.tsx"]
 }

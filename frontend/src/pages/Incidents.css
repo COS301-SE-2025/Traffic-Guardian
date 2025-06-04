@@ -1052,6 +1052,12 @@ svg {
     text-align: right;
   }
 
+
+
+
+
+
+
   .status-update-group {
     width: 100%;
     justify-content: flex-end;
@@ -1071,4 +1077,17 @@ svg {
   .incidents-table td[data-label="Actions"]::before {
     align-self: flex-start;
   }
+}
+
+::selection {
+  background: rgb(255 140 0 / 30%);
+  color: #000;
+}
+
+.card {
+  background: #fa3;
+}
+
+.shadow {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }

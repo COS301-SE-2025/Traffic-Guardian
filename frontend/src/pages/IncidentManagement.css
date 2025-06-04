@@ -1,3 +1,5 @@
+/* Incident Management styles */
+
 .incident-management-page {
   padding: 2rem;
   min-height: 100vh;
@@ -13,6 +15,7 @@
   justify-content: space-between; /* Keep this for now */
   margin-bottom: 2rem;
   position: relative; /* Add this to allow absolute positioning of h2 */
+  background: #000;
 }
 
 .header-container h2 {
@@ -109,6 +112,27 @@
 
 .incident-table button:hover {
   background: #e89c2f;
+}
+
+.incident-card {
+  background: rgb(255 255 255 / 30%);
+  border: none;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
+}
+
+.incident-card h3 {
+  color: #000;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.incident-card p {
+  color: #333;
+  font-size: 1rem;
+  margin: 0.5rem 0;
 }
 
 .loading-message,
