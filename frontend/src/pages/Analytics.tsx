@@ -581,22 +581,28 @@ const Analytics: React.FC = () => {
           </div>
 
           {}
-          <div className="chart-container half-width">
+          <div className="chart-container half-width" style={{ overflow: 'visible' }}>
             <h2>System Performance Metrics</h2>
-            <div style={{ padding: '60px 80px 60px 80px' }}>
-              <ResponsiveContainer width="100%" height={180}>
-                <RadarChart data={performanceMetrics}>
+            <div style={{ padding: '5px' }}>
+              <ResponsiveContainer width="100%" height={450}>
+                <RadarChart
+                  data={performanceMetrics}
+                  outerRadius="55%"                               
+                  margin={{ top: 100, right: 100, bottom: 100, left: 100 }}
+      >
                   <PolarGrid stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
                   <PolarAngleAxis 
                     dataKey="metric" 
                     stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 11 }}
+                    tickSize={35}
+                    tickLine={false}
                   />
                   <PolarRadiusAxis 
                     angle={90} 
                     domain={[0, 100]} 
                     stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
-                    tick={{ fontSize: 9 }}
+                    tick={{ fontSize: 11 }}
                     tickCount={5}
                   />
                   <Radar 
@@ -608,9 +614,9 @@ const Analytics: React.FC = () => {
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-                      border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
-                      borderRadius: '8px'
+                    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                    border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                    borderRadius: '8px'
                     }}
                   />
                 </RadarChart>
