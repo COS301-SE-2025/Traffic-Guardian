@@ -601,7 +601,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .recharts-polar-angle-axis .recharts-text {
-  font-size: 10px !important;
+  font-size: 11px !important;
   fill: #6b7280;
 }
 
@@ -610,7 +610,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .recharts-polar-angle-axis-tick {
-  font-size: 10px !important;
+  font-size: 11px !important;
 }
 
 .recharts-polar-angle-axis-tick text {
@@ -619,7 +619,11 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .recharts-layer.recharts-polar-angle-axis text {
-  font-size: 10px !important;
+  font-size: 11px !important;
+}
+
+.chart-container.half-width {
+  overflow: visible;
 }
 
 .chart-container.half-width .recharts-wrapper {
