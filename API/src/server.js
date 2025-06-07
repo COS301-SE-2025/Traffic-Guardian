@@ -1,14 +1,29 @@
 const app = require('./app');
 const db = require('./config/db');
 const http = require('http');
-const Server = require('socket.io');
+const { Server } = require('socket.io');
 
 const server = http.createServer(app);
 
-const io = new Server();
+const io = new Server(server, {
+  cors : {
+    origin: process.env.CORS_ORIGIN || '*',
+    credentials: true
+  }
+});
 
 const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
+
+io.on('connection',(socket)=>{
+  console.log(socket.id + 'connected');
+
+  io.on('disconnect',()=>{
+    console.log(socket.id + 'disconnected');
+  })
+});
+
+app.set('io', io);
 
 // Test database connection before starting server
 db.query('SELECT NOW()')
