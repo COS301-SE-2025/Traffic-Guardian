@@ -16,8 +16,12 @@ const io = new Server(server, {
 const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
+var welcomeMsg;
 io.on('connection',(socket)=>{
   console.log(socket.id + ' connected');
+
+  welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
+  socket.emit('welcome', welcomeMsg);
 
   io.on('disconnect',()=>{
     console.log(socket.id + ' disconnected');
