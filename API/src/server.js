@@ -1,5 +1,11 @@
 const app = require('./app');
 const db = require('./config/db');
+const http = require('http');
+const Server = require('socket.io');
+
+const server = http.createServer(app);
+
+const io = new Server();
 
 const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
