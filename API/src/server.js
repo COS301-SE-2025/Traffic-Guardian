@@ -35,7 +35,7 @@ db.query('SELECT NOW()')
       console.log(`Database connection established`);
       console.log(`Server running on port ${PORT}`);
       console.log(`API available at: http://${HOST}:${PORT}`);
-      console.log(`API documentation available at: http://${HOST}:${PORT}/api-docs`);
+      console.log(`API documentation available at: https://documenter.getpostman.com/view/34423164/2sB2qak34y`);
     });
   })
   .catch(err => {
