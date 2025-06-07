@@ -192,3 +192,137 @@ nav {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-20px); }
 }
+
+.problem {
+    padding: 5rem 0;
+    background: var(--secondary-dark);
+    position: relative;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.section-title {
+    text-align: center;
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 3rem;
+    color: var(--text-primary);
+}
+
+.section-title span {
+    color: var(--accent-orange);
+}
+
+.problem-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.problem-card {
+    background: var(--card-dark);
+    padding: 2rem;
+    border-radius: 20px;
+    border: 1px solid rgba(243, 156, 18, 0.2);
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.problem-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--accent-orange);
+    box-shadow: 0 20px 40px rgba(243, 156, 18, 0.2);
+}
+
+.problem-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: var(--gradient-orange);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+
+.problem-card h3 {
+    color: var(--accent-orange);
+    margin-bottom: 1rem;
+}
+
+.problem-card p {
+    color: var(--text-muted);
+}
+
+.solution {
+    padding: 5rem 0;
+    background: var(--primary-dark);
+}
+
+.solution-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.solution-text h3 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--accent-orange);
+}
+
+.solution-text p {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+.solution-text ul {
+    list-style: none;
+    padding: 0;
+}
+
+.solution-text li {
+    padding: 0.5rem 0;
+    color: var(--text-secondary);
+}
+
+.solution-text li::before {
+    content: '✓ ';
+    color: var(--accent-orange);
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.solution-visual {
+    position: relative;
+    height: 400px;
+    background: var(--card-dark);
+    border: 2px solid var(--accent-orange);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.solution-visual::after {
+    content: '🚦 Live Detection Demo';
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--gradient-orange);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.demo-placeholder {
+    text-align: center;
+    color: var(--text-secondary);
+}
