@@ -132,3 +132,24 @@ function lazyLoadMedia() {
 }
 
 document.addEventListener('DOMContentLoaded', lazyLoadMedia);
+
+let scrollTimeout;
+function throttleScroll(callback, delay) {
+    if (scrollTimeout) return;
+    
+    scrollTimeout = setTimeout(() => {
+        callback();
+        scrollTimeout = null;
+    }, delay);
+}
+
+window.addEventListener('scroll', () => {
+    throttleScroll(() => {
+        const nav = document.querySelector('nav');
+        if (window.scrollY > 100) {
+            nav.classList.add('scrolled');
+        } else {
+            nav.classList.remove('scrolled');
+        }
+    }, 100);
+});
