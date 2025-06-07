@@ -499,3 +499,54 @@ footer a {
     color: var(--accent-orange);
     text-decoration: none;
 }
+
+.aws-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-top: 1rem;
+    border: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
+
+    .solution-content {
+        grid-template-columns: 1fr;
+    }
+
+    .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .tech-logos {
+        gap: 1rem;
+    }
+
+    .tech-item {
+        padding: 1rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}
