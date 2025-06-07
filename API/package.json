@@ -25,7 +25,8 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.0",
     "morgan": "^1.10.0",
-    "pg": "^8.16.0"
+    "pg": "^8.16.0",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "axios": "^1.9.0",
