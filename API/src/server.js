@@ -8,6 +8,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors : {
     origin: process.env.CORS_ORIGIN || '*',
+    methods : ['GET', 'POST'],
     credentials: true
   }
 });
@@ -16,10 +17,10 @@ const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 io.on('connection',(socket)=>{
-  console.log(socket.id + 'connected');
+  console.log(socket.id + ' connected');
 
   io.on('disconnect',()=>{
-    console.log(socket.id + 'disconnected');
+    console.log(socket.id + ' disconnected');
   })
 });
 
@@ -31,7 +32,7 @@ db.query('SELECT NOW()')
     console.log('Database connection established');
     
     // Start the server
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Database connection established`);
       console.log(`Server running on port ${PORT}`);
       console.log(`API available at: http://${HOST}:${PORT}`);
