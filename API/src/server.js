@@ -23,7 +23,9 @@ io.on('connection',(socket)=>{
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
 
-  
+  socket.on('user-location',(positition)=>{
+    console.log(`${socket.id} location = ${positition.coords.latitude} , ${positition.coords.latitude}`);
+  })
 
   io.on('disconnect',()=>{
     console.log(socket.id + ' disconnected');

@@ -16,32 +16,14 @@
 <body>
     <h1>Page just for testing socket connection and events</h1>
 
-     <div id="map" style="height: 25vw; width: 100vh;">
-
-     </div>
+     <div id="map" style="height: 25vw; width: 100vh;"></div>
         
     <h2>Events</h2>
     <div id="eventLog">
 
     </div>
 
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script>
-        const socket = io('http://localhost:5000');
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>    
 
-        var eventLog = document.getElementById('eventLog');
-        socket.on('welcome', (msg)=>{
-            console.log(msg);
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            const seconds = now.getSeconds();
-            var eventLog = document.getElementById('eventLog');
-            var ev = document.createElement('div');
-            ev.innerText = `${msg} (${hours}:${minutes}:${seconds})`;
-            eventLog.appendChild(ev);
-        });
-    </script>
-    
 </body>
 </html>
