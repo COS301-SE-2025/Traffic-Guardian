@@ -18,13 +18,16 @@ const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
 io.on('connection',(socket)=>{
+  var incidents = [];
   console.log(socket.id + ' connected');
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
 
-  socket.on('user-location',(positition)=>{
-    console.log(`${socket.id} location = ${positition.coords.latitude} , ${positition.coords.latitude}`);
+  socket.on('incident-location',(positition)=>{
+    console.log(`${socket.id} reported incident at location = ${positition.latitude} , ${positition.latitude}`);
+    incidents.push(positition);
+    socket.emit('incident-recived', `I saved your incident at {${positition.latitude} , ${positition.latitude}}`);
   })
 
   io.on('disconnect',()=>{
