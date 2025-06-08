@@ -37,7 +37,13 @@ function mapClick(e){
 }
 
 function reportIncident(){
-    console.log(position);
+    var marker = L.marker([position.latitude, position.longitude]).addTo(map);
+    var circle = L.circle([position.latitude, position.longitude], {
+    color: 'red',
+    fillColor: '#f03',
+    fillOpacity: 0.5,
+    radius: 50
+    }).addTo(map);
     socket.emit('incident-location', position);
 }
 
