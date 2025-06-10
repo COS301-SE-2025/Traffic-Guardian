@@ -27,6 +27,7 @@ python3 NIC.py
 FOR YOVOL8
 
 streamlink https://youtu.be/BPNJQqkla08 best --player-external-http --player-external-http-port 8080
+streamlink https://www.youtube.com/watch?v=JDL-d-G--jk best --player-external-http --player-external-http-port 8080
 
 # Use the working version
 python3 enhanced_nic_fixed.py
