@@ -254,4 +254,30 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      <section className="final-cta" id="demo">
+        <div className="container">
+          <h2>Ready to Transform Traffic Safety?</h2>
+          <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
+            Join us in revolutionising highway monitoring with AI-powered incident detection
+          </p>
+          <a href="https://github.com/COS301-SE-2025/Traffic-Guardian.git" className="btn btn-primary">
+            View Our Progress
+          </a>
+        </div>
+      </section>
+
+      <footer>
+        <div className="container">
+          <p>&copy; 2025 Traffic Guardian | COS 301 Capstone Project | University of Pretoria</p>
+          <p style={{ marginTop: '0.5rem' }}>
+            <a href="mailto:quantumquenchers@gmail.com">quantumquenchers@gmail.com</a>
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default LandingPage;
+
         
