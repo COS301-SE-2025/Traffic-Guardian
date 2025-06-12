@@ -58,3 +58,11 @@ const LandingPage: React.FC = () => {
       observer.disconnect();
     };
   }, []);
+
+  const handleLogin = () => {
+    navigate('/account');
+  };
+
+  const handleSignUp = () => {
+    navigate('/signup');
+  };
