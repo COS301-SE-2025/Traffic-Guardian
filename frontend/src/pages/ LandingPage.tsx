@@ -115,4 +115,58 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      <section className="problem" id="problem">
+        <div className="container">
+          <h2 className="section-title">The <span>Critical Challenge</span> We Address</h2>
+          <div className="problem-grid">
+            <div className="problem-card">
+              <div className="problem-icon">⏱️</div>
+              <h3>Response Delays</h3>
+              <p>Every second counts. Manual monitoring creates dangerous delays between incidents and emergency response.</p>
+            </div>
+            <div className="problem-card">
+              <div className="problem-icon">🚗</div>
+              <h3>Cascading Congestion</h3>
+              <p>Undetected incidents rapidly escalate into major traffic events, impacting thousands of commuters daily.</p>
+            </div>
+            <div className="problem-card">
+              <div className="problem-icon">👁️</div>
+              <h3>Human Limitations</h3>
+              <p>Operators cannot effectively monitor multiple camera feeds 24/7, leading to missed critical events.</p>
+            </div>
+            <div className="problem-card">
+              <div className="problem-icon">💰</div>
+              <h3>Economic Impact</h3>
+              <p>Traffic incidents cost millions in lost productivity, fuel waste, and secondary accident damages.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="solution" id="solution">
+        <div className="container">
+          <h2 className="section-title">Introducing <span>Traffic Guardian</span></h2>
+          <div className="solution-content">
+            <div className="solution-text">
+              <h3>Intelligent Incident Detection System</h3>
+              <p>Traffic Guardian revolutionises highway monitoring by transforming passive camera networks into active, AI-powered detection systems that never sleep.</p>
+              <ul>
+                <li>Instant detection of accidents, breakdowns, and hazards</li>
+                <li>Automated severity classification for resource optimisation</li>
+                <li>Real-time alerts with precise geolocation data</li>
+                <li>Comprehensive incident analytics and reporting</li>
+                <li>24/7 autonomous monitoring across multiple feeds</li>
+              </ul>
+            </div>
+            <div className="solution-visual">
+              <div className="demo-placeholder">
+                <p style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎥</p>
+                <p>Live Detection Interface</p>
+                <p style={{ fontSize: '0.9rem', marginTop: '1rem' }}>Computer vision analysing traffic in real-time</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
         
