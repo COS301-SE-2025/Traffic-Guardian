@@ -93,3 +93,26 @@ const LandingPage: React.FC = () => {
           </ul>
         </div>
       </nav>
+
+      <section className="hero" id="home">
+        <div className="hero-content">
+          <h1 className="floating">AI-Powered Traffic Safety for Gauteng</h1>
+          <p className="hero-subtitle">
+            Transforming highway monitoring with real-time computer vision to detect incidents instantly and save lives
+          </p>
+          <div className="cta-buttons">
+            <a href="#solution" className="btn btn-primary">Discover Our Solution</a>
+            <a href="#features" className="btn btn-secondary">View Features</a>
+          </div>
+          <div className="auth-section">
+            <h3>Get Started Today</h3>
+            <div className="auth-buttons">
+              <button className="btn btn-login" onClick={handleLogin}>Login</button>
+              <button className="btn btn-signup" onClick={handleSignUp}>Sign Up</button>
+            </div>
+          </div>
+          <div className="aws-badge">Powered by AWS</div>
+        </div>
+      </section>
+
+        
