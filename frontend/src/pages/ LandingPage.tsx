@@ -169,4 +169,42 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      <section className="features" id="features">
+        <div className="container">
+          <h2 className="section-title">Advanced <span>Capabilities</span></h2>
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon">🧠</div>
+              <h3 className="feature-title">Deep Learning AI</h3>
+              <p>State-of-the-art TensorFlow models trained on thousands of traffic scenarios for accurate incident detection</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">⚡</div>
+              <h3 className="feature-title">Real-Time Processing</h3>
+              <p>Sub-second detection latency ensures immediate awareness of developing situations on the highway</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">🗺️</div>
+              <h3 className="feature-title">3D Traffic Visualisation</h3>
+              <p>Interactive digital twin of the highway network with live incident mapping and traffic flow analysis</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">📊</div>
+              <h3 className="feature-title">Predictive Analytics</h3>
+              <p>Historical pattern recognition to identify accident hotspots and predict high-risk conditions</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">🔔</div>
+              <h3 className="feature-title">Smart Alert System</h3>
+              <p>Intelligent notification routing based on incident severity and available emergency resources</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">🔒</div>
+              <h3 className="feature-title">Enterprise Security</h3>
+              <p>Bank-grade encryption with full POPI Act compliance for all captured data and communications</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
         
