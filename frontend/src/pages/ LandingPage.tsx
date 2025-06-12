@@ -207,4 +207,51 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+       <section className="tech-stack">
+        <div className="container">
+          <h2 className="section-title">Built with <span>Industry-Leading Technology</span></h2>
+          <div className="tech-logos">
+            <div className="tech-item">AWS Cloud</div>
+            <div className="tech-item">TensorFlow</div>
+            <div className="tech-item">OpenCV</div>
+            <div className="tech-item">React.js</div>
+            <div className="tech-item">Python</div>
+            <div className="tech-item">WebSockets</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="team" id="team">
+        <div className="container">
+          <h2 className="section-title">Meet <span>Quantum Quenchers</span></h2>
+          <div className="team-grid">
+            <div className="team-member">
+              <div className="member-avatar">ND</div>
+              <h4>Nicholas Dobson</h4>
+              <p>Full-Stack & DevOps Engineer</p>
+            </div>
+            <div className="team-member">
+              <div className="member-avatar">SG</div>
+              <h4>Shaylin Govender</h4>
+              <p>Team Lead & Full-Stack Engineer</p>
+            </div>
+            <div className="team-member">
+              <div className="member-avatar">LK</div>
+              <h4>Lonwabo Kwitshana</h4>
+              <p>Frontend & UI/UX Engineer</p>
+            </div>
+            <div className="team-member">
+              <div className="member-avatar">MT</div>
+              <h4>Mpho Tsotetsi</h4>
+              <p>Backend & Database Engineer</p>
+            </div>
+            <div className="team-member">
+              <div className="member-avatar">AM</div>
+              <h4>Aryan Mohanlall</h4>
+              <p>Backend & System Integration Engineer</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
         
