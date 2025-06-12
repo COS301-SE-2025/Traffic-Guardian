@@ -28,4 +28,33 @@ const LandingPage: React.FC = () => {
 
     window.addEventListener('scroll', handleScroll);
 
-    
+    // Intersection Observer for animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-in');
+        }
+      });
+    }, observerOptions);
+
+    const elementsToObserve = document.querySelectorAll(
+      '.problem-card, .feature-card, .team-member, .process-step, .impact-card, .detail-card'
+    );
+
+    elementsToObserve.forEach(el => {
+      observer.observe(el);
+    });
+
+    return () => {
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.removeEventListener('click', handleSmoothScroll);
+      });
+      window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
+    };
+  }, []);
