@@ -66,3 +66,30 @@ const LandingPage: React.FC = () => {
   const handleSignUp = () => {
     navigate('/signup');
   };
+
+  return (
+    <div className="landing-page">
+      <nav className={isScrolled ? 'scrolled' : ''}>
+        <div className="nav-container">
+          <div className="logo">
+            <img src={TrafficGuardianLogo} alt="Traffic Guardian" className="logo-img" />
+          </div>
+          <button 
+            className="hamburger"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <ul className={`nav-links ${isMobileMenuOpen ? 'active' : ''}`}>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#problem">Problem</a></li>
+            <li><a href="#solution">Solution</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#team">Team</a></li>
+            <li><button className="nav-btn nav-btn-login" onClick={handleLogin}>Login</button></li>
+            <li><button className="nav-btn nav-btn-signup" onClick={handleSignUp}>Sign Up</button></li>
+          </ul>
+        </div>
+      </nav>
