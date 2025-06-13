@@ -1,13 +1,14 @@
 """
-Enhanced Network Interface Camera (NIC) with improved AI detection.
-Features: Multi-model support, real-time analytics, and optimized performance.
+Fixed Enhanced Network Interface Camera (NIC) with built-in AI detection.
+This version works without external dependencies and includes all necessary functions.
 """
 import cv2
 import torch
 import time
 import json
 from datetime import datetime
-from improved_detection import ImprovedDetector
+import numpy as np
+from collections import defaultdict
 
 class EnhancedNIC:
     def __init__(self, stream_url="http://127.0.0.1:8080/", config=None):
@@ -20,13 +21,15 @@ class EnhancedNIC:
         """
         self.stream_url = stream_url
         self.config = config or self._default_config()
+          # Initialize detector
+        self.model = self._load_model()
+        self.target_classes = ['person', 'car', 'truck', 'bus', 'motorcycle', 'bicycle']
         
-        # Initialize detector
-        self.detector = ImprovedDetector(
-            model_version=self.config['model_version'],
-            confidence_threshold=self.config['confidence_threshold'],
-            iou_threshold=self.config['iou_threshold']
-        )
+        # Collision detection tracking
+        self.previous_detections = []
+        self.collision_threshold = 50  # pixels - minimum distance for collision detection
+        self.stationary_threshold = 10  # pixels - threshold for stationary detection
+        self.traffic_density_zones = []  # For traffic monitoring
         
         # Analytics
         self.analytics = {
@@ -34,13 +37,36 @@ class EnhancedNIC:
             'total_detections': 0,
             'class_totals': {},
             'start_time': time.time(),
-            'alerts': []
+            'alerts': [],
+            'collisions_detected': 0,
+            'traffic_density': 'LOW',
+            'stationary_vehicles': 0
         }
         
         # Video capture
         self.cap = None
         self.initialize_capture()
         
+    def _load_model(self):
+        """Load the best available YOLO model."""
+        try:
+            # Try YOLOv8 first
+            from ultralytics import YOLO
+            model = YOLO(f"{self.config['model_version']}.pt")
+            print(f"✓ Loaded YOLOv8 model: {self.config['model_version']}")
+            self.model_type = 'yolov8'
+            return model
+        except ImportError:
+            try:
+                # Fallback to YOLOv5
+                model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
+                print("✓ Loaded YOLOv5 model (fallback)")
+                self.model_type = 'yolov5'
+                return model
+            except Exception as e:
+                print(f"✗ Failed to load any model: {e}")
+                return None
+    
     def _default_config(self):
         """Default configuration settings."""
         return {
@@ -54,7 +80,18 @@ class EnhancedNIC:
                 'car': 2,    # Alert if more than 2 cars detected
             },
             'log_detections': True,
-            'frame_skip': 1  # Process every N frames for performance
+            'frame_skip': 3,  # Process every 3rd frame for performance
+            # Collision detection settings
+            'collision_detection': True,
+            'collision_distance_threshold': 50,  # pixels
+            'stationary_time_threshold': 5,  # seconds
+            # Traffic monitoring settings
+            'traffic_monitoring': True,
+            'traffic_density_thresholds': {
+                'low': 5,    # vehicles per frame
+                'medium': 15,
+                'high': 25
+            }
         }
     
     def initialize_capture(self):
@@ -97,23 +134,32 @@ class EnhancedNIC:
                     if not self.initialize_capture():
                         break
                     continue
-                
-                # Skip frames for performance if configured
+                  # Skip frames for performance if configured
                 frame_count += 1
                 if frame_count % self.config['frame_skip'] != 0:
                     continue
                 
                 # Perform detection
-                results = self.detector.detect_objects(frame)
+                results = self._detect_objects(frame)
+                
+                # Collision detection
+                if self.config.get('collision_detection', True):
+                    collision_alerts = self._detect_collisions(results['detections'])
+                    results['collision_alerts'] = collision_alerts
+                
+                # Traffic density analysis
+                if self.config.get('traffic_monitoring', True):
+                    traffic_info = self._analyze_traffic(results['detections'])
+                    results['traffic_info'] = traffic_info
                 
                 # Update analytics
                 self._update_analytics(results)
                 
-                # Check for alerts
+                # Check for alerts (including collisions and traffic)
                 self._check_alerts(results)
                 
                 # Draw enhanced visualization
-                annotated_frame = self.detector.draw_detections(frame, results)
+                annotated_frame = self._draw_detections(frame, results)
                 
                 # Add analytics overlay
                 annotated_frame = self._add_analytics_overlay(annotated_frame)
@@ -144,6 +190,198 @@ class EnhancedNIC:
         finally:
             self._cleanup()
     
+    def _detect_objects(self, frame):
+        """Perform object detection."""
+        start_time = time.time()
+        
+        if self.model is None:
+            return {'detections': [], 'total_count': 0, 'class_counts': {}, 'processing_time': 0, 'fps': 0}
+        
+        try:
+            if self.model_type == 'yolov8':
+                results = self.model(frame, conf=self.config['confidence_threshold'], verbose=False)
+                detections = self._process_yolov8_results(results[0])
+            else:  # yolov5
+                results = self.model(frame)
+                detections = self._process_yolov5_results(results)
+                
+            # Calculate performance metrics
+            processing_time = time.time() - start_time
+            
+            # Count by class
+            class_counts = defaultdict(int)
+            for detection in detections:
+                class_counts[detection['class']] += 1
+            
+            return {
+                'detections': detections,
+                'total_count': len(detections),
+                'class_counts': dict(class_counts),
+                'processing_time': processing_time,
+                'fps': 1.0 / processing_time if processing_time > 0 else 0
+            }
+        except Exception as e:
+            print(f"Detection error: {e}")
+            return {'detections': [], 'total_count': 0, 'class_counts': {}, 'processing_time': 0, 'fps': 0}
+    
+    def _process_yolov8_results(self, results):
+        """Process YOLOv8 results format."""
+        detections = []
+        if results.boxes is not None:
+            boxes = results.boxes.xyxy.cpu().numpy()
+            confidences = results.boxes.conf.cpu().numpy()
+            classes = results.boxes.cls.cpu().numpy()
+            
+            for i, (box, conf, cls) in enumerate(zip(boxes, confidences, classes)):
+                class_name = results.names[int(cls)]
+                if class_name in self.target_classes:
+                    x1, y1, x2, y2 = map(int, box)
+                    detections.append({
+                        'bbox': [x1, y1, x2 - x1, y2 - y1],
+                        'confidence': float(conf),
+                        'class': class_name,                        'center': [(x1 + x2) // 2, (y1 + y2) // 2]
+                    })
+        return detections
+    
+    def _detect_collisions(self, detections):
+        """Detect potential collisions between vehicles."""
+        collision_alerts = []
+        vehicles = [d for d in detections if d['class'] in ['car', 'truck', 'bus', 'motorcycle']]
+        
+        for i, vehicle1 in enumerate(vehicles):
+            for j, vehicle2 in enumerate(vehicles[i+1:], i+1):
+                # Calculate distance between vehicle centers
+                x1, y1 = vehicle1['center']
+                x2, y2 = vehicle2['center']
+                distance = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                
+                # Check if vehicles are too close (potential collision)
+                if distance < self.config['collision_distance_threshold']:
+                    collision_alert = {
+                        'type': 'collision_warning',
+                        'vehicles': [vehicle1['class'], vehicle2['class']],
+                        'distance': distance,
+                        'positions': [(x1, y1), (x2, y2)],
+                        'timestamp': datetime.now().isoformat()
+                    }
+                    collision_alerts.append(collision_alert)
+                    
+        return collision_alerts
+    
+    def _analyze_traffic(self, detections):
+        """Analyze traffic density and flow."""
+        vehicles = [d for d in detections if d['class'] in ['car', 'truck', 'bus', 'motorcycle']]
+        vehicle_count = len(vehicles)
+        
+        # Determine traffic density
+        thresholds = self.config['traffic_density_thresholds']
+        if vehicle_count <= thresholds['low']:
+            density = 'LOW'
+        elif vehicle_count <= thresholds['medium']:
+            density = 'MEDIUM'
+        else:
+            density = 'HIGH'
+        
+        # Update analytics
+        self.analytics['traffic_density'] = density
+        
+        traffic_info = {
+            'vehicle_count': vehicle_count,
+            'density': density,
+            'congestion_level': self._calculate_congestion(vehicles)
+        }
+        
+        return traffic_info
+    
+    def _calculate_congestion(self, vehicles):
+        """Calculate congestion level based on vehicle spacing."""
+        if len(vehicles) < 2:
+            return 'NONE'
+        
+        # Calculate average distance between vehicles
+        distances = []
+        for i, v1 in enumerate(vehicles):
+            for v2 in vehicles[i+1:]:
+                x1, y1 = v1['center']
+                x2, y2 = v2['center']
+                distance = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                distances.append(distance)
+        
+        if distances:
+            avg_distance = np.mean(distances)
+            if avg_distance < 80:
+                return 'HIGH'
+            elif avg_distance < 150:
+                return 'MEDIUM'
+            else:
+                return 'LOW'
+        
+        return 'NONE'
+    
+    def _process_yolov5_results(self, results):
+        """Process YOLOv5 results format."""
+        detections = []
+        df = results.pandas().xyxy[0]
+        
+        for _, row in df.iterrows():
+            if row['name'] in self.target_classes and row['confidence'] >= self.config['confidence_threshold']:
+                x1, y1, x2, y2 = int(row['xmin']), int(row['ymin']), int(row['xmax']), int(row['ymax'])
+                detections.append({
+                    'bbox': [x1, y1, x2 - x1, y2 - y1],
+                    'confidence': float(row['confidence']),
+                    'class': row['name'],
+                    'center': [(x1 + x2) // 2, (y1 + y2) // 2]
+                })
+        return detections
+    
+    def _draw_detections(self, frame, results):
+        """Draw detection visualization."""
+        annotated_frame = frame.copy()
+        detections = results['detections']
+        
+        # Color map for different classes
+        colors = {
+            'person': (255, 0, 0),      # Blue
+            'car': (0, 255, 0),        # Green
+            'truck': (0, 0, 255),      # Red
+            'bus': (255, 255, 0),      # Cyan
+            'motorcycle': (255, 0, 255), # Magenta
+            'bicycle': (0, 255, 255)   # Yellow
+        }
+        
+        for detection in detections:
+            x, y, w, h = detection['bbox']
+            class_name = detection['class']
+            confidence = detection['confidence']
+            
+            color = colors.get(class_name, (128, 128, 128))
+            
+            # Draw bounding box
+            cv2.rectangle(annotated_frame, (x, y), (x + w, y + h), color, 2)
+            
+            # Draw label with confidence
+            label = f"{class_name}: {confidence:.2f}"
+            label_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)[0]
+            cv2.rectangle(annotated_frame, (x, y - label_size[1] - 10), 
+                         (x + label_size[0], y), color, -1)
+            cv2.putText(annotated_frame, label, (x, y - 5), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        
+        # Draw performance info
+        fps = results['fps']
+        total_count = results['total_count']
+        cv2.putText(annotated_frame, f"FPS: {fps:.1f} | Objects: {total_count}", 
+                   (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        
+        # Draw class counts
+        y_offset = 60
+        for class_name, count in results['class_counts'].items():
+            cv2.putText(annotated_frame, f"{class_name}: {count}", 
+                       (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+            y_offset += 25
+        
+        return annotated_frame
+    
     def _update_analytics(self, results):
         """Update detection analytics."""
         self.analytics['total_frames'] += 1
@@ -153,11 +391,11 @@ class EnhancedNIC:
             if class_name not in self.analytics['class_totals']:
                 self.analytics['class_totals'][class_name] = 0
             self.analytics['class_totals'][class_name] += count
-    
     def _check_alerts(self, results):
         """Check for alert conditions."""
         current_time = datetime.now()
         
+        # Check count thresholds
         for class_name, count in results['class_counts'].items():
             threshold = self.config['alert_thresholds'].get(class_name)
             if threshold and count > threshold:
@@ -170,6 +408,29 @@ class EnhancedNIC:
                 }
                 self.analytics['alerts'].append(alert)
                 print(f"⚠️  ALERT: {count} {class_name}s detected (threshold: {threshold})")
+        
+        # Check collision alerts
+        if 'collision_alerts' in results:
+            for collision in results['collision_alerts']:
+                self.analytics['alerts'].append(collision)
+                self.analytics['collisions_detected'] += 1
+                vehicles = ' and '.join(collision['vehicles'])
+                distance = collision['distance']
+                print(f"🚨 COLLISION ALERT: {vehicles} too close! Distance: {distance:.1f} pixels")
+        
+        # Check traffic density alerts
+        if 'traffic_info' in results:
+            traffic = results['traffic_info']
+            if traffic['density'] == 'HIGH' and traffic['congestion_level'] == 'HIGH':
+                alert = {
+                    'timestamp': current_time.isoformat(),
+                    'type': 'traffic_congestion',
+                    'density': traffic['density'],
+                    'congestion': traffic['congestion_level'],
+                    'vehicle_count': traffic['vehicle_count']
+                }
+                self.analytics['alerts'].append(alert)
+                print(f"🚦 TRAFFIC ALERT: High congestion detected! {traffic['vehicle_count']} vehicles")
     
     def _add_analytics_overlay(self, frame):
         """Add analytics information to frame."""
@@ -179,12 +440,13 @@ class EnhancedNIC:
         runtime = time.time() - self.analytics['start_time']
         avg_detections = (self.analytics['total_detections'] / 
                          max(1, self.analytics['total_frames']))
-        
-        # Create overlay text
+          # Create overlay text
         overlay_text = [
             f"Runtime: {runtime:.0f}s",
             f"Frames: {self.analytics['total_frames']}",
             f"Avg Detections/Frame: {avg_detections:.1f}",
+            f"Traffic: {self.analytics.get('traffic_density', 'LOW')}",
+            f"Collisions: {self.analytics.get('collisions_detected', 0)}",
             f"Alerts: {len(self.analytics['alerts'])}"
         ]
         
@@ -204,6 +466,9 @@ class EnhancedNIC:
     
     def _save_frame(self, frame, frame_number, manual=False):
         """Save frame with timestamp."""
+        import os
+        os.makedirs('output_frames', exist_ok=True)
+        
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"output_frames/frame_{timestamp}_{frame_number}"
         if manual:
@@ -258,8 +523,7 @@ class EnhancedNIC:
             print(f"Average processing FPS: {fps:.1f}")
 
 def main():
-    """Main function to run enhanced NIC."""
-    # Custom configuration
+    """Main function to run enhanced NIC."""    # Custom configuration
     config = {
         'model_version': 'yolov8s',  # Use YOLOv8 small for better performance
         'confidence_threshold': 0.4,
@@ -272,7 +536,18 @@ def main():
             'truck': 2     # Alert if more than 2 trucks
         },
         'log_detections': True,
-        'frame_skip': 1  # Process every frame
+        'frame_skip': 3,  # Process every 3rd frame for performance
+        # Collision detection settings
+        'collision_detection': True,
+        'collision_distance_threshold': 50,  # pixels
+        'stationary_time_threshold': 5,  # seconds
+        # Traffic monitoring settings
+        'traffic_monitoring': True,
+        'traffic_density_thresholds': {
+            'low': 5,    # vehicles per frame
+            'medium': 15,
+            'high': 25
+        }
     }
     
     # Initialize and run enhanced NIC
