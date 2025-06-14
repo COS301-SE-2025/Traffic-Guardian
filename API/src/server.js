@@ -2,6 +2,13 @@ const app = require('./app');
 const db = require('./config/db');
 const http = require('http');
 const { Server } = require('socket.io');
+const axios = require('axios');
+const FormData = require('form-data');
+const path = require('path');
+require('dotenv').config({
+  override: true,
+  path: path.join(__dirname, '../../development.env'),
+});
 
 const server = http.createServer(app);
 
@@ -29,6 +36,24 @@ io.on('connection',(socket)=>{
     incidents.push(positition);
     socket.emit('incident-recived', `I saved your incident at {${positition.latitude} , ${positition.latitude}}`);
   })
+
+    var regions = ['-26.1438,28.0406', '-26.0912,28.0868', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658' ];
+    for(var i=0; i< regions.length; i++){
+      const form = new FormData();
+      form.append('key', process.env.WEATHERAPI);
+      form.append('q',regions[i]);
+      axios.post('https://api.weatherapi.com/v1/current.json',form,{
+        //headers : form.getHeaders()
+      })
+      .then((response)=>{
+        console.log(response.data);
+      })
+      .catch((error)=>{
+        console.log(error);
+      })
+    }
+
+
 
   io.on('disconnect',()=>{
     console.log(socket.id + ' disconnected');
