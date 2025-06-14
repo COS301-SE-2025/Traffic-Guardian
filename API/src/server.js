@@ -37,7 +37,7 @@ io.on('connection',(socket)=>{
     socket.emit('incident-recived', `I saved your incident at {${positition.latitude} , ${positition.latitude}}`);
   })
 
-    var regions = ['-26.1438,28.0406', '-26.0912,28.0868', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658' ];
+    var regions = ['-26.1438,28.0406', '-26.0912,28.0868', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658', '-26.1625,27.9015', '-26.0936,27.9931', '-26.2259,28.1598', '-26.6667,27.9167', '-26.3333,28.1667', '25.7487,28.2380'];
     for(var i=0; i< regions.length; i++){
       const form = new FormData();
       form.append('key', process.env.WEATHERAPI);
