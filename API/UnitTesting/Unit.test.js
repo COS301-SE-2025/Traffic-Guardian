@@ -1,16 +1,15 @@
 const axios = require('axios');
 const artifacts = require('./artifacts.json');
-const path = require('path');
-require('dotenv').config({
-  override: true,
-  path: path.join(__dirname, '../development.env')
-});
 const Seeding = require('./Seeding.json');
+const config = require('./testConfig');
 const yeah = Seeding.hmmmm;
+
+// API base URL from config
+const API_BASE_URL = config.apiBaseUrl;
 
 test('Login User', async ()=>{
     const payload = artifacts[1];
-    const response = await axios.post('http://localhost:5000/api/auth/login', payload, {
+    const response = await axios.post(`${API_BASE_URL}/api/auth/login`, payload, {
         header: {
         "Content-Type": "application/json",
         "X-API-KEY": yeah
@@ -22,7 +21,7 @@ test('Login User', async ()=>{
 });
 
 test('Get User preferences', async ()=>{
-    const response = await axios.get('http://localhost:5000/api/user/preferences', {
+    const response = await axios.get(`${API_BASE_URL}/api/user/preferences`, {
     headers: {
         'Content-Type': 'application/json',
         'X-API-KEY': yeah
@@ -38,7 +37,7 @@ test('Get User preferences', async ()=>{
 
 test('Update user preferences', async ()=>{
     const payload = artifacts[3];
-    const response = await axios.get('http://localhost:5000/api/incidents',{
+    const response = await axios.get(`${API_BASE_URL}/api/incidents`,{
     headers: {
         'Content-Type': 'application/json',
         'X-API-KEY': yeah
