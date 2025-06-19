@@ -4,11 +4,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios');
 const FormData = require('form-data');
-const path = require('path');
-require('dotenv').config({
-  override: true,
-  path: path.join(__dirname, '../../development.env'),
-});
 
 const server = http.createServer(app);
 
@@ -20,6 +15,7 @@ const io = new Server(server, {
   }
 });
 
+// Configuration - will use GitHub secrets in production, .env for local development
 const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
@@ -98,8 +94,13 @@ db.query('SELECT NOW()')
       console.log(`API available at: http://${HOST}:${PORT}`);
       console.log(`API documentation available at: https://documenter.getpostman.com/view/34423164/2sB2qak34y`);
     });
-  })
-  .catch(err => {
+  })  .catch(err => {
     console.error('Database connection failed:', err);
+    console.error('Please ensure all required GitHub Codespace secrets are properly configured:');
+    console.error('- DATABASE_USERNAME');
+    console.error('- DATABASE_HOST');
+    console.error('- DATABASE_NAME');
+    console.error('- DATABASE_PASSWORD');
+    console.error('- DATABASE_PORT');
     process.exit(1);
   });
