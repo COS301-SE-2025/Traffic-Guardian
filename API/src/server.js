@@ -4,6 +4,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios');
 const FormData = require('form-data');
+const weather = require('../src/Weather/weather');
 
 const server = http.createServer(app);
 
@@ -33,46 +34,9 @@ io.on('connection',(socket)=>{
     socket.emit('incident-recived', `I saved your incident at {${positition.latitude} , ${positition.latitude}}`);
   })
 
-    var regions = ['-26.1438,28.0406', 'Sandton', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658', '-26.0936,27.9931', '-26.2259,28.1598', '-26.6667,27.9167', '-26.3333,28.1667', '-25.7487,28.2380'];
-    var weatherCurrent = [];
-    var johannesburgCount = 0;
-    async function getWeather(){
-      johannesburgCount = 0;
-      console.log(regions.length);
-      for(var i=0; i< regions.length; i++){
-        const form = new FormData();
-        form.append('key', process.env.WEATHERAPI);
-        form.append('q',regions[i]);
-        try{
-        var response = await axios.post('https://api.weatherapi.com/v1/current.json',form);
-          weatherCurrent.push(response.data);
-        }catch(error){
-          console.log(error);
-        }
-      }
-
-      
-     for(var i=0; i< weatherCurrent.length; i++){
-      if(weatherCurrent[i].location.name == 'Johannesburg'){
-        johannesburgCount++;
-      }
-
-      if(johannesburgCount == 2 && weatherCurrent[i].location.name == 'Johannesburg'){
-        weatherCurrent[i].location.name = 'Rosebank';
-      }
-
-      if(johannesburgCount == 3 && weatherCurrent[i].location.name == 'Johannesburg'){
-        weatherCurrent[i].location.name = 'Marlboro';
-      }
-     }
-
-      weatherCurrent.forEach((w)=>{
-        console.log(w);
-      })
-    }
-
-    getWeather();
-    setInterval(getWeather, 60*60*1000); //1hr interval
+    
+    weather.getWeather();
+    setInterval(weather.getWeather, 60*60*1000); //1hr interval
 
 
   io.on('disconnect',()=>{
@@ -82,7 +46,13 @@ io.on('connection',(socket)=>{
 
 app.set('io', io);
 
+//because could not connect to aws db
+server.listen(PORT, ()=>{
+
+})
+
 // Test database connection before starting server
+/*
 db.query('SELECT NOW()')
   .then(() => {
     console.log('Database connection established');
@@ -103,4 +73,5 @@ db.query('SELECT NOW()')
     console.error('- DATABASE_PASSWORD');
     console.error('- DATABASE_PORT');
     process.exit(1);
-  });
+   });
+   */
