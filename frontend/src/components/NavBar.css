@@ -17,7 +17,7 @@
   align-items: center;
 }
 
-.nav-links {
+.tg-nav-links {
   list-style: none;
   display: flex;
   align-items: center;
@@ -98,7 +98,7 @@
 
 /* Media query for smaller screens */
 @media (width <= 768px) {
-  .nav-links {
+  .tg-nav-links {
     gap: 1rem; /* Smaller gap on mobile */
     justify-content: space-between; /* Spread items evenly */
   }
@@ -117,6 +117,33 @@
   }
 
   .search-icon {
+    font-size: 18px; /* Slightly smaller icon */
+  }
+}.help-icon-container {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.help-icon {
+  font-size: 20px;
+  color: white;
+  cursor: pointer;
+  transition: color 0.2s ease-in;
+}
+
+.help-icon:hover {
+  color: #ffae36;
+}
+
+/* Active state for help link */
+.help-link.active .help-icon {
+  color: #ffae36;
+}
+
+/* Media query for smaller screens */
+@media (width <= 768px) {
+  .help-icon {
     font-size: 18px; /* Slightly smaller icon */
   }
 }
