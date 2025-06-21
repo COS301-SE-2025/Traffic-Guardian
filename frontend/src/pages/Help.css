@@ -92,7 +92,7 @@
   line-height: 1.5;
   color: var(--text-primary);
   font-weight: 400;
-  letter-spacing: -0.01em; /* Subtle letter spacing for better readability */
+  letter-spacing: -0.01em;
 }
 
 /* Header - Refined and Minimal */
@@ -101,47 +101,37 @@
   border-bottom: 1px solid var(--border-default);
   padding: var(--space-xl) var(--space-lg);
   text-align: center;
-  
-  /* Justification: Reduced padding for sleeker profile, single border instead of gradients for cleaner look */
 }
 
 .help-main-title {
-  font-size: 2rem; /* Reduced from 2.5rem for more refined proportions */
-  font-weight: 600; /* Apple-style medium weight instead of heavy */
+  font-size: 2rem;
+  font-weight: 600;
   margin: 0 0 var(--space-sm) 0;
   color: var(--text-primary);
-  letter-spacing: -0.02em; /* Tighter spacing for modern look */
-  
-  /* Justification: Smaller size feels less overwhelming, 600 weight is more sophisticated than 700 */
+  letter-spacing: -0.02em;
 }
 
 .help-main-subtitle {
-  font-size: 1rem; /* Consistent with body text for better hierarchy */
+  font-size: 1rem;
   margin: 0;
   color: var(--text-secondary);
-  max-width: 480px; /* Narrower for better readability */
+  max-width: 480px;
   margin: 0 auto;
   font-weight: 400;
-  
-  /* Justification: Smaller subtitle creates better proportion with title, narrower width improves reading flow */
 }
 
 /* Main Container - Spacious Layout */
 .help-container {
-  max-width: 1024px; /* Reduced for better reading experience */
+  max-width: 1024px;
   margin: 0 auto;
   padding: 0 var(--space-lg) var(--space-3xl);
-  
-  /* Justification: Narrower max-width improves readability, consistent padding system */
 }
 
 /* Search Section - Clean and Functional */
 .help-search-container {
   position: relative;
   margin: var(--space-2xl) auto var(--space-xl);
-  max-width: 400px; /* Slightly smaller for better proportions */
-  
-  /* Justification: Reduced width focuses attention, proper spacing creates rhythm */
+  max-width: 400px;
 }
 
 .help-search-icon {
@@ -153,8 +143,6 @@
   width: 20px;
   height: 20px;
   pointer-events: none;
-  
-  /* Justification: Consistent spacing, muted color doesn't compete with content */
 }
 
 .help-search-input {
@@ -166,17 +154,13 @@
   background: var(--surface-elevated);
   color: var(--text-primary);
   transition: all var(--transition-fast);
-  box-shadow: none; /* No shadow by default for cleaner look */
-  
-  /* Justification: Single border instead of double, no default shadow for minimalism */
+  box-shadow: none;
 }
 
 .help-search-input:focus {
   outline: none;
   border-color: var(--border-accent);
-  box-shadow: 0 0 0 3px var(--primary-muted); /* Subtle focus ring */
-  
-  /* Justification: Accessible focus state without overwhelming glow effects */
+  box-shadow: 0 0 0 3px var(--primary-muted);
 }
 
 .help-search-input::placeholder {
@@ -188,10 +172,8 @@
 .help-sections-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm); /* Tighter spacing for cleaner look */
+  gap: var(--space-sm);
   margin-bottom: var(--space-2xl);
-  
-  /* Justification: Reduced gaps create more cohesive visual grouping */
 }
 
 /* Section Cards - Subtle and Refined */
@@ -201,22 +183,16 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   transition: all var(--transition-medium);
-  
-  /* Justification: Minimal borders and subtle backgrounds let content breathe */
 }
 
 .help-section-card:hover {
   border-color: var(--border-default);
   box-shadow: var(--shadow-subtle);
-  
-  /* Justification: Subtle hover states provide feedback without distraction */
 }
 
 .help-section-card.expanded {
   border-color: var(--border-accent);
   box-shadow: var(--shadow-medium);
-  
-  /* Justification: Accent color shows active state, deeper shadow indicates elevation */
 }
 
 /* Section Headers - Typography-Focused */
@@ -233,21 +209,15 @@
   transition: background-color var(--transition-fast);
   font-family: inherit;
   color: var(--text-primary);
-  
-  /* Justification: Generous padding improves touch targets, fast transition feels responsive */
 }
 
 .help-section-header:hover {
   background: var(--surface-hover);
-  
-  /* Justification: Subtle hover state doesn't interfere with content */
 }
 
 .help-section-header:focus {
   outline: 2px solid var(--border-accent);
   outline-offset: -2px;
-  
-  /* Justification: Clear focus indicator for accessibility without breaking layout */
 }
 
 .help-section-header-left {
@@ -258,22 +228,18 @@
 }
 
 .help-section-icon {
-  width: 20px; /* Smaller, more refined */
+  width: 20px;
   height: 20px;
   color: var(--text-accent);
   flex-shrink: 0;
-  
-  /* Justification: Smaller icons don't compete with typography, accent color provides hierarchy */
 }
 
 .help-section-title {
-  font-size: 1.125rem; /* Slightly larger for hierarchy */
-  font-weight: 500; /* Medium weight for balance */
+  font-size: 1.125rem;
+  font-weight: 500;
   margin: 0;
   color: var(--text-primary);
   letter-spacing: -0.01em;
-  
-  /* Justification: Proper size hierarchy, medium weight feels more refined than bold */
 }
 
 .help-section-chevron {
@@ -287,23 +253,16 @@
 .help-section-card.expanded .help-section-chevron {
   color: var(--text-accent);
   transform: rotate(180deg);
-  
-  /* Justification: Smooth rotation provides clear visual feedback */
 }
 
 /* Section Content - Spacious and Readable */
 .help-section-content {
-  border-top: 1px solid var(--border-subtle);
   animation: slideDown var(--transition-slow) ease-out;
   background: var(--surface-color);
-  
-  /* Justification: Subtle border and background differentiation without being heavy */
 }
 
 .help-section-content-inner {
   padding: var(--space-lg);
-  
-  /* Justification: Consistent padding maintains rhythm */
 }
 
 /* Q&A Styling - Clean Typography */
@@ -311,29 +270,25 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
-  
-  /* Justification: Generous spacing between Q&A pairs improves scanability */
 }
 
-
+.help-qa-item {
+  /* No bottom borders - cleaner look with spacing doing the separation */
+}
 
 .help-qa-question {
-  font-size: 1.0625rem; /* Slightly larger for hierarchy */
+  font-size: 1.0625rem;
   font-weight: 500;
   margin: 0 0 var(--space-sm) 0;
   color: var(--text-primary);
-  line-height: 1.4; /* Tighter line height for headings */
-  
-  /* Justification: No decorative prefixes, let typography create hierarchy */
+  line-height: 1.4;
 }
 
 .help-qa-answer {
   margin: 0;
   color: var(--text-secondary);
-  line-height: 1.6; /* Comfortable reading line height */
-  font-size: 0.9375rem; /* Slightly smaller for hierarchy */
-  
-  /* Justification: Clear hierarchy through size and color, comfortable reading experience */
+  line-height: 1.6;
+  font-size: 0.9375rem;
 }
 
 /* Quick Access - Grid-Based and Clean */
@@ -343,8 +298,6 @@
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
   margin-bottom: var(--space-xl);
-  
-  /* Justification: Consistent with card styling, proper spacing */
 }
 
 .help-quick-access-title {
@@ -360,8 +313,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--space-md);
-  
-  /* Justification: Responsive grid, consistent spacing */
 }
 
 .help-quick-access-item {
@@ -377,26 +328,22 @@
   cursor: pointer;
   text-decoration: none;
   color: inherit;
-  
-  /* Justification: Subtle styling lets content be the focus */
 }
 
 .help-quick-access-item:hover {
   background: var(--surface-hover);
   border-color: var(--border-default);
-  transform: translateY(-1px); /* Subtle lift effect */
-  
-  /* Justification: Minimal hover feedback, subtle motion feels natural */
+  transform: translateY(-1px);
 }
 
 .help-quick-access-icon {
-  width: 24px; /* Appropriate size for quick access */
+  width: 24px;
   height: 24px;
   color: var(--text-accent);
 }
 
 .help-quick-access-label {
-  font-weight: 450; /* Slightly lighter for balance */
+  font-weight: 450;
   color: var(--text-primary);
   text-align: center;
   font-size: 0.9375rem;
@@ -413,8 +360,6 @@
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
   text-align: center;
-  
-  /* Justification: No excessive decoration, focus on content */
 }
 
 .help-contact-title {
@@ -444,7 +389,7 @@
   from {
     opacity: 0;
     max-height: 0;
-    transform: translateY(-4px); /* Minimal movement */
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
@@ -460,7 +405,7 @@
   }
   
   .help-main-title {
-    font-size: 1.75rem; /* Proportional scaling */
+    font-size: 1.75rem;
   }
   
   .help-container {
