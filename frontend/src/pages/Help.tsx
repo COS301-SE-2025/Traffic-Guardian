@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Search, AlertTriangle, BarChart3, Archive, Video, Settings, User, HelpCircle, MapPin, Clock, Users, Shield } from 'lucide-react';
+import './Help.css'; // Import the professional CSS
 
 // TypeScript interfaces
 interface HelpContent {
@@ -33,7 +34,7 @@ const Help: React.FC = () => {
     {
       id: 'getting-started',
       title: 'Getting Started',
-      icon: <HelpCircle className="w-5 h-5" />,
+      icon: <HelpCircle className="help-section-icon" />,
       content: [
         {
           question: 'How do I navigate the Traffic Guardian dashboard?',
@@ -56,7 +57,7 @@ const Help: React.FC = () => {
     {
       id: 'dashboard',
       title: 'Dashboard Features',
-      icon: <BarChart3 className="w-5 h-5" />,
+      icon: <BarChart3 className="help-section-icon" />,
       content: [
         {
           question: 'Understanding dashboard widgets',
@@ -79,7 +80,7 @@ const Help: React.FC = () => {
     {
       id: 'live-feed',
       title: 'Live Feed Monitoring',
-      icon: <Video className="w-5 h-5" />,
+      icon: <Video className="help-section-icon" />,
       content: [
         {
           question: 'Video stream management',
@@ -102,7 +103,7 @@ const Help: React.FC = () => {
     {
       id: 'incidents',
       title: 'Incident Management',
-      icon: <AlertTriangle className="w-5 h-5" />,
+      icon: <AlertTriangle className="help-section-icon" />,
       content: [
         {
           question: 'Creating manual incident reports',
@@ -129,7 +130,7 @@ const Help: React.FC = () => {
     {
       id: 'analytics',
       title: 'Analytics & Reporting',
-      icon: <BarChart3 className="w-5 h-5" />,
+      icon: <BarChart3 className="help-section-icon" />,
       content: [
         {
           question: 'Trend analysis and charts',
@@ -152,7 +153,7 @@ const Help: React.FC = () => {
     {
       id: 'archives',
       title: 'Archives & Historical Data',
-      icon: <Archive className="w-5 h-5" />,
+      icon: <Archive className="help-section-icon" />,
       content: [
         {
           question: 'Accessing archived incidents',
@@ -171,7 +172,7 @@ const Help: React.FC = () => {
     {
       id: 'user-management',
       title: 'User Management & Account',
-      icon: <User className="w-5 h-5" />,
+      icon: <User className="help-section-icon" />,
       content: [
         {
           question: 'Account registration and login',
@@ -194,7 +195,7 @@ const Help: React.FC = () => {
     {
       id: 'system-admin',
       title: 'System Administration',
-      icon: <Settings className="w-5 h-5" />,
+      icon: <Settings className="help-section-icon" />,
       content: [
         {
           question: 'Camera configuration and monitoring',
@@ -221,7 +222,7 @@ const Help: React.FC = () => {
     {
       id: 'emergency-response',
       title: 'Emergency Response Coordination',
-      icon: <Users className="w-5 h-5" />,
+      icon: <Users className="help-section-icon" />,
       content: [
         {
           question: 'Resource dispatch and allocation',
@@ -240,7 +241,7 @@ const Help: React.FC = () => {
     {
       id: 'troubleshooting',
       title: 'Troubleshooting & Support',
-      icon: <Shield className="w-5 h-5" />,
+      icon: <Shield className="help-section-icon" />,
       content: [
         {
           question: 'Common connectivity issues',
@@ -275,68 +276,67 @@ const Help: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Traffic Guardian Help Center</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Comprehensive guide to using the Traffic Guardian incident detection and reporting system
-          </p>
-        </div>
+    <div className="help-page">
+      {/* Header */}
+      <div className="help-header">
+        <h1 className="help-main-title">Traffic Guardian Help Center</h1>
+        <p className="help-main-subtitle">
+          Comprehensive guide to using the Traffic Guardian incident detection and reporting system
+        </p>
+      </div>
 
+      <div className="help-container">
         {/* Search Bar */}
-        <div className="relative mb-8">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
-          </div>
+        <div className="help-search-container">
+          <Search className="help-search-icon" />
           <input
             type="text"
             placeholder="Search help topics..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+            className="help-search-input"
           />
         </div>
 
         {/* Help Sections */}
-        <div className="space-y-4">
+        <div className="help-sections-container">
           {filteredSections.map((section) => (
-            <div key={section.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div 
+              key={section.id} 
+              className={`help-section-card ${openSections[section.id] ? 'expanded' : ''}`}
+            >
               <button
                 onClick={() => toggleSection(section.id)}
-                className="w-full px-6 py-4 text-left bg-white hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition-colors duration-200"
+                className="help-section-header"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="text-orange-500">
-                      {section.icon}
-                    </div>
-                    <h2 className="text-xl font-semibold text-gray-900">{section.title}</h2>
-                  </div>
-                  <div className="text-gray-400">
-                    {openSections[section.id] ? (
-                      <ChevronDown className="w-5 h-5" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5" />
-                    )}
-                  </div>
+                <div className="help-section-header-left">
+                  {section.icon}
+                  <h2 className="help-section-title">{section.title}</h2>
+                </div>
+                <div className="help-section-chevron">
+                  {openSections[section.id] ? (
+                    <ChevronDown />
+                  ) : (
+                    <ChevronRight />
+                  )}
                 </div>
               </button>
               
               {openSections[section.id] && (
-                <div className="px-6 pb-6 border-t border-gray-100">
-                  <div className="space-y-6 pt-6">
-                    {section.content.map((item, index) => (
-                      <div key={index} className="border-l-4 border-orange-200 pl-4">
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          {item.question}
-                        </h3>
-                        <p className="text-gray-700 leading-relaxed">
-                          {item.answer}
-                        </p>
-                      </div>
-                    ))}
+                <div className="help-section-content">
+                  <div className="help-section-content-inner">
+                    <div className="help-qa-list">
+                      {section.content.map((item, index) => (
+                        <div key={index} className="help-qa-item">
+                          <h3 className="help-qa-question">
+                            {item.question}
+                          </h3>
+                          <p className="help-qa-answer">
+                            {item.answer}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -344,39 +344,39 @@ const Help: React.FC = () => {
           ))}
         </div>
 
-        {/* Quick Links Footer */}
-        <div className="mt-12 bg-orange-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Access</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex items-center space-x-2 text-orange-600">
-              <BarChart3 className="w-4 h-4" />
-              <span className="text-sm font-medium">Dashboard</span>
+        {/* Quick Access Links */}
+        <div className="help-quick-access">
+          <h3 className="help-quick-access-title">Quick Access</h3>
+          <div className="help-quick-access-grid">
+            <div className="help-quick-access-item">
+              <BarChart3 className="help-quick-access-icon" />
+              <span className="help-quick-access-label">Dashboard</span>
             </div>
-            <div className="flex items-center space-x-2 text-orange-600">
-              <Video className="w-4 h-4" />
-              <span className="text-sm font-medium">Live Feed</span>
+            <div className="help-quick-access-item">
+              <Video className="help-quick-access-icon" />
+              <span className="help-quick-access-label">Live Feed</span>
             </div>
-            <div className="flex items-center space-x-2 text-orange-600">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-medium">Incidents</span>
+            <div className="help-quick-access-item">
+              <AlertTriangle className="help-quick-access-icon" />
+              <span className="help-quick-access-label">Incidents</span>
             </div>
-            <div className="flex items-center space-x-2 text-orange-600">
-              <Archive className="w-4 h-4" />
-              <span className="text-sm font-medium">Archives</span>
+            <div className="help-quick-access-item">
+              <Archive className="help-quick-access-icon" />
+              <span className="help-quick-access-label">Archives</span>
             </div>
           </div>
         </div>
 
         {/* Contact Support */}
-        <div className="mt-8 text-center">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Need Additional Help?</h3>
-            <p className="text-gray-600 mb-4">
+        <div className="help-contact-support">
+          <div className="help-contact-card">
+            <h3 className="help-contact-title">Need Additional Help?</h3>
+            <p className="help-contact-description">
               Contact your system administrator for technical support or additional training resources.
             </p>
-            <div className="text-sm text-gray-500">
+            <p className="help-contact-footer">
               Traffic Guardian v1.0 | University of Pretoria | Quantum Quenchers Team
-            </div>
+            </p>
           </div>
         </div>
       </div>
