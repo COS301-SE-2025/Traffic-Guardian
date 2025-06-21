@@ -42,14 +42,19 @@ function getBbox(latlong){
         TR: {lat: "", lon: ""}
     };
 
-    //bottom left
-    BBOX.BL.lat = olat - distToLat(75);
-    BBOX.BL.lon = olong - distToLong(75, olat);
-    //top right
-    BBOX.TR.lat = olat + distToLat(75);
-    BBOX.TR.lon = olong + distToLong(75, olat);
-    
+    const deltaLat = distToLat(10);
+    const deltaLon = distToLong(10, olat);
 
+    console.log(`deltaLat = ${deltaLat}`);
+    console.log(`delatLon = ${deltaLon}`);
+
+    //bottom left
+    BBOX.BL.lat = olat - deltaLat
+    BBOX.BL.lon = olong - deltaLon;
+    //top right
+    BBOX.TR.lat = olat + deltaLat
+    BBOX.TR.lon = olong + deltaLon;
+    
     return BBOX;
 }
 
