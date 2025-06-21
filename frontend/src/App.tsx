@@ -11,6 +11,7 @@ import SignUp from './pages/SignUp';
 import Profile from './pages/Profile';
 import Analytics from './pages/Analytics';
 import Archives from './pages/Archives';
+import Help from './pages/Help';
 import IncidentManagement from './pages/IncidentManagement';
 import PageWrapper from './components/PageWrapper';
 
@@ -40,6 +41,7 @@ const AnimatedRoutes = () => {
           <Route path="/signup" element={<PageWrapper><SignUp /></PageWrapper>} />
           <Route path="/profile" element={<PageWrapper><Profile /></PageWrapper>} />
           <Route path="/incident-management" element={<PageWrapper><IncidentManagement /></PageWrapper>} />
+          <Route path="/help" element={<PageWrapper><Help /></PageWrapper>} />
           
           {/* Redirect any unknown routes to landing page */}
           <Route path="*" element={<Navigate to="/" replace />} />
