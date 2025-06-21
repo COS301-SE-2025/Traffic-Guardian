@@ -11,26 +11,28 @@ var regions = ['-26.1438,28.0406', '-26.09108017449409,28.08474153621201', '-25.
 var bbox_regions = [];
 
 async function getTraffic(){
-        console.log(getBbox(regions[1]));
-        const BBOX = getBbox(regions[1]);
+        //console.log(getBbox(regions[1]));
+        var BBOX;
 
     try{
-        //console.log(process.env.TOMTOMAPI);
-    const response = await axios.get(url, {
-        params: {
-            bbox: `${BBOX.BL.lon},${BBOX.BL.lat},${BBOX.TR.lon},${BBOX.TR.lat}`,
-            //fields: 'id,geometry,properties',
-            language: 'en-GB',
-            timeValidityFilter: 'present',
-            key: process.env.TOMTOMAPI
+        for(var i=0; i<regions.length; i++){
+        BBOX = getBbox(regions[i]);
+        const response = await axios.get(url, {
+            params: {
+                bbox: `${BBOX.BL.lon},${BBOX.BL.lat},${BBOX.TR.lon},${BBOX.TR.lat}`,
+                //fields: 'id,geometry,properties',
+                language: 'en-GB',
+                timeValidityFilter: 'present',
+                key: process.env.TOMTOMAPI
+            }
+        })
+        console.log(response.data.incidents.length);
         }
-    })
-    console.log(response.data);
-    }catch(error){
-        console.error('Error code:', error.response?.status);
-        console.error('Error message:', error.response?.data || error.message);
+        }catch(error){
+            console.error('Error code:', error.response?.status);
+            console.error('Error message:', error.message);
+        }
     }
-}
 
 function getBbox(latlong){
     const olatolong = latlong.split(",").map(parseFloat);
@@ -45,8 +47,8 @@ function getBbox(latlong){
     const deltaLat = distToLat(10);
     const deltaLon = distToLong(10, olat);
 
-    console.log(`deltaLat = ${deltaLat}`);
-    console.log(`delatLon = ${deltaLon}`);
+    //console.log(`deltaLat = ${deltaLat}`);
+    //console.log(`delatLon = ${deltaLon}`);
 
     //bottom left
     BBOX.BL.lat = olat - deltaLat
