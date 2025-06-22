@@ -1,7 +1,7 @@
 .landing-page {
     width: 100%;
     min-height: 100vh;
-    background-color: #282c34;
+    background-color: #121212;
 }
 
 .landing-page * {
@@ -11,23 +11,23 @@
 }
 
 :root {
-    --primary-dark: #282c34;
-    --secondary-dark: #3a3f4b;
-    --accent-blue: #61dafb;
-    --accent-blue-dark: #4fc3e5;
+    --primary-dark: #121212;
+    --secondary-dark: #1E1E1E;
+    --accent-orange: #FFAE36;
+    --accent-orange-dark: #e89c2f;
     --text-primary: #ffffff;
-    --text-secondary: #e3e3e3;
-    --text-muted: #a8a8a8;
-    --card-dark: #3a3f4b;
-    --gradient-blue: linear-gradient(135deg, #61dafb 0%, #4fc3e5 100%);
-    --gradient-dark: linear-gradient(135deg, #282c34 0%, #3a3f4b 100%);
+    --text-secondary: #ddd;
+    --text-muted: #aaa;
+    --card-dark: #1E1E1E;
+    --gradient-orange: linear-gradient(135deg, #FFAE36 0%, #e89c2f 100%);
+    --gradient-dark: linear-gradient(135deg, #121212 0%, #1E1E1E 100%);
 }
 
 .landing-page nav {
     position: fixed;
     top: 0;
     width: 100%;
-    background: rgba(40, 44, 52, 0.98);
+    background: rgba(18, 18, 18, 0.98);
     backdrop-filter: blur(10px);
     z-index: 1000;
     padding: 1rem 0;
@@ -36,7 +36,7 @@
 }
 
 .landing-page nav.scrolled {
-    background: rgba(40, 44, 52, 1);
+    background: rgba(18, 18, 18, 1);
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
 }
 
@@ -75,7 +75,7 @@
 }
 
 .nav-links a:hover {
-    color: var(--accent-blue);
+    color: var(--accent-orange);
 }
 
 .nav-btn {
@@ -91,23 +91,23 @@
 }
 
 .nav-btn-login {
-    color: var(--accent-blue);
-    border: 2px solid var(--accent-blue);
+    color: var(--accent-orange);
+    border: 2px solid var(--accent-orange);
 }
 
 .nav-btn-login:hover {
-    background: var(--accent-blue);
+    background: var(--accent-orange);
     color: var(--primary-dark);
 }
 
 .nav-btn-signup {
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
     color: var(--primary-dark);
 }
 
 .nav-btn-signup:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(97, 218, 251, 0.4);
+    box-shadow: 0 5px 15px rgba(255, 174, 54, 0.4);
 }
 
 .hamburger {
@@ -122,7 +122,7 @@
 .hamburger span {
     width: 25px;
     height: 3px;
-    background: var(--accent-blue);
+    background: var(--accent-orange);
     margin: 3px 0;
     transition: 0.3s;
 }
@@ -144,7 +144,7 @@
     right: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(97, 218, 251, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 174, 54, 0.1) 0%, transparent 70%);
     animation: pulse 4s ease-in-out infinite;
 }
 
@@ -166,7 +166,7 @@
     font-size: clamp(2.5rem, 5vw, 4rem);
     margin-bottom: 1.5rem;
     animation: fadeInUp 1s ease-out;
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -193,7 +193,7 @@
 .auth-section {
     margin: 3rem 0;
     padding: 2rem;
-    background: rgba(58, 63, 75, 0.5);
+    background: rgba(30, 30, 30, 0.5);
     border-radius: 20px;
     backdrop-filter: blur(10px);
     animation: fadeInUp 1s ease-out 0.6s;
@@ -228,46 +228,46 @@
 }
 
 .btn-primary {
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
     color: var(--primary-dark);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(97, 218, 251, 0.4);
+    box-shadow: 0 10px 30px rgba(255, 174, 54, 0.4);
 }
 
 .btn-secondary {
     background: transparent;
-    color: var(--accent-blue);
-    border: 2px solid var(--accent-blue);
+    color: var(--accent-orange);
+    border: 2px solid var(--accent-orange);
 }
 
 .btn-secondary:hover {
-    background: var(--accent-blue);
+    background: var(--accent-orange);
     color: var(--primary-dark);
-    box-shadow: 0 10px 30px rgba(97, 218, 251, 0.4);
+    box-shadow: 0 10px 30px rgba(255, 174, 54, 0.4);
 }
 
 .btn-login {
     background: transparent;
-    color: var(--accent-blue);
-    border: 2px solid var(--accent-blue);
+    color: var(--accent-orange);
+    border: 2px solid var(--accent-orange);
 }
 
 .btn-login:hover {
-    background: var(--accent-blue);
+    background: var(--accent-orange);
     color: var(--primary-dark);
 }
 
 .btn-signup {
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
     color: var(--primary-dark);
 }
 
 .btn-signup:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(97, 218, 251, 0.4);
+    box-shadow: 0 10px 30px rgba(255, 174, 54, 0.4);
 }
 
 .floating {
