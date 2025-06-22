@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const axios = require('axios');
 const FormData = require('form-data');
 const weather = require('../src/Weather/weather');
+const traffic = require('../src/Traffic/traffic');
 
 const server = http.createServer(app);
 
@@ -38,6 +39,9 @@ io.on('connection',(socket)=>{
     weather.getWeather();
     setInterval(weather.getWeather, 60*60*1000); //1hr interval
 
+    traffic.getTraffic();
+    setInterval(traffic.getTraffic, 30*60*1000); //30 min interval
+
 
   io.on('disconnect',()=>{
     console.log(socket.id + ' disconnected');
@@ -46,13 +50,8 @@ io.on('connection',(socket)=>{
 
 app.set('io', io);
 
-//because could not connect to aws db
-server.listen(PORT, ()=>{
-
-})
 
 // Test database connection before starting server
-/*
 db.query('SELECT NOW()')
   .then(() => {
     console.log('Database connection established');
@@ -74,4 +73,3 @@ db.query('SELECT NOW()')
     console.error('- DATABASE_PORT');
     process.exit(1);
    });
-   */
