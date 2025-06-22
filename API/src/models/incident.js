@@ -2,19 +2,18 @@ const db = require('../config/db');
 
 const incidentModel = {  async createIncident(incidentData) {
     const { 
-      Incident_Date, 
-      Incident_Location, 
-      Incident_CarID, 
+      Incidents_DateT, 
+      Incidents_Longitude, 
+      Incidents_Latitude, 
       Incident_Severity, 
       Incident_Status, 
       Incident_Reporter
     } = incidentData;
-    
-    const query = `
-      INSERT INTO "TrafficGuardian"."Incidents" (
-        "Incident_Date", 
-        "Incident_Location", 
-        "Incident_CarID", 
+      const query = `
+      INSERT INTO "postgres"."Incidents" (
+        "Incidents_DateT", 
+        "Incidents_Longitude", 
+        "Incidents_Latitude", 
         "Incident_Severity", 
         "Incident_Status", 
         "Incident_Reporter"
@@ -24,27 +23,25 @@ const incidentModel = {  async createIncident(incidentData) {
     `;
     
     const values = [
-      Incident_Date, 
-      Incident_Location, 
-      Incident_CarID, 
-      Incident_Severity, 
-      Incident_Status || 'open', 
+      Incidents_DateT || new Date(), 
+      Incidents_Longitude,
+      Incidents_Latitude, 
+      Incident_Severity || 'medium', 
+      Incident_Status || 'ongoing', 
       Incident_Reporter
     ];
     
     const { rows } = await db.query(query, values);
     return rows[0];
-  },
-  async getIncidentById(Incident_ID) {
-    const query = 'SELECT * FROM "TrafficGuardian"."Incidents" WHERE "Incident_ID" = $1';
-    const { rows } = await db.query(query, [Incident_ID]);
+  },  async getIncidentById(Incidents_ID) {
+    const query = 'SELECT * FROM "postgres"."Incidents" WHERE "Incidents_ID" = $1';
+    const { rows } = await db.query(query, [Incidents_ID]);
     return rows[0];
-  },
-  async updateIncident(Incident_ID, incidentData) {
+  },async updateIncident(Incidents_ID, incidentData) {
     const allowedFields = [
-      'Incident_Date', 
-      'Incident_Location', 
-      'Incident_CarID', 
+      'Incidents_DateT', 
+      'Incidents_Longitude', 
+      'Incidents_Latitude', 
       'Incident_Severity', 
       'Incident_Status', 
       'Incident_Reporter'
@@ -64,21 +61,19 @@ const incidentModel = {  async createIncident(incidentData) {
     
     if (!updates) {
       throw new Error('No valid fields to update');
-    }
-    
-    const query = `
-      UPDATE "TrafficGuardian"."Incidents"
+    }    const query = `
+      UPDATE "postgres"."Incidents"
       SET ${updates}
-      WHERE "Incident_ID" = $1 
+      WHERE "Incidents_ID" = $1 
       RETURNING *
     `;
     
-    const { rows } = await db.query(query, [Incident_ID]);
+    const { rows } = await db.query(query, [Incidents_ID]);
     return rows[0];
   },
 
   async getIncidents(filters = {}) {
-    let query = 'SELECT * FROM "TrafficGuardian"."Incidents"';
+    let query = 'SELECT * FROM "postgres"."Incidents"';
     const values = [];
     const conditions = [];
     
