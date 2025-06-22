@@ -12,7 +12,7 @@ from collections import defaultdict, deque
 import math
 
 class IncidentDetectionSystem:
-    def __init__(self, stream_url="http://127.0.0.1:8080/", config=None):
+    def __init__(self, stream_url="Videos\CarTrainingVideo.mp4", config=None):
         """
         Advanced incident detection system for traffic monitoring.
         """
