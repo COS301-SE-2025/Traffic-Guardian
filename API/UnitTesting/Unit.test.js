@@ -1,44 +1,29 @@
 const axios = require('axios');
 const artifacts = require('./artifacts.json');
-const path = require('path');
-require('dotenv').config({
-  override: true,
-  path: path.join(__dirname, '../development.env'),
-});
 const Seeding = require('./Seeding.json');
+const config = require('./testConfig');
 const yeah = Seeding.hmmmm;
 
-/* test('Register User', async ()=>{
-    const payload = artifacts[2];
-    console.log(artifacts[0]);
-    console.log(payload);
-    const response = await axios.post('http://localhost:5000/api/auth/register', payload, {
-    headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY': yeah
+// API base URL from config
+const API_BASE_URL = config.apiBaseUrl;
+
+
+test('Login User', async ()=>{
+    const payload = artifacts[1];
+    const response = await axios.post(`${API_BASE_URL}/api/auth/login`, payload, {
+        header: {
+        "Content-Type": "application/json",
+        "X-API-KEY": yeah
         }
     });
-    console.log(response);
 
-    expect(1).toBe(1);
-}); */
+    //expect(response.data).toMatchObject(seeding[0]);
+    expect(response.status).toBe(200);
+});
 
-// test('Login User', async ()=>{
-//     const payload = artifacts[1];
-//     const response = await axios.post('http://localhost:5000/api/auth/login', payload, {
-//         headers: {
-//             'Content-Type': 'application/json',
-//             'X-API-KEY': yeah
-//         }
-//     });
-
-//     //expect(response.data).toMatchObject(seeding[0]);
-//     expect(response.status).toBe(200);
-// });
 
 test('Get User preferences', async ()=>{
-    const headers = artifacts[1];
-    const response = await axios.get('http://localhost:5000/api/user/preferences', {
+    const response = await axios.get(`${API_BASE_URL}/api/user/preferences`, {
     headers: {
         'Content-Type': 'application/json',
         'X-API-KEY': yeah
@@ -54,8 +39,7 @@ test('Get User preferences', async ()=>{
 
 test('Update user preferences', async ()=>{
     const payload = artifacts[3];
-    const headers = artifacts[1];
-    const response = await axios.get('http://localhost:5000/api/incidents',{
+    const response = await axios.get(`${API_BASE_URL}/api/incidents`,{
     headers: {
         'Content-Type': 'application/json',
         'X-API-KEY': yeah
@@ -68,7 +52,6 @@ test('Update user preferences', async ()=>{
 
 test('Get specific incident', async ()=>{
     const payload = artifacts[3];
-    const headers = artifacts[1];
     const response = await axios.get('http://localhost:5000/api/incidents/1',{
     headers: {
         'Content-Type': 'application/json',
@@ -83,7 +66,6 @@ test('Get specific incident', async ()=>{
 
 test('Create incident', async ()=>{
     const payload = artifacts[3];
-    const headers = artifacts[1];
     const response = await axios.post('http://localhost:5000/api/incidents', payload ,{
     headers: {
         'Content-Type': 'application/json',
@@ -98,7 +80,6 @@ test('Create incident', async ()=>{
 
 test('Update incident', async ()=>{
     const payload = artifacts[4];
-    const headers = artifacts[1];
     const response = await axios.put('http://localhost:5000/api/incidents/1', payload ,{
     headers: {
         'Content-Type': 'application/json',
@@ -112,7 +93,6 @@ test('Update incident', async ()=>{
 
 test('Get specific alert', async ()=>{
     const payload = artifacts[4];
-    const headers = artifacts[1];
     const response = await axios.get('http://localhost:5000/api/incidents/1/alerts', {
     headers: {
         'Content-Type': 'application/json',

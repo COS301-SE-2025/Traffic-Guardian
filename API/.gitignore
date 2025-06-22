@@ -1,2 +1,7 @@
 # Node modules
 node_modules/
+
+# Environment files
+development.env
+.env
+
