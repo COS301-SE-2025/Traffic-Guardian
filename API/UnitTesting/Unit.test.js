@@ -7,6 +7,7 @@ const yeah = Seeding.hmmmm;
 // API base URL from config
 const API_BASE_URL = config.apiBaseUrl;
 
+
 test('Login User', async ()=>{
     const payload = artifacts[1];
     const response = await axios.post(`${API_BASE_URL}/api/auth/login`, payload, {
@@ -19,6 +20,7 @@ test('Login User', async ()=>{
     //expect(response.data).toMatchObject(seeding[0]);
     expect(response.status).toBe(200);
 });
+
 
 test('Get User preferences', async ()=>{
     const response = await axios.get(`${API_BASE_URL}/api/user/preferences`, {

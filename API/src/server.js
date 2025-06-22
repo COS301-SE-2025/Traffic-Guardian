@@ -18,6 +18,7 @@ const io = new Server(server, {
 });
 
 // Configuration - will use GitHub secrets in production, .env for local development
+
 const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 

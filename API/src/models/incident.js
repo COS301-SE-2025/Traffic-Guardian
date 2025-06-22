@@ -47,12 +47,12 @@ const incidentModel = {  async createIncident(incidentData) {
       'Incident_Reporter'
     ];
     
-    
-      for (let v in incidentData){
+
+    for (let v in incidentData){
         if(incidentData[v].length > 10) incidentData[v] = incidentData[v].substring(0, 10);
         //console.log(incidentData);
       }
-
+      
     // Filter out undefined fields and only include allowed fields
     const updates = Object.keys(incidentData)
       .filter(key => allowedFields.includes(key) && incidentData[key] !== undefined)

@@ -41,9 +41,11 @@ const alertModel = {  async createAlert(alertData) {
     
     const { rows } = await db.query(query, [Alerts_Message, Alerts_ID]);
     return rows[0];
+
   },  async getAllAlerts() {
     const query = `SELECT * FROM "postgres"."Alerts"`;    
     const { rows } = await db.query(query);
+
     return rows;
   }
 };
