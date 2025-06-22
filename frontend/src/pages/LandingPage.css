@@ -294,25 +294,31 @@
 .section-title {
     text-align: center;
     font-size: clamp(2rem, 4vw, 3rem);
-    margin-bottom: 3rem;
+    margin-bottom: 1.5rem;
     color: var(--text-primary);
 }
 
 .section-title span {
-    color: var(--accent-blue);
+    color: var(--accent-orange);
+}
+
+.problem .section-title,
+.solution .section-title {
+    margin-bottom: 2.5rem;
 }
 
 .problem-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 2rem;
+    margin-top: 1rem;
 }
 
 .problem-card {
     background: var(--card-dark);
     padding: 2rem;
     border-radius: 20px;
-    border: 1px solid rgba(97, 218, 251, 0.2);
+    border: 1px solid rgba(255, 174, 54, 0.2);
     text-align: center;
     transition: all 0.3s;
     opacity: 0;
@@ -325,15 +331,15 @@
 
 .problem-card:hover {
     transform: translateY(-10px);
-    border-color: var(--accent-blue);
-    box-shadow: 0 20px 40px rgba(97, 218, 251, 0.2);
+    border-color: var(--accent-orange);
+    box-shadow: 0 20px 40px rgba(255, 174, 54, 0.2);
 }
 
 .problem-icon {
     width: 80px;
     height: 80px;
     margin: 0 auto 1.5rem;
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -342,7 +348,7 @@
 }
 
 .problem-card h3 {
-    color: var(--accent-blue);
+    color: var(--accent-orange);
     margin-bottom: 1rem;
 }
 
@@ -360,12 +366,13 @@
     grid-template-columns: 1fr 1fr;
     gap: 4rem;
     align-items: center;
+    margin-top: 1rem;
 }
 
 .solution-text h3 {
     font-size: 2rem;
     margin-bottom: 1rem;
-    color: var(--accent-blue);
+    color: var(--accent-orange);
 }
 
 .solution-text p {
@@ -385,7 +392,7 @@
 
 .solution-text li::before {
     content: '✓ ';
-    color: var(--accent-blue);
+    color: var(--accent-orange);
     font-weight: bold;
     margin-right: 0.5rem;
 }
@@ -394,7 +401,7 @@
     position: relative;
     height: 400px;
     background: var(--card-dark);
-    border: 2px solid var(--accent-blue);
+    border: 2px solid var(--accent-orange);
     border-radius: 20px;
     overflow: hidden;
     display: flex;
@@ -407,7 +414,7 @@
     position: absolute;
     top: 20px;
     left: 20px;
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
     color: var(--primary-dark);
     padding: 0.5rem 1rem;
     border-radius: 20px;
@@ -453,19 +460,19 @@
     left: 0;
     width: 100%;
     height: 3px;
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
 }
 
 .feature-card:hover {
     transform: translateY(-5px);
-    border-color: var(--accent-blue);
-    box-shadow: 0 20px 50px rgba(97, 218, 251, 0.2);
+    border-color: var(--accent-orange);
+    box-shadow: 0 20px 50px rgba(255, 174, 54, 0.2);
 }
 
 .feature-icon {
     font-size: 3rem;
     margin-bottom: 1rem;
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -499,7 +506,7 @@
 .tech-item {
     padding: 1.5rem 2rem;
     background: var(--card-dark);
-    border: 1px solid rgba(97, 218, 251, 0.3);
+    border: 1px solid rgba(255, 174, 54, 0.3);
     border-radius: 15px;
     font-weight: 600;
     transition: all 0.3s;
@@ -507,7 +514,7 @@
 }
 
 .tech-item:hover {
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
     color: var(--primary-dark);
     transform: translateY(-5px);
     border-color: transparent;
@@ -542,15 +549,15 @@
 
 .team-member:hover {
     transform: translateY(-10px);
-    border-color: var(--accent-blue);
-    box-shadow: 0 20px 50px rgba(97, 218, 251, 0.2);
+    border-color: var(--accent-orange);
+    box-shadow: 0 20px 50px rgba(255, 174, 54, 0.2);
 }
 
 .member-avatar {
     width: 100px;
     height: 100px;
     border-radius: 50%;
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
     margin: 0 auto 1rem;
     display: flex;
     align-items: center;
@@ -566,13 +573,13 @@
 }
 
 .team-member p {
-    color: var(--accent-blue);
+    color: var(--accent-orange);
     font-size: 0.9rem;
 }
 
 .final-cta {
     padding: 5rem 0;
-    background: var(--gradient-blue);
+    background: var(--gradient-orange);
     text-align: center;
     color: var(--primary-dark);
 }
@@ -585,6 +592,8 @@
 .final-cta .btn-primary {
     background: var(--primary-dark);
     color: var(--text-primary);
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
 }
 
 .final-cta .btn-primary:hover {
@@ -597,11 +606,11 @@
     background: var(--primary-dark);
     color: var(--text-secondary);
     text-align: center;
-    border-top: 1px solid rgba(97, 218, 251, 0.2);
+    border-top: 1px solid rgba(255, 174, 54, 0.2);
 }
 
 .landing-page footer a {
-    color: var(--accent-blue);
+    color: var(--accent-orange);
     text-decoration: none;
 }
 
@@ -613,7 +622,7 @@
     border-radius: 5px;
     font-weight: bold;
     margin-top: 1rem;
-    border: 1px solid rgba(97, 218, 251, 0.3);
+    border: 1px solid rgba(255, 174, 54, 0.3);
 }
 
 @keyframes fadeInUp {
