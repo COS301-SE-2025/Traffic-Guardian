@@ -44,9 +44,11 @@ async function getTraffic(){
         for(let t of trafficRes){
             for(let i of t.incidents){
                  let iconIdx = i.properties.iconCategory;
-                 let iconEventIdx = i.properties.events.iconCategory;
+                 let iconEventIdx = i.properties.events[0].iconCategory;
                  i.properties.iconCategory = iconCategory[iconIdx];
-                 i.properties.events.iconCategory = iconCategory[iconEventIdx];
+                 i.properties.events[0].iconCategory = iconCategory[iconEventIdx];
+                console.log(i.properties.iconCategory);
+                console.log(i.properties.events[0].iconCategory);
             }
         }//cleanup
 
