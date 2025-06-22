@@ -102,7 +102,7 @@ const LandingPage: React.FC = () => {
           </p>
           <div className="cta-buttons">
             <a href="#solution" className="btn btn-primary">Discover Our Solution</a>
-            <a href="#features" className="btn btn-secondary">View Features</a>
+            <a href="#features" className="btn btn-primary">View Features</a>
           </div>
           <div className="auth-section">
             <h3>Get Started Today</h3>
