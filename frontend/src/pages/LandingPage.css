@@ -1,4 +1,50 @@
-.landing-page {
+.btn-primary {
+    background: var(--accent-orange);
+    color: var(--primary-dark);
+    border: 2px solid var(--accent-orange);
+    font-weight: 700;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn-primary:hover::before {
+    left: 100%;
+}
+
+.btn-primary:hover {
+    background: var(--accent-orange-dark);
+    border-color: var(--accent-orange-dark);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(255, 174, 54, 0.4);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--accent-orange);
+    border: 2px solid var(--accent-orange);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-secondary:hover {
+    background: var(--accent-orange);
+    color: var(--primary-dark);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(255, 174, 54, 0.4);
+}.landing-page {
     width: 100%;
     min-height: 100vh;
     background-color: #121212;
@@ -131,7 +177,7 @@
     min-height: 100vh;
     display: flex;
     align-items: center;
-    background: var(--gradient-dark);
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 50%, #0f0f0f 100%);
     position: relative;
     overflow: hidden;
     padding-top: 80px;
@@ -144,7 +190,7 @@
     right: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255, 174, 54, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 174, 54, 0.08) 0%, transparent 70%);
     animation: pulse 4s ease-in-out infinite;
 }
 
@@ -174,41 +220,65 @@
 
 .hero-subtitle {
     font-size: clamp(1.2rem, 2vw, 1.5rem);
-    margin-bottom: 2rem;
-    color: var(--text-secondary);
+    margin-bottom: 2.5rem;
+    color: #ddd;
     animation: fadeInUp 1s ease-out 0.2s;
     animation-fill-mode: both;
+    line-height: 1.6;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .cta-buttons {
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
     justify-content: center;
     flex-wrap: wrap;
-    margin-bottom: 3rem;
+    margin-bottom: 4rem;
     animation: fadeInUp 1s ease-out 0.4s;
     animation-fill-mode: both;
 }
 
 .auth-section {
     margin: 3rem 0;
-    padding: 2rem;
-    background: rgba(30, 30, 30, 0.5);
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
+    padding: 2.5rem;
+    background: rgba(30, 30, 30, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 174, 54, 0.3);
     animation: fadeInUp 1s ease-out 0.6s;
     animation-fill-mode: both;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.auth-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #FFAE36 0%, #e89c2f 100%);
+}
+
+.auth-section::after {
+    display: none;
 }
 
 .auth-section h3 {
     color: var(--text-primary);
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+    font-weight: 600;
+    text-align: center;
 }
 
 .auth-buttons {
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
     justify-content: center;
     flex-wrap: wrap;
 }
@@ -225,16 +295,39 @@
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    border: 2px solid transparent;
 }
 
 .btn-primary {
-    background: var(--gradient-orange);
+    background: var(--accent-orange);
     color: var(--primary-dark);
+    border: 2px solid var(--accent-orange);
+    font-weight: 700;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn-primary:hover::before {
+    left: 100%;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(255, 174, 54, 0.4);
+    background: var(--accent-orange-dark);
+    border-color: var(--accent-orange-dark);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(255, 174, 54, 0.4);
 }
 
 .btn-secondary {
@@ -253,21 +346,34 @@
     background: transparent;
     color: var(--accent-orange);
     border: 2px solid var(--accent-orange);
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .btn-login:hover {
     background: var(--accent-orange);
     color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 174, 54, 0.3);
 }
 
 .btn-signup {
-    background: var(--gradient-orange);
+    background: var(--accent-orange);
     color: var(--primary-dark);
+    border: 2px solid var(--accent-orange);
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .btn-signup:hover {
+    background: var(--accent-orange-dark);
+    border-color: var(--accent-orange-dark);
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(255, 174, 54, 0.4);
+    box-shadow: 0 8px 25px rgba(255, 174, 54, 0.4);
 }
 
 .floating {
@@ -302,6 +408,7 @@
     color: var(--accent-orange);
 }
 
+/* Add extra spacing for problem and solution sections */
 .problem .section-title,
 .solution .section-title {
     margin-bottom: 2.5rem;
@@ -435,6 +542,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 3rem;
+    margin-top: 1rem;
 }
 
 .feature-card {
@@ -582,6 +690,10 @@
     background: var(--gradient-orange);
     text-align: center;
     color: var(--primary-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .final-cta h2 {
@@ -589,11 +701,16 @@
     margin-bottom: 1.5rem;
 }
 
+/* Make the View Progress button smaller and centered */
 .final-cta .btn-primary {
     background: var(--primary-dark);
     color: var(--text-primary);
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
+    padding: 0.5rem 1.2rem;
+    font-size: 0.85rem;
+    border: 2px solid var(--primary-dark);
+    display: inline-block;
+    margin: 0 auto;
+    max-width: 200px;
 }
 
 .final-cta .btn-primary:hover {
