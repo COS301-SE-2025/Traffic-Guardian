@@ -1,6 +1,6 @@
 """
 Simple Network Interface Camera (NIC) with YOLO Detection
-Basic version for getting started quickly
+
 """
 import cv2
 import torch
