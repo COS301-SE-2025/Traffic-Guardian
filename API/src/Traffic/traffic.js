@@ -25,20 +25,19 @@ async function getTraffic(){
 
     try{
         for(var i=0; i<regions.length; i++){
-        BBOX = getBbox(regions[i]);
-        const response = await axios.get(url, {
-            params: {
-                bbox: `${BBOX.BL.lon},${BBOX.BL.lat},${BBOX.TR.lon},${BBOX.TR.lat}`,
-                fields: reqFields,
-                language: 'en-GB',
-                timeValidityFilter: 'present',
-                key: process.env.TOMTOMAPI
-            }
-        })
-        trafficData.incidents = response.data.incidents;
-        trafficData.location = regionNames[i];
-        trafficRes.push(trafficData);
-        break;
+            BBOX = getBbox(regions[i]);
+            const response = await axios.get(url, {
+                params: {
+                    bbox: `${BBOX.BL.lon},${BBOX.BL.lat},${BBOX.TR.lon},${BBOX.TR.lat}`,
+                    fields: reqFields,
+                    language: 'en-GB',
+                    timeValidityFilter: 'present',
+                    key: process.env.TOMTOMAPI
+                }
+            })
+            trafficData.incidents = response.data.incidents;
+            trafficData.location = regionNames[i];
+            trafficRes.push(trafficData);
         }
 
         for(let t of trafficRes){
@@ -47,8 +46,8 @@ async function getTraffic(){
                  let iconEventIdx = i.properties.events[0].iconCategory;
                  i.properties.iconCategory = iconCategory[iconIdx];
                  i.properties.events[0].iconCategory = iconCategory[iconEventIdx];
-                console.log(i.properties.iconCategory);
-                console.log(i.properties.events[0].iconCategory);
+                //console.log(i.properties.iconCategory);
+                //console.log(i.properties.events[0].iconCategory);
             }
         }//cleanup
 
