@@ -23,24 +23,23 @@ const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
+var weatherD;
+var trafficD;
+
 io.on('connection',(socket)=>{
-  var incidents = [];
   console.log(socket.id + ' connected');
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
 
-  socket.on('incident-location',(positition)=>{
-    console.log(`${socket.id} reported incident at location = ${positition.latitude} , ${positition.latitude}`);
-    incidents.push(positition);
-    socket.emit('incident-recived', `I saved your incident at {${positition.latitude} , ${positition.latitude}}`);
-  })
 
     
-    weather.getWeather();
+    weatherD = weather.getWeather();
+    socket.emit('weatherUpdate',weatherD);
     setInterval(weather.getWeather, 60*60*1000); //1hr interval
 
-    traffic.getTraffic();
+    trafficD = traffic.getTraffic();
+    socket.emit('trafficUpdate', trafficD);
     setInterval(traffic.getTraffic, 30*60*1000); //30 min interval
 
 
