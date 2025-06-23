@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 
 class SimpleNIC:
-    def __init__(self, stream_url="Videos\CarTrainingVideo.mp4"):
+    def __init__(self, stream_url="Videos/Traffic_Video2.mp4"):
         """Initialize Simple NIC with YOLO detection."""
         self.stream_url = stream_url
         self.target_classes = ['person', 'car', 'truck', 'bus', 'motorcycle', 'bicycle']

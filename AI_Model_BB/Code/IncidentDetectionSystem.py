@@ -1,6 +1,6 @@
 """
-Enhanced Incident Detection System
-Builds upon Enhanced NIC V2 with additional incident detection capabilities
+Enhanced Incident Detection System - IMPROVED VERSION
+Fixed collision detection and removed wrong direction detection
 """
 import cv2
 import torch
@@ -12,7 +12,7 @@ from collections import defaultdict, deque
 import math
 
 class IncidentDetectionSystem:
-    def __init__(self, stream_url="Videos\CarTrainingVideo.mp4", config=None):
+    def __init__(self, stream_url="Videos\Traffic_Video1.mp4", config=None):
         """
         Advanced incident detection system for traffic monitoring.
         """
@@ -29,19 +29,18 @@ class IncidentDetectionSystem:
         self.next_vehicle_id = 0
         self.history_length = 15
         
-        # Incident detection components
+        # Incident detection components (REMOVED wrong_direction)
         self.incident_types = {
             'collision': [],
             'stopped_vehicle': [],
-            'wrong_direction': [],
             'pedestrian_on_road': [],
             'debris': [],
             'sudden_speed_change': []
         }
         
         # Speed and motion analysis
-        self.speed_zones = {}  # Define speed limits for different areas
-        self.motion_history = deque(maxlen=30)  # Track overall motion patterns
+        self.speed_zones = {}
+        self.motion_history = deque(maxlen=30)
         
         # Analytics and logging
         self.analytics = {
@@ -77,27 +76,30 @@ class IncidentDetectionSystem:
             'log_detections': True,
             'frame_skip': 2,
             
-            # Collision detection
-            'collision_distance_threshold': 60,
-            'prediction_horizon': 20,
-            'min_tracking_confidence': 0.5,
+            # IMPROVED COLLISION DETECTION SETTINGS
+            'collision_distance_threshold': 40,  # Reduced - closer proximity needed
+            'prediction_horizon': 15,            # Reduced prediction window
+            'min_tracking_confidence': 0.6,      # Higher confidence required
+            'min_collision_speed': 3.0,          # Both vehicles must be moving
+            'collision_angle_threshold': 45,     # Vehicles must be approaching each other
+            'min_trajectory_length': 5,          # Need more tracking history
+            'collision_persistence': 3,          # Alert must persist for 3 frames
             
             # Incident detection thresholds
             'stopped_vehicle_time': 10,  # seconds
             'speed_change_threshold': 0.8,  # relative change
-            'wrong_direction_angle': 135,  # degrees
             'pedestrian_road_threshold': 50,  # pixels from road edge
             
             # Speed monitoring
             'speed_zones': {
-                'highway': {'min': 45, 'max': 80},  # km/h equivalent in pixels/frame
+                'highway': {'min': 45, 'max': 80},
                 'city': {'min': 20, 'max': 50}
             },
             
-            # Area definitions (you can customize these)
+            # Area definitions
             'road_boundaries': {
-                'lanes': [(100, 200), (300, 400), (500, 600)],  # Lane center lines
-                'shoulders': [(50, 100), (650, 700)]  # Road shoulders
+                'lanes': [(100, 200), (300, 400), (500, 600)],
+                'shoulders': [(50, 100), (650, 700)]
             }
         }
     
@@ -161,7 +163,7 @@ class IncidentDetectionSystem:
                 # Vehicle tracking and trajectory analysis
                 tracking_results = self._update_vehicle_tracking(detection_results['detections'])
                 
-                # Incident detection pipeline
+                # Incident detection pipeline (NO MORE WRONG DIRECTION)
                 incidents = self._detect_incidents(frame, detection_results, tracking_results)
                 
                 # Update analytics
@@ -270,21 +272,20 @@ class IncidentDetectionSystem:
         return {'active_tracks': matched_ids}
     
     def _detect_incidents(self, frame, detection_results, tracking_results):
-        """Main incident detection pipeline."""
+        """Main incident detection pipeline - REMOVED WRONG DIRECTION."""
         incidents = []
         current_frame = self.analytics['total_frames']
         
-        # 1. Collision Detection (trajectory-based)
-        collision_incidents = self._detect_collisions(tracking_results['active_tracks'])
+        # 1. IMPROVED Collision Detection (trajectory-based)
+        collision_incidents = self._detect_smart_collisions(tracking_results['active_tracks'])
         incidents.extend(collision_incidents)
         
         # 2. Stopped Vehicle Detection
         stopped_incidents = self._detect_stopped_vehicles(current_frame)
         incidents.extend(stopped_incidents)
         
-        # 3. Wrong Direction Detection
-        wrong_dir_incidents = self._detect_wrong_direction()
-        incidents.extend(wrong_dir_incidents)
+        # 3. REMOVED: Wrong Direction Detection
+        # (No longer detecting wrong direction since camera can see both lanes)
         
         # 4. Pedestrian on Road Detection
         pedestrian_incidents = self._detect_pedestrians_on_road(detection_results['detections'])
@@ -300,33 +301,244 @@ class IncidentDetectionSystem:
         
         return incidents
     
-    def _detect_collisions(self, active_tracks):
-        """Detect potential collisions using trajectory prediction."""
+    def _detect_smart_collisions(self, active_tracks):
+        """
+        IMPROVED collision detection with smarter logic to reduce false positives.
+        """
         incidents = []
         prediction_horizon = self.config['prediction_horizon']
+        min_trajectory_length = self.config['min_trajectory_length']
         
         for i, track1_id in enumerate(active_tracks):
             for track2_id in active_tracks[i+1:]:
                 track1 = self.tracked_vehicles.get(track1_id)
                 track2 = self.tracked_vehicles.get(track2_id)
                 
-                if not track1 or not track2 or not track1.get('velocity') or not track2.get('velocity'):
+                # Skip if either vehicle doesn't have enough data
+                if not self._is_collision_candidate(track1, track2, min_trajectory_length):
                     continue
                 
-                # Predict collision
-                collision_data = self._predict_collision(track1, track2, prediction_horizon)
+                # Check if vehicles are actually approaching each other
+                if not self._are_vehicles_approaching(track1, track2):
+                    continue
+                
+                # Predict collision with improved logic
+                collision_data = self._predict_smart_collision(track1, track2, prediction_horizon)
                 if collision_data:
-                    incidents.append({
-                        'type': 'collision',
-                        'severity': collision_data['severity'],
-                        'time_to_collision': collision_data['ttc'],
-                        'vehicles': [track1['class'], track2['class']],
-                        'positions': [track1['center'], track2['center']],
-                        'predicted_point': collision_data['collision_point'],
-                        'timestamp': datetime.now().isoformat()
-                    })
+                    # Check collision persistence (reduce flicker)
+                    collision_key = f"{track1_id}_{track2_id}"
+                    
+                    # Initialize collision counter if not exists
+                    if not hasattr(self, 'collision_counters'):
+                        self.collision_counters = {}
+                    
+                    if collision_key not in self.collision_counters:
+                        self.collision_counters[collision_key] = 0
+                    
+                    self.collision_counters[collision_key] += 1
+                    
+                    # Only alert after collision persists for required frames
+                    if self.collision_counters[collision_key] >= self.config['collision_persistence']:
+                        incidents.append({
+                            'type': 'collision',
+                            'severity': collision_data['severity'],
+                            'time_to_collision': collision_data['ttc'],
+                            'vehicles': [track1['class'], track2['class']],
+                            'vehicle_ids': [track1_id, track2_id],
+                            'positions': [track1['center'], track2['center']],
+                            'predicted_point': collision_data['collision_point'],
+                            'approach_angle': collision_data['approach_angle'],
+                            'relative_speed': collision_data['relative_speed'],
+                            'confidence': collision_data['confidence'],
+                            'timestamp': datetime.now().isoformat()
+                        })
+                else:
+                    # Reset counter if no collision detected
+                    collision_key = f"{track1_id}_{track2_id}"
+                    if hasattr(self, 'collision_counters') and collision_key in self.collision_counters:
+                        self.collision_counters[collision_key] = 0
         
         return incidents
+    
+    def _is_collision_candidate(self, track1, track2, min_trajectory_length):
+        """Check if two vehicles are candidates for collision detection."""
+        if not track1 or not track2:
+            return False
+        
+        # Both vehicles must have velocity data
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return False
+        
+        # Both vehicles must have sufficient tracking history
+        hist1 = self.vehicle_history.get(track1['id'], [])
+        hist2 = self.vehicle_history.get(track2['id'], [])
+        
+        if len(hist1) < min_trajectory_length or len(hist2) < min_trajectory_length:
+            return False
+        
+        # Both vehicles must be moving at minimum speed
+        speed1 = track1.get('speed', 0)
+        speed2 = track2.get('speed', 0)
+        min_speed = self.config['min_collision_speed']
+        
+        if speed1 < min_speed or speed2 < min_speed:
+            return False
+        
+        return True
+    
+    def _are_vehicles_approaching(self, track1, track2):
+        """
+        Check if two vehicles are actually approaching each other.
+        This reduces false positives from vehicles in parallel lanes.
+        """
+        pos1 = np.array(track1['center'])
+        pos2 = np.array(track2['center'])
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        
+        # Vector from vehicle 1 to vehicle 2
+        relative_pos = pos2 - pos1
+        
+        # Relative velocity (how fast they're approaching)
+        relative_vel = vel2 - vel1
+        
+        # Check if relative velocity is pointing towards each other
+        # (dot product of relative position and relative velocity should be negative)
+        approach_rate = np.dot(relative_pos, relative_vel)
+        
+        # Also check if they're within reasonable angular approach
+        if np.linalg.norm(relative_pos) > 0 and np.linalg.norm(relative_vel) > 0:
+            cos_angle = approach_rate / (np.linalg.norm(relative_pos) * np.linalg.norm(relative_vel))
+            cos_angle = np.clip(cos_angle, -1, 1)  # Handle numerical errors
+            angle = math.degrees(math.acos(abs(cos_angle)))
+            
+            # Vehicles must be approaching within reasonable angle
+            if angle > self.config['collision_angle_threshold']:
+                return False
+        
+        # They are approaching if approach_rate is negative (getting closer)
+        return approach_rate < -1.0  # Threshold for approach rate
+    
+    def _predict_smart_collision(self, track1, track2, horizon):
+        """
+        Improved collision prediction with better physics and confidence scoring.
+        """
+        pos1 = np.array(track1['center'], dtype=float)
+        pos2 = np.array(track2['center'], dtype=float)
+        vel1 = np.array(track1['velocity'], dtype=float)
+        vel2 = np.array(track2['velocity'], dtype=float)
+        
+        min_distance = float('inf')
+        collision_time = None
+        collision_point = None
+        closest_approach_time = None
+        
+        # Check each future time step
+        for t in range(1, horizon + 1):
+            # Predict future positions
+            future_pos1 = pos1 + vel1 * t
+            future_pos2 = pos2 + vel2 * t
+            
+            # Distance at this time step
+            distance = np.linalg.norm(future_pos2 - future_pos1)
+            
+            if distance < min_distance:
+                min_distance = distance
+                closest_approach_time = t
+            
+            # Check for collision
+            if distance < self.config['collision_distance_threshold']:
+                collision_time = t
+                collision_point = (future_pos1 + future_pos2) / 2
+                break
+        
+        if collision_time:
+            ttc = collision_time / 30  # Convert to seconds (assume 30 FPS)
+            
+            # Calculate additional metrics for confidence
+            current_distance = np.linalg.norm(pos2 - pos1)
+            relative_speed = np.linalg.norm(vel2 - vel1)
+            
+            # Calculate approach angle
+            relative_pos = pos2 - pos1
+            relative_vel = vel2 - vel1
+            
+            if np.linalg.norm(relative_pos) > 0 and np.linalg.norm(relative_vel) > 0:
+                cos_angle = np.dot(relative_pos, relative_vel) / (np.linalg.norm(relative_pos) * np.linalg.norm(relative_vel))
+                cos_angle = np.clip(cos_angle, -1, 1)
+                approach_angle = math.degrees(math.acos(abs(cos_angle)))
+            else:
+                approach_angle = 90
+            
+            # Calculate confidence based on multiple factors
+            confidence = self._calculate_collision_confidence(
+                ttc, current_distance, relative_speed, approach_angle, min_distance
+            )
+            
+            # Only return high-confidence collisions
+            if confidence > 0.6:  # Threshold for collision confidence
+                severity = self._determine_collision_severity(ttc, relative_speed, confidence)
+                
+                return {
+                    'ttc': ttc,
+                    'severity': severity,
+                    'collision_point': collision_point.tolist(),
+                    'min_distance': min_distance,
+                    'approach_angle': approach_angle,
+                    'relative_speed': relative_speed,
+                    'confidence': confidence
+                }
+        
+        return None
+    
+    def _calculate_collision_confidence(self, ttc, current_distance, relative_speed, approach_angle, min_distance):
+        """
+        Calculate confidence score for collision prediction based on multiple factors.
+        """
+        confidence = 0.0
+        
+        # Time factor: shorter time = higher confidence
+        if ttc <= 1.0:
+            confidence += 0.4
+        elif ttc <= 2.0:
+            confidence += 0.3
+        elif ttc <= 3.0:
+            confidence += 0.2
+        
+        # Distance factor: closer vehicles = higher confidence
+        if current_distance < 100:
+            confidence += 0.2
+        elif current_distance < 150:
+            confidence += 0.1
+        
+        # Speed factor: higher relative speed = higher confidence
+        if relative_speed > 10:
+            confidence += 0.2
+        elif relative_speed > 5:
+            confidence += 0.1
+        
+        # Angle factor: head-on approach = higher confidence
+        if approach_angle < 30:
+            confidence += 0.2
+        elif approach_angle < 60:
+            confidence += 0.1
+        
+        # Minimum distance factor
+        if min_distance < 20:
+            confidence += 0.1
+        
+        return min(confidence, 1.0)  # Cap at 1.0
+    
+    def _determine_collision_severity(self, ttc, relative_speed, confidence):
+        """Determine collision severity based on time, speed, and confidence."""
+        if ttc < 1.0 and relative_speed > 10 and confidence > 0.8:
+            return 'CRITICAL'
+        elif ttc < 2.0 and confidence > 0.7:
+            return 'HIGH'
+        elif ttc < 3.0 and confidence > 0.6:
+            return 'MEDIUM'
+        else:
+            return 'LOW'
     
     def _detect_stopped_vehicles(self, current_frame):
         """Detect vehicles that have been stationary for too long."""
@@ -341,7 +553,10 @@ class IncidentDetectionSystem:
             speed = np.sqrt(vehicle['velocity'][0]**2 + vehicle['velocity'][1]**2)
             
             if speed < 2:  # Very low speed threshold
-                stopped_duration = current_frame - vehicle.get('stopped_since', current_frame)
+                if 'stopped_since' not in vehicle:
+                    vehicle['stopped_since'] = current_frame
+                
+                stopped_duration = current_frame - vehicle['stopped_since']
                 
                 if stopped_duration > stopped_threshold:
                     incidents.append({
@@ -359,43 +574,7 @@ class IncidentDetectionSystem:
         
         return incidents
     
-    def _detect_wrong_direction(self):
-        """Detect vehicles moving in the wrong direction."""
-        incidents = []
-        
-        for track_id, vehicle in self.tracked_vehicles.items():
-            if 'velocity' not in vehicle or vehicle['velocity'] is None:
-                continue
-            
-            # Calculate movement angle
-            vx, vy = vehicle['velocity']
-            if abs(vx) < 1 and abs(vy) < 1:  # Skip nearly stationary vehicles
-                continue
-            
-            angle = math.degrees(math.atan2(vy, vx)) % 360
-            
-            # Assume normal traffic flows left to right (0-45 degrees) or right to left (135-225 degrees)
-            # Adjust these ranges based on your camera angle and traffic flow
-            normal_ranges = [(315, 360), (0, 45), (135, 225)]
-            
-            is_wrong_direction = True
-            for start, end in normal_ranges:
-                if start <= angle <= end:
-                    is_wrong_direction = False
-                    break
-            
-            if is_wrong_direction:
-                incidents.append({
-                    'type': 'wrong_direction',
-                    'severity': 'HIGH',
-                    'vehicle_id': track_id,
-                    'vehicle_class': vehicle['class'],
-                    'position': vehicle['center'],
-                    'movement_angle': angle,
-                    'timestamp': datetime.now().isoformat()
-                })
-        
-        return incidents
+    # REMOVED: _detect_wrong_direction method entirely
     
     def _detect_pedestrians_on_road(self, detections):
         """Detect pedestrians in dangerous road areas."""
@@ -406,8 +585,7 @@ class IncidentDetectionSystem:
         for pedestrian in pedestrians:
             x, y = pedestrian['center']
             
-            # Check if pedestrian is in the main road area (customize based on your camera view)
-            # This is a simplified check - you'd want to define road boundaries more precisely
+            # Check if pedestrian is in the main road area
             if self._is_in_road_area(x, y):
                 incidents.append({
                     'type': 'pedestrian_on_road',
@@ -466,8 +644,6 @@ class IncidentDetectionSystem:
             speed_history = vehicle.get('speed_history', [])
             
             if len(speed_history) >= 5:
-                avg_recent_speed = np.mean(speed_history[-5:])
-                
                 # Detect sudden speed changes
                 if len(speed_history) > 1:
                     speed_change = abs(current_speed - speed_history[-1]) / max(speed_history[-1], 1)
@@ -487,7 +663,7 @@ class IncidentDetectionSystem:
         
         return incidents
     
-    # Helper methods
+    # Helper methods (unchanged)
     def _find_best_match(self, vehicle, current_frame):
         """Find the best matching tracked vehicle."""
         best_match = None
@@ -575,51 +751,8 @@ class IncidentDetectionSystem:
             if len(vehicle['speed_history']) > 10:
                 vehicle['speed_history'].pop(0)
     
-    def _predict_collision(self, track1, track2, horizon):
-        """Predict if two vehicles will collide."""
-        pos1 = track1['center']
-        pos2 = track2['center']
-        vel1 = track1['velocity']
-        vel2 = track2['velocity']
-        
-        min_distance = float('inf')
-        collision_time = None
-        collision_point = None
-        
-        for t in range(1, horizon + 1):
-            # Predict future positions
-            future_pos1 = [pos1[0] + vel1[0] * t, pos1[1] + vel1[1] * t]
-            future_pos2 = [pos2[0] + vel2[0] * t, pos2[1] + vel2[1] * t]
-            
-            distance = np.sqrt((future_pos2[0] - future_pos1[0])**2 + 
-                             (future_pos2[1] - future_pos1[1])**2)
-            
-            if distance < min_distance:
-                min_distance = distance
-                
-            if distance < self.config['collision_distance_threshold']:
-                collision_time = t
-                collision_point = [(future_pos1[0] + future_pos2[0]) / 2,
-                                 (future_pos1[1] + future_pos2[1]) / 2]
-                break
-        
-        if collision_time:
-            ttc = collision_time / 30  # Convert to seconds
-            severity = 'HIGH' if ttc < 2 else 'MEDIUM' if ttc < 5 else 'LOW'
-            
-            return {
-                'ttc': ttc,
-                'severity': severity,
-                'collision_point': collision_point,
-                'min_distance': min_distance
-            }
-        
-        return None
-    
     def _is_in_road_area(self, x, y):
         """Check if a point is in the main road area."""
-        # This is a simplified implementation - customize based on your camera view
-        # You might want to define polygonal road boundaries
         frame_width = 1280  # Adjust based on your resolution
         frame_height = 720
         
@@ -696,12 +829,14 @@ class IncidentDetectionSystem:
             severity = incident.get('severity', 'MEDIUM')
             
             # Color based on severity
-            if severity == 'HIGH':
-                color = (0, 0, 255)  # Red
+            if severity == 'CRITICAL':
+                color = (0, 0, 139)      # Dark Red
+            elif severity == 'HIGH':
+                color = (0, 0, 255)      # Red
             elif severity == 'MEDIUM':
-                color = (0, 165, 255)  # Orange
+                color = (0, 165, 255)    # Orange
             else:
-                color = (0, 255, 255)  # Yellow
+                color = (0, 255, 255)    # Yellow
             
             # Draw incident marker
             if 'position' in incident:
@@ -714,15 +849,24 @@ class IncidentDetectionSystem:
                 cv2.putText(frame, label, (int(pos[0]) - 40, int(pos[1]) - 30),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             
-            # Special handling for collisions
+            # Special handling for IMPROVED collisions
             if incident_type == 'collision' and 'predicted_point' in incident:
                 pred_point = incident['predicted_point']
                 cv2.circle(frame, (int(pred_point[0]), int(pred_point[1])), 25, (0, 0, 255), 3)
                 
                 ttc = incident['time_to_collision']
-                cv2.putText(frame, f"COLLISION: {ttc:.1f}s", 
-                           (int(pred_point[0]) - 60, int(pred_point[1]) - 40),
+                confidence = incident.get('confidence', 0)
+                
+                # Enhanced collision display
+                collision_text = f"COLLISION: {ttc:.1f}s"
+                confidence_text = f"Conf: {confidence:.1f}"
+                
+                cv2.putText(frame, collision_text, 
+                           (int(pred_point[0]) - 70, int(pred_point[1]) - 40),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                cv2.putText(frame, confidence_text, 
+                           (int(pred_point[0]) - 40, int(pred_point[1]) - 15),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         
         return frame
     
@@ -738,12 +882,18 @@ class IncidentDetectionSystem:
                 pt2 = tuple(map(int, history[i]))
                 cv2.line(frame, pt1, pt2, (0, 255, 0), 2)
             
-            # Draw vehicle ID
+            # Draw vehicle ID and speed
             if history:
                 last_pos = history[-1]
-                cv2.putText(frame, f"ID:{track_id}", 
-                           (int(last_pos[0]) + 10, int(last_pos[1]) - 10),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                vehicle = self.tracked_vehicles.get(track_id)
+                if vehicle:
+                    speed = vehicle.get('speed', 0)
+                    cv2.putText(frame, f"ID:{track_id}", 
+                               (int(last_pos[0]) + 10, int(last_pos[1]) - 25),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                    cv2.putText(frame, f"Speed:{speed:.1f}", 
+                               (int(last_pos[0]) + 10, int(last_pos[1]) - 10),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
         
         return frame
     
@@ -776,6 +926,13 @@ class IncidentDetectionSystem:
         else:
             overlay_text.append("  None detected")
         
+        # Add improved collision stats
+        if hasattr(self, 'collision_counters'):
+            active_collisions = sum(1 for count in self.collision_counters.values() if count > 0)
+            overlay_text.append("")
+            overlay_text.append(f"Collision Tracking:")
+            overlay_text.append(f"  Active: {active_collisions}")
+        
         # Draw overlay background
         overlay_height = len(overlay_text) * 25 + 30
         cv2.rectangle(frame, (width - 350, 10), (width - 10, overlay_height), 
@@ -785,7 +942,15 @@ class IncidentDetectionSystem:
         
         # Draw text
         for i, text in enumerate(overlay_text):
-            color = (0, 0, 255) if "HIGH" in text else (0, 165, 255) if "MEDIUM" in text else (255, 255, 255)
+            if "CRITICAL" in text:
+                color = (0, 0, 139)  # Dark red
+            elif "HIGH" in text:
+                color = (0, 0, 255)  # Red
+            elif "MEDIUM" in text:
+                color = (0, 165, 255)  # Orange
+            else:
+                color = (255, 255, 255)  # White
+                
             cv2.putText(frame, text, (width - 340, 35 + i * 25), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
         
@@ -825,17 +990,19 @@ class IncidentDetectionSystem:
             if incident_type == 'collision':
                 ttc = incident['time_to_collision']
                 vehicles = ' and '.join(incident['vehicles'])
-                print(f"🚨 {severity} ALERT: Collision predicted between {vehicles} in {ttc:.1f}s!")
+                confidence = incident.get('confidence', 0)
+                relative_speed = incident.get('relative_speed', 0)
+                
+                print(f"🚨 {severity} COLLISION ALERT:")
+                print(f"   Vehicles: {vehicles}")
+                print(f"   Time to collision: {ttc:.1f}s")
+                print(f"   Confidence: {confidence:.2f}")
+                print(f"   Relative speed: {relative_speed:.1f}")
             
             elif incident_type == 'stopped_vehicle':
                 duration = incident['stopped_duration']
                 vehicle_class = incident['vehicle_class']
                 print(f"⚠️ {severity} ALERT: {vehicle_class} stopped for {duration:.1f}s")
-            
-            elif incident_type == 'wrong_direction':
-                vehicle_class = incident['vehicle_class']
-                angle = incident['movement_angle']
-                print(f"🔄 {severity} ALERT: {vehicle_class} moving wrong direction (angle: {angle:.1f}°)")
             
             elif incident_type == 'pedestrian_on_road':
                 print(f"🚶 {severity} ALERT: Pedestrian detected on roadway!")
@@ -895,6 +1062,10 @@ class IncidentDetectionSystem:
         self.vehicle_history.clear()
         self.next_vehicle_id = 0
         
+        # Clear collision counters
+        if hasattr(self, 'collision_counters'):
+            self.collision_counters.clear()
+        
         print("📊 Analytics and tracking data reset")
     
     def _cleanup(self):
@@ -920,7 +1091,15 @@ class IncidentDetectionSystem:
             },
             'detection_summary': self.analytics['class_totals'],
             'incident_summary': {},
-            'all_incidents': self.analytics['incident_log']
+            'all_incidents': self.analytics['incident_log'],
+            'improvements_applied': [
+                'Removed wrong direction detection (bidirectional road support)',
+                'Enhanced collision detection with approach angle analysis',
+                'Added collision confidence scoring',
+                'Implemented collision persistence filtering',
+                'Added minimum speed requirements for collision detection',
+                'Improved trajectory length requirements'
+            ]
         }
         
         # Summarize incidents by type
@@ -939,7 +1118,7 @@ class IncidentDetectionSystem:
         
         # Print summary
         print(f"\n{'='*50}")
-        print("🏁 FINAL INCIDENT DETECTION REPORT")
+        print("🏁 IMPROVED INCIDENT DETECTION REPORT")
         print(f"{'='*50}")
         print(f"Runtime: {runtime:.1f} seconds")
         print(f"Frames processed: {self.analytics['total_frames']}")
@@ -954,11 +1133,15 @@ class IncidentDetectionSystem:
         else:
             print("\n✅ No incidents detected during session")
         
+        print(f"\n🔧 Improvements applied:")
+        for improvement in report['improvements_applied']:
+            print(f"  ✓ {improvement}")
+        
         print(f"\n📄 Detailed report saved to: {filename}")
 
 
 def main():
-    """Main function to run the incident detection system."""
+    """Main function to run the IMPROVED incident detection system."""
     # Enhanced configuration for incident detection
     config = {
         # YOLO model settings
@@ -972,31 +1155,39 @@ def main():
         'log_detections': True,
         'frame_skip': 2,
         
-        # Collision detection
-        'collision_distance_threshold': 60,
-        'prediction_horizon': 20,
-        'min_tracking_confidence': 0.5,
+        # IMPROVED COLLISION DETECTION SETTINGS
+        'collision_distance_threshold': 40,    # Closer proximity needed
+        'prediction_horizon': 15,              # Shorter prediction window  
+        'min_tracking_confidence': 0.6,        # Higher confidence required
+        'min_collision_speed': 3.0,            # Both vehicles must be moving
+        'collision_angle_threshold': 45,       # Vehicles must be approaching
+        'min_trajectory_length': 5,            # More tracking history needed
+        'collision_persistence': 3,            # Alert must persist for 3 frames
         
-        # Incident detection thresholds
+        # Other incident detection thresholds
         'stopped_vehicle_time': 8,      # seconds before alert
         'speed_change_threshold': 0.7,  # relative speed change
-        'wrong_direction_angle': 135,   # degrees
         'pedestrian_road_threshold': 50,
         
-        # Speed monitoring (adjust based on your camera setup)
+        # Speed monitoring
         'speed_zones': {
             'highway': {'min': 45, 'max': 80},
             'city': {'min': 20, 'max': 50}
         }
     }
     
-    print("🚀 Initializing Advanced Incident Detection System...")
+    print("🚀 Initializing IMPROVED Incident Detection System...")
     print("="*60)
-    print("Features enabled:")
-    print("✓ Collision prediction with trajectory analysis")
+    print("🔧 IMPROVEMENTS APPLIED:")
+    print("✓ REMOVED wrong direction detection (bidirectional road support)")
+    print("✓ ENHANCED collision detection with smarter logic:")
+    print("  - Approach angle analysis")
+    print("  - Collision confidence scoring") 
+    print("  - Persistence filtering (reduces false positives)")
+    print("  - Minimum speed requirements")
+    print("  - Better trajectory analysis")
     print("✓ Stopped vehicle detection")
-    print("✓ Wrong direction detection") 
-    print("✓ Pedestrian safety monitoring")
+    print("✓ Pedestrian safety monitoring") 
     print("✓ Debris/obstacle detection")
     print("✓ Speed anomaly detection")
     print("✓ Real-time alerting and logging")
