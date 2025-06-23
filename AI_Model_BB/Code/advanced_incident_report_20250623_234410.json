@@ -1,0 +1,66 @@
+{
+  "session_summary": {
+    "runtime_seconds": 52.08134698867798,
+    "total_frames": 155,
+    "total_detections": 1387,
+    "total_incidents": 13,
+    "average_fps": 2.9761135024732677
+  },
+  "detection_summary": {
+    "car": 1332,
+    "bus": 18,
+    "truck": 36,
+    "person": 1
+  },
+  "incident_summary": {
+    "collision": 13
+  },
+  "collision_layer_performance": {
+    "layer1_trajectory_detected": 16,
+    "layer2_depth_confirmed": 16,
+    "layer3_flow_confirmed": 16,
+    "layer4_physics_confirmed": 16,
+    "final_confirmed_collisions": 13,
+    "false_positive_reduction": 0.1875
+  },
+  "all_incidents": [
+    {
+      "type": "collision",
+      "severity": "MEDIUM",
+      "time_to_collision": 0.06666666666666667,
+      "vehicles": [
+        "car",
+        "car"
+      ],
+      "vehicle_ids": [
+        4,
+        2
+      ],
+      "positions": [
+        [
+          158,
+          229
+        ],
+        [
+          159,
+          123
+        ]
+      ],
+      "predicted_point": [
+        157.51390372605124,
+        258.9889400690313
+      ],
+      "confidence": 0.75,
+      "validation_layers": {
+        "trajectory": true,
+        "depth": true,
+        "optical_flow": false,
+        "physics": true
+      },
+      "layer_analysis": {
+        "depth": {
+          "depth_difference": 0.18760911903412703,
+          "vehicle1_depth": 0.3679645919317408,
+          "vehicle2_depth": 0.5555737109658678,
+          "shadow_indicators": [
+            

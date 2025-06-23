@@ -12,7 +12,7 @@ from collections import defaultdict, deque
 import math
 
 class AdvancedIncidentDetectionSystem:
-    def __init__(self, stream_url="Videos\Traffic_Video1.mp4", config=None):
+    def __init__(self, stream_url="Videos/Traffic_Video2.mp4", config=None):
         """
         Advanced incident detection system with multi-layer collision detection.
         """
@@ -1060,91 +1060,197 @@ class AdvancedIncidentDetectionSystem:
         return frame
     
     def _draw_tracking_info(self, frame):
-        """Draw vehicle tracking trajectories."""
+        """Draw clean vehicle tracking trajectories for demo presentation."""
+        # Get frame dimensions for cleanup logic
+        height, width = frame.shape[:2]
+        
         for track_id, history in self.vehicle_history.items():
             if len(history) < 2:
                 continue
             
-            # Draw trajectory
-            for i in range(1, len(history)):
-                pt1 = tuple(map(int, history[i-1]))
-                pt2 = tuple(map(int, history[i]))
-                cv2.line(frame, pt1, pt2, (0, 255, 0), 2)
+            # Only draw trajectory if vehicle is still active (seen recently)
+            vehicle = self.tracked_vehicles.get(track_id)
+            if not vehicle:
+                continue
+                
+            current_frame = self.analytics['total_frames']
+            if current_frame - vehicle['last_seen'] > 10:  # Vehicle not seen for 10 frames
+                continue
             
-            # Draw vehicle info
-            if history:
-                last_pos = history[-1]
-                vehicle = self.tracked_vehicles.get(track_id)
-                if vehicle:
+            # Draw a cleaner, shorter trajectory (last 8 points only)
+            recent_history = history[-8:] if len(history) > 8 else history
+            
+            # Draw trajectory with fading effect
+            for i in range(1, len(recent_history)):
+                # Calculate alpha (transparency) - newer points are more visible
+                alpha = i / len(recent_history)
+                
+                pt1 = tuple(map(int, recent_history[i-1]))
+                pt2 = tuple(map(int, recent_history[i]))
+                
+                # Only draw if points are within frame bounds
+                if (0 <= pt1[0] < width and 0 <= pt1[1] < height and 
+                    0 <= pt2[0] < width and 0 <= pt2[1] < height):
+                    
+                    # Use thinner line and semi-transparent green
+                    cv2.line(frame, pt1, pt2, (0, int(255 * alpha), 0), 1)
+            
+            # Draw clean vehicle info only for active vehicles
+            if recent_history:
+                last_pos = recent_history[-1]
+                
+                # Only show ID and speed if vehicle is in a good position (not at edges)
+                if (50 < last_pos[0] < width - 100 and 50 < last_pos[1] < height - 50):
+                    
+                    # Create a small info box with background
+                    info_x = int(last_pos[0]) + 15
+                    info_y = int(last_pos[1]) - 20
+                    
+                    # Ensure info box doesn't go out of bounds
+                    if info_x > width - 80:
+                        info_x = int(last_pos[0]) - 70
+                    if info_y < 30:
+                        info_y = int(last_pos[1]) + 30
+                    
+                    # Draw semi-transparent background for text
+                    cv2.rectangle(frame, (info_x - 5, info_y - 15), 
+                                 (info_x + 65, info_y + 5), (0, 0, 0), -1)
+                    cv2.rectangle(frame, (info_x - 5, info_y - 15), 
+                                 (info_x + 65, info_y + 5), (255, 255, 255), 1)
+                    
+                    # Clean, minimal text display
                     speed = vehicle.get('speed', 0)
-                    cv2.putText(frame, f"ID:{track_id}", 
-                               (int(last_pos[0]) + 10, int(last_pos[1]) - 25),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-                    cv2.putText(frame, f"Speed:{speed:.1f}", 
-                               (int(last_pos[0]) + 10, int(last_pos[1]) - 10),
+                    cv2.putText(frame, f"V{track_id}:{speed:.0f}", 
+                               (info_x, info_y - 2),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
         
         return frame
     
     def _add_advanced_analytics_overlay(self, frame, incidents):
-        """Add comprehensive analytics overlay with layer statistics."""
+        """Add professional-looking analytics overlay for demo presentation."""
         height, width = frame.shape[:2]
         
         # Create incident summary
         incident_counts = defaultdict(int)
+        collision_incidents = []
         for incident in incidents:
             incident_counts[incident['type']] += 1
+            if incident['type'] == 'collision':
+                collision_incidents.append(incident)
         
         runtime = time.time() - self.analytics['start_time']
         layers = self.analytics['collision_layers']
         
+        # Create clean, professional overlay
         overlay_text = [
-            f"Runtime: {runtime:.0f}s",
-            f"Frames: {self.analytics['total_frames']}",
-            f"Active Tracks: {len(self.tracked_vehicles)}",
-            f"Total Incidents: {self.analytics['incidents_detected']}",
+            "🚗 ADVANCED TRAFFIC MONITORING",
+            "─" * 28,
+            f"⏱️  Runtime: {runtime:.0f}s",
+            f"📹 Frames: {self.analytics['total_frames']:,}",
+            f"🎯 Active Vehicles: {len(self.tracked_vehicles)}",
             "",
-            "COLLISION DETECTION LAYERS:",
-            f"  Layer 1 (Trajectory): {layers['trajectory_detected']}",
-            f"  Layer 2 (Depth): {layers['depth_confirmed']}",
-            f"  Layer 3 (Flow): {layers['flow_confirmed']}",
-            f"  Layer 4 (Physics): {layers['physics_confirmed']}",
-            f"  FINAL Confirmed: {layers['final_confirmed']}",
+            "🔍 COLLISION DETECTION STATUS:",
+            f"   Layer 1 (Trajectory): {layers['trajectory_detected']}",
+            f"   Layer 2 (Depth): {layers['depth_confirmed']}",
+            f"   Layer 3 (Flow): {layers['flow_confirmed']}",
+            f"   Layer 4 (Physics): {layers['physics_confirmed']}",
+            "─" * 28,
+            f"🚨 CONFIRMED ALERTS: {layers['final_confirmed']}",
             "",
-            "CURRENT INCIDENTS:",
         ]
         
-        # Add current incidents
-        if incidents:
-            for incident_type, count in incident_counts.items():
-                overlay_text.append(f"  {incident_type}: {count}")
+        # Add current high-priority incidents only
+        if collision_incidents:
+            overlay_text.append("⚠️  ACTIVE INCIDENTS:")
+            for incident in collision_incidents[:3]:  # Show max 3 incidents
+                severity = incident.get('severity', 'MEDIUM')
+                confidence = incident.get('confidence', 0)
+                ttc = incident.get('time_to_collision', 0)
+                overlay_text.append(f"   🚨 {severity}: {ttc:.1f}s ({confidence:.0%})")
         else:
-            overlay_text.append("  None detected")
+            overlay_text.append("✅ NO INCIDENTS DETECTED")
+            overlay_text.append("   System monitoring normally")
         
-        # Draw overlay background
-        overlay_height = len(overlay_text) * 20 + 30
-        cv2.rectangle(frame, (width - 300, 10), (width - 10, overlay_height), 
-                     (0, 0, 0), -1)
-        cv2.rectangle(frame, (width - 300, 10), (width - 10, overlay_height), 
-                     (255, 255, 255), 2)
+        # Calculate overlay dimensions
+        max_text_width = max(len(line) for line in overlay_text)
+        overlay_width = max(max_text_width * 8, 280)
+        overlay_height = len(overlay_text) * 22 + 40
         
-        # Draw text
+        # Position overlay (top-right with margin)
+        overlay_x = width - overlay_width - 20
+        overlay_y = 20
+        
+        # Draw professional-looking overlay background with gradient effect
+        # Main background (dark with transparency)
+        overlay_bg = np.zeros((overlay_height, overlay_width, 3), dtype=np.uint8)
+        overlay_bg[:] = (20, 20, 20)  # Dark background
+        
+        # Add border gradient effect
+        cv2.rectangle(overlay_bg, (0, 0), (overlay_width-1, overlay_height-1), (100, 100, 100), 2)
+        cv2.rectangle(overlay_bg, (2, 2), (overlay_width-3, overlay_height-3), (60, 60, 60), 1)
+        
+        # Blend overlay with main frame
+        roi = frame[overlay_y:overlay_y+overlay_height, overlay_x:overlay_x+overlay_width]
+        if roi.shape[:2] == overlay_bg.shape[:2]:
+            blended = cv2.addWeighted(roi, 0.3, overlay_bg, 0.7, 0)
+            frame[overlay_y:overlay_y+overlay_height, overlay_x:overlay_x+overlay_width] = blended
+        
+        # Draw text with appropriate colors
         for i, text in enumerate(overlay_text):
-            if "FINAL" in text and "Confirmed" in text:
-                color = (0, 255, 0)  # Green for final confirmed
+            text_y = overlay_y + 25 + i * 22
+            text_x = overlay_x + 15
+            
+            # Choose colors based on content
+            if "🚗 ADVANCED TRAFFIC" in text:
+                color = (100, 200, 255)  # Light blue header
+                font_size = 0.6
+                thickness = 2
+            elif "─" in text:
+                color = (150, 150, 150)  # Gray separator
+                font_size = 0.4
+                thickness = 1
+            elif "CONFIRMED ALERTS" in text:
+                if layers['final_confirmed'] > 0:
+                    color = (0, 100, 255)  # Orange for alerts
+                else:
+                    color = (100, 255, 100)  # Green for no alerts
+                font_size = 0.5
+                thickness = 2
             elif "Layer" in text:
-                color = (100, 149, 237)  # Blue for layer stats
-            elif "CRITICAL" in text:
-                color = (0, 0, 139)
-            elif "HIGH" in text:
-                color = (0, 0, 255)
-            elif "MEDIUM" in text:
-                color = (0, 165, 255)
+                color = (200, 200, 200)  # Light gray for layer info
+                font_size = 0.4
+                thickness = 1
+            elif "🚨" in text:
+                color = (0, 0, 255)  # Red for incidents
+                font_size = 0.5
+                thickness = 2
+            elif "✅" in text or "NO INCIDENTS" in text:
+                color = (100, 255, 100)  # Green for all clear
+                font_size = 0.5
+                thickness = 2
+            elif "⚠️" in text:
+                color = (0, 200, 255)  # Orange for warnings
+                font_size = 0.5
+                thickness = 2
             else:
-                color = (255, 255, 255)
-                
-            cv2.putText(frame, text, (width - 290, 30 + i * 20), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+                color = (255, 255, 255)  # White for regular text
+                font_size = 0.45
+                thickness = 1
+            
+            # Draw text with slight shadow for better readability
+            cv2.putText(frame, text, (text_x + 1, text_y + 1), 
+                       cv2.FONT_HERSHEY_SIMPLEX, font_size, (0, 0, 0), thickness)
+            cv2.putText(frame, text, (text_x, text_y), 
+                       cv2.FONT_HERSHEY_SIMPLEX, font_size, color, thickness)
+        
+        # Add system status indicator (bottom right of overlay)
+        status_color = (100, 255, 100) if layers['final_confirmed'] == 0 else (0, 100, 255)
+        status_text = "MONITORING" if layers['final_confirmed'] == 0 else "ALERT MODE"
+        
+        cv2.circle(frame, (overlay_x + overlay_width - 30, overlay_y + overlay_height - 20), 
+                  8, status_color, -1)
+        cv2.putText(frame, status_text, (overlay_x + overlay_width - 80, overlay_y + overlay_height - 15), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.3, status_color, 1)
         
         return frame
     
@@ -1386,9 +1492,9 @@ def main():
         'deceleration_threshold': 12.0,
         
         # FINAL VALIDATION REQUIREMENTS
-        'require_all_layers': False,           # Don't require ALL layers
-        'minimum_layer_agreement': 3,          # At least 3 layers must agree
-        'collision_confidence_threshold': 0.75, # High confidence threshold
+        'require_all_layers': True,           #  require ALL layers
+        'minimum_layer_agreement': 4,          # At least 4 layers must agree
+        'collision_confidence_threshold': 1.0, # High confidence threshold
         
         # Other settings
         'stopped_vehicle_time': 10,
