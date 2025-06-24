@@ -1,4 +1,3 @@
-// src/ThemeContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface ThemeContextType {
@@ -10,9 +9,18 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    // Initialize from localStorage or default to false
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
+    try {
+      const saved = localStorage.getItem('darkMode');
+      if (saved === null) {
+        return false; // Default to false if key doesn't exist
+      }
+      const parsed = JSON.parse(saved);
+      // Ensure parsed value is a boolean
+      return typeof parsed === 'boolean' ? parsed : false;
+    } catch (error) {
+      console.error('Failed to parse darkMode from localStorage:', error);
+      return false; // Fallback to false on error
+    }
   });
 
   useEffect(() => {
