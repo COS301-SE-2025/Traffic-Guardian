@@ -12,6 +12,7 @@
     "User_Password": "StrongPa$$20"
     },
     {
+    "User_Email": "testuser@gmail.com",
     "preferences": {
         "notifications": true,
         "alertLevel": "high",

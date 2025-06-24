@@ -35,7 +35,6 @@ test('Get User preferences', async ()=>{
     expect(response.status).toBe(200);
 }); 
 
-/*
 test('Update user preferences', async ()=>{
     const payload = artifacts[2];
     const response = await axios.put(`${API_BASE_URL}/api/user/preferences`,payload ,{
@@ -48,7 +47,7 @@ test('Update user preferences', async ()=>{
     //expect(response.data).toMatchObject(seeding[0]);
     expect(response.status).toBe(200);
 });
-*/
+
 test('Create incident', async ()=>{
     const payload = artifacts[3];
     const response = await axios.post('http://localhost:5000/api/incidents', payload ,{
