@@ -1,18 +1,19 @@
 """
 Enhanced Incident Detection System with ADVANCED Multi-Layer Collision Detection
-Implements: Depth Estimation, Optical Flow, and Physics-Based Validation
+Implements: Depth Estimation, Optical Flow, Physics-Based Validation, and API Integration
 """
 import cv2
 import torch
 import time
 import json
+import requests
 from datetime import datetime
 import numpy as np
 from collections import defaultdict, deque
 import math
 
 class AdvancedIncidentDetectionSystem:
-    def __init__(self, stream_url="Videos/Traffic_Video1.mp4", config=None):
+    def __init__(self, stream_url="Videos\Traffic_Video1.mp4", config=None):
         """
         Advanced incident detection system with multi-layer collision detection.
         """
@@ -69,7 +70,17 @@ class AdvancedIncidentDetectionSystem:
                 'flow_confirmed': 0,
                 'physics_confirmed': 0,
                 'final_confirmed': 0
-            }
+            },
+            'api_reports_sent': 0,
+            'api_failures': 0
+        }
+        
+        # API Configuration
+        self.api_config = {
+            'endpoint': 'http://localhost:5000/api/incidents',
+            'api_key': 'abcde12345abcde',
+            'timeout': 5,
+            'retry_attempts': 2
         }
         
         # Video capture
@@ -338,6 +349,11 @@ class AdvancedIncidentDetectionSystem:
         final_collisions = self._final_collision_validation(physics_validated)
         self.analytics['collision_layers']['final_confirmed'] += len(final_collisions)
         
+        # Send API reports for confirmed collisions
+        if final_collisions and self.config.get('api_enabled', True):
+            for collision in final_collisions:
+                self._send_incident_to_api(collision)
+        
         incidents.extend(final_collisions)
         
         # 6. Other incident types (simplified - no debris detection)
@@ -351,6 +367,63 @@ class AdvancedIncidentDetectionSystem:
         incidents.extend(speed_incidents)
         
         return incidents
+    
+    def _send_incident_to_api(self, incident):
+        """Send incident report to API endpoint."""
+        try:
+            # Prepare incident data for API
+            incident_data = {
+                "Incident_Date": datetime.now().strftime("%Y-%m-%d"),
+                "Incident_Location": self.config.get('incident_location', 'Traffic Camera Location'),
+                "Incident_Severity": self._map_severity_for_api(incident.get('severity', 'MEDIUM')),
+                "Incident_Status": "open"
+            }
+            
+            headers = {
+                'X-API-KEY': self.config.get('api_key', 'abcde12345abcde'),
+                'Content-Type': 'application/json'
+            }
+            
+            # Send POST request
+            response = requests.post(
+                self.config.get('api_endpoint', 'http://localhost:5000/api/incidents'),
+                headers=headers,
+                json=incident_data,
+                timeout=self.config.get('api_timeout', 5)
+            )
+            
+            if response.status_code == 200 or response.status_code == 201:
+                self.analytics['api_reports_sent'] += 1
+                print(f"✅ Incident reported to API: {incident_data['Incident_Severity']} severity")
+                print(f"   Location: {incident_data['Incident_Location']}")
+                print(f"   Response: {response.status_code}")
+            else:
+                self.analytics['api_failures'] += 1
+                print(f"⚠️ API report failed: HTTP {response.status_code}")
+                print(f"   Response: {response.text}")
+                
+        except requests.exceptions.Timeout:
+            self.analytics['api_failures'] += 1
+            print(f"⚠️ API report timeout: Request took longer than {self.config.get('api_timeout', 5)}s")
+            
+        except requests.exceptions.ConnectionError:
+            self.analytics['api_failures'] += 1
+            print(f"⚠️ API connection failed: Could not connect to {self.config.get('api_endpoint')}")
+            print("   (This is normal if the API server is not running)")
+            
+        except Exception as e:
+            self.analytics['api_failures'] += 1
+            print(f"⚠️ API report error: {e}")
+    
+    def _map_severity_for_api(self, system_severity):
+        """Map system severity levels to API expected values."""
+        severity_mapping = {
+            'CRITICAL': 'high',
+            'HIGH': 'high', 
+            'MEDIUM': 'medium',
+            'LOW': 'low'
+        }
+        return severity_mapping.get(system_severity, 'medium')
     
     def _detect_trajectory_collisions(self, active_tracks):
         """LAYER 1: Basic trajectory-based collision detection."""
@@ -1156,6 +1229,7 @@ class AdvancedIncidentDetectionSystem:
             f"  Physics Check: {layers['physics_confirmed']}",
             "",
             f"Confirmed Incidents: {layers['final_confirmed']}",
+            f"API Reports Sent: {self.analytics['api_reports_sent']}",
         ]
         
         # Add active incidents if any
@@ -1258,6 +1332,7 @@ class AdvancedIncidentDetectionSystem:
                 print(f"   Time to collision: {ttc:.1f}s")
                 print(f"   Multi-layer confidence: {confidence:.2f}")
                 print(f"   Validation layers: {layers}")
+                print(f"   📡 API report status: {'Sent' if self.analytics['api_reports_sent'] > 0 else 'Pending'}")
             
             elif incident_type == 'stopped_vehicle':
                 duration = incident['stopped_duration']
@@ -1362,13 +1437,19 @@ class AdvancedIncidentDetectionSystem:
                 'false_positive_reduction': (layers['trajectory_detected'] - layers['final_confirmed']) / max(layers['trajectory_detected'], 1)
             },
             'all_incidents': self.analytics['incident_log'],
+            'api_integration': {
+                'reports_sent': self.analytics['api_reports_sent'],
+                'api_failures': self.analytics['api_failures'],
+                'success_rate': self.analytics['api_reports_sent'] / max(self.analytics['api_reports_sent'] + self.analytics['api_failures'], 1) * 100
+            },
             'advanced_features': [
                 'Multi-layer collision detection with 4 validation layers',
                 'Depth estimation from intensity and shadow analysis',
                 'Optical flow analysis for sudden motion detection',
                 'Physics-based validation using acceleration patterns',
                 'Removed debris detection (was causing false positives)',
-                'Enhanced confidence scoring and layer agreement requirements'
+                'Enhanced confidence scoring and layer agreement requirements',
+                'Automatic API incident reporting to backend system'
             ]
         }
         
@@ -1413,6 +1494,13 @@ class AdvancedIncidentDetectionSystem:
                 print(f"  {incident_type}: {count}")
         else:
             print("\n✅ No incidents detected during session")
+        
+        print(f"\n🌐 API INTEGRATION:")
+        print(f"  Reports sent: {self.analytics['api_reports_sent']}")
+        print(f"  API failures: {self.analytics['api_failures']}")
+        if self.analytics['api_reports_sent'] + self.analytics['api_failures'] > 0:
+            success_rate = self.analytics['api_reports_sent'] / (self.analytics['api_reports_sent'] + self.analytics['api_failures']) * 100
+            print(f"  Success rate: {success_rate:.1f}%")
         
         print(f"\n🔧 Advanced features applied:")
         for feature in report['advanced_features']:
@@ -1462,10 +1550,19 @@ def main():
         'deceleration_threshold': 12.0,
         
         # FINAL VALIDATION REQUIREMENTS
-        'require_all_layers': True,           # Don't require ALL layers
-        'minimum_layer_agreement': 4,          # At least 3 layers must agree
-        'collision_confidence_threshold': 1.0, # High confidence threshold
+        'require_all_layers': False,           # Don't require ALL layers
+        'minimum_layer_agreement': 3,          # At least 3 layers must agree
+        'collision_confidence_threshold': 0.75, # High confidence threshold
         
+        
+        # API Integration Settings
+            'api_enabled': False,                  
+            'api_endpoint': 'http://localhost:5000/api/incidents',
+            'api_key': 'abcde12345abcde',
+            'api_timeout': 5,
+            'api_retry_attempts': 2,
+            'incident_location': 'Main Street & 5th Avenue',  # Default location
+            
         # Other settings
         'stopped_vehicle_time': 10,
         'speed_change_threshold': 0.8,
