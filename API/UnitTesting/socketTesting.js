@@ -125,3 +125,7 @@ function hitOrMiss(){
         }
     }
 }
+
+socket.on('trafficUpdate',(data)=>{
+    console.log(data);
+});
