@@ -20,13 +20,13 @@ const authController = {  login: async (req, res) => {
       const user = await userModel.findByEmail(User_Email);
       
       if (!user) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Invalid email' });
       }
       
       const isMatch = await bcrypt.compare(User_Password, user.User_Password);
       
       if (!isMatch) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Invalid password' });
       }
       
       // Generate or retrieve API key
