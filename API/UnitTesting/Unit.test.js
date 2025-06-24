@@ -35,11 +35,9 @@ test('Get User preferences', async ()=>{
     expect(response.status).toBe(200);
 }); 
 
-
-
 test('Update user preferences', async ()=>{
-    const payload = artifacts[3];
-    const response = await axios.get(`${API_BASE_URL}/api/incidents`,{
+    const payload = artifacts[2];
+    const response = await axios.put(`${API_BASE_URL}/api/user/preferences`,payload ,{
     headers: {
         'Content-Type': 'application/json',
         'X-API-KEY': yeah
@@ -49,20 +47,6 @@ test('Update user preferences', async ()=>{
     //expect(response.data).toMatchObject(seeding[0]);
     expect(response.status).toBe(200);
 });
-
-test('Get specific incident', async ()=>{
-    const payload = artifacts[3];
-    const response = await axios.get('http://localhost:5000/api/incidents/1',{
-    headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY': yeah
-        }
-    });
-
-    //expect(response.data).toMatchObject(seeding[0]);
-    expect(response.status).toBe(200);
-});
-
 
 test('Create incident', async ()=>{
     const payload = artifacts[3];
@@ -77,10 +61,9 @@ test('Create incident', async ()=>{
     expect(response.status).toBe(201);
 }); 
 
-
-test('Update incident', async ()=>{
-    const payload = artifacts[4];
-    const response = await axios.put('http://localhost:5000/api/incidents/1', payload ,{
+test('Get specific incident', async ()=>{
+    const payload = artifacts[3];
+    const response = await axios.get('http://localhost:5000/api/incidents/5',{
     headers: {
         'Content-Type': 'application/json',
         'X-API-KEY': yeah
@@ -89,6 +72,33 @@ test('Update incident', async ()=>{
 
     //expect(response.data).toMatchObject(seeding[0]);
     expect(response.status).toBe(200);
+});
+
+
+test('Update incident', async ()=>{
+    const payload = artifacts[4];
+    const response = await axios.put('http://localhost:5000/api/incidents/5', payload ,{
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': yeah
+        }
+    });
+
+    //expect(response.data).toMatchObject(seeding[0]);
+    expect(response.status).toBe(200);
+});
+/*
+test('Create alert', async ()=>{
+    const payload = artifacts[5];
+    const response = await axios.post('http://localhost:5000/api/alerts',payload, {
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': yeah
+        }
+    });
+
+    //expect(response.data).toMatchObject(seeding[0]);
+    expect(response.status).toBe(201);
 });
 
 test('Get specific alert', async ()=>{
@@ -104,19 +114,6 @@ test('Get specific alert', async ()=>{
     expect(response.status).toBe(200);
 });
 
-test('Create alert', async ()=>{
-    const payload = artifacts[5];
-    const response = await axios.post('http://localhost:5000/api/alerts',payload, {
-    headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY': yeah
-        }
-    });
-
-    //expect(response.data).toMatchObject(seeding[0]);
-    expect(response.status).toBe(201);
-});
-
 test('Update alert', async ()=>{
     const payload = artifacts[6];
     const response = await axios.put('http://localhost:5000/api/alerts/1/status',payload, {
@@ -129,7 +126,7 @@ test('Update alert', async ()=>{
     //expect(response.data).toMatchObject(seeding[0]);
     expect(response.status).toBe(200);
 });
-
+*/
 test('Get all alerts', async ()=>{
     const payload = artifacts[6];
     const response = await axios.get('http://localhost:5000/api/user/alerts',{

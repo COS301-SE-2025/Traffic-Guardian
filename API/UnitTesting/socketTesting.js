@@ -125,3 +125,19 @@ function hitOrMiss(){
         }
     }
 }
+
+socket.on('trafficUpdate',(data)=>{
+    console.log(data);
+});
+
+socket.on('criticalIncidents',(data)=>{
+    console.log(data);
+})
+
+socket.on('incidentCategory', (data)=>{
+    console.log(data);
+})
+
+socket.on('incidentLocations', (data)=>{
+    console.log(data);
+})

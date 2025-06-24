@@ -1,4 +1,5 @@
 const db = require('../config/db');
+//const io = require('../server');
 
 const incidentModel = {  async createIncident(incidentData) {
     const { 
@@ -10,8 +11,8 @@ const incidentModel = {  async createIncident(incidentData) {
       Incident_Reporter
     } = incidentData;
       const query = `
-      INSERT INTO "postgres"."Incidents" (
-        "Incidents_DateT", 
+      INSERT INTO "Incidents" (
+        "Incidents_DateTime", 
         "Incidents_Longitude", 
         "Incidents_Latitude", 
         "Incident_Severity", 
@@ -32,9 +33,10 @@ const incidentModel = {  async createIncident(incidentData) {
     ];
     
     const { rows } = await db.query(query, values);
+    //io.emit('newIncident', values);
     return rows[0];
   },  async getIncidentById(Incidents_ID) {
-    const query = 'SELECT * FROM "postgres"."Incidents" WHERE "Incidents_ID" = $1';
+    const query = 'SELECT * FROM "Incidents" WHERE "Incidents_ID" = $1';
     const { rows } = await db.query(query, [Incidents_ID]);
     return rows[0];
   },async updateIncident(Incidents_ID, incidentData) {
@@ -62,7 +64,7 @@ const incidentModel = {  async createIncident(incidentData) {
     if (!updates) {
       throw new Error('No valid fields to update');
     }    const query = `
-      UPDATE "postgres"."Incidents"
+      UPDATE "Incidents"
       SET ${updates}
       WHERE "Incidents_ID" = $1 
       RETURNING *
@@ -73,7 +75,7 @@ const incidentModel = {  async createIncident(incidentData) {
   },
 
   async getIncidents(filters = {}) {
-    let query = 'SELECT * FROM "postgres"."Incidents"';
+    let query = 'SELECT * FROM "Incidents"';
     const values = [];
     const conditions = [];
     
