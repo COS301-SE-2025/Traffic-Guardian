@@ -31,16 +31,25 @@ io.on('connection',(socket)=>{
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
-
-
     
-    weatherD = weather.getWeather();
-    socket.emit('weatherUpdate',weatherD);
-    setInterval(weather.getWeather, 60*60*1000); //1hr interval
+    //weather prt
+    weather.getWeather().then((data)=>{
+      socket.emit('weatherUpdate', data);
+    })
+    setInterval(async()=>{
+      const weatherD = await weather.getWeather();
+      socket.emit('weatherUpdate',weatherD);
+    }, 60*60*1000); //1hr interval
 
-    trafficD = traffic.getTraffic();
-    socket.emit('trafficUpdate', trafficD);
-    setInterval(traffic.getTraffic, 30*60*1000); //30 min interval
+    //traffic prt
+    traffic.getTraffic().then((data)=>{
+      socket.emit('trafficUpdate', data);
+      //console.log(data);
+    })
+    setInterval(async()=>{
+      const data = await traffic.getTraffic();
+      socket.emit('trafficUpdate', data);
+    }, 30*60*1000); //30 min interval
 
 
   io.on('disconnect',()=>{
@@ -48,7 +57,12 @@ io.on('connection',(socket)=>{
   })
 });
 
-app.set('io', io);
+  app.set('io', io);
+  /*
+  server.listen(PORT, ()=>{
+    console.log('Socket server running');
+  })
+    */
 
 
 // Test database connection before starting server
