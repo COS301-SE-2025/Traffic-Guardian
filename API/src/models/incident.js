@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const io = require('../server');
 
 const incidentModel = {  async createIncident(incidentData) {
     const { 
@@ -32,6 +33,7 @@ const incidentModel = {  async createIncident(incidentData) {
     ];
     
     const { rows } = await db.query(query, values);
+    io.emit('newIncident', values);
     return rows[0];
   },  async getIncidentById(Incidents_ID) {
     const query = 'SELECT * FROM "postgres"."Incidents" WHERE "Incidents_ID" = $1';

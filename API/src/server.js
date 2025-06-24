@@ -23,8 +23,6 @@ const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
-var weatherD;
-var trafficD;
 
 io.on('connection',(socket)=>{
   console.log(socket.id + ' connected');
@@ -99,3 +97,6 @@ db.query('SELECT NOW()')
     console.error('- DATABASE_PORT');
     process.exit(1);
    });
+
+
+   module.exports = io;
