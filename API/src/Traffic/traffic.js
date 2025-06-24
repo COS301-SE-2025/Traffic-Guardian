@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { json } = require('stream/consumers');
+//const { json } = require('stream/consumers');
 require('dotenv').config({
 path: require('path').join(__dirname, '../../.env')
 });
@@ -14,32 +14,43 @@ const regionNames = ['Rosebank', 'Sandton', 'Midrand', 'Centurion', 'Pretoria', 
 
 const reqFields = '{incidents{geometry{type,coordinates},properties{iconCategory,magnitudeOfDelay,events{description,code,iconCategory}}}}';
 
+var incidentMap = new Map();
+
 async function getTraffic(){
-        //console.log(getBbox(regions[1]));
         var BBOX;
         var trafficRes = [];
-        var trafficData = {
-            "location" : "",
-            "incidents" : []
-        };
 
     try{
+        var count=0;
         for(var i=0; i<regions.length; i++){
-        BBOX = getBbox(regions[i]);
-        const response = await axios.get(url, {
-            params: {
-                bbox: `${BBOX.BL.lon},${BBOX.BL.lat},${BBOX.TR.lon},${BBOX.TR.lat}`,
-                fields: reqFields,
-                language: 'en-GB',
-                timeValidityFilter: 'present',
-                key: process.env.TOMTOMAPI
-            }
-        })
-        trafficData.incidents = response.data.incidents;
-        trafficData.location = regionNames[i];
-        trafficRes.push(trafficData);
-        break;
+            BBOX = getBbox(regions[i]);
+            const response = await axios.get(url, {
+                params: {
+                    bbox: `${BBOX.BL.lon},${BBOX.BL.lat},${BBOX.TR.lon},${BBOX.TR.lat}`,
+                    fields: reqFields,
+                    language: 'en-GB',
+                    timeValidityFilter: 'present',
+                    key: process.env.TOMTOMAPI
+                }
+            })
+
+            const trafficData = {
+                location: regionNames[i],
+                incidents: response.data.incidents
+            };
+            trafficRes.push(trafficData);
         }
+
+        for(let tr of trafficRes){
+            tr.location = regionNames[count];
+            for(let inc of tr.incidents){
+                var ic = inc.properties.iconCategory;
+                incidentMap.set(ic,inc);
+            }
+            tr.incidents = Array.from(incidentMap.values());
+            incidentMap.clear();
+            count += 1;
+        }//remove duplicates
 
         for(let t of trafficRes){
             for(let i of t.incidents){
@@ -47,10 +58,11 @@ async function getTraffic(){
                  let iconEventIdx = i.properties.events[0].iconCategory;
                  i.properties.iconCategory = iconCategory[iconIdx];
                  i.properties.events[0].iconCategory = iconCategory[iconEventIdx];
-                console.log(i.properties.iconCategory);
-                console.log(i.properties.events[0].iconCategory);
             }
-        }//cleanup
+        }//name assign
+
+        //console.log(trafficRes[0].incidents);
+        return trafficRes;
 
         }catch(error){
             console.error('Code related error:', error);
@@ -91,21 +103,123 @@ function distToLat(distance){
     return distance / 110.574;
 }
 
+function criticalIncidents(incidentsArr){
+    var res = {
+        'Data' : "Amount of critical Incidents",
+        'Amount' : 0
+    }
+    var resCount = 0;
+    for(let elem of incidentsArr){
+        for(let inc of elem.incidents){
+            if(inc.properties.magnitudeOfDelay > 3){resCount += 1;}
+        }
+    }
+
+    res.Amount = resCount;
+    return res;
+}
+
+function incidentCategory(incidentsArr){
+    var resMap = new Map();
+    for(let ic of iconCategory) resMap.set(ic,0);
+
+    for(let elem of incidentsArr){
+        for(let inc of elem.incidents){
+            if(resMap.has(inc.properties.iconCategory)){
+                var valCount = resMap.get(inc.properties.iconCategory);
+                resMap.set(inc.properties.iconCategory, (valCount + 1) / 13);
+            }
+        }
+    }
+
+    const res = {
+        'categories' : Array.from(resMap.keys()),
+        'percentages' : Array.from(resMap.values())
+    }
+
+    return res;
+}
+
+function incidentLocations(incidentsArr){
+
+    var resArr = [];
+    for(let incd of incidentsArr){
+        var resData = {
+            'location' : incd.location,
+            "amount" : incd.incidents.length
+        }
+        resArr.push(resData);
+    }
+
+    return resArr;
+
+}
+
 module.exports = {
-    getTraffic
+    getTraffic,
+    criticalIncidents,
+    incidentCategory,
+    incidentLocations
 }
 
 
 /*
-response.data.incidents[0] = 
 {
-  type: 'Feature',
-  properties: { iconCategory: 8, magnitudeOfDelay: 4, events: [ [Object] ] },
-  geometry: { type: 'LineString', coordinates: [ [Array], [Array] ] }
+  location: 'Hatfield',
+  incidents: [
+    { properties: [Object], geometry: [Object] },
+    { properties: [Object], geometry: [Object] },
+    { properties: [Object], geometry: [Object] },
+    { properties: [Object], geometry: [Object] },
+    { properties: [Object], geometry: [Object] },
+    { properties: [Object], geometry: [Object] },
+    { properties: [Object], geometry: [Object] },
+    { properties: [Object], geometry: [Object] }
+  ]
 }
+*/
+
+/*
+response.incidents = 
+[
+  {
+    properties: { iconCategory: 'Jam', magnitudeOfDelay: 2, events: [Array] },
+    geometry: { type: 'LineString', coordinates: [Array] }
+  },
+  {
+    properties: {
+      iconCategory: 'Road closed',
+      magnitudeOfDelay: 4,
+      events: [Array]
+    },
+    geometry: { type: 'LineString', coordinates: [Array] }
+  },
+  {
+    properties: { iconCategory: 'Jam', magnitudeOfDelay: 3, events: [Array] },
+    geometry: { type: 'LineString', coordinates: [Array] }
+  }
+]
 
 events = 
 {
     [ { code: 401, description: 'Closed', iconCategory: 8 } ]
 }
 */
+
+
+/*
+[
+  { location: 'Rosebank', incidents: [ [Object], [Object], [Object] ] },
+  { location: 'Sandton', incidents: [ [Object], [Object] ] },
+  { location: 'Midrand', incidents: [ [Object], [Object] ] },
+  { location: 'Centurion', incidents: [ [Object], [Object] ] },
+  { location: 'Pretoria', incidents: [ [Object], [Object] ] },
+  { location: 'Soweto', incidents: [ [Object] ] },
+  { location: 'Randburg', incidents: [ [Object], [Object] ] },
+  { location: 'Boksburg', incidents: [ [Object], [Object], [Object] ] },
+  { location: 'Vereeniging', incidents: [ [Object], [Object] ] },
+  { location: 'Alberton', incidents: [ [Object], [Object] ] },
+  { location: 'Hatfield', incidents: [ [Object], [Object] ] }
+]
+*/
+

@@ -23,25 +23,43 @@ const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
+
 io.on('connection',(socket)=>{
-  var incidents = [];
   console.log(socket.id + ' connected');
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
-
-  socket.on('incident-location',(positition)=>{
-    console.log(`${socket.id} reported incident at location = ${positition.latitude} , ${positition.latitude}`);
-    incidents.push(positition);
-    socket.emit('incident-recived', `I saved your incident at {${positition.latitude} , ${positition.latitude}}`);
-  })
-
     
-    weather.getWeather();
-    setInterval(weather.getWeather, 60*60*1000); //1hr interval
+    //weather prt
+    weather.getWeather().then((data)=>{
+      socket.emit('weatherUpdate', data);
+    })
+    setInterval(async()=>{
+      const weatherD = await weather.getWeather();
+      socket.emit('weatherUpdate',weatherD);
+    }, 60*60*1000); //1hr interval
 
-    traffic.getTraffic();
-    setInterval(traffic.getTraffic, 30*60*1000); //30 min interval
+    //traffic prt
+    traffic.getTraffic().then((data)=>{
+      socket.emit('trafficUpdate', data);
+
+      //critical incidents
+      const res = traffic.criticalIncidents(data);
+      socket.emit('criticalIncidents', res);
+
+      //incident Category
+      const res_incidentCategory = traffic.incidentCategory(data);
+      socket.emit('incidentCategory', res_incidentCategory);
+
+      //incident Locations
+      const res_incidentLocations =  traffic.incidentLocations(data);
+      socket.emit('incidentLocations', res_incidentLocations);
+    })
+    setInterval(async()=>{
+      const data = await traffic.getTraffic();
+      socket.emit('trafficUpdate', data);
+    }, 30*60*1000); //30 min interval
+
 
 
   io.on('disconnect',()=>{
@@ -49,7 +67,12 @@ io.on('connection',(socket)=>{
   })
 });
 
-app.set('io', io);
+  app.set('io', io);
+
+ /*  server.listen(PORT, ()=>{
+    console.log('Socket server running');
+  }) */
+
 
 
 // Test database connection before starting server
@@ -74,3 +97,6 @@ db.query('SELECT NOW()')
     console.error('- DATABASE_PORT');
     process.exit(1);
    });
+
+
+   module.exports = io;

@@ -8,10 +8,11 @@
     },
 
     {
-    "User_Email": "user@gmail.com",
-    "User_Password": "user"
+    "User_Email": "lonwabo@example.com",
+    "User_Password": "StrongPa$$20"
     },
     {
+    "User_Email": "testuser@gmail.com",
     "preferences": {
         "notifications": true,
         "alertLevel": "high",
@@ -27,7 +28,7 @@
     },
     {
     "Incident_Severity": "medium",
-    "Incident_Status": "in-progess-ongoing"
+    "Incident_Status": "ongoing"
     },
     {
     "Alert_IncidentID": 1,
