@@ -93,7 +93,7 @@ const alertController = {
       const userId = req.user.User_ID;
       
       // Get active alerts for the user
-      const alerts = await alertModel.getActiveAlerts(userId);
+      const alerts = await alertModel.getAllAlerts();
       
       return res.status(200).json(alerts);
     } catch (error) {
