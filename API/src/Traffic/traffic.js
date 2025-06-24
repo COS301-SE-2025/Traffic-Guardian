@@ -103,8 +103,63 @@ function distToLat(distance){
     return distance / 110.574;
 }
 
+function criticalIncidents(incidentsArr){
+    var res = {
+        'Data' : "Amount of critical Incidents",
+        'Amount' : 0
+    }
+    var resCount = 0;
+    for(let elem of incidentsArr){
+        for(let inc of elem.incidents){
+            if(inc.properties.magnitudeOfDelay > 3){resCount += 1;}
+        }
+    }
+
+    res.Amount = resCount;
+    return res;
+}
+
+function incidentCategory(incidentsArr){
+    var resMap = new Map();
+    for(let ic of iconCategory) resMap.set(ic,0);
+
+    for(let elem of incidentsArr){
+        for(let inc of elem.incidents){
+            if(resMap.has(inc.properties.iconCategory)){
+                var valCount = resMap.get(inc.properties.iconCategory);
+                resMap.set(inc.properties.iconCategory, (valCount + 1) / 13);
+            }
+        }
+    }
+
+    const res = {
+        'categories' : Array.from(resMap.keys()),
+        'percentages' : Array.from(resMap.values())
+    }
+
+    return res;
+}
+
+function incidentLocations(incidentsArr){
+
+    var resArr = [];
+    for(let incd of incidentsArr){
+        var resData = {
+            'location' : incd.location,
+            "amount" : incd.incidents.length
+        }
+        resArr.push(resData);
+    }
+
+    return resArr;
+
+}
+
 module.exports = {
-    getTraffic
+    getTraffic,
+    criticalIncidents,
+    incidentCategory,
+    incidentLocations
 }
 
 

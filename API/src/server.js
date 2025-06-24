@@ -44,12 +44,24 @@ io.on('connection',(socket)=>{
     //traffic prt
     traffic.getTraffic().then((data)=>{
       socket.emit('trafficUpdate', data);
-      //console.log(data);
+
+      //critical incidents
+      const res = traffic.criticalIncidents(data);
+      socket.emit('criticalIncidents', res);
+
+      //incident Category
+      const res_incidentCategory = traffic.incidentCategory(data);
+      socket.emit('incidentCategory', res_incidentCategory);
+
+      //incident Locations
+      const res_incidentLocations =  traffic.incidentLocations(data);
+      socket.emit('incidentLocations', res_incidentLocations);
     })
     setInterval(async()=>{
       const data = await traffic.getTraffic();
       socket.emit('trafficUpdate', data);
     }, 30*60*1000); //30 min interval
+
 
 
   io.on('disconnect',()=>{
@@ -58,11 +70,11 @@ io.on('connection',(socket)=>{
 });
 
   app.set('io', io);
-  /*
-  server.listen(PORT, ()=>{
+
+ /*  server.listen(PORT, ()=>{
     console.log('Socket server running');
-  })
-    */
+  }) */
+
 
 
 // Test database connection before starting server
