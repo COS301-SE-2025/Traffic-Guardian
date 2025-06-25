@@ -261,7 +261,7 @@ couldnt integrate into the runtest.py
 pip install coverage
 
 # Run tests with coverage tracking
-coverage run --source=../Code -m unittest test_advanced_incident_detection.py
+coverage run --source=../Code --omit=../Code/simple_nic.py -m unittest test_advanced_incident_detection.py
 
 # View coverage report
 coverage report

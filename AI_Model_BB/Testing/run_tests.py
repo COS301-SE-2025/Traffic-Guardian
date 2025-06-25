@@ -102,7 +102,7 @@ def run_all_tests():
     # Overall result
     if result.wasSuccessful():
         print(f"\n✅ ALL TESTS PASSED!")
-        print(f"🎯 Your Advanced Incident Detection System is working correctly!")
+        print(f"🎯 The Advanced Incident Detection System is working correctly!")
         return True
     else:
         print(f"\n❌ SOME TESTS FAILED")
