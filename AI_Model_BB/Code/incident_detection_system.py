@@ -177,12 +177,13 @@ class AdvancedIncidentDetectionSystem:
             return
         
         print("🚀 Starting ADVANCED incident detection system...")
+        print("🎬 DEMO MODE: Fullscreen enabled for recording")
         print("🔍 Multi-layer collision detection enabled:")
         print("  Layer 1: Trajectory Prediction")
         print("  Layer 2: Depth Analysis") 
         print("  Layer 3: Optical Flow Analysis")
         print("  Layer 4: Physics Validation")
-        print("Controls: 'q' = quit, 's' = save frame, 'r' = reset analytics")
+        print("Controls: 'q' = quit, 's' = save frame, 'r' = reset analytics, 'f' = toggle fullscreen")
         
         frame_count = 0
         
@@ -218,7 +219,15 @@ class AdvancedIncidentDetectionSystem:
                 
                 # Display and save
                 if self.config['display_window']:
-                    cv2.imshow("Advanced Incident Detection", annotated_frame)
+                    # Create fullscreen window for demo
+                    window_name = "Advanced Traffic Monitoring System - DEMO"
+                    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+                    
+                    # Set fullscreen if requested
+                    if self.config.get('fullscreen_demo', False):
+                        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                    
+                    cv2.imshow(window_name, annotated_frame)
                 
                 if self.config['save_incidents'] and incidents:
                     self._save_incident_frame(annotated_frame, incidents, frame_count)
@@ -234,6 +243,16 @@ class AdvancedIncidentDetectionSystem:
                     self._save_frame(annotated_frame, frame_count, manual=True)
                 elif key == ord('r'):
                     self._reset_analytics()
+                elif key == ord('f'):
+                    # Toggle fullscreen
+                    window_name = "Advanced Traffic Monitoring System - DEMO"
+                    current_prop = cv2.getWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN)
+                    if current_prop == cv2.WINDOW_FULLSCREEN:
+                        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
+                        print("📺 Windowed mode")
+                    else:
+                        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                        print("🖥️ Fullscreen mode")
                 
         except KeyboardInterrupt:
             print("\n⏹️ Detection stopped by user")
@@ -1520,6 +1539,7 @@ def main():
         
         # System settings
         'display_window': True,
+        'fullscreen_demo': True,               # Enable fullscreen for demo
         'save_incidents': True,
         'log_detections': True,
         'frame_skip': 2,
@@ -1554,16 +1574,15 @@ def main():
         'minimum_layer_agreement': 3,          # At least 3 layers must agree
         'collision_confidence_threshold': 0.75, # High confidence threshold
         
-        
-        # API Integration Settings
-            'api_enabled': False,                  
+                    # API Integration Settings
+            'api_enabled': True,                   # Enable/disable API reporting
             'api_endpoint': 'http://localhost:5000/api/incidents',
             'api_key': 'abcde12345abcde',
             'api_timeout': 5,
             'api_retry_attempts': 2,
             'incident_location': 'Main Street & 5th Avenue',  # Default location
             
-        # Other settings
+            # Other settings
         'stopped_vehicle_time': 10,
         'speed_change_threshold': 0.8,
         'pedestrian_road_threshold': 50,
