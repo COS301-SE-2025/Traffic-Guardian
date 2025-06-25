@@ -26,6 +26,10 @@ const incidentController = {
         Incident_Reporter: Incident_Reporter || (req.user ? req.user.id : null)
       });
       
+      const io = req.app.get('io');
+      io.emit('newAlert', incident);
+      console.log('Emitting newAlert:', incident);
+
       return res.status(201).json({
         message: 'Incident created successfully',
         incident

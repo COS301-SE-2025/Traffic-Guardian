@@ -54,5 +54,18 @@
     "User_Email": "testuser",
     "User_Role": "user",
     "User_Preferences": "{}"
-    }
+    },
+    {
+    "location": "Hatfield",
+    "incidents": [
+      { "properties": { "magnitudeOfDelay": 4, "iconCategory": "Accident" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 2, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 5, "iconCategory": "Accident" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 1, "iconCategory": "Rain" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 4, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 6, "iconCategory": "Road works" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 2, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 7, "iconCategory": "Accident" }, "geometry": {} }
+    ]
+  }
 ]
