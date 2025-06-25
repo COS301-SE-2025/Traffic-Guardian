@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Search, Filter, Calendar, Download, Eye, RotateCcw, Clock, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Filter, Download, Eye, RotateCcw, Clock, AlertTriangle } from 'lucide-react';
+import { useTheme } from '../consts/ThemeContext';
+import { useNavigate } from 'react-router-dom';
 import './Archives.css';
 
-// TypeScript interfaces
+// Updated TypeScript interfaces to match your backend response
 interface IncidentData {
   Incidents_ID: number;
   Incident_Status: string;
@@ -17,10 +19,11 @@ interface IncidentData {
   Duration_Minutes?: number;
 }
 
+// Updated to match your backend response
 interface ArchiveRecord {
-  Archive_ID: number;
   Archive_Date: string;
-  Incident_Data: IncidentData;
+  Archive_Incidents: IncidentData;
+  Archive_Alerts: any; // null in your data
 }
 
 interface Filters {
@@ -35,64 +38,13 @@ interface Filters {
 
 type ViewMode = 'cards' | 'table';
 
-// Mock data structure based on your JSON examples
-const mockArchiveData: ArchiveRecord[] = [
-  {
-    Archive_ID: 1,
-    Archive_Date: "2024-07-21T12:30:00Z",
-    Incident_Data: {
-      Incidents_ID: 1,
-      Incident_Status: "resolved",
-      Incident_Reporter: "System Auto",
-      Incident_Severity: "medium",
-      Incidents_DateTime: "2024-07-20T00:00:00",
-      Incidents_Latitude: -26.2041,
-      Incidents_Longitude: 28.0473,
-      Incident_Type: "Traffic Congestion",
-      Incident_Location: "M1 Highway, Johannesburg",
-      Resolution_Notes: "Traffic cleared after 2 hours",
-      Duration_Minutes: 120
-    }
-  },
-  {
-    Archive_ID: 2,
-    Archive_Date: "2024-07-21T14:45:00Z",
-    Incident_Data: {
-      Incidents_ID: 2,
-      Incident_Status: "resolved",
-      Incident_Reporter: "Traffic Officer 101",
-      Incident_Severity: "high",
-      Incidents_DateTime: "2024-07-20T08:15:00",
-      Incidents_Latitude: -25.7479,
-      Incidents_Longitude: 28.2293,
-      Incident_Type: "Vehicle Accident",
-      Incident_Location: "N1 Highway, Pretoria",
-      Resolution_Notes: "Vehicles towed, road cleared",
-      Duration_Minutes: 180
-    }
-  },
-  {
-    Archive_ID: 3,
-    Archive_Date: "2024-07-22T09:15:00Z",
-    Incident_Data: {
-      Incidents_ID: 3,
-      Incident_Status: "resolved",
-      Incident_Reporter: "Camera System",
-      Incident_Severity: "low",
-      Incidents_DateTime: "2024-07-21T16:30:00",
-      Incidents_Latitude: -26.1269,
-      Incidents_Longitude: 27.9069,
-      Incident_Type: "Minor Obstruction",
-      Incident_Location: "R21 Highway, Kempton Park",
-      Resolution_Notes: "Debris removed by maintenance crew",
-      Duration_Minutes: 45
-    }
-  }
-];
-
 const Archives: React.FC = () => {
-  const [archives, setArchives] = useState<ArchiveRecord[]>(mockArchiveData);
-  const [loading, setLoading] = useState<boolean>(false);
+  const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
+  
+  const [archives, setArchives] = useState<ArchiveRecord[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [filters, setFilters] = useState<Filters>({
@@ -108,28 +60,94 @@ const Archives: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const itemsPerPage: number = 10;
 
-  // Filter logic
+  // Load archives from your API
+  const loadArchives = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const apiKey = localStorage.getItem('apiKey');
+      if (!apiKey) {
+        setError('No API key found. Please log in.');
+        navigate('/account');
+        return;
+      }
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/archives`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Unauthorized: Invalid or missing API key');
+          navigate('/account');
+          return;
+        }
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setArchives(data);
+      } else {
+        console.warn('API returned non-array data:', data);
+        setArchives([]);
+        setError('Invalid data format received from server');
+      }
+    } catch (error: any) {
+      setError(`Failed to load archives: ${error.message}`);
+      console.error('Archives loading error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadArchives();
+  }, []);
+
+  // Client-side filtering logic - updated to work with Archive_Incidents
   const filteredArchives = useMemo((): ArchiveRecord[] => {
     return archives.filter(archive => {
-      const data = archive.Incident_Data;
+      // Check if Archive_Incidents exists
+      if (!archive?.Archive_Incidents) {
+        return false;
+      }
+      
+      const data = archive.Archive_Incidents;
       const searchLower = filters.search.toLowerCase();
       
       // Search across multiple fields
       const matchesSearch = !filters.search || 
-        data.Incident_Location?.toLowerCase().includes(searchLower) ||
         data.Incident_Type?.toLowerCase().includes(searchLower) ||
         data.Incident_Reporter?.toLowerCase().includes(searchLower) ||
-        data.Resolution_Notes?.toLowerCase().includes(searchLower);
+        data.Resolution_Notes?.toLowerCase().includes(searchLower) ||
+        data.Incidents_ID?.toString().includes(searchLower) ||
+        data.Incident_Status?.toLowerCase().includes(searchLower);
 
       const matchesSeverity = !filters.severity || data.Incident_Severity === filters.severity;
       const matchesStatus = !filters.status || data.Incident_Status === filters.status;
-      const matchesType = !filters.type || data.Incident_Type === filters.type;
+      const matchesType = !filters.type || data.Incident_Type?.toLowerCase().includes(filters.type.toLowerCase());
       const matchesReporter = !filters.reporter || data.Incident_Reporter?.toLowerCase().includes(filters.reporter.toLowerCase());
 
-      // Date filtering
-      const incidentDate = new Date(data.Incidents_DateTime);
-      const matchesDateFrom = !filters.dateFrom || incidentDate >= new Date(filters.dateFrom);
-      const matchesDateTo = !filters.dateTo || incidentDate <= new Date(filters.dateTo + 'T23:59:59');
+      // Date filtering with null check
+      let matchesDateFrom = true;
+      let matchesDateTo = true;
+      
+      if (data.Incidents_DateTime) {
+        const incidentDate = new Date(data.Incidents_DateTime);
+        matchesDateFrom = !filters.dateFrom || incidentDate >= new Date(filters.dateFrom);
+        matchesDateTo = !filters.dateTo || incidentDate <= new Date(filters.dateTo + 'T23:59:59');
+      } else if (filters.dateFrom || filters.dateTo) {
+        // If date filters are set but incident has no date, exclude it
+        matchesDateFrom = false;
+        matchesDateTo = false;
+      }
 
       return matchesSearch && matchesSeverity && matchesStatus && matchesType && matchesReporter && matchesDateFrom && matchesDateTo;
     });
@@ -140,12 +158,17 @@ const Archives: React.FC = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentArchives = filteredArchives.slice(startIndex, startIndex + itemsPerPage);
 
-  const toggleExpanded = (archiveId: number): void => {
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  const toggleExpanded = (incidentId: number): void => {
     const newExpanded = new Set(expandedItems);
-    if (newExpanded.has(archiveId)) {
-      newExpanded.delete(archiveId);
+    if (newExpanded.has(incidentId)) {
+      newExpanded.delete(incidentId);
     } else {
-      newExpanded.add(archiveId);
+      newExpanded.add(incidentId);
     }
     setExpandedItems(newExpanded);
   };
@@ -175,25 +198,25 @@ const Archives: React.FC = () => {
   };
 
   const formatDateTime = (dateString: string): string => {
-    return new Date(dateString).toLocaleString('en-ZA', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      return new Date(dateString).toLocaleString('en-ZA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateString; // Return original if parsing fails
+    }
   };
 
   const getSeverityClass = (severity: string): string => {
-    const classMap: Record<string, string> = {
-      low: 'severity-low',
-      medium: 'severity-medium',
-      high: 'severity-high'
-    };
-    return classMap[severity] || 'severity-low';
+    return `severity-${severity}`;
   };
 
   const formatDuration = (minutes: number): string => {
+    if (!minutes) return '0m';
     if (minutes < 60) return `${minutes}m`;
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -201,11 +224,33 @@ const Archives: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="loading-message">Loading archived incidents...</div>;
+    return (
+      <div className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+        <div className="loading-message">
+          <div className="loading-spinner"></div>
+          Loading archived incidents...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+        <div className="error-message">
+          <AlertTriangle size={24} />
+          {error}
+          <button onClick={() => loadArchives()} className="retry-button">
+            <RotateCcw size={16} />
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="archives-container">
+    <div className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
       {/* Header */}
       <div className="header">
         <div className="header-content">
@@ -255,14 +300,14 @@ const Archives: React.FC = () => {
           </select>
 
           <select
-            value={filters.type}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+            value={filters.status}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilters(prev => ({ ...prev, status: e.target.value }))}
             className="filter-select"
           >
-            <option value="">All Types</option>
-            <option value="Traffic Congestion">Traffic Congestion</option>
-            <option value="Vehicle Accident">Vehicle Accident</option>
-            <option value="Minor Obstruction">Minor Obstruction</option>
+            <option value="">All Statuses</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+            <option value="ongoing">Ongoing</option>
           </select>
 
           <button
@@ -278,6 +323,13 @@ const Archives: React.FC = () => {
         {/* Advanced Filters */}
         {showAdvancedFilters && (
           <div className="advanced-filters">
+            <input
+              type="text"
+              placeholder="Incident Type"
+              value={filters.type}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+              className="text-input"
+            />
             <input
               type="date"
               placeholder="From Date"
@@ -329,23 +381,45 @@ const Archives: React.FC = () => {
       </div>
 
       {/* Content */}
-      {viewMode === 'cards' ? (
+      {currentArchives.length === 0 ? (
+        <div className="no-data-message">
+          <Clock size={48} />
+          <h3>No archived incidents found</h3>
+          <p>Try adjusting your filters or check back later.</p>
+        </div>
+      ) : viewMode === 'cards' ? (
         <div className="cards-container">
-          {currentArchives.map((archive) => (
-            <div key={archive.Archive_ID} className="incident-card">
+          {currentArchives.map((archive, index) => {
+            // Safety check
+            if (!archive?.Archive_Incidents) {
+              return (
+                <div key={index} className="incident-card">
+                  <div className="card-content">
+                    <p className="incident-detail">Invalid archive data</p>
+                  </div>
+                </div>
+              );
+            }
+            
+            const incident = archive.Archive_Incidents;
+            
+            return (
+            <div key={`${incident.Incidents_ID}-${index}`} className="incident-card">
               {/* Card Header */}
               <div className="card-header">
                 <div className="card-header-left">
                   <div className="incident-id">
-                    ID: {archive.Incident_Data.Incidents_ID}
+                    ID: {incident.Incidents_ID || 'N/A'}
                   </div>
-                  <div className={`severity-badge ${getSeverityClass(archive.Incident_Data.Incident_Severity)}`}>
-                    {archive.Incident_Data.Incident_Severity}
+                  <div className={`severity-badge ${getSeverityClass(incident.Incident_Severity || 'low')}`}>
+                    {incident.Incident_Severity || 'Unknown'}
                   </div>
                 </div>
                 <div className="card-header-right">
                   <div>Archived: {formatDateTime(archive.Archive_Date)}</div>
-                  <div>Duration: {formatDuration(archive.Incident_Data.Duration_Minutes || 0)}</div>
+                  {incident.Duration_Minutes && (
+                    <div>Duration: {formatDuration(incident.Duration_Minutes)}</div>
+                  )}
                 </div>
               </div>
 
@@ -353,44 +427,52 @@ const Archives: React.FC = () => {
               <div className="card-content">
                 <div>
                   <h4 className="incident-title">
-                    {archive.Incident_Data.Incident_Type}
+                    {incident.Incident_Type || `Incident #${incident.Incidents_ID}`}
                   </h4>
                   <p className="incident-detail">
-                    📍 {archive.Incident_Data.Incident_Location}
+                    Status: {incident.Incident_Status || 'Unknown Status'}
                   </p>
                   <p className="incident-detail small">
-                    {formatDateTime(archive.Incident_Data.Incidents_DateTime)}
+                    {incident.Incidents_DateTime ? formatDateTime(incident.Incidents_DateTime) : 'No date available'}
                   </p>
+                  {(incident.Incidents_Latitude || incident.Incidents_Longitude) && (
+                    <p className="incident-detail small">
+                      Location: {incident.Incidents_Latitude}, {incident.Incidents_Longitude}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <p className="incident-detail">
-                    👤 Reporter: {archive.Incident_Data.Incident_Reporter || 'Unknown'}
+                    Reporter: {incident.Incident_Reporter || 'Unknown'}
                   </p>
-                  <p className="incident-detail">
-                    {archive.Incident_Data.Resolution_Notes}
-                  </p>
+                  {incident.Resolution_Notes && (
+                    <p className="incident-detail">
+                      {incident.Resolution_Notes}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Expandable JSON View */}
               <div className="card-footer">
                 <button
-                  onClick={() => toggleExpanded(archive.Archive_ID)}
+                  onClick={() => toggleExpanded(incident.Incidents_ID)}
                   className="expand-button"
                 >
                   <Eye size={16} />
-                  {expandedItems.has(archive.Archive_ID) ? 'Hide' : 'View'} Technical Details
-                  {expandedItems.has(archive.Archive_ID) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  {expandedItems.has(incident.Incidents_ID) ? 'Hide' : 'View'} Technical Details
+                  {expandedItems.has(incident.Incidents_ID) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
                 
-                {expandedItems.has(archive.Archive_ID) && (
+                {expandedItems.has(incident.Incidents_ID) && (
                   <pre className="json-view">
-                    {JSON.stringify(archive.Incident_Data, null, 2)}
+                    {JSON.stringify(archive, null, 2)}
                   </pre>
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         // Table View
@@ -399,48 +481,61 @@ const Archives: React.FC = () => {
             <thead>
               <tr className="table-header">
                 <th>ID</th>
-                <th>Type</th>
-                <th>Location</th>
+                <th>Status</th>
                 <th>Severity</th>
-                <th>Duration</th>
+                <th>Date</th>
+                <th>Reporter</th>
                 <th>Archived</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {currentArchives.map((archive) => (
-                <tr key={archive.Archive_ID} className="table-row">
+              {currentArchives.map((archive, index) => {
+                // Safety check
+                if (!archive?.Archive_Incidents) {
+                  return (
+                    <tr key={index} className="table-row">
+                      <td className="table-cell" colSpan={7}>Invalid archive data</td>
+                    </tr>
+                  );
+                }
+                
+                const incident = archive.Archive_Incidents;
+                
+                return (
+                <tr key={`${incident.Incidents_ID}-${index}`} className="table-row">
                   <td className="table-cell id">
-                    {archive.Incident_Data.Incidents_ID}
+                    {incident.Incidents_ID || 'N/A'}
                   </td>
                   <td className="table-cell primary">
-                    {archive.Incident_Data.Incident_Type}
-                  </td>
-                  <td className="table-cell secondary">
-                    {archive.Incident_Data.Incident_Location}
+                    {incident.Incident_Status || 'Unknown'}
                   </td>
                   <td className="table-cell">
-                    <span className={`severity-badge ${getSeverityClass(archive.Incident_Data.Incident_Severity)}`}>
-                      {archive.Incident_Data.Incident_Severity}
+                    <span className={`severity-badge ${getSeverityClass(incident.Incident_Severity || 'low')}`}>
+                      {incident.Incident_Severity || 'Unknown'}
                     </span>
                   </td>
                   <td className="table-cell secondary">
-                    {formatDuration(archive.Incident_Data.Duration_Minutes || 0)}
+                    {incident.Incidents_DateTime ? formatDateTime(incident.Incidents_DateTime) : 'N/A'}
+                  </td>
+                  <td className="table-cell secondary">
+                    {incident.Incident_Reporter || 'Unknown'}
                   </td>
                   <td className="table-cell small">
                     {formatDateTime(archive.Archive_Date)}
                   </td>
                   <td className="table-cell">
                     <button
-                      onClick={() => toggleExpanded(archive.Archive_ID)}
-                      className={`table-action-button ${expandedItems.has(archive.Archive_ID) ? 'active' : ''}`}
+                      onClick={() => toggleExpanded(incident.Incidents_ID)}
+                      className={`table-action-button ${expandedItems.has(incident.Incidents_ID) ? 'active' : ''}`}
                     >
                       <Eye size={14} />
-                      {expandedItems.has(archive.Archive_ID) ? 'Hide' : 'View'}
+                      {expandedItems.has(incident.Incidents_ID) ? 'Hide' : 'View'}
                     </button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
