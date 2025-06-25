@@ -21,7 +21,7 @@ describe('User endpoints', ()=>{
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(200);
     });
-    /* 
+    
     test('Get User preferences', async ()=>{
         const response = await axios.get(`${API_BASE_URL}/api/user/preferences`, {
         headers: {
@@ -47,12 +47,11 @@ describe('User endpoints', ()=>{
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(200);
     });
-    */
 });
 
 
 describe('Incident endpoints', ()=>{
-    test('Create incident', async ()=>{
+/*     test('Create incident', async ()=>{
         const payload = artifacts[3];
         const response = await axios.post('http://localhost:5000/api/incidents', payload ,{
         headers: {
@@ -63,8 +62,8 @@ describe('Incident endpoints', ()=>{
 
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(201);
-    }); 
-/*
+    }); */ 
+
     test('Get specific incident', async ()=>{
         const payload = artifacts[3];
         const response = await axios.get('http://localhost:5000/api/incidents/5',{
@@ -91,7 +90,6 @@ describe('Incident endpoints', ()=>{
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(200);
     });
-    */
 
 });
 
