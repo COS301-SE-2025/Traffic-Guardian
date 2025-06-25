@@ -6,17 +6,17 @@ import { useTheme } from '../consts/ThemeContext';
 const Account: React.FC = () => {
   const navigate = useNavigate();
   const { toggleDarkMode } = useTheme();
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
-  });
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     const apiKey = localStorage.getItem('apiKey');
+    const savedTheme = localStorage.getItem('theme');
+    console.log('Account useEffect: apiKey=', apiKey, 'savedTheme=', savedTheme);
+
     if (apiKey) {
-      // Fetch preferences on page load if already logged in
       const fetchPreferences = async () => {
         try {
           const prefsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
@@ -28,31 +28,53 @@ const Account: React.FC = () => {
 
           if (prefsResponse.ok) {
             const prefsData = await prefsResponse.json();
-            console.log('Fetched preferences on load:', prefsData);
-            const preferences = typeof prefsData.preferences === 'string'
-              ? JSON.parse(prefsData.preferences)
-              : prefsData.preferences || {
-                  notifications: true,
-                  alertLevel: 'medium',
-                  theme: 'dark',
-                };
+            console.log('Account fetched preferences:', prefsData);
+            let preferences;
+            try {
+              preferences = typeof prefsData.preferences === 'string' && prefsData.preferences.trim()
+                ? JSON.parse(prefsData.preferences)
+                : prefsData.preferences || {};
+            } catch (err) {
+              console.warn('Account: Failed to parse preferences, using fallback', err);
+              preferences = {};
+            }
+
+            // Validate theme
+            const validTheme = preferences.theme === 'dark' || preferences.theme === 'light' ? preferences.theme : savedTheme || 'dark';
+            preferences = {
+              notifications: preferences.notifications ?? true,
+              alertLevel: preferences.alertLevel || 'medium',
+              theme: validTheme,
+            };
+
+            console.log('Account processed preferences:', preferences);
+            localStorage.setItem('theme', preferences.theme);
             toggleDarkMode(preferences.theme === 'dark');
+          } else {
+            console.warn('Account: Failed to fetch preferences, using saved theme:', savedTheme);
+            if (savedTheme) {
+              toggleDarkMode(savedTheme === 'dark');
+            }
           }
           navigate('/profile');
         } catch (err: any) {
-          console.error('Failed to fetch preferences on load:', err);
+          console.error('Account: Error fetching preferences:', err);
+          if (savedTheme) {
+            toggleDarkMode(savedTheme === 'dark');
+          }
+          setIsChecking(false);
         }
       };
       fetchPreferences();
+    } else {
+      console.log('Account: No apiKey, showing login form');
+      setIsChecking(false);
     }
   }, [navigate, toggleDarkMode]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setLoginData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setLoginData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -66,7 +88,7 @@ const Account: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           User_Email: loginData.email,
-          User_Password: loginData.password
+          User_Password: loginData.password,
         }),
       });
 
@@ -93,7 +115,6 @@ const Account: React.FC = () => {
         localStorage.setItem('userEmail', loginData.email);
       }
 
-      // Fetch preferences after login
       const prefsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
         headers: {
           'X-API-Key': data.apiKey,
@@ -101,16 +122,40 @@ const Account: React.FC = () => {
         },
       });
 
+      let preferences;
       if (prefsResponse.ok) {
         const prefsData = await prefsResponse.json();
-        console.log('Fetched preferences after login:', prefsData);
-        const preferences = typeof prefsData.preferences === 'string'
-          ? JSON.parse(prefsData.preferences)
-          : prefsData.preferences || {
-              notifications: true,
-              alertLevel: 'medium',
-              theme: 'dark',
-            };
+        console.log('Account login fetched preferences:', prefsData);
+        try {
+          preferences = typeof prefsData.preferences === 'string' && prefsData.preferences.trim()
+            ? JSON.parse(prefsData.preferences)
+            : prefsData.preferences || {};
+        } catch (err) {
+          console.warn('Account login: Failed to parse preferences, using fallback', err);
+          preferences = {};
+        }
+
+        // Validate theme
+        const savedTheme = localStorage.getItem('theme');
+        const validTheme = preferences.theme === 'dark' || preferences.theme === 'light' ? preferences.theme : savedTheme || 'dark';
+        preferences = {
+          notifications: preferences.notifications ?? true,
+          alertLevel: preferences.alertLevel || 'medium',
+          theme: validTheme,
+        };
+
+        console.log('Account login processed preferences:', preferences);
+        localStorage.setItem('theme', preferences.theme);
+        toggleDarkMode(preferences.theme === 'dark');
+      } else {
+        console.warn('Account login: Failed to fetch preferences, using saved theme');
+        const savedTheme = localStorage.getItem('theme');
+        preferences = {
+          notifications: true,
+          alertLevel: 'medium',
+          theme: savedTheme || 'dark',
+        };
+        localStorage.setItem('theme', preferences.theme);
         toggleDarkMode(preferences.theme === 'dark');
       }
 
@@ -121,6 +166,10 @@ const Account: React.FC = () => {
       setLoading(false);
     }
   };
+
+  if (isChecking) {
+    return <div>Checking authentication...</div>;
+  }
 
   return (
     <div className="account-page">
