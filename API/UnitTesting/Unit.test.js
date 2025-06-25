@@ -50,7 +50,7 @@ describe('User endpoints', ()=>{
     */
 });
 
-/*
+
 describe('Incident endpoints', ()=>{
     test('Create incident', async ()=>{
         const payload = artifacts[3];
@@ -64,7 +64,7 @@ describe('Incident endpoints', ()=>{
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(201);
     }); 
-
+/*
     test('Get specific incident', async ()=>{
         const payload = artifacts[3];
         const response = await axios.get('http://localhost:5000/api/incidents/5',{
@@ -91,9 +91,9 @@ describe('Incident endpoints', ()=>{
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(200);
     });
-
-})
     */
+
+});
 
 /*
 describe('Alerts endpoints', ()=>{

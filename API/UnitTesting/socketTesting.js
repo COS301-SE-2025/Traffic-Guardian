@@ -141,3 +141,7 @@ socket.on('incidentCategory', (data)=>{
 socket.on('incidentLocations', (data)=>{
     console.log(data);
 })
+
+socket.on('newAlert', (data)=>{
+    addEvent(data);
+})
