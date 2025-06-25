@@ -11,6 +11,22 @@ export interface DatabaseIncident {
   Incident_Reporter?: number;
 }
 
+// Response interfaces
+export interface LocationData {
+  location: string;
+  amount: number;
+}
+
+export interface CriticalIncidentsData {
+  Data: string;
+  Amount: number;
+}
+
+export interface CategoryData {
+  categories: string[];
+  percentages: number[];
+}
+
 export interface TrafficIncident {
   location: string;
   incidents: Array<{
@@ -64,7 +80,58 @@ class ApiService {
     }
   }
 
-  // Get traffic incidents from TomTom
+  // Get incident locations endpoint
+  static async fetchIncidentLocations(): Promise<LocationData[]> {
+    try {
+      console.log('Fetching incident locations...');
+      const response = await fetch(`${API_BASE_URL}/traffic/incidentLocations`, {
+        headers: this.getAuthHeaders(),
+      });
+      
+      const locations = await this.handleResponse<LocationData[]>(response);
+      console.log(`Fetched locations data for ${locations.length} locations`);
+      return locations;
+    } catch (error) {
+      console.error('Error fetching incident locations:', error);
+      return [];
+    }
+  }
+
+  // Get critical incidents count from endpoint
+  static async fetchCriticalIncidents(): Promise<CriticalIncidentsData | null> {
+    try {
+      console.log('Fetching critical incidents...');
+      const response = await fetch(`${API_BASE_URL}/traffic/criticalIncidents`, {
+        headers: this.getAuthHeaders(),
+      });
+      
+      const criticalData = await this.handleResponse<CriticalIncidentsData>(response);
+      console.log(`Fetched critical incidents: ${criticalData.Amount}`);
+      return criticalData;
+    } catch (error) {
+      console.error('Error fetching critical incidents:', error);
+      return null;
+    }
+  }
+
+  // Get incident categories from endpoint
+  static async fetchIncidentCategories(): Promise<CategoryData | null> {
+    try {
+      console.log('Fetching incident categories...');
+      const response = await fetch(`${API_BASE_URL}/traffic/incidentCategory`, {
+        headers: this.getAuthHeaders(),
+      });
+      
+      const categoryData = await this.handleResponse<CategoryData>(response);
+      console.log(`Fetched ${categoryData.categories.length} categories`);
+      return categoryData;
+    } catch (error) {
+      console.error('Error fetching incident categories:', error);
+      return null;
+    }
+  }
+
+  // Get full traffic incidents (if needed)
   static async fetchTrafficIncidents(): Promise<TrafficIncident[]> {
     try {
       console.log('Fetching traffic incidents...');
