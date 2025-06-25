@@ -4,4 +4,7 @@ AI Model(BB)/output_frames/
 AI Model(BB)/processed_frames/
 AI Model(BB)/incident_frames/
 .DS_Store
-**/*.env
+.env.development
+.env.production
+.env*
+

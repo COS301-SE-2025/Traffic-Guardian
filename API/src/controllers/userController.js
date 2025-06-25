@@ -2,7 +2,7 @@ const userModel = require('../models/user');
 
 const userController = {  updatePreferences: async (req, res) => {
     try {
-      const userId = req.user.User_ID;
+      const userId = req.body.User_Email;
       const preferences = req.body.preferences;
       
       if (!preferences) {

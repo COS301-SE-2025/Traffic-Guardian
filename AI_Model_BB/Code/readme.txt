@@ -2,7 +2,7 @@ Car Detection with OpenCV
 
 A Python application for detecting and counting vehicles in video files using computer vision techniques. This project provides multiple detection methods including Haar cascades and background subtraction for robust car detection in traffic videos.
 
-🚗 Features
+Features
 
 - **Real-time car detection** in video files
 - **Multiple detection methods**:
@@ -12,7 +12,7 @@ A Python application for detecting and counting vehicles in video files using co
 - **Adjustable parameters** for different video types
 - **Debug mode** for parameter tuning
 
-📋 Requirements
+Requirements
 
 ###System Requirements
 - Python 3.7 or higher
@@ -26,7 +26,7 @@ pip install opencv-python numpy
 
 
 
- 📁 Project Structure
+ Project Structure
 
 car-detection/
 │
@@ -58,7 +58,7 @@ python main.py
 ```
 
 
-🎮 Controls
+Controls
 
 **During Video Playback:**
 - `q` - Quit the application

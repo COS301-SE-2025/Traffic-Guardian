@@ -1,0 +1,173 @@
+/* Incident Management styles */
+
+.incident-management-page {
+  padding: 2rem;
+  min-height: 100vh;
+  color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+
+  /* background-color: #121212; */
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Keep this for now */
+  margin-bottom: 2rem;
+  position: relative; /* Add this to allow absolute positioning of h2 */
+  background: #000;
+}
+
+.header-container h2 {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%); 
+  margin: 0; 
+}
+
+
+.incident-management-page h2 {
+  color: #000;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+
+.back-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: #FFAE36;
+  color: black;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.back-button:hover {
+  background: #e89c2f; /* Matches button hover */
+}
+
+.incident-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
+  overflow: hidden;
+}
+
+.incident-table th,
+.incident-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+.incident-table th {
+  background-color: #2a2a2a;
+  color: #ddd;
+  font-weight: bold;
+}
+
+.incident-table tr:last-child td {
+  border-bottom: none;
+}
+
+.incident-table tr:hover {
+  background-color: #2e2e2e;
+}
+
+.incident-table select {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  background-color: #2a2a2a;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.incident-table select:focus {
+  outline: none;
+  box-shadow: 0 0 5px rgb(255 174 54 / 50%);
+}
+
+.incident-table button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: #FFAE36;
+  color: black;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.incident-table button:hover {
+  background: #e89c2f;
+}
+
+.incident-card {
+  background: rgb(255 255 255 / 30%);
+  border: none;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
+}
+
+.incident-card h3 {
+  color: #000;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.incident-card p {
+  color: #333;
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+
+.loading-message,
+.error-message,
+.access-denied-message {
+  text-align: center;
+  padding: 2rem;
+  color: #fff;
+  font-size: 1.2rem;
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
+  margin: 2rem auto;
+  max-width: 500px;
+}
+
+@media (width <= 768px) {
+  .incident-table {
+    font-size: 0.9rem;
+  }
+
+  .incident-table th,
+  .incident-table td {
+    padding: 0.75rem;
+  }
+
+  .incident-table select,
+  .incident-table button {
+    font-size: 0.85rem;
+    padding: 0.4rem;
+  }
+
+
+  .back-button {
+    width: 100%;
+    text-align: center;
+  }
+}

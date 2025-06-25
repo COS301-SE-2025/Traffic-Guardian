@@ -1,0 +1,59 @@
+.archives-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* aligns content toward the top */
+  overflow: hidden;
+  text-align: center;
+  padding-top: 5rem; /* adjust to desired vertical offset */
+  padding-inline: 1rem;
+}
+
+.under-construction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.under-construction img {
+  max-width: 200px;
+  height: auto;
+  animation: pulse 2s infinite;
+}
+
+.under-construction p {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.light-mode {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.dark-mode {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+body.no-scroll {
+  overflow: hidden;
+}

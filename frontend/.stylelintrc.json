@@ -1,0 +1,15 @@
+{
+  "extends": "stylelint-config-standard",
+  "rules": {
+    "color-hex-length": "short",
+    "color-function-notation": "modern",
+    "alpha-value-notation": "percentage",
+    "font-family-name-quotes": "always-where-recommended",
+    "comment-empty-line-before": ["always", { "except": ["first-nested"] }],
+    "declaration-block-no-redundant-longhand-properties": true,
+    "shorthand-property-no-redundant-values": true,
+    "no-descending-specificity": true,
+    "media-feature-range-notation": "context",
+    "selector-pseudo-element-colon-notation": "double"
+  }
+}
