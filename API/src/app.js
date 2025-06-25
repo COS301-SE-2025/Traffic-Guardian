@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const incidentRoutes = require('./routes/incidents');
 const alertRoutes = require('./routes/alerts');
+const trafficRoutes = require('./routes/traffic'); // NEW LINE ADDED
 
 // Create Express application
 const app = express();
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/alerts', alertRoutes);
+app.use('/api/traffic', trafficRoutes); // NEW LINE ADDED
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
