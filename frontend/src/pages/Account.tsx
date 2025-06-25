@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Account.css';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../consts/ThemeContext';
+import CarLoadingAnimation from '../components/CarLoadingAnimation';
 
 const Account: React.FC = () => {
   const navigate = useNavigate();
@@ -168,7 +169,7 @@ const Account: React.FC = () => {
   };
 
   if (isChecking) {
-    return <div>Checking authentication...</div>;
+    return <CarLoadingAnimation />;
   }
 
   return (
@@ -219,10 +220,7 @@ const Account: React.FC = () => {
           
           <button className="signup-btn" type="submit" disabled={loading} data-testid="submit-button">
             {loading ? (
-              <>
-                <span className="loading loading-spinner"></span>
-                Logging in...
-              </>
+              <CarLoadingAnimation />
             ) : (
               'Login'
             )}

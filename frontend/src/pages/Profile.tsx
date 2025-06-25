@@ -3,6 +3,7 @@ import './Profile.css';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../consts/ThemeContext';
+import CarLoadingAnimation from '../components/CarLoadingAnimation';
 
 interface User {
   name: string;
@@ -296,11 +297,7 @@ const Profile: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="loading-spinner" data-cy="loading-spinner" aria-busy="true">
-        Loading profile data...
-      </div>
-    );
+    return <CarLoadingAnimation />;
   }
   if (error) {
     return (
