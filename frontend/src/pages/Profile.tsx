@@ -11,20 +11,22 @@ interface User {
 }
 
 interface Preferences {
-  receiveAlerts: boolean;
-  darkMode: boolean;
-  alertLevel?: string;
+  notifications: boolean;
+  alertLevel: string;
+  theme: string;
 }
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
-  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { toggleDarkMode } = useTheme();
   const [user, setUser] = useState<User>({ name: '', email: '' });
   const [preferences, setPreferences] = useState<Preferences>({
-    receiveAlerts: true,
-    darkMode: isDarkMode,
+    notifications: true,
     alertLevel: 'medium',
+    theme: 'dark',
   });
+  const [tempPreferences, setTempPreferences] = useState<Preferences>({ ...preferences });
+  const [savedPreferences, setSavedPreferences] = useState<Preferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [incidentCount, setIncidentCount] = useState(0);
@@ -38,7 +40,6 @@ const Profile: React.FC = () => {
           throw new Error('No API key found. Please log in.');
         }
 
-        // Fetch user profile
         const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/profile`, {
           headers: {
             'X-API-Key': apiKey,
@@ -57,7 +58,6 @@ const Profile: React.FC = () => {
           role: userData.User_Role,
         });
 
-        // Fetch user preferences
         const prefsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
           headers: {
             'X-API-Key': apiKey,
@@ -67,16 +67,21 @@ const Profile: React.FC = () => {
 
         if (prefsResponse.ok) {
           const prefsData = await prefsResponse.json();
-          const fetchedPrefs = prefsData.preferences || {
-            receiveAlerts: true,
-            darkMode: false,
-            alertLevel: 'medium',
-          };
-          setPreferences(fetchedPrefs);
-          toggleDarkMode(fetchedPrefs.darkMode); // Sync with ThemeContext
+          const fetchedPrefs = typeof prefsData.preferences === 'string'
+            ? JSON.parse(prefsData.preferences)
+            : prefsData.preferences || {};
+
+          const currentPrefs = Object.keys(fetchedPrefs).length === 0 && savedPreferences
+            ? savedPreferences
+            : fetchedPrefs;
+
+          setPreferences(currentPrefs);
+          setTempPreferences(currentPrefs);
+          toggleDarkMode(currentPrefs.theme === 'dark');
+        } else {
+          throw new Error('Failed to fetch preferences');
         }
 
-        // Fetch incident and alert counts for admins
         if (userData.User_Role === 'admin') {
           const incidentsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents`, {
             headers: {
@@ -120,18 +125,25 @@ const Profile: React.FC = () => {
     };
 
     fetchProfileData();
-  }, [navigate, toggleDarkMode]);
+  }, [navigate, toggleDarkMode, savedPreferences]);
 
-  const handlePreferenceChange = async (key: keyof Preferences, value: any) => {
-    const updatedPrefs = { ...preferences, [key]: value };
-    setPreferences(updatedPrefs);
-    if (key === 'darkMode') {
-      toggleDarkMode(value); // Update ThemeContext
-    }
+  const handlePreferenceChange = (key: keyof Preferences, value: any) => {
+    setTempPreferences(prev => ({ ...prev, [key]: value }));
+  };
 
+  const handleSavePreferences = async () => {
     try {
       const apiKey = localStorage.getItem('apiKey');
-      if (!apiKey) throw new Error('No API key found');
+      if (!apiKey) {
+        setError('No API key found. Please log in.');
+        navigate('/account');
+        return;
+      }
+
+      if (!user.email) {
+        setError('User email not available. Please try again.');
+        return;
+      }
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
         method: 'PUT',
@@ -139,20 +151,39 @@ const Profile: React.FC = () => {
           'X-API-Key': apiKey,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ preferences: updatedPrefs }),
+        body: JSON.stringify({
+          User_Email: user.email,
+          preferences: tempPreferences,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update preferences');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update preferences');
+      }
+
+      const responseData = await response.json();
+      if (responseData.user && responseData.user.User_Preferences) {
+        const updatedPrefs = typeof responseData.user.User_Preferences === 'string'
+          ? JSON.parse(responseData.user.User_Preferences)
+          : responseData.user.User_Preferences;
+        setPreferences(updatedPrefs);
+        setSavedPreferences(updatedPrefs);
+        toggleDarkMode(updatedPrefs.theme === 'dark');
+      } else {
+        setPreferences(tempPreferences);
+        setSavedPreferences(tempPreferences);
+        toggleDarkMode(tempPreferences.theme === 'dark');
       }
     } catch (err: any) {
       setError(err.message);
+      setTempPreferences({ ...preferences });
     }
   };
 
   const handleSignOut = () => {
     localStorage.removeItem('apiKey');
-    localStorage.removeItem('user');
+    localStorage.removeItem('userEmail');
     navigate('/account');
   };
 
@@ -227,33 +258,37 @@ const Profile: React.FC = () => {
           <h3 data-cy="notification-prefs-title" id="notification-prefs-title">
             Notification Preferences
           </h3>
-          <div className="preference-item" data-cy="preference-item-receive-alerts">
-            <label htmlFor="receive-alerts">
+          <div className="preference-item" data-cy="preference-item-notifications">
+            <label htmlFor="notifications">
               <input
                 type="checkbox"
-                id="receive-alerts"
-                checked={preferences.receiveAlerts}
-                onChange={(e) => handlePreferenceChange('receiveAlerts', e.target.checked)}
-                data-cy="receive-alerts-checkbox"
-                aria-label="Receive incident alerts"
+                id="notifications"
+                checked={tempPreferences.notifications}
+                onChange={(e) => handlePreferenceChange('notifications', e.target.checked)}
+                data-cy="notifications-checkbox"
+                aria-label="Receive incident notifications"
               />
-              Receive incident alerts
+              Receive incident notifications
             </label>
           </div>
-          <div className="preference-item" data-cy="preference-item-dark-mode">
-            <label htmlFor="dark-mode" className="toggle-label">
-              <input
-                type="checkbox"
-                id="dark-mode"
-                checked={preferences.darkMode}
-                onChange={(e) => handlePreferenceChange('darkMode', e.target.checked)}
-                data-cy="dark-mode-toggle"
-                aria-label="Toggle dark mode"
-                className="toggle-input"
-              />
-              <span className="toggle-slider"></span>
-              Enable dark mode
+          <div className="preference-item" data-cy="preference-item-theme">
+            <label htmlFor="theme" data-cy="theme-label">
+              Theme:
             </label>
+            <select
+              id="theme"
+              value={tempPreferences.theme}
+              onChange={(e) => handlePreferenceChange('theme', e.target.value)}
+              data-cy="theme-select"
+              aria-label="Select theme"
+            >
+              <option value="dark" data-cy="theme-option-dark">
+                Dark
+              </option>
+              <option value="light" data-cy="theme-option-light">
+                Light
+              </option>
+            </select>
           </div>
           <div className="preference-item" data-cy="preference-item-alert-level">
             <label htmlFor="alert-level" data-cy="alert-level-label">
@@ -261,7 +296,7 @@ const Profile: React.FC = () => {
             </label>
             <select
               id="alert-level"
-              value={preferences.alertLevel}
+              value={tempPreferences.alertLevel}
               onChange={(e) => handlePreferenceChange('alertLevel', e.target.value)}
               data-cy="alert-level-select"
               aria-label="Select alert level"
@@ -276,6 +311,14 @@ const Profile: React.FC = () => {
                 High
               </option>
             </select>
+          </div>
+          <div className="preference-item" data-cy="preference-save">
+            <Button
+              label="Save Preferences"
+              onClick={handleSavePreferences}
+              data-cy="save-preferences-button"
+              aria-label="Save preferences"
+            />
           </div>
         </div>
 
