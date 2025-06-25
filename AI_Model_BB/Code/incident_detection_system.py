@@ -13,7 +13,7 @@ from collections import defaultdict, deque
 import math
 
 class AdvancedIncidentDetectionSystem:
-    def __init__(self, stream_url="Videos\Traffic_Video1.mp4", config=None):
+    def __init__(self, stream_url="Videos/Demo2.mp4", config=None):
         """
         Advanced incident detection system with multi-layer collision detection.
         """
@@ -177,21 +177,25 @@ class AdvancedIncidentDetectionSystem:
             return
         
         print("🚀 Starting ADVANCED incident detection system...")
-        print("🎬 DEMO MODE: Fullscreen enabled for recording")
         print("🔍 Multi-layer collision detection enabled:")
         print("  Layer 1: Trajectory Prediction")
         print("  Layer 2: Depth Analysis") 
         print("  Layer 3: Optical Flow Analysis")
         print("  Layer 4: Physics Validation")
-        print("Controls: 'q' = quit, 's' = save frame, 'r' = reset analytics, 'f' = toggle fullscreen")
+        print("Controls:")
+        print("  'q' = quit")
+        print("  's' = save frame") 
+        print("  'r' = reset analytics")
+        print("  'f' = toggle fullscreen")
+        print("  ESC = exit fullscreen")
         
         frame_count = 0
+        is_fullscreen = False
         
         try:
             while True:
                 ret, frame = self.cap.read()
                 if not ret:
-                    print("📹 End of video reached, restarting...")
                     self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Restart video
                     continue
                 
@@ -219,15 +223,9 @@ class AdvancedIncidentDetectionSystem:
                 
                 # Display and save
                 if self.config['display_window']:
-                    # Create fullscreen window for demo
-                    window_name = "Advanced Traffic Monitoring System - DEMO"
-                    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-                    
-                    # Set fullscreen if requested
-                    if self.config.get('fullscreen_demo', False):
-                        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                    
-                    cv2.imshow(window_name, annotated_frame)
+                    # Create named window with proper flags for fullscreen support
+                    cv2.namedWindow("Advanced Incident Detection", cv2.WINDOW_NORMAL)
+                    cv2.imshow("Advanced Incident Detection", annotated_frame)
                 
                 if self.config['save_incidents'] and incidents:
                     self._save_incident_frame(annotated_frame, incidents, frame_count)
@@ -245,14 +243,21 @@ class AdvancedIncidentDetectionSystem:
                     self._reset_analytics()
                 elif key == ord('f'):
                     # Toggle fullscreen
-                    window_name = "Advanced Traffic Monitoring System - DEMO"
-                    current_prop = cv2.getWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN)
-                    if current_prop == cv2.WINDOW_FULLSCREEN:
-                        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
-                        print("📺 Windowed mode")
+                    is_fullscreen = not is_fullscreen
+                    if is_fullscreen:
+                        cv2.setWindowProperty("Advanced Incident Detection", 
+                                            cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                        print("🖥️ Switched to fullscreen mode (Press ESC or 'f' to exit)")
                     else:
-                        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                        print("🖥️ Fullscreen mode")
+                        cv2.setWindowProperty("Advanced Incident Detection", 
+                                            cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
+                        print("🪟 Switched to windowed mode")
+                elif key == 27:  # ESC key
+                    if is_fullscreen:
+                        is_fullscreen = False
+                        cv2.setWindowProperty("Advanced Incident Detection", 
+                                            cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
+                        print("🪟 Exited fullscreen mode")
                 
         except KeyboardInterrupt:
             print("\n⏹️ Detection stopped by user")
@@ -1219,7 +1224,7 @@ class AdvancedIncidentDetectionSystem:
         return frame
     
     def _add_advanced_analytics_overlay(self, frame, incidents):
-        """Add clean, professional analytics overlay for demo presentation."""
+        """Add responsive analytics overlay that adapts to window size."""
         height, width = frame.shape[:2]
         
         # Create incident summary
@@ -1233,22 +1238,22 @@ class AdvancedIncidentDetectionSystem:
         runtime = time.time() - self.analytics['start_time']
         layers = self.analytics['collision_layers']
         
-        # Create simple, clean overlay text
+        # Create responsive overlay text
         overlay_text = [
             "Traffic Monitoring System",
             "",
             f"Runtime: {runtime:.0f}s",
-            f"Vehicles Tracked: {len(self.tracked_vehicles)}",
-            f"Frames Processed: {self.analytics['total_frames']:,}",
+            f"Vehicles: {len(self.tracked_vehicles)}",
+            f"Frames: {self.analytics['total_frames']:,}",
             "",
-            "Multi-Layer Collision Detection:",
-            f"  Trajectory Analysis: {layers['trajectory_detected']}",
-            f"  Depth Validation: {layers['depth_confirmed']}",
-            f"  Motion Analysis: {layers['flow_confirmed']}",
-            f"  Physics Check: {layers['physics_confirmed']}",
+            "Multi-Layer Detection:",
+            f"  Trajectory: {layers['trajectory_detected']}",
+            f"  Depth: {layers['depth_confirmed']}",
+            f"  Motion: {layers['flow_confirmed']}",
+            f"  Physics: {layers['physics_confirmed']}",
             "",
-            f"Confirmed Incidents: {layers['final_confirmed']}",
-            f"API Reports Sent: {self.analytics['api_reports_sent']}",
+            f"Confirmed: {layers['final_confirmed']}",
+            f"API Reports: {self.analytics['api_reports_sent']}",
         ]
         
         # Add active incidents if any
@@ -1260,15 +1265,38 @@ class AdvancedIncidentDetectionSystem:
                 vehicles = ' & '.join(incident.get('vehicles', ['Unknown', 'Unknown']))
                 overlay_text.append(f"  {vehicles}: {ttc:.1f}s")
         
-        # Calculate overlay dimensions
-        overlay_width = 300
-        overlay_height = len(overlay_text) * 25 + 30
+        # Calculate responsive overlay dimensions based on frame size
+        # Scale overlay size based on resolution
+        if width > 1500:  # Large/fullscreen
+            overlay_width = 350
+            font_scale = 0.6
+            line_height = 28
+            padding = 20
+        elif width > 1000:  # Medium
+            overlay_width = 300
+            font_scale = 0.55
+            line_height = 25
+            padding = 15
+        else:  # Small
+            overlay_width = 250
+            font_scale = 0.5
+            line_height = 22
+            padding = 12
         
-        # Position overlay (top-right)
-        overlay_x = width - overlay_width - 15
-        overlay_y = 15
+        overlay_height = len(overlay_text) * line_height + (padding * 2)
         
-        # Draw simple, clean background
+        # Position overlay (top-right with responsive margins)
+        margin = max(15, width // 100)  # Responsive margin
+        overlay_x = width - overlay_width - margin
+        overlay_y = margin
+        
+        # Ensure overlay doesn't go off screen
+        if overlay_x < 0:
+            overlay_x = 10
+        if overlay_y + overlay_height > height:
+            overlay_y = height - overlay_height - 10
+        
+        # Draw responsive background
         cv2.rectangle(frame, (overlay_x, overlay_y), 
                      (overlay_x + overlay_width, overlay_y + overlay_height), 
                      (40, 40, 40), -1)  # Dark gray background
@@ -1277,39 +1305,43 @@ class AdvancedIncidentDetectionSystem:
                      (overlay_x + overlay_width, overlay_y + overlay_height), 
                      (200, 200, 200), 2)  # Light gray border
         
-        # Draw text with simple, readable styling
+        # Draw text with responsive sizing
         for i, text in enumerate(overlay_text):
-            text_y = overlay_y + 25 + i * 25
-            text_x = overlay_x + 15
+            text_y = overlay_y + padding + (i + 1) * line_height
+            text_x = overlay_x + padding
             
-            # Simple color scheme
+            # Skip if text would go below frame
+            if text_y > height - 10:
+                break
+            
+            # Responsive color scheme
             if i == 0:  # Title
                 color = (255, 255, 255)
-                font_size = 0.7
+                font_size = font_scale + 0.1
                 thickness = 2
-            elif "Confirmed Incidents" in text:
+            elif "Confirmed" in text:
                 if layers['final_confirmed'] > 0:
                     color = (0, 100, 255)  # Orange for incidents
                 else:
                     color = (100, 255, 100)  # Green for no incidents
-                font_size = 0.6
+                font_size = font_scale
                 thickness = 2
             elif "ACTIVE ALERTS" in text:
                 color = (0, 0, 255)  # Red for alerts
-                font_size = 0.6
+                font_size = font_scale
                 thickness = 2
             elif text.startswith("  ") and ":" in text:  # Alert details or stats
                 if "ALERTS" in overlay_text[max(0, i-1)]:  # Alert details
                     color = (0, 0, 255)  # Red for alert details
                 else:  # Layer stats
                     color = (180, 180, 180)  # Light gray for stats
-                font_size = 0.5
+                font_size = font_scale - 0.05
                 thickness = 1
             elif text == "":  # Empty lines
                 continue
             else:  # Regular text
                 color = (220, 220, 220)  # Light gray
-                font_size = 0.55
+                font_size = font_scale
                 thickness = 1
             
             cv2.putText(frame, text, (text_x, text_y), 
@@ -1539,7 +1571,6 @@ def main():
         
         # System settings
         'display_window': True,
-        'fullscreen_demo': True,               # Enable fullscreen for demo
         'save_incidents': True,
         'log_detections': True,
         'frame_skip': 2,
