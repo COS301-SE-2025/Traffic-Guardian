@@ -11,6 +11,10 @@ from datetime import datetime
 import numpy as np
 from collections import defaultdict, deque
 import math
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class AdvancedIncidentDetectionSystem:
     def __init__(self, stream_url="Videos/Demo2.mp4", config=None):
@@ -75,26 +79,46 @@ class AdvancedIncidentDetectionSystem:
             'api_failures': 0
         }
         
-        # API Configuration
-        self.api_config = {
-            'endpoint': 'http://localhost:5000/api/incidents',
-            'api_key': 'abcde12345abcde',
-            'timeout': 5,
-            'retry_attempts': 2
-        }
+        self.api_config = self._load_api_config()
         
         # Video capture
         self.cap = None
         self.initialize_capture()
         
-        # REMOVED: Background subtraction (causing false debris alerts)
+
         
+    def _load_api_config(self):
+        """
+        Securely load API configuration from environment variables.
+        """
+        api_key = os.getenv('API_KEY')
+        
+        if not api_key:
+            print("⚠️ WARNING: API_KEY not found in environment variables!")
+            print("   Please create a .env file with your API key")
+            print("   API integration will be disabled")
+            return {
+                'endpoint': 'http://localhost:5000/api/incidents',
+                'api_key': None,
+                'timeout': 5,
+                'retry_attempts': 2,
+                'enabled': False
+            }
+        
+        return {
+            'endpoint': os.getenv('API_ENDPOINT', 'http://localhost:5000/api/incidents'),
+            'api_key': api_key,
+            'timeout': int(os.getenv('API_TIMEOUT', '5')),
+            'retry_attempts': int(os.getenv('API_RETRY_ATTEMPTS', '2')),
+            'enabled': True
+        }
+    
     def _default_config(self):
         """Enhanced configuration with advanced collision detection settings."""
         return {
-            # YOLO settings
-            'model_version': 'yolov8s',
-            'confidence_threshold': 0.4,
+            # YOLO settings - can be overridden by environment variables
+            'model_version': os.getenv('MODEL_VERSION', 'yolov8s'),
+            'confidence_threshold': float(os.getenv('CONFIDENCE_THRESHOLD', '0.4')),
             'iou_threshold': 0.45,
             
             # Display and logging
@@ -102,6 +126,9 @@ class AdvancedIncidentDetectionSystem:
             'save_incidents': True,
             'log_detections': True,
             'frame_skip': 2,
+            
+            # Location configuration from environment
+            'incident_location': os.getenv('INCIDENT_LOCATION', 'Traffic Camera Location'),
             
             # MULTI-LAYER COLLISION DETECTION SETTINGS
             'collision_distance_threshold': 35,    # Even tighter
@@ -138,6 +165,59 @@ class AdvancedIncidentDetectionSystem:
             'speed_change_threshold': 0.8,
             'pedestrian_road_threshold': 50,
         }
+    
+    def _send_incident_to_api(self, incident):
+        """Send incident report to API endpoint using secure configuration."""
+        if not self.api_config['enabled']:
+            print("API integration disabled - no API key found")
+            return
+        
+        try:
+            # Prepare incident data for API
+            incident_data = {
+                "Incident_Date": datetime.now().strftime("%Y-%m-%d"),
+                "Incident_Location": self.config['incident_location'],
+                "Incident_Severity": self._map_severity_for_api(incident.get('severity', 'MEDIUM')),
+                "Incident_Status": "open"
+            }
+            
+            headers = {
+                'X-API-KEY': self.api_config['api_key'],  # Now loaded securely from env
+                'Content-Type': 'application/json'
+            }
+            
+            # Send POST request
+            response = requests.post(
+                self.api_config['endpoint'],
+                headers=headers,
+                json=incident_data,
+                timeout=self.api_config['timeout']
+            )
+            
+            if response.status_code == 200 or response.status_code == 201:
+                self.analytics['api_reports_sent'] += 1
+                print(f"✅ Incident reported to API: {incident_data['Incident_Severity']} severity")
+                print(f"   Location: {incident_data['Incident_Location']}")
+                print(f"   Response: {response.status_code}")
+            else:
+                self.analytics['api_failures'] += 1
+                print(f"⚠️ API report failed: HTTP {response.status_code}")
+                print(f"   Response: {response.text}")
+                
+        except requests.exceptions.Timeout:
+            self.analytics['api_failures'] += 1
+            print(f"⚠️API report timeout: Request took longer than {self.api_config['timeout']}s")
+            
+        except requests.exceptions.ConnectionError:
+            self.analytics['api_failures'] += 1
+            print(f"⚠️ API connection failed: Could not connect to {self.api_config['endpoint']}")
+            print("   (This is normal if the API server is not running)")
+            
+        except Exception as e:
+            self.analytics['api_failures'] += 1
+            print(f"⚠️ API report error: {e}")
+
+
     
     def _load_model(self):
         """Load YOLO model with error handling."""
@@ -404,7 +484,7 @@ class AdvancedIncidentDetectionSystem:
             }
             
             headers = {
-                'X-API-KEY': self.config.get('api_key', 'abcde12345abcde'),
+                'X-API-KEY': self.config.get('api_key', '2fc66075d878832'),
                 'Content-Type': 'application/json'
             }
             
@@ -1608,7 +1688,7 @@ def main():
                     # API Integration Settings
             'api_enabled': True,                   # Enable/disable API reporting
             'api_endpoint': 'http://localhost:5000/api/incidents',
-            'api_key': 'abcde12345abcde',
+            'api_key': '2fc66075d878832',
             'api_timeout': 5,
             'api_retry_attempts': 2,
             'incident_location': 'Main Street & 5th Avenue',  # Default location

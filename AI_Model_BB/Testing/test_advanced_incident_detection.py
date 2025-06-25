@@ -11,6 +11,10 @@ import json
 import time
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 # Add Code folder to path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -81,7 +85,7 @@ class TestAdvancedIncidentDetectionSystem(unittest.TestCase):
             
             # API settings
             'api_endpoint': 'http://localhost:5000/api/incidents',
-            'api_key': 'abcde12345abcde',
+            'api_key': os.getenv('API_KEY'),
             'api_timeout': 5,
             'api_retry_attempts': 2,
             'incident_location': 'Traffic Camera Location',
