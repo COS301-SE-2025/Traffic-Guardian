@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './Account.css';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../consts/ThemeContext';
 
 const Account: React.FC = () => {
   const navigate = useNavigate();
+  const { toggleDarkMode } = useTheme();
   const [loginData, setLoginData] = useState({
     email: '',
     password: ''
@@ -11,13 +13,39 @@ const Account: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Check if user is already logged in
   useEffect(() => {
     const apiKey = localStorage.getItem('apiKey');
     if (apiKey) {
-      navigate('/profile');
+      // Fetch preferences on page load if already logged in
+      const fetchPreferences = async () => {
+        try {
+          const prefsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
+            headers: {
+              'X-API-Key': apiKey,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (prefsResponse.ok) {
+            const prefsData = await prefsResponse.json();
+            console.log('Fetched preferences on load:', prefsData);
+            const preferences = typeof prefsData.preferences === 'string'
+              ? JSON.parse(prefsData.preferences)
+              : prefsData.preferences || {
+                  notifications: true,
+                  alertLevel: 'medium',
+                  theme: 'dark',
+                };
+            toggleDarkMode(preferences.theme === 'dark');
+          }
+          navigate('/profile');
+        } catch (err: any) {
+          console.error('Failed to fetch preferences on load:', err);
+        }
+      };
+      fetchPreferences();
     }
-  }, [navigate]);
+  }, [navigate, toggleDarkMode]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -62,10 +90,31 @@ const Account: React.FC = () => {
 
       if (data.apiKey) {
         localStorage.setItem('apiKey', data.apiKey);
+        localStorage.setItem('userEmail', loginData.email);
       }
-      
-      navigate('/profile');
 
+      // Fetch preferences after login
+      const prefsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
+        headers: {
+          'X-API-Key': data.apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (prefsResponse.ok) {
+        const prefsData = await prefsResponse.json();
+        console.log('Fetched preferences after login:', prefsData);
+        const preferences = typeof prefsData.preferences === 'string'
+          ? JSON.parse(prefsData.preferences)
+          : prefsData.preferences || {
+              notifications: true,
+              alertLevel: 'medium',
+              theme: 'dark',
+            };
+        toggleDarkMode(preferences.theme === 'dark');
+      }
+
+      navigate('/profile');
     } catch (err: any) {
       setError(err.message || 'An error occurred during login');
     } finally {
