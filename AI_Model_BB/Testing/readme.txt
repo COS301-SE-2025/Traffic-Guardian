@@ -252,3 +252,16 @@ After all tests pass:
 ---
 
 **🎯 Remember:** Good tests = confident deployments = reliable systems!
+
+
+
+Code Coverage
+
+couldnt integrate into the runtest.py
+pip install coverage
+
+# Run tests with coverage tracking
+coverage run --source=../Code -m unittest test_advanced_incident_detection.py
+
+# View coverage report
+coverage report
