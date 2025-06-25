@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import { ThemeProvider } from './consts/ThemeContext'
+import { ThemeProvider } from './consts/ThemeContext';
 import NavBar from './components/NavBar';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
@@ -14,6 +14,7 @@ import Archives from './pages/Archives';
 import Help from './pages/Help';
 import IncidentManagement from './pages/IncidentManagement';
 import PageWrapper from './components/PageWrapper';
+import ProtectedRoute from './utils/ProtectedRoute';
 
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
@@ -25,7 +26,6 @@ const AnimatedRoutes = () => {
 
   return (
     <>
-      {/* Only show NavBar if not on landing page */}
       {!isLandingPage && <NavBar />}
       
       <AnimatePresence mode="wait">
@@ -39,11 +39,17 @@ const AnimatedRoutes = () => {
           <Route path="/analytics" element={<PageWrapper><Analytics /></PageWrapper>} />
           <Route path="/archives" element={<PageWrapper><Archives /></PageWrapper>} />
           <Route path="/signup" element={<PageWrapper><SignUp /></PageWrapper>} />
-          <Route path="/profile" element={<PageWrapper><Profile /></PageWrapper>} />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <PageWrapper><Profile /></PageWrapper>
+              </ProtectedRoute>
+            } 
+          />
           <Route path="/incident-management" element={<PageWrapper><IncidentManagement /></PageWrapper>} />
           <Route path="/help" element={<PageWrapper><Help /></PageWrapper>} />
           
-          {/* Redirect any unknown routes to landing page */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AnimatePresence>
@@ -52,8 +58,11 @@ const AnimatedRoutes = () => {
 };
 
 const App: React.FC = () => {
+  const initialTheme = localStorage.getItem('theme');
+  const isDarkMode = initialTheme ? initialTheme === 'dark' : true;
+
   return (
-    <ThemeProvider>
+    <ThemeProvider initialDarkMode={isDarkMode}>
       <Router>
         <AnimatedRoutes />
       </Router>
