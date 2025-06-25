@@ -10,7 +10,7 @@ var regions = ['-26.1438,28.0406', 'Sandton', '-25.9819,28.1329', '-25.8347,28.1
     var johannesburgCount = 0;
     async function getWeather(){
       johannesburgCount = 0;
-      console.log(`Regions = ${regions.length}`);
+      //console.log(`Regions = ${regions.length}`);
       for(var i=0; i< regions.length; i++){
         const form = new FormData();
         form.append('key', process.env.WEATHERAPI);
@@ -41,6 +41,8 @@ var regions = ['-26.1438,28.0406', 'Sandton', '-25.9819,28.1329', '-25.8347,28.1
       weatherCurrent.forEach((w)=>{
         //console.log(w);
       })
+
+      return weatherCurrent;
     }
 
 module.exports = {
