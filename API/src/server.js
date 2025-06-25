@@ -99,4 +99,6 @@ db.query('SELECT NOW()')
    });
 
 
-   module.exports = io;
+  module.exports = {
+    io
+  };

@@ -6,7 +6,6 @@ const yeah = Seeding.hmmmm;
 
 // API base URL from config
 const API_BASE_URL = config.apiBaseUrl;
-
 describe('User endpoints', ()=>{
 
     test('Login User', async ()=>{
@@ -49,9 +48,8 @@ describe('User endpoints', ()=>{
     });
 });
 
-
 describe('Incident endpoints', ()=>{
-/*     test('Create incident', async ()=>{
+     test('Create incident', async ()=>{
         const payload = artifacts[3];
         const response = await axios.post('http://localhost:5000/api/incidents', payload ,{
         headers: {
@@ -62,7 +60,7 @@ describe('Incident endpoints', ()=>{
 
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(201);
-    }); */ 
+    }); 
 
     test('Get specific incident', async ()=>{
         const payload = artifacts[3];
@@ -90,7 +88,6 @@ describe('Incident endpoints', ()=>{
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(200);
     });
-
 });
 
 /*
