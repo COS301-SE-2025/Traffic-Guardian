@@ -1,4 +1,5 @@
 const traffic = require('../src/Traffic/traffic');
+const artifacts = require('../UnitTesting/artifacts.json');
 
 describe('Geographical distance conversions', () => {
 
@@ -17,9 +18,8 @@ describe('Geographical distance conversions', () => {
     });
   });
 
-
   describe('distToLong', () => {
-    test('Converts distance to longitude degrees at equator (lat=0)', () => {
+    test('Converts distance to longitude degrees at equator', () => {
       expect(traffic.distToLong(111.32, 0)).toBeCloseTo(1, 4);
     });
 
@@ -33,4 +33,35 @@ describe('Geographical distance conversions', () => {
     });
   });
 
+});
+
+describe('Incident Analysis Functions', () => {
+  const iconCategory = ['Accident', 'Jam', 'Rain', 'Road works'];
+  const sampleInput = [artifacts[9]];
+
+  test('criticalIncidents should count delays > 3', () => {
+    const result = traffic.criticalIncidents(sampleInput);
+    expect(result).toEqual({
+      Data: 'Amount of critical Incidents',
+      Amount: 5
+    });
+  });
+
+  test('incidentCategory should return correct percentages', () => {
+    const result = traffic.incidentCategory(sampleInput);
+
+    expect(result.categories).toEqual(expect.arrayContaining(iconCategory));
+
+    const accidentIndex = result.categories.indexOf('Accident');
+  });
+
+  test('incidentLocations should return correct locations and counts', () => {
+    const result = traffic.incidentLocations(sampleInput);
+    expect(result).toEqual([
+      {
+        location: 'Hatfield',
+        amount: 8
+      }
+    ]);
+  });
 });
