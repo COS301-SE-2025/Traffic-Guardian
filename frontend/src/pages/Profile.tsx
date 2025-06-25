@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Profile.css';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +19,7 @@ interface Preferences {
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { toggleDarkMode } = useTheme();
+  const hasInitialized = useRef(false);
   const [user, setUser] = useState<User>({ name: '', email: '' });
   const [preferences, setPreferences] = useState<Preferences>({
     notifications: true,
@@ -32,10 +33,76 @@ const Profile: React.FC = () => {
   const [incidentCount, setIncidentCount] = useState(0);
   const [alertCount, setAlertCount] = useState(0);
 
+  // Helper function to handle API responses including 304
+  const handleApiResponse = async (response: Response) => {
+    if (response.status === 304) {
+      // 304 Not Modified - return empty array or cached data
+      return [];
+    }
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    }
+    
+    return [];
+  };
+
+  // Optimized function to fetch alert counts with proper error handling
+  const fetchAlertCounts = async (incidents: any[], apiKey: string) => {
+    let totalAlerts = 0;
+    
+    try {
+      // Make concurrent requests instead of sequential
+      const alertPromises = incidents.map(async (incident) => {
+        try {
+          const alertsResponse = await fetch(
+            `${process.env.REACT_APP_API_URL}/api/incidents/${incident.Incidents_ID}/alerts`,
+            {
+              headers: {
+                'X-API-Key': apiKey,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          
+          const alerts = await handleApiResponse(alertsResponse);
+          return Array.isArray(alerts) ? alerts.length : 0;
+        } catch (error) {
+          console.warn(`Failed to fetch alerts for incident ${incident.Incidents_ID}:`, error);
+          return 0; // Return 0 if individual alert fetch fails
+        }
+      });
+
+      // Wait for all alert requests to complete
+      const alertCounts = await Promise.all(alertPromises);
+      totalAlerts = alertCounts.reduce((sum, count) => sum + count, 0);
+      
+    } catch (error) {
+      console.error('Error fetching alert counts:', error);
+      // Don't throw here - just log and continue with 0 alerts
+    }
+    
+    return totalAlerts;
+  };
+
   useEffect(() => {
+    if (hasInitialized.current) {
+      return;
+    }
+    
+    hasInitialized.current = true;
+    
     const fetchProfileData = async () => {
       try {
         const apiKey = localStorage.getItem('apiKey');
+        const savedTheme = localStorage.getItem('theme');
+        console.log('Profile useEffect: apiKey=', apiKey, 'savedTheme=', savedTheme);
+
         if (!apiKey) {
           throw new Error('No API key found. Please log in.');
         }
@@ -65,55 +132,76 @@ const Profile: React.FC = () => {
           },
         });
 
+        let currentPrefs = {
+          notifications: true,
+          alertLevel: 'medium',
+          theme: savedTheme || 'dark',
+        };
+
         if (prefsResponse.ok) {
           const prefsData = await prefsResponse.json();
-          const fetchedPrefs = typeof prefsData.preferences === 'string'
-            ? JSON.parse(prefsData.preferences)
-            : prefsData.preferences || {};
+          console.log('Profile fetched preferences:', prefsData);
+          let fetchedPrefs;
+          try {
+            fetchedPrefs = typeof prefsData.preferences === 'string' && prefsData.preferences.trim()
+              ? JSON.parse(prefsData.preferences)
+              : prefsData.preferences || {};
+          } catch (err) {
+            console.warn('Profile: Failed to parse preferences, using fallback', err);
+            fetchedPrefs = {};
+          }
 
-          const currentPrefs = Object.keys(fetchedPrefs).length === 0 && savedPreferences
-            ? savedPreferences
-            : fetchedPrefs;
+          const validTheme = fetchedPrefs.theme === 'dark' || fetchedPrefs.theme === 'light' ? fetchedPrefs.theme : savedTheme || 'dark';
+          currentPrefs = {
+            notifications: fetchedPrefs.notifications ?? true,
+            alertLevel: fetchedPrefs.alertLevel || 'medium',
+            theme: validTheme,
+          };
 
-          setPreferences(currentPrefs);
-          setTempPreferences(currentPrefs);
-          toggleDarkMode(currentPrefs.theme === 'dark');
+          console.log('Profile processed preferences:', currentPrefs);
+          localStorage.setItem('theme', currentPrefs.theme);
         } else {
-          throw new Error('Failed to fetch preferences');
+          console.warn('Profile: Failed to fetch preferences, using saved theme:', savedTheme);
+          if (savedTheme) {
+            currentPrefs = {
+              notifications: true,
+              alertLevel: 'medium',
+              theme: savedTheme,
+            };
+            localStorage.setItem('theme', currentPrefs.theme);
+          }
         }
 
+        setPreferences(currentPrefs);
+        setTempPreferences(currentPrefs);
+
+        // Fetch admin data if user is admin
         if (userData.User_Role === 'admin') {
-          const incidentsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents`, {
-            headers: {
-              'X-API-Key': apiKey,
-              'Content-Type': 'application/json',
-            },
-          });
+          try {
+            const incidentsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents`, {
+              headers: {
+                'X-API-Key': apiKey,
+                'Content-Type': 'application/json',
+              },
+            });
 
-          if (!incidentsResponse.ok) {
-            throw new Error('Failed to fetch incidents');
-          }
-          const incidents = await incidentsResponse.json();
-          setIncidentCount(incidents.length);
+            const incidents = await handleApiResponse(incidentsResponse);
+            const incidentsList = Array.isArray(incidents) ? incidents : [];
+            setIncidentCount(incidentsList.length);
 
-          let totalAlerts = 0;
-          for (const incident of incidents) {
-            const alertsResponse = await fetch(
-              `${process.env.REACT_APP_API_URL}/api/incidents/${incident.Incident_ID}/alerts`,
-              {
-                headers: {
-                  'X-API-Key': apiKey,
-                  'Content-Type': 'application/json',
-                },
-              }
-            );
-            if (alertsResponse.ok) {
-              const alerts = await alertsResponse.json();
-              totalAlerts += alerts.length;
-            }
+            // Fetch alert counts with improved error handling
+            const totalAlerts = await fetchAlertCounts(incidentsList, apiKey);
+            setAlertCount(totalAlerts);
+            
+          } catch (adminError: any) {
+            console.error('Error fetching admin data:', adminError);
+            // Don't fail the entire profile load if admin data fails
+            setIncidentCount(0);
+            setAlertCount(0);
           }
-          setAlertCount(totalAlerts);
         }
+
+        toggleDarkMode(currentPrefs.theme === 'dark');
       } catch (err: any) {
         setError(err.message);
         if (err.message.includes('unauthorized') || err.message.includes('API key')) {
@@ -125,7 +213,7 @@ const Profile: React.FC = () => {
     };
 
     fetchProfileData();
-  }, [navigate, toggleDarkMode, savedPreferences]);
+  }, []);
 
   const handlePreferenceChange = (key: keyof Preferences, value: any) => {
     setTempPreferences(prev => ({ ...prev, [key]: value }));
@@ -145,6 +233,12 @@ const Profile: React.FC = () => {
         return;
       }
 
+      const validTheme = tempPreferences.theme === 'dark' || tempPreferences.theme === 'light' ? tempPreferences.theme : 'dark';
+      const validatedPrefs = {
+        ...tempPreferences,
+        theme: validTheme,
+      };
+
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
         method: 'PUT',
         headers: {
@@ -153,7 +247,7 @@ const Profile: React.FC = () => {
         },
         body: JSON.stringify({
           User_Email: user.email,
-          preferences: tempPreferences,
+          preferences: validatedPrefs,
         }),
       });
 
@@ -163,19 +257,33 @@ const Profile: React.FC = () => {
       }
 
       const responseData = await response.json();
+      let updatedPrefs;
       if (responseData.user && responseData.user.User_Preferences) {
-        const updatedPrefs = typeof responseData.user.User_Preferences === 'string'
-          ? JSON.parse(responseData.user.User_Preferences)
-          : responseData.user.User_Preferences;
+        try {
+          updatedPrefs = typeof responseData.user.User_Preferences === 'string' && responseData.user.User_Preferences.trim()
+            ? JSON.parse(responseData.user.User_Preferences)
+            : responseData.user.User_Preferences;
+        } catch (err) {
+          console.warn('Profile: Failed to parse updated preferences, using temp', err);
+          updatedPrefs = validatedPrefs;
+        }
+
+        updatedPrefs.theme = updatedPrefs.theme === 'dark' || updatedPrefs.theme === 'light' ? updatedPrefs.theme : validatedPrefs.theme;
+
+        console.log('Profile saved preferences:', updatedPrefs);
         setPreferences(updatedPrefs);
         setSavedPreferences(updatedPrefs);
+        localStorage.setItem('theme', updatedPrefs.theme);
         toggleDarkMode(updatedPrefs.theme === 'dark');
       } else {
-        setPreferences(tempPreferences);
-        setSavedPreferences(tempPreferences);
-        toggleDarkMode(tempPreferences.theme === 'dark');
+        console.log('Profile: No User_Preferences in response, using temp');
+        setPreferences(validatedPrefs);
+        setSavedPreferences(validatedPrefs);
+        localStorage.setItem('theme', validatedPrefs.theme);
+        toggleDarkMode(validatedPrefs.theme === 'dark');
       }
     } catch (err: any) {
+      console.error('Profile: Error saving preferences:', err);
       setError(err.message);
       setTempPreferences({ ...preferences });
     }
@@ -266,12 +374,12 @@ const Profile: React.FC = () => {
                 checked={tempPreferences.notifications}
                 onChange={(e) => handlePreferenceChange('notifications', e.target.checked)}
                 data-cy="notifications-checkbox"
-                aria-label="Receive incident notifications"
+                aria-label="Receive event notifications"
               />
-              Receive incident notifications
+              Receive event notifications
             </label>
           </div>
-          <div className="preference-item" data-cy="preference-item-theme">
+          <div className="preference-item" data-cy="theme-item">
             <label htmlFor="theme" data-cy="theme-label">
               Theme:
             </label>
@@ -290,12 +398,12 @@ const Profile: React.FC = () => {
               </option>
             </select>
           </div>
-          <div className="preference-item" data-cy="preference-item-alert-level">
-            <label htmlFor="alert-level" data-cy="alert-level-label">
+          <div className="preference-item" data-cy="alert-level-item">
+            <label htmlFor="alertLevel" data-cy="alert-level-label">
               Alert Level:
             </label>
             <select
-              id="alert-level"
+              id="alertLevel"
               value={tempPreferences.alertLevel}
               onChange={(e) => handlePreferenceChange('alertLevel', e.target.value)}
               data-cy="alert-level-select"
@@ -327,52 +435,50 @@ const Profile: React.FC = () => {
             className="profile-section"
             data-cy="admin-dashboard-section"
             id="admin-dashboard-section"
-            role="region"
-            aria-labelledby="admin-dashboard-title"
-          >
-            <h3 data-cy="admin-dashboard-title" id="admin-dashboard-title">
+            aria-labelledby="admin-section-title">
+            <h3 data-testid="admin-section-title" id="admin-section-title">
               Admin Dashboard
             </h3>
-            <div className="stats-container" data-cy="stats-container">
-              <div className="stat-card" data-cy="stat-card-incidents">
-                <div className="stat-value" data-cy="stat-value">
+            <div className="stats-container" data-testid="stats-container">
+              <div className="stats-item" data-testid="stats-incidents">
+                <div className="stats-value" id="incidents-count">
                   {incidentCount}
                 </div>
-                <div className="stat-label" data-cy="stat-label">
+                <div className="stats-label" id="incidents-label">
                   Total Incidents
                 </div>
               </div>
-              <div className="stat-card" data-cy="stat-card-alerts">
-                <div className="stat-value" data-cy="stat-value">
+              <div className="stats-item" data-testid="alerts-sent">
+                <div className="stats-value" id="alerts-value">
                   {alertCount}
                 </div>
-                <div className="stat-label" data-cy="stat-label">
+                <div className="stats-label" id="alerts-label">
                   Alerts Sent
                 </div>
               </div>
             </div>
-            <div className="button-wrapper">
+            <div className="button-container">
               <Button
                 label="Manage Incidents"
                 onClick={() => navigate('/incidents')}
-                data-cy="manage-incidents-button"
-                aria-label="Navigate to incident management"
+                data-testid="manage-incidents-btn"
+                aria-label="Go to incident management"
               />
             </div>
           </div>
         )}
 
-        <div className="profile-actions" data-cy="profile-actions">
+        <div className="profile-actions" data-cy="test-actions">
           <Button
             label="Change Password"
             onClick={() => navigate('/change-password')}
-            data-cy="change-password-button"
-            aria-label="Navigate to change password"
+            data-testid="change-password-btn"
+            aria-label="Go to change password"
           />
           <Button
             label="Sign Out"
             onClick={handleSignOut}
-            data-cy="sign-out-button"
+            data-testid="sign-out-btn"
             aria-label="Sign out"
           />
         </div>

@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Incidents.css';
 
-// SVG icon components
+// SVG icon components (unchanged)
 const AlertTriangleIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -62,16 +62,13 @@ const CameraIcon = () => (
 );
 
 interface ApiIncident {
-  Incident_ID?: number;
-  Incident_Date: string;
-  Incident_Location: string;
-  Incident_CameraID: string;
-  Incident_Type: string;
+  Incidents_ID: number;
+  Incidents_DateTime: string;
+  Incidents_Longitude: number | null;
+  Incidents_Latitude: number | null;
   Incident_Severity: 'high' | 'medium' | 'low';
-  Incident_Status: 'open' | 'in-progress' | 'resolved';
-  Incident_Description?: string;
-  created_at?: string;
-  updated_at?: string;
+  Incident_Status: 'open' | 'ongoing' | 'resolved';
+  Incident_Reporter: string | null;
 }
 
 interface DisplayIncident {
@@ -81,7 +78,7 @@ interface DisplayIncident {
   cameraId: string;
   type: string;
   severity: 'high' | 'medium' | 'low';
-  status: 'open' | 'in-progress' | 'resolved';
+  status: 'open' | 'ongoing' | 'resolved';
   description?: string;
   createdAt: string;
   updatedAt: string;
@@ -93,7 +90,7 @@ interface ManualIncidentForm {
   Incident_CameraID: string;
   Incident_Type: string;
   Incident_Severity: 'high' | 'medium' | 'low';
-  Incident_Status: 'open' | 'in-progress' | 'resolved';
+  Incident_Status: 'open' | 'ongoing' | 'resolved';
   Incident_Description: string;
   reporterName: string;
   reporterContact: string;
@@ -132,7 +129,7 @@ const Incidents: React.FC = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [selectedStatuses, setSelectedStatuses] = useState<Record<number, 'open' | 'in-progress' | 'resolved'>>({});
+  const [selectedStatuses, setSelectedStatuses] = useState<Record<number, 'open' | 'ongoing' | 'resolved'>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [manualIncident, setManualIncident] = useState<ManualIncidentForm>({
@@ -191,18 +188,20 @@ const Incidents: React.FC = () => {
     try {
       setIsLoading(true);
       const data = await apiRequest('/api/incidents');
-      
+
       const transformedIncidents: DisplayIncident[] = data.map((incident: ApiIncident) => ({
-        id: incident.Incident_ID || 0,
-        date: incident.Incident_Date,
-        location: incident.Incident_Location,
-        cameraId: incident.Incident_CameraID,
-        type: incident.Incident_Type,
+        id: incident.Incidents_ID || 0,
+        date: incident.Incidents_DateTime,
+        location: incident.Incidents_Latitude && incident.Incidents_Longitude
+          ? `Lat: ${incident.Incidents_Latitude}, Lng: ${incident.Incidents_Longitude}`
+          : 'Not Available',
+        cameraId: 'N/A', // No camera data in DB
+        type: incident.Incident_Reporter ? 'Reported Incident' : 'Unknown', // Placeholder for type
         severity: incident.Incident_Severity,
         status: incident.Incident_Status,
-        description: incident.Incident_Description,
-        createdAt: incident.created_at || incident.Incident_Date,
-        updatedAt: incident.updated_at || incident.Incident_Date
+        description: undefined, // No description in DB
+        createdAt: incident.Incidents_DateTime,
+        updatedAt: incident.Incidents_DateTime
       }));
 
       setIncidents(transformedIncidents);
@@ -223,6 +222,9 @@ const Incidents: React.FC = () => {
           navigate('/account');
           return;
         }
+        // Fetch user role
+        const userResponse = await apiRequest('/api/auth/profile');
+        setUserRole(userResponse.User_Role || 'user');
         await loadIncidents();
       } catch (error: any) {
         toast.error(`Error: ${error.message}`);
@@ -259,29 +261,29 @@ const Incidents: React.FC = () => {
     }
 
     if (filters.dateFrom) {
-      filtered = filtered.filter(incident => incident.date >= filters.dateFrom);
+      filtered = filtered.filter(incident => new Date(incident.date) >= new Date(filters.dateFrom));
     }
 
     if (filters.dateTo) {
-      filtered = filtered.filter(incident => incident.date <= filters.dateTo);
+      filtered = filtered.filter(incident => new Date(incident.date) <= new Date(filters.dateTo));
     }
 
     setFilteredIncidents(filtered);
     setCurrentPage(1);
   }, [filters, incidents]);
 
-  const handleStatusChange = (incidentId: number, newStatus: 'open' | 'in-progress' | 'resolved') => {
+  const handleStatusChange = (incidentId: number, newStatus: 'open' | 'ongoing' | 'resolved') => {
     setSelectedStatuses(prev => ({ ...prev, [incidentId]: newStatus }));
   };
 
   const handleStatusUpdate = async (incidentId: number) => {
     const newStatus = selectedStatuses[incidentId];
     const currentStatus = incidents.find(i => i.id === incidentId)?.status;
-    
+
     if (!newStatus || newStatus === currentStatus) return;
 
     setIsLoading(true);
-    
+
     try {
       await apiRequest(`/api/incidents/${incidentId}`, {
         method: 'PUT',
@@ -289,7 +291,7 @@ const Incidents: React.FC = () => {
       });
 
       setIncidents(prev =>
-        prev.map(inc => 
+        prev.map(inc =>
           inc.id === incidentId ? { ...inc, status: newStatus } : inc
         )
       );
@@ -313,9 +315,11 @@ const Incidents: React.FC = () => {
         case 'view':
           const incident = await apiRequest(`/api/incidents/${incidentId}`);
           console.log('Viewing incident:', incident);
+          // Optionally navigate to a details page
           break;
         case 'edit':
           console.log(`Editing incident ${incidentId}`);
+          // Optionally navigate to an edit page
           break;
       }
     } catch (error: any) {
@@ -325,7 +329,7 @@ const Incidents: React.FC = () => {
 
   const handleManualIncidentChange = (key: keyof ManualIncidentForm, value: any) => {
     setManualIncident(prev => ({ ...prev, [key]: value }));
-    
+
     if (formErrors[key]) {
       setFormErrors(prev => ({ ...prev, [key]: undefined }));
     }
@@ -400,7 +404,7 @@ const Incidents: React.FC = () => {
 
   const handleSubmitManualIncident = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error('Please correct the errors in the form');
       return;
@@ -409,14 +413,13 @@ const Incidents: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const apiPayload: Omit<ApiIncident, 'Incident_ID' | 'created_at' | 'updated_at'> = {
-        Incident_Date: manualIncident.Incident_Date,
-        Incident_Location: manualIncident.Incident_Location,
-        Incident_CameraID: manualIncident.Incident_CameraID,
-        Incident_Type: manualIncident.Incident_Type,
+      const apiPayload = {
+        Incidents_DateTime: manualIncident.Incident_Date,
+        Incidents_Latitude: manualIncident.coordinates.lat ? parseFloat(manualIncident.coordinates.lat) : null,
+        Incidents_Longitude: manualIncident.coordinates.lng ? parseFloat(manualIncident.coordinates.lng) : null,
         Incident_Severity: manualIncident.Incident_Severity,
         Incident_Status: manualIncident.Incident_Status,
-        Incident_Description: manualIncident.Incident_Description
+        Incident_Reporter: manualIncident.reporterName
       };
 
       await apiRequest('/api/incidents', {
@@ -461,17 +464,20 @@ const Incidents: React.FC = () => {
   const getStatusClass = (status: string) => status.toLowerCase().replace('-', '');
 
   const getSeverityDisplay = (severity: string) => {
-    const map = { high: 'Critical', medium: 'Medium', low: 'Low' };
+    const map = { high: 'Critical', medium: 'Moderate', low: 'Minor' };
     return map[severity as keyof typeof map] || severity;
   };
 
   const getStatusDisplay = (status: string) => {
-    const map = { open: 'Active', 'in-progress': 'In Progress', resolved: 'Resolved' };
+    const map = { open: 'Active', ongoing: 'Ongoing', resolved: 'Resolved' };
     return map[status as keyof typeof map] || status;
   };
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
     return date.toLocaleString('en-ZA', {
       year: 'numeric',
       month: '2-digit',
@@ -531,7 +537,7 @@ const Incidents: React.FC = () => {
             >
               <option value="">All Statuses</option>
               <option value="open">Active</option>
-              <option value="in-progress">In Progress</option>
+              <option value="ongoing">Ongoing</option>
               <option value="resolved">Resolved</option>
             </select>
           </div>
@@ -545,8 +551,8 @@ const Incidents: React.FC = () => {
             >
               <option value="">All Severities</option>
               <option value="high">Critical</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              <option value="medium">Moderate</option>
+              <option value="low">Minor</option>
             </select>
           </div>
 
@@ -558,14 +564,8 @@ const Incidents: React.FC = () => {
               onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
             >
               <option value="">All Types</option>
-              <option value="Vehicle Accident">Vehicle Accident</option>
-              <option value="Vehicle Breakdown">Vehicle Breakdown</option>
-              <option value="Traffic Congestion">Traffic Congestion</option>
-              <option value="Road Debris">Road Debris</option>
-              <option value="Weather Hazard">Weather Hazard</option>
-              <option value="Construction Zone">Construction Zone</option>
-              <option value="Emergency Vehicle">Emergency Vehicle</option>
-              <option value="Other">Other</option>
+              <option value="Reported Incident">Reported Incident</option>
+              <option value="Unknown">Unknown</option>
             </select>
           </div>
 
@@ -657,7 +657,7 @@ const Incidents: React.FC = () => {
                         className="action-btn"
                         onClick={() => handleIncidentAction(incident.id, 'edit')}
                         title="Edit"
-                        disabled={isLoading}
+                        disabled={isLoading || userRole !== 'admin'}
                       >
                         <EditIcon />
                       </button>
@@ -667,12 +667,12 @@ const Incidents: React.FC = () => {
                           value={selectedStatuses[incident.id] || incident.status}
                           onChange={(e) => handleStatusChange(
                             incident.id, 
-                            e.target.value as 'open' | 'in-progress' | 'resolved'
+                            e.target.value as 'open' | 'ongoing' | 'resolved'
                           )}
-                          disabled={isLoading}
+                          disabled={isLoading || userRole !== 'admin'}
                         >
                           <option value="open">Active</option>
-                          <option value="in-progress">In Progress</option>
+                          <option value="ongoing">Ongoing</option>
                           <option value="resolved">Resolved</option>
                         </select>
                         <button
@@ -682,7 +682,8 @@ const Incidents: React.FC = () => {
                           disabled={
                             isLoading ||
                             !selectedStatuses[incident.id] ||
-                            selectedStatuses[incident.id] === incident.status
+                            selectedStatuses[incident.id] === incident.status ||
+                            userRole !== 'admin'
                           }
                         >
                           <CheckIcon />
@@ -739,7 +740,7 @@ const Incidents: React.FC = () => {
                 className="modal-close"
                 onClick={() => setShowManualForm(false)}
               >
-                ×
+                <XIcon />
               </button>
             </div>
             
@@ -814,11 +815,25 @@ const Incidents: React.FC = () => {
                         onChange={(e) => handleManualIncidentChange('Incident_Severity', e.target.value as 'high' | 'medium' | 'low')}
                         required
                       >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High (Critical)</option>
+                        <option value="low">Minor</option>
+                        <option value="medium">Moderate</option>
+                        <option value="high">Critical</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label required">Status</label>
+                    <select
+                      className="form-select"
+                      value={manualIncident.Incident_Status}
+                      onChange={(e) => handleManualIncidentChange('Incident_Status', e.target.value as 'open' | 'ongoing' | 'resolved')}
+                      required
+                    >
+                      <option value="open">Active</option>
+                      <option value="ongoing">Ongoing</option>
+                      <option value="resolved">Resolved</option>
+                    </select>
                   </div>
 
                   <div className="form-group">
@@ -903,7 +918,7 @@ const Incidents: React.FC = () => {
                         value={manualIncident.injuriesReported}
                         onChange={(e) => handleManualIncidentChange('injuriesReported', e.target.value as 'yes' | 'no' | 'unknown')}
                       >
-                        <option value="unknown">Unknown</option>
+                        <option value="unknown">...</option>
                         <option value="no">No</option>
                         <option value="yes">Yes</option>
                       </select>
@@ -915,11 +930,11 @@ const Incidents: React.FC = () => {
                   <h4 className="section-title">Reporter Information</h4>
                   <div className="form-grid two-columns">
                     <div className="form-group">
-                      <label className="form-label required">Reporter Name</label>
+                      <label className="form-label required">Username</label>
                       <input
                         type="text"
                         className="form-input"
-                        placeholder="Full name"
+                        placeholder="Your username"
                         value={manualIncident.reporterName}
                         onChange={(e) => handleManualIncidentChange('reporterName', e.target.value)}
                         required
