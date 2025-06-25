@@ -23,9 +23,12 @@ const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
+var connectedUsers = [];
 
 io.on('connection',(socket)=>{
+  connectedUsers.push(socket);
   console.log(socket.id + ' connected');
+  console.log('Number of users connected' + connectedUsers.length);
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);

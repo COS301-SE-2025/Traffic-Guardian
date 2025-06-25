@@ -38,24 +38,11 @@ describe('Weather sockets', () => {
 
 describe('Traffic sockets', ()=>{
 
-/*     test('receives trafficUpdate from server', (done) => {
-      clientSocket.emit('trafficUpdate', [{ id: 1 }]);
-      clientSocket.on('trafficUpdate', async (data) => {
-        try {
-          expect(Array.isArray(data)).toBe(true);
-          done();
-        } catch (e) {
-          done(e);
-        }
-      });
-    }); */
-
-
       test('receives trafficUpdate (mocked)', (done) => {
     const fakeSocket = {
       on: jest.fn((event, callback) => {
         if (event === 'trafficUpdate') {
-          callback([{ id: 1 }]); // simulate incoming event
+          callback([{ id: 1 }]);
         }
       }),
     };
