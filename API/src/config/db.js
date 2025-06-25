@@ -35,7 +35,7 @@ const pool = new Pool({
   // Connection pool settings
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 10000, // Return an error after 2 seconds if connection could not be established
+  connectionTimeoutMillis: 50000, // Return an error after 5 seconds if connection could not be established
   ssl: {rejectUnauthorized: false}
 });
 

@@ -159,7 +159,9 @@ module.exports = {
     getTraffic,
     criticalIncidents,
     incidentCategory,
-    incidentLocations
+    incidentLocations,
+    distToLat,
+    distToLong
 }
 
 

@@ -32,6 +32,7 @@
   "devDependencies": {
     "axios": "^1.9.0",
     "jest": "^29.7.0",
-    "nodemon": "^2.0.22"
+    "nodemon": "^2.0.22",
+    "socket.io-client": "^4.8.1"
   }
 }
