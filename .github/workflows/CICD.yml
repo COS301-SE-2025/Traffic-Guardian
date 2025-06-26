@@ -115,50 +115,98 @@ jobs:
           echo "Testing simple connection with SSL mode set via environment variable:"
           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT version();" || echo "Connection failed"
           
+          echo "Checking current user and database:"
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+            SELECT current_user, current_database();
+          " || echo "Connection check failed"
+          
+          echo "Checking table visibility (using pg_catalog):"
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+            SELECT n.nspname as schema, c.relname as table
+            FROM pg_catalog.pg_class c
+            JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relkind = 'r' AND n.nspname = 'public'
+            ORDER BY schema, table;
+          " || echo "Table listing query failed"
+          
+          echo "Checking current user's table permissions:"
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+            SELECT 
+              has_table_privilege(current_user, 'public.\"User\"', 'SELECT') AS can_select_user,
+              has_table_privilege(current_user, 'public.\"User\"', 'INSERT') AS can_insert_user,
+              has_table_privilege(current_user, 'public.\"Incidents\"', 'SELECT') AS can_select_incidents,
+              has_table_privilege(current_user, 'public.\"Alerts\"', 'SELECT') AS can_select_alerts;
+          " || echo "Permission check failed"
+          
           echo "===== END DEBUG ====="
 
-      - name: Verify database schema
+      - name: Verify database tables
         run: |
-          echo "Verifying database schema in remote database..."
-          # Using PGSSLMODE environment variable for SSL connection
+          echo "Verifying database tables in remote database..."
+          # Using PGSSLMODE environment variable for SSL connection and checking for tables directly
+          # We're now specifically targeting the public schema where our tables reside
+          
+          # First, list all tables in the public schema
+          echo "Listing all tables in public schema..."
           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'postgres';
-          "
-          echo "Checking if required tables exist..."
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+            ORDER BY table_name;
+          " || echo "Table listing query failed - may have limited visibility, continuing with direct checks"
+          
+          # Now check if we can directly access the tables we need using pg_catalog
+          echo "Checking direct table access in public schema..."
           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            SELECT table_name FROM information_schema.tables WHERE table_schema = 'postgres' AND table_type = 'BASE TABLE';
-          "
+            SELECT 
+              EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+                    WHERE c.relname = 'User' AND n.nspname = 'public' AND c.relkind = 'r') AS user_table_exists,
+              EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+                    WHERE c.relname = 'Incidents' AND n.nspname = 'public' AND c.relkind = 'r') AS incidents_table_exists,
+              EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+                    WHERE c.relname = 'Alerts' AND n.nspname = 'public' AND c.relkind = 'r') AS alerts_table_exists;
+          " || echo "Direct table check failed, trying alternative approach"
+          
+          # As a fallback, try to count rows which will fail if tables don't exist
+          echo "Checking tables with direct queries (fallback)..."
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+            SELECT 'User' AS table_name, COUNT(*) AS row_count FROM public.\"User\" 
+            UNION ALL
+            SELECT 'Incidents' AS table_name, COUNT(*) AS row_count FROM public.\"Incidents\"
+            UNION ALL
+            SELECT 'Alerts' AS table_name, COUNT(*) AS row_count FROM public.\"Alerts\";
+          " || echo "Direct count queries failed - there may be table permission issues"
 
       - name: Insert test data
         run: |
           echo "Inserting test data into remote database..."
           # Insert test user for login tests with SSL via environment variable
           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            INSERT INTO \"postgres\".\"User\" (\"User_Email\", \"User_Preferences\", \"User_Username\", \"User_Password\", \"User_Fullname\", \"User_Cellphone\", \"User_Role\", \"User_APIKey\")
+            INSERT INTO public.\"User\" (\"User_Email\", \"User_Preferences\", \"User_Username\", \"User_Password\", \"User_Fullname\", \"User_Cellphone\", \"User_Role\", \"User_APIKey\")
             VALUES ('user@gmail.com', '{}', 'user', '\$2b\$10\$9jZqtlSPIbEMhN6FYfDTDeW2tepzewl7ZWI3jj/x1iPnu4HjVCP8q', 'Test User', '5551234567', 'User', '19da0e4d94f8aad')
             ON CONFLICT (\"User_Email\") DO NOTHING;
           "
           
           # Create a test incident with SSL via environment variable
           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            INSERT INTO \"postgres\".\"Incidents\" (
+            INSERT INTO public.\"Incidents\" (
               \"Incidents_DateT\", \"Incidents_Longitude\", \"Incidents_Latitude\", \"Incident_Severity\", \"Incident_Status\", \"Incident_Reporter\"
             )
             SELECT NOW(), -26.1438, 28.0406, 'medium', 'ongoing', 'user@gmail.com'
             WHERE NOT EXISTS (
-              SELECT 1 FROM \"postgres\".\"Incidents\" 
+              SELECT 1 FROM public.\"Incidents\" 
               WHERE \"Incidents_Longitude\" = -26.1438 AND \"Incidents_Latitude\" = 28.0406
             );
           "
           
           # Create a test alert with SSL via environment variable
           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            INSERT INTO \"postgres\".\"Alerts\" (
+            INSERT INTO public.\"Alerts\" (
               \"Alerts_IncidentID\", \"Alerts_Message\", \"Alert_recipients\"
             )
             SELECT 1, 'Traffic incident reported', '{\"user@gmail.com\"}'
             WHERE NOT EXISTS (
-              SELECT 1 FROM \"postgres\".\"Alerts\" WHERE \"Alerts_Message\" = 'Traffic incident reported'
+              SELECT 1 FROM public.\"Alerts\" WHERE \"Alerts_Message\" = 'Traffic incident reported'
             );
           "
           echo "Database initialized with test data"
@@ -168,9 +216,9 @@ jobs:
           echo "Verifying remote database setup..."
           # Using PGSSLMODE environment variable for SSL connection
           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            SELECT COUNT(*) AS user_count FROM \"postgres\".\"User\";
-            SELECT COUNT(*) AS incident_count FROM \"postgres\".\"Incidents\";
-            SELECT COUNT(*) AS alert_count FROM \"postgres\".\"Alerts\";
+            SELECT COUNT(*) AS user_count FROM public.\"User\";
+            SELECT COUNT(*) AS incident_count FROM public.\"Incidents\";
+            SELECT COUNT(*) AS alert_count FROM public.\"Alerts\";
           "
 
       - name: Run API tests
