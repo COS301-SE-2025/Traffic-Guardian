@@ -289,7 +289,7 @@ jobs:
           # AI Model artifacts
           mkdir -p dist/ai_model
           if [ -d "AI_Model_BB/Code" ]; then
-            cp -r AI_Model_BB/Code/* dist/ai_model/Testing/
+            cp -r AI_Model_BB/Code/* dist/ai_model/
           else
             echo "Creating mock AI Model artifact"
             echo "# Traffic Guardian AI Model" > dist/ai_model/model.py
