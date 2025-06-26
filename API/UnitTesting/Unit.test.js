@@ -4,8 +4,8 @@ const Seeding = require('./Seeding.json');
 const config = require('./testConfig');
 const yeah = Seeding.hmmmm;
 
-// Increase the default timeout for all tests
-jest.setTimeout(30000);
+// Increase the default timeout for all tests to handle CI/CD network latency
+jest.setTimeout(60000);
 
 // API base URL from config
 const API_BASE_URL = config.apiBaseUrl;
@@ -22,7 +22,7 @@ describe('User endpoints', ()=>{
 
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(200);
-    }, 30000); // Increased timeout to 30 seconds
+    }, 60000); // Increased timeout to 60 seconds for CI/CD
     
     test('Get User preferences', async ()=>{
         const response = await axios.get(`${API_BASE_URL}/api/user/preferences`, {
