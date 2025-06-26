@@ -1,0 +1,19 @@
+# Traffic API Keys
+WEATHERAPI="8f7c5c64260048a1a2395130251406"
+TOMTOMAPI="3CFiPBuqZSUrLS5iUv6zGYtKmAip3mqs"
+
+# CORS Settings
+CORS_ORIGIN="http://localhost:3000"
+
+# Our existing database credentials (KEEP OUR CURRENT VALUES)
+# DB_HOST=your_db_host
+# DB_PORT=5432
+# DB_NAME=your_db_name
+# DB_USER=your_db_user
+# DB_PASSWORD=your_db_password
+
+# Our existing other environment variables (KEEP ALL OUR CURRENT VALUES)
+# PORT=5000
+# NODE_ENV=development
+# JWT_SECRET=your_jwt_secret
+# etc...

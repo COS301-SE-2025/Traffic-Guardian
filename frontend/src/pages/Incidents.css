@@ -209,7 +209,7 @@ svg {
   align-items: center;
 }
 
-.btn-primary {
+.rprt-btn-primary {
   background-color: var(--button-primary-bg);
   color: var(--button-primary-text);
   border: none;
@@ -223,12 +223,12 @@ svg {
   gap: 0.5rem;
 }
 
-.btn-primary svg {
+.rprt-btn-primary svg {
   width: 20px;
   height: 20px;
 }
 
-.btn-primary:hover {
+.rprt-btn-primary:hover {
   background-color: var(--button-primary-hover);
   transform: translateY(-1px);
 }

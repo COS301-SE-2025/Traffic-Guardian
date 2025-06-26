@@ -502,7 +502,7 @@ const Incidents: React.FC = () => {
             <FilterIcon />
             Clear Filters
           </button>
-          <button className="btn-primary" onClick={() => setShowManualForm(true)}>
+          <button className="rprt-btn-primary" onClick={() => setShowManualForm(true)}>
             <PlusIcon />
             Report Incident
           </button>
