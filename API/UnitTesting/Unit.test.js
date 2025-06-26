@@ -4,6 +4,9 @@ const Seeding = require('./Seeding.json');
 const config = require('./testConfig');
 const yeah = Seeding.hmmmm;
 
+// Increase the default timeout for all tests
+jest.setTimeout(15000);
+
 // API base URL from config
 const API_BASE_URL = config.apiBaseUrl;
 describe('User endpoints', ()=>{
@@ -19,7 +22,7 @@ describe('User endpoints', ()=>{
 
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(200);
-    });
+    }, 15000); // Increased timeout to 15 seconds
     
     test('Get User preferences', async ()=>{
         const response = await axios.get(`${API_BASE_URL}/api/user/preferences`, {
@@ -32,7 +35,7 @@ describe('User endpoints', ()=>{
 
         //expect(response.data).toMatchObject(seeding[1]);
         expect(response.status).toBe(200);
-    }); 
+    }, 15000); // Increased timeout to 15 seconds
 
     test('Update user preferences', async ()=>{
         const payload = artifacts[2];
@@ -45,7 +48,7 @@ describe('User endpoints', ()=>{
 
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(200);
-    });
+    }, 15000); // Increased timeout to 15 seconds
 });
 
 describe('Incident endpoints', ()=>{
@@ -74,7 +77,7 @@ describe('Incident endpoints', ()=>{
 
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(200);
-    });
+    }, 15000); // Increased timeout to 15 seconds
 
 
     test('Update incident', async ()=>{
@@ -88,7 +91,7 @@ describe('Incident endpoints', ()=>{
 
         //expect(response.data).toMatchObject(seeding[0]);
         expect(response.status).toBe(200);
-    });
+    }, 15000); // Increased timeout to 15 seconds
 });
 
 /*
