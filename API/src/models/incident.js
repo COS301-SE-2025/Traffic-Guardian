@@ -49,37 +49,28 @@ const incidentModel = {  async createIncident(incidentData) {
       'Incident_Reporter'
     ];
     
-    // Safely truncate string values to max 10 characters
-    for (let v in incidentData) {
-        // Only apply length check and truncation to string values
-        if (incidentData[v] && typeof incidentData[v] === 'string' && incidentData[v].length > 10) {
-            incidentData[v] = incidentData[v].substring(0, 10);
-        }
-    }
-      // const updates = Object.keys(incidentData)
-      // .filter(key => allowedFields.includes(key) && incidentData[key] !== undefined)
-      // .map(key => `"${key}" = '${incidentData[key]}'`)
-      // .join(', ');
+
+    for (let v in incidentData){
+        if(incidentData[v].length > 10) incidentData[v] = incidentData[v].substring(0, 10);
+        //console.log(incidentData);
+      }
+      
     // Filter out undefined fields and only include allowed fields
-    const validFields = Object.keys(incidentData)
-      .filter(key => allowedFields.includes(key) && incidentData[key] !== undefined);
+    const updates = Object.keys(incidentData)
+      .filter(key => allowedFields.includes(key) && incidentData[key] !== undefined)
+      .map(key => `"${key}" = '${incidentData[key]}'`)
+      .join(', ');
     
-    if (validFields.length === 0) {
+    if (!updates) {
       throw new Error('No valid fields to update');
-    }
-    
-    // Build the parameterized query
-    const setClause = validFields.map((key, i) => `"${key}" = $${i + 2}`).join(', ');
-    const queryParams = [Incidents_ID, ...validFields.map(key => incidentData[key])];
-    
-    const query = `
+    }    const query = `
       UPDATE "Incidents"
-      SET ${setClause}
+      SET ${updates}
       WHERE "Incidents_ID" = $1 
       RETURNING *
     `;
     
-    const { rows } = await db.query(query, queryParams);
+    const { rows } = await db.query(query, [Incidents_ID]);
     return rows[0];
   },
 

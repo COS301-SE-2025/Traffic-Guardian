@@ -78,12 +78,7 @@ const incidentController = {
   },
   updateIncident: async (req, res) => {
     try {
-      const Incidents_ID = parseInt(req.params.id, 10);
-      
-      if (isNaN(Incidents_ID)) {
-        return res.status(400).json({ error: 'Invalid incident ID format' });
-      }
-      
+      const Incidents_ID = req.params.id;
       const { 
         Incidents_DateTime, 
         Incidents_Longitude, 
@@ -108,7 +103,7 @@ const incidentController = {
       }
       
       const updatedIncident = await incidentModel.updateIncident(Incidents_ID, {
-        Incidents_DateT: Incidents_DateTime, // Matching the field name expected in the model
+        Incidents_DateT: Incidents_DateTime, // Using the correct field name expected by the model
         Incidents_Longitude: Incidents_Longitude ? parseFloat(Incidents_Longitude) : null,
         Incidents_Latitude: Incidents_Latitude ? parseFloat(Incidents_Latitude) : null,
         Incident_Severity,
