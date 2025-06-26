@@ -156,7 +156,7 @@ svg {
   border-radius: 5px;
 }
 
-/* Toggle Switch Styles */
+
 .toggle-label {
   position: relative;
   display: inline-flex;
@@ -217,8 +217,6 @@ svg {
   text-align: center;
   flex: 1;
   min-width: 100px;
-
-  /* Removed box-shadow */
 }
 
 .stat-value {
@@ -234,8 +232,8 @@ svg {
 }
 
 .button-wrapper {
-  margin-top: 0.8rem; /* Added spacing above Manage Incidents button */
-  text-align: center; /* Center the button */
+  margin-top: 0.8rem; 
+  text-align: center; 
 }
 
 .profile-actions {
@@ -271,4 +269,32 @@ button:hover {
 
 .error-message {
   color: var(--error-message);
+}
+
+.stats-item {
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stats-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--primary-color, #3b82f6);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.stats-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
 }

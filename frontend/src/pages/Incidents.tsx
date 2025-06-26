@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Incidents.css';
+import CarLoadingAnimation from '../components/CarLoadingAnimation';
+import { useSocket } from '../consts/SocketContext';
 
 // SVG icon components
 const AlertTriangleIcon = () => (
@@ -20,12 +22,6 @@ const PlusIcon = () => (
 const FilterIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-  </svg>
-);
-
-const UploadIcon = () => (
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
   </svg>
 );
 
@@ -61,17 +57,40 @@ const CameraIcon = () => (
   </svg>
 );
 
+const BellIcon = () => (
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+  </svg>
+);
+
+const WifiOffIcon = () => (
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18M8.5 8.5c.87-.87 2.04-1.4 3.3-1.4M12 12l9-9M3.5 14.5c0-1.5.6-2.85 1.6-3.85" />
+  </svg>
+);
+
+const WifiIcon = () => (
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+  </svg>
+);
+
+// TypeScript interfaces matching database schema
 interface ApiIncident {
-  Incident_ID?: number;
-  Incident_Date: string;
-  Incident_Location: string;
-  Incident_CameraID: string;
-  Incident_Type: string;
+  Incidents_ID: number;
+  Incidents_DateTime: string;
+  Incidents_Longitude: number | null;
+  Incidents_Latitude: number | null;
   Incident_Severity: 'high' | 'medium' | 'low';
-  Incident_Status: 'open' | 'in-progress' | 'resolved';
-  Incident_Description?: string;
-  created_at?: string;
-  updated_at?: string;
+  Incident_Status: 'open' | 'ongoing' | 'resolved' | 'closed';
+  Incident_Reporter: string | null;
+}
+
+interface RealTimeAlert {
+  id: string;
+  incident: ApiIncident;
+  timestamp: Date;
+  acknowledged: boolean;
 }
 
 interface DisplayIncident {
@@ -81,27 +100,19 @@ interface DisplayIncident {
   cameraId: string;
   type: string;
   severity: 'high' | 'medium' | 'low';
-  status: 'open' | 'in-progress' | 'resolved';
+  status: 'open' | 'ongoing' | 'resolved' | 'closed';
   description?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 interface ManualIncidentForm {
-  Incident_Date: string;
-  Incident_Location: string;
-  Incident_CameraID: string;
-  Incident_Type: string;
+  Incidents_DateTime: string;
+  Incidents_Longitude: string;
+  Incidents_Latitude: string;
   Incident_Severity: 'high' | 'medium' | 'low';
-  Incident_Status: 'open' | 'in-progress' | 'resolved';
-  Incident_Description: string;
-  reporterName: string;
-  reporterContact: string;
-  coordinates: { lat: string; lng: string };
-  weatherConditions: string;
-  trafficImpact: 'none' | 'minor' | 'moderate' | 'severe';
-  injuriesReported: 'yes' | 'no' | 'unknown';
-  images: File[];
+  Incident_Status: 'open' | 'ongoing' | 'resolved' | 'closed';
+  Incident_Reporter: string;
 }
 
 interface FilterState {
@@ -117,6 +128,16 @@ const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const Incidents: React.FC = () => {
   const navigate = useNavigate();
+  
+  const { 
+    isConnected, 
+    realtimeAlerts, 
+    unreadAlertCount, 
+    acknowledgeAlert, 
+    clearAllAlerts, 
+    markAllAsRead 
+  } = useSocket();
+  
   const [incidents, setIncidents] = useState<DisplayIncident[]>([]);
   const [filteredIncidents, setFilteredIncidents] = useState<DisplayIncident[]>([]);
   const [filters, setFilters] = useState<FilterState>({
@@ -132,29 +153,21 @@ const Incidents: React.FC = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [selectedStatuses, setSelectedStatuses] = useState<Record<number, 'open' | 'in-progress' | 'resolved'>>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedStatuses, setSelectedStatuses] = useState<Record<number, 'open' | 'ongoing' | 'resolved' | 'closed'>>({});
+  const [showAlertsPanel, setShowAlertsPanel] = useState(false);
 
   const [manualIncident, setManualIncident] = useState<ManualIncidentForm>({
-    Incident_Date: new Date().toISOString().split('T')[0],
-    Incident_Location: '',
-    Incident_CameraID: '',
-    Incident_Type: 'Vehicle Accident',
+    Incidents_DateTime: new Date().toISOString().slice(0, 16),
+    Incidents_Longitude: '',
+    Incidents_Latitude: '',
     Incident_Severity: 'medium',
     Incident_Status: 'open',
-    Incident_Description: '',
-    reporterName: '',
-    reporterContact: '',
-    coordinates: { lat: '', lng: '' },
-    weatherConditions: '',
-    trafficImpact: 'minor',
-    injuriesReported: 'unknown',
-    images: []
+    Incident_Reporter: ''
   });
 
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof ManualIncidentForm, string>>>({});
 
-  const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+  const apiRequest = useCallback(async (endpoint: string, options: RequestInit = {}) => {
     const apiKey = localStorage.getItem('apiKey');
     if (!apiKey) {
       throw new Error('No API key found. Please log in.');
@@ -185,24 +198,26 @@ const Incidents: React.FC = () => {
       }
       throw error;
     }
-  };
+  }, [navigate]);
 
-  const loadIncidents = async () => {
+  const loadIncidents = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await apiRequest('/api/incidents');
-      
+
       const transformedIncidents: DisplayIncident[] = data.map((incident: ApiIncident) => ({
-        id: incident.Incident_ID || 0,
-        date: incident.Incident_Date,
-        location: incident.Incident_Location,
-        cameraId: incident.Incident_CameraID,
-        type: incident.Incident_Type,
+        id: incident.Incidents_ID || 0,
+        date: incident.Incidents_DateTime,
+        location: incident.Incidents_Latitude && incident.Incidents_Longitude
+          ? `Lat: ${incident.Incidents_Latitude}, Lng: ${incident.Incidents_Longitude}`
+          : 'Not Available',
+        cameraId: 'N/A',
+        type: incident.Incident_Reporter ? 'Reported Incident' : 'Unknown',
         severity: incident.Incident_Severity,
         status: incident.Incident_Status,
-        description: incident.Incident_Description,
-        createdAt: incident.created_at || incident.Incident_Date,
-        updatedAt: incident.updated_at || incident.Incident_Date
+        description: undefined,
+        createdAt: incident.Incidents_DateTime,
+        updatedAt: incident.Incidents_DateTime
       }));
 
       setIncidents(transformedIncidents);
@@ -212,28 +227,61 @@ const Incidents: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [apiRequest]);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const apiKey = localStorage.getItem('apiKey');
+      if (!apiKey) {
+        toast.error('No API key found. Please log in.');
+        navigate('/account');
+        return;
+      }
+      
+      const userResponse = await apiRequest('/api/auth/profile');
+      setUserRole(userResponse.User_Role || 'user');
+      await loadIncidents();
+    } catch (error: any) {
+      toast.error(`Error: ${error.message}`);
+      if (error.message.includes('Unauthorized')) {
+        navigate('/account');
+      }
+    }
+  }, [navigate, apiRequest, loadIncidents]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const apiKey = localStorage.getItem('apiKey');
-        if (!apiKey) {
-          toast.error('No API key found. Please log in.');
-          navigate('/account');
-          return;
-        }
-        await loadIncidents();
-      } catch (error: any) {
-        toast.error(`Error: ${error.message}`);
-        if (error.message.includes('Unauthorized')) {
-          navigate('/account');
-        }
-      }
-    };
-
     fetchData();
-  }, [navigate]);
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (realtimeAlerts.length > 0) {
+      const latestAlert = realtimeAlerts[0];
+      if (latestAlert && !latestAlert.acknowledged) {
+        const newIncident: DisplayIncident = {
+          id: latestAlert.incident.Incidents_ID || 0,
+          date: latestAlert.incident.Incidents_DateTime,
+          location: latestAlert.incident.Incidents_Latitude && latestAlert.incident.Incidents_Longitude
+            ? `Lat: ${latestAlert.incident.Incidents_Latitude}, Lng: ${latestAlert.incident.Incidents_Longitude}`
+            : 'Not Available',
+          cameraId: 'N/A',
+          type: latestAlert.incident.Incident_Reporter ? 'Reported Incident' : 'Unknown',
+          severity: latestAlert.incident.Incident_Severity,
+          status: latestAlert.incident.Incident_Status,
+          description: undefined,
+          createdAt: latestAlert.incident.Incidents_DateTime,
+          updatedAt: latestAlert.incident.Incidents_DateTime
+        };
+
+        setIncidents(prev => {
+          const exists = prev.some(inc => inc.id === newIncident.id);
+          if (!exists) {
+            return [newIncident, ...prev];
+          }
+          return prev;
+        });
+      }
+    }
+  }, [realtimeAlerts]);
 
   useEffect(() => {
     let filtered = incidents;
@@ -259,29 +307,29 @@ const Incidents: React.FC = () => {
     }
 
     if (filters.dateFrom) {
-      filtered = filtered.filter(incident => incident.date >= filters.dateFrom);
+      filtered = filtered.filter(incident => new Date(incident.date) >= new Date(filters.dateFrom));
     }
 
     if (filters.dateTo) {
-      filtered = filtered.filter(incident => incident.date <= filters.dateTo);
+      filtered = filtered.filter(incident => new Date(incident.date) <= new Date(filters.dateTo));
     }
 
     setFilteredIncidents(filtered);
     setCurrentPage(1);
   }, [filters, incidents]);
 
-  const handleStatusChange = (incidentId: number, newStatus: 'open' | 'in-progress' | 'resolved') => {
+  const handleStatusChange = (incidentId: number, newStatus: 'open' | 'ongoing' | 'resolved' | 'closed') => {
     setSelectedStatuses(prev => ({ ...prev, [incidentId]: newStatus }));
   };
 
   const handleStatusUpdate = async (incidentId: number) => {
     const newStatus = selectedStatuses[incidentId];
     const currentStatus = incidents.find(i => i.id === incidentId)?.status;
-    
+
     if (!newStatus || newStatus === currentStatus) return;
 
     setIsLoading(true);
-    
+
     try {
       await apiRequest(`/api/incidents/${incidentId}`, {
         method: 'PUT',
@@ -289,7 +337,7 @@ const Incidents: React.FC = () => {
       });
 
       setIncidents(prev =>
-        prev.map(inc => 
+        prev.map(inc =>
           inc.id === incidentId ? { ...inc, status: newStatus } : inc
         )
       );
@@ -325,7 +373,7 @@ const Incidents: React.FC = () => {
 
   const handleManualIncidentChange = (key: keyof ManualIncidentForm, value: any) => {
     setManualIncident(prev => ({ ...prev, [key]: value }));
-    
+
     if (formErrors[key]) {
       setFormErrors(prev => ({ ...prev, [key]: undefined }));
     }
@@ -334,73 +382,29 @@ const Incidents: React.FC = () => {
   const validateForm = (): boolean => {
     const errors: Partial<Record<keyof ManualIncidentForm, string>> = {};
 
-    if (!manualIncident.Incident_Location.trim()) {
-      errors.Incident_Location = 'Location is required';
+    if (!manualIncident.Incidents_DateTime.trim()) {
+      errors.Incidents_DateTime = 'Date and time is required';
     }
-    if (!manualIncident.Incident_CameraID.trim()) {
-      errors.Incident_CameraID = 'Camera ID is required';
+
+    if (!manualIncident.Incident_Reporter.trim()) {
+      errors.Incident_Reporter = 'Reporter name is required';
     }
-    if (!manualIncident.Incident_Description.trim()) {
-      errors.Incident_Description = 'Description is required';
+
+    if (manualIncident.Incidents_Latitude && isNaN(parseFloat(manualIncident.Incidents_Latitude))) {
+      errors.Incidents_Latitude = 'Invalid latitude format';
     }
-    if (!manualIncident.reporterName.trim()) {
-      errors.reporterName = 'Reporter name is required';
+
+    if (manualIncident.Incidents_Longitude && isNaN(parseFloat(manualIncident.Incidents_Longitude))) {
+      errors.Incidents_Longitude = 'Invalid longitude format';
     }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleFileUpload = (files: FileList | null) => {
-    if (!files) return;
-
-    const newFiles = Array.from(files).filter(file => {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error('Only image files (JPEG, PNG, GIF, WebP) are allowed');
-        return false;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB');
-        return false;
-      }
-
-      return true;
-    });
-
-    setManualIncident(prev => ({
-      ...prev,
-      images: [...prev.images, ...newFiles]
-    }));
-  };
-
-  const removeFile = (index: number) => {
-    setManualIncident(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.currentTarget.classList.add('drag-over');
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
-    handleFileUpload(e.dataTransfer.files);
-  };
-
   const handleSubmitManualIncident = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error('Please correct the errors in the form');
       return;
@@ -409,47 +413,55 @@ const Incidents: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const apiPayload: Omit<ApiIncident, 'Incident_ID' | 'created_at' | 'updated_at'> = {
-        Incident_Date: manualIncident.Incident_Date,
-        Incident_Location: manualIncident.Incident_Location,
-        Incident_CameraID: manualIncident.Incident_CameraID,
-        Incident_Type: manualIncident.Incident_Type,
+      const apiPayload = {
+        Incidents_DateTime: manualIncident.Incidents_DateTime,
+        Incidents_Latitude: manualIncident.Incidents_Latitude ? parseFloat(manualIncident.Incidents_Latitude) : null,
+        Incidents_Longitude: manualIncident.Incidents_Longitude ? parseFloat(manualIncident.Incidents_Longitude) : null,
         Incident_Severity: manualIncident.Incident_Severity,
         Incident_Status: manualIncident.Incident_Status,
-        Incident_Description: manualIncident.Incident_Description
+        Incident_Reporter: manualIncident.Incident_Reporter
       };
 
-      await apiRequest('/api/incidents', {
+      const response = await apiRequest('/api/incidents', {
         method: 'POST',
         body: JSON.stringify(apiPayload)
       });
 
+      console.log('Incident created successfully:', response);
+
       await loadIncidents();
 
       setManualIncident({
-        Incident_Date: new Date().toISOString().split('T')[0],
-        Incident_Location: '',
-        Incident_CameraID: '',
-        Incident_Type: 'Vehicle Accident',
+        Incidents_DateTime: new Date().toISOString().slice(0, 16),
+        Incidents_Longitude: '',
+        Incidents_Latitude: '',
         Incident_Severity: 'medium',
         Incident_Status: 'open',
-        Incident_Description: '',
-        reporterName: '',
-        reporterContact: '',
-        coordinates: { lat: '', lng: '' },
-        weatherConditions: '',
-        trafficImpact: 'minor',
-        injuriesReported: 'unknown',
-        images: []
+        Incident_Reporter: ''
       });
 
       setShowManualForm(false);
-      toast.success('Incident reported successfully!');
+      toast.success('Incident reported successfully! All users have been alerted in real-time.', {
+        autoClose: 5000,
+      });
     } catch (error: any) {
       toast.error(`Failed to submit incident: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const formatRelativeTime = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
   };
 
   const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage);
@@ -461,17 +473,25 @@ const Incidents: React.FC = () => {
   const getStatusClass = (status: string) => status.toLowerCase().replace('-', '');
 
   const getSeverityDisplay = (severity: string) => {
-    const map = { high: 'Critical', medium: 'Medium', low: 'Low' };
+    const map = { high: 'Critical', medium: 'Moderate', low: 'Minor' };
     return map[severity as keyof typeof map] || severity;
   };
 
   const getStatusDisplay = (status: string) => {
-    const map = { open: 'Active', 'in-progress': 'In Progress', resolved: 'Resolved' };
+    const map = { 
+      open: 'Active', 
+      ongoing: 'Ongoing', 
+      resolved: 'Resolved',
+      closed: 'Closed'
+    };
     return map[status as keyof typeof map] || status;
   };
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
     return date.toLocaleString('en-ZA', {
       year: 'numeric',
       month: '2-digit',
@@ -481,16 +501,119 @@ const Incidents: React.FC = () => {
     });
   };
 
+  if (isLoading && incidents.length === 0) {
+    return <CarLoadingAnimation />;
+  }
+
   return (
     <div className="incidents-page">
+      {showAlertsPanel && (
+        <div className="alerts-panel-overlay" onClick={() => setShowAlertsPanel(false)}>
+          <div className="alerts-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="alerts-panel-header">
+              <h3>Recent Alerts</h3>
+              <div className="alerts-panel-actions">
+                {realtimeAlerts.length > 0 && (
+                  <>
+                    <button className="btn-link" onClick={markAllAsRead}>
+                      Mark all as read
+                    </button>
+                    <button className="btn-link" onClick={clearAllAlerts}>
+                      Clear all
+                    </button>
+                  </>
+                )}
+                <button className="btn-close" onClick={() => setShowAlertsPanel(false)}>
+                  <XIcon />
+                </button>
+              </div>
+            </div>
+            <div className="alerts-panel-content">
+              {realtimeAlerts.length === 0 ? (
+                <div className="alerts-empty">
+                  <BellIcon />
+                  <p>No recent alerts</p>
+                  <p className="empty-subtitle">New incident notifications will appear here</p>
+                </div>
+              ) : (
+                <div className="alerts-list">
+                  {realtimeAlerts.map((alert: RealTimeAlert) => (
+                    <div 
+                      key={alert.id} 
+                      className={`alert-item ${alert.acknowledged ? 'acknowledged' : 'unread'} severity-${alert.incident.Incident_Severity}`}
+                    >
+                      <div className="alert-content">
+                        <div className="alert-header">
+                          <span className={`alert-severity ${alert.incident.Incident_Severity}`}>
+                            {getSeverityDisplay(alert.incident.Incident_Severity)} Incident
+                          </span>
+                          <span className="alert-time">
+                            {formatRelativeTime(alert.timestamp)}
+                          </span>
+                        </div>
+                        <div className="alert-details">
+                          <div className="alert-id">ID: {alert.incident.Incidents_ID}</div>
+                          <div className="alert-location">
+                            {alert.incident.Incidents_Latitude && alert.incident.Incidents_Longitude
+                              ? `Lat: ${alert.incident.Incidents_Latitude}, Lng: ${alert.incident.Incidents_Longitude}`
+                              : 'Location not specified'}
+                          </div>
+                          <div className="alert-reporter">
+                            Reporter: {alert.incident.Incident_Reporter || 'Unknown'}
+                          </div>
+                        </div>
+                      </div>
+                      {!alert.acknowledged && (
+                        <button 
+                          className="btn-acknowledge"
+                          onClick={() => acknowledgeAlert(alert.id)}
+                        >
+                          <CheckIcon />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="incidents-header">
         <div className="incidents-title">
           <div>
             <h2>Incident Management</h2>
-            <div className="incidents-sidebar">Monitor and manage traffic incidents across Gauteng</div>
+            <div className="incidents-subtitle">
+              Monitor and manage traffic incidents across Gauteng
+              <div className="connection-status">
+                {isConnected ? (
+                  <span className="status-connected">
+                    <WifiIcon />
+                    Real-time alerts active
+                  </span>
+                ) : (
+                  <span className="status-disconnected">
+                    <WifiOffIcon />
+                    Real-time alerts disconnected
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         <div className="incidents-actions">
+          <button 
+            className={`btn-alerts ${unreadAlertCount > 0 ? 'has-alerts' : ''}`}
+            onClick={() => setShowAlertsPanel(true)}
+          >
+            <BellIcon />
+            <span>Alerts</span>
+            {unreadAlertCount > 0 && (
+              <span className="alert-badge">{unreadAlertCount > 99 ? '99+' : unreadAlertCount}</span>
+            )}
+          </button>
+          
           <button className="btn-secondary" onClick={() => setFilters({
             search: '',
             status: '',
@@ -502,7 +625,7 @@ const Incidents: React.FC = () => {
             <FilterIcon />
             Clear Filters
           </button>
-          <button className="btn-primary" onClick={() => setShowManualForm(true)}>
+          <button className="rprt-btn-primary" onClick={() => setShowManualForm(true)}>
             <PlusIcon />
             Report Incident
           </button>
@@ -531,8 +654,9 @@ const Incidents: React.FC = () => {
             >
               <option value="">All Statuses</option>
               <option value="open">Active</option>
-              <option value="in-progress">In Progress</option>
+              <option value="ongoing">Ongoing</option>
               <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
             </select>
           </div>
 
@@ -545,8 +669,8 @@ const Incidents: React.FC = () => {
             >
               <option value="">All Severities</option>
               <option value="high">Critical</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              <option value="medium">Moderate</option>
+              <option value="low">Minor</option>
             </select>
           </div>
 
@@ -558,14 +682,8 @@ const Incidents: React.FC = () => {
               onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
             >
               <option value="">All Types</option>
-              <option value="Vehicle Accident">Vehicle Accident</option>
-              <option value="Vehicle Breakdown">Vehicle Breakdown</option>
-              <option value="Traffic Congestion">Traffic Congestion</option>
-              <option value="Road Debris">Road Debris</option>
-              <option value="Weather Hazard">Weather Hazard</option>
-              <option value="Construction Zone">Construction Zone</option>
-              <option value="Emergency Vehicle">Emergency Vehicle</option>
-              <option value="Other">Other</option>
+              <option value="Reported Incident">Reported Incident</option>
+              <option value="Unknown">Unknown</option>
             </select>
           </div>
 
@@ -657,7 +775,7 @@ const Incidents: React.FC = () => {
                         className="action-btn"
                         onClick={() => handleIncidentAction(incident.id, 'edit')}
                         title="Edit"
-                        disabled={isLoading}
+                        disabled={isLoading || userRole !== 'admin'}
                       >
                         <EditIcon />
                       </button>
@@ -667,13 +785,14 @@ const Incidents: React.FC = () => {
                           value={selectedStatuses[incident.id] || incident.status}
                           onChange={(e) => handleStatusChange(
                             incident.id, 
-                            e.target.value as 'open' | 'in-progress' | 'resolved'
+                            e.target.value as 'open' | 'ongoing' | 'resolved' | 'closed'
                           )}
-                          disabled={isLoading}
+                          disabled={isLoading || userRole !== 'admin'}
                         >
                           <option value="open">Active</option>
-                          <option value="in-progress">In Progress</option>
+                          <option value="ongoing">Ongoing</option>
                           <option value="resolved">Resolved</option>
+                          <option value="closed">Closed</option>
                         </select>
                         <button
                           className="action-btn confirm-btn"
@@ -682,7 +801,8 @@ const Incidents: React.FC = () => {
                           disabled={
                             isLoading ||
                             !selectedStatuses[incident.id] ||
-                            selectedStatuses[incident.id] === incident.status
+                            selectedStatuses[incident.id] === incident.status ||
+                            userRole !== 'admin'
                           }
                         >
                           <CheckIcon />
@@ -739,114 +859,99 @@ const Incidents: React.FC = () => {
                 className="modal-close"
                 onClick={() => setShowManualForm(false)}
               >
-                ×
+                <XIcon />
               </button>
             </div>
             
             <div className="modal-body">
-              <form className="incident-form" onSubmit={handleSubmitManualIncident}>
+              <form className="professional-incident-form" onSubmit={handleSubmitManualIncident}>
                 <div className="form-section">
-                  <h4 className="section-title">Incident Information</h4>
-                  <div className="form-grid two-columns">
-                    <div className="form-group">
-                      <label className="form-label required">Incident Date</label>
+                  <h4 className="section-title">Incident Details</h4>
+                  <p className="section-description">
+                    Report a new traffic incident. All required fields must be completed.
+                  </p>
+                  
+                  <div className="form-grid">
+                    <div className="form-group full-width">
+                      <label className="form-label required">Date and Time</label>
                       <input
-                        type="date"
+                        type="datetime-local"
                         className="form-input"
-                        value={manualIncident.Incident_Date}
-                        onChange={(e) => handleManualIncidentChange('Incident_Date', e.target.value)}
+                        value={manualIncident.Incidents_DateTime}
+                        onChange={(e) => handleManualIncidentChange('Incidents_DateTime', e.target.value)}
                         required
                       />
+                      {formErrors.Incidents_DateTime && (
+                        <div className="form-error">{formErrors.Incidents_DateTime}</div>
+                      )}
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label required">Camera ID</label>
+                      <label className="form-label required">Reporter Name</label>
                       <input
                         type="text"
                         className="form-input"
-                        placeholder="e.g., CAM-N1-03"
-                        value={manualIncident.Incident_CameraID}
-                        onChange={(e) => handleManualIncidentChange('Incident_CameraID', e.target.value)}
+                        placeholder="Enter your name or identification"
+                        value={manualIncident.Incident_Reporter}
+                        onChange={(e) => handleManualIncidentChange('Incident_Reporter', e.target.value)}
                         required
                       />
-                      {formErrors.Incident_CameraID && <div className="form-error">{formErrors.Incident_CameraID}</div>}
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label required">Location</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g., N1 Western Bypass Southbound"
-                      value={manualIncident.Incident_Location}
-                      onChange={(e) => handleManualIncidentChange('Incident_Location', e.target.value)}
-                      required
-                    />
-                    {formErrors.Incident_Location && <div className="form-error">{formErrors.Incident_Location}</div>}
-                  </div>
-
-                  <div className="form-grid two-columns">
-                    <div className="form-group">
-                      <label className="form-label required">Incident Type</label>
-                      <select
-                        className="form-select"
-                        value={manualIncident.Incident_Type}
-                        onChange={(e) => handleManualIncidentChange('Incident_Type', e.target.value)}
-                        required
-                      >
-                        <option value="Vehicle Accident">Vehicle Accident</option>
-                        <option value="Vehicle Breakdown">Vehicle Breakdown</option>
-                        <option value="Traffic Congestion">Traffic Congestion</option>
-                        <option value="Road Debris">Road Debris</option>
-                        <option value="Weather Hazard">Weather Hazard</option>
-                        <option value="Construction Zone">Construction Zone</option>
-                        <option value="Emergency Vehicle">Emergency Vehicle</option>
-                        <option value="Other">Other</option>
-                      </select>
+                      {formErrors.Incident_Reporter && (
+                        <div className="form-error">{formErrors.Incident_Reporter}</div>
+                      )}
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label required">Severity</label>
+                      <label className="form-label required">Severity Level</label>
                       <select
                         className="form-select"
                         value={manualIncident.Incident_Severity}
                         onChange={(e) => handleManualIncidentChange('Incident_Severity', e.target.value as 'high' | 'medium' | 'low')}
                         required
                       >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High (Critical)</option>
+                        <option value="low">Low - Minor disruption</option>
+                        <option value="medium">Medium - Moderate impact</option>
+                        <option value="high">High - Critical incident</option>
                       </select>
                     </div>
-                  </div>
 
-                  <div className="form-group">
-                    <label className="form-label required">Description</label>
-                    <textarea
-                      className="form-textarea"
-                      placeholder="Detailed description of the incident..."
-                      value={manualIncident.Incident_Description}
-                      onChange={(e) => handleManualIncidentChange('Incident_Description', e.target.value)}
-                      required
-                      rows={3}
-                    />
-                    {formErrors.Incident_Description && <div className="form-error">{formErrors.Incident_Description}</div>}
+                    <div className="form-group">
+                      <label className="form-label required">Initial Status</label>
+                      <select
+                        className="form-select"
+                        value={manualIncident.Incident_Status}
+                        onChange={(e) => handleManualIncidentChange('Incident_Status', e.target.value as 'open' | 'ongoing' | 'resolved' | 'closed')}
+                        required
+                      >
+                        <option value="open">Open - Newly reported</option>
+                        <option value="ongoing">Ongoing - Being addressed</option>
+                        <option value="resolved">Resolved - Issue fixed</option>
+                        <option value="closed">Closed - Completed</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
                 <div className="form-section">
-                  <h4 className="section-title">Location Details</h4>
-                  <div className="form-grid two-columns">
+                  <h4 className="section-title">Location Information</h4>
+                  <p className="section-description">
+                    GPS coordinates are optional but help with precise incident location.
+                  </p>
+                  
+                  <div className="form-grid">
                     <div className="form-group">
                       <label className="form-label">Latitude</label>
                       <input
                         type="text"
                         className="form-input"
-                        placeholder="-25.7479"
-                        value={manualIncident.coordinates.lat}
-                        onChange={(e) => handleManualIncidentChange('coordinates', { ...manualIncident.coordinates, lat: e.target.value })}
+                        placeholder="e.g., -25.7479"
+                        value={manualIncident.Incidents_Latitude}
+                        onChange={(e) => handleManualIncidentChange('Incidents_Latitude', e.target.value)}
                       />
+                      {formErrors.Incidents_Latitude && (
+                        <div className="form-error">{formErrors.Incidents_Latitude}</div>
+                      )}
+                      <div className="form-help">Decimal degrees format (negative for South)</div>
                     </div>
 
                     <div className="form-group">
@@ -854,142 +959,47 @@ const Incidents: React.FC = () => {
                       <input
                         type="text"
                         className="form-input"
-                        placeholder="28.2293"
-                        value={manualIncident.coordinates.lng}
-                        onChange={(e) => handleManualIncidentChange('coordinates', { ...manualIncident.coordinates, lng: e.target.value })}
+                        placeholder="e.g., 28.2293"
+                        value={manualIncident.Incidents_Longitude}
+                        onChange={(e) => handleManualIncidentChange('Incidents_Longitude', e.target.value)}
                       />
+                      {formErrors.Incidents_Longitude && (
+                        <div className="form-error">{formErrors.Incidents_Longitude}</div>
+                      )}
+                      <div className="form-help">Decimal degrees format (positive for East)</div>
                     </div>
                   </div>
-                </div>
 
-                <div className="form-section">
-                  <h4 className="section-title">Additional Details</h4>
-                  <div className="form-grid three-columns">
-                    <div className="form-group">
-                      <label className="form-label">Weather Conditions</label>
-                      <select
-                        className="form-select"
-                        value={manualIncident.weatherConditions}
-                        onChange={(e) => handleManualIncidentChange('weatherConditions', e.target.value)}
-                      >
-                        <option value="">Select weather</option>
-                        <option value="Clear">Clear</option>
-                        <option value="Cloudy">Cloudy</option>
-                        <option value="Rainy">Rainy</option>
-                        <option value="Foggy">Foggy</option>
-                        <option value="Windy">Windy</option>
-                        <option value="Storm">Storm</option>
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Traffic Impact</label>
-                      <select
-                        className="form-select"
-                        value={manualIncident.trafficImpact}
-                        onChange={(e) => handleManualIncidentChange('trafficImpact', e.target.value as 'none' | 'minor' | 'moderate' | 'severe')}
-                      >
-                        <option value="none">None</option>
-                        <option value="minor">Minor</option>
-                        <option value="moderate">Moderate</option>
-                        <option value="severe">Severe</option>
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Injuries Reported</label>
-                      <select
-                        className="form-select"
-                        value={manualIncident.injuriesReported}
-                        onChange={(e) => handleManualIncidentChange('injuriesReported', e.target.value as 'yes' | 'no' | 'unknown')}
-                      >
-                        <option value="unknown">Unknown</option>
-                        <option value="no">No</option>
-                        <option value="yes">Yes</option>
-                      </select>
-                    </div>
+                  <div className="location-helper">
+                    <button
+                      type="button"
+                      className="helper-btn"
+                      onClick={() => {
+                        if (navigator.geolocation) {
+                          navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                              setManualIncident(prev => ({
+                                ...prev,
+                                Incidents_Latitude: position.coords.latitude.toString(),
+                                Incidents_Longitude: position.coords.longitude.toString()
+                              }));
+                              toast.success('Current location captured');
+                            },
+                            (error) => {
+                              toast.error('Unable to get current location');
+                            }
+                          );
+                        } else {
+                          toast.error('Geolocation not supported by browser');
+                        }
+                      }}
+                    >
+                      Use Current Location
+                    </button>
+                    <span className="helper-text">
+                      Or manually enter coordinates from GPS device or map
+                    </span>
                   </div>
-                </div>
-
-                <div className="form-section">
-                  <h4 className="section-title">Reporter Information</h4>
-                  <div className="form-grid two-columns">
-                    <div className="form-group">
-                      <label className="form-label required">Reporter Name</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Full name"
-                        value={manualIncident.reporterName}
-                        onChange={(e) => handleManualIncidentChange('reporterName', e.target.value)}
-                        required
-                      />
-                      {formErrors.reporterName && <div className="form-error">{formErrors.reporterName}</div>}
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Contact Information</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Phone number or email"
-                        value={manualIncident.reporterContact}
-                        onChange={(e) => handleManualIncidentChange('reporterContact', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-section">
-                  <h4 className="section-title">Photos & Documentation</h4>
-                  <div 
-                    className="file-upload"
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                  >
-                    <div className="file-upload-content">
-                      <UploadIcon />
-                      <div className="file-upload-text">
-                        Drag and drop images here, or{' '}
-                        <button 
-                          type="button"
-                          className="file-upload-btn"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          browse files
-                        </button>
-                      </div>
-                      <div className="form-help">
-                        Supported formats: JPEG, PNG, GIF, WebP (max 5MB each)
-                      </div>
-                    </div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      className="file-upload-input"
-                      multiple
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e.target.files)}
-                    />
-                  </div>
-
-                  {manualIncident.images.length > 0 && (
-                    <div className="uploaded-files">
-                      {manualIncident.images.map((file, index) => (
-                        <div key={index} className="uploaded-file">
-                          <span className="file-name">{file.name}</span>
-                          <button
-                            type="button"
-                            className="file-remove"
-                            onClick={() => removeFile(index)}
-                          >
-                            <XIcon />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 <div className="form-actions">
@@ -1007,14 +1017,11 @@ const Incidents: React.FC = () => {
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <>
-                        <div className="loading-spinner" />
-                        Submitting...
-                      </>
+                      <div className="loading-spinner">Submitting...</div>
                     ) : (
                       <>
                         <CheckIcon />
-                        Submit Incident
+                        Submit Incident Report
                       </>
                     )}
                   </button>
