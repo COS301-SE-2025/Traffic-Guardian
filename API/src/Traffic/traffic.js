@@ -127,9 +127,18 @@ function incidentCategory(incidentsArr){
         for(let inc of elem.incidents){
             if(resMap.has(inc.properties.iconCategory)){
                 var valCount = resMap.get(inc.properties.iconCategory);
-                resMap.set(inc.properties.iconCategory, (valCount + 1) / 13);
+                resMap.set(inc.properties.iconCategory, (valCount + 1));
             }
         }
+    }
+
+    var total = 0;
+    for (const [key, value] of resMap.entries()) {
+        total += value;
+    }
+
+    for (const [key, value] of resMap.entries()) {
+        resMap.set(key, value / total);
     }
 
     const res = {
