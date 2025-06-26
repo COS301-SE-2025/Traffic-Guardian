@@ -177,40 +177,7 @@ jobs:
             SELECT 'Alerts' AS table_name, COUNT(*) AS row_count FROM public.\"Alerts\";
           " || echo "Direct count queries failed - there may be table permission issues"
 
-      - name: Insert test data
-        run: |
-          echo "Inserting test data into remote database..."
-          # Insert test user for login tests with SSL via environment variable
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            INSERT INTO public.\"User\" (\"User_Email\", \"User_Preferences\", \"User_Username\", \"User_Password\", \"User_Fullname\", \"User_Cellphone\", \"User_Role\", \"User_APIKey\")
-            VALUES ('user@gmail.com', '{}', 'user', '\$2b\$10\$9jZqtlSPIbEMhN6FYfDTDeW2tepzewl7ZWI3jj/x1iPnu4HjVCP8q', 'Test User', '5551234567', 'User', '19da0e4d94f8aad')
-            ON CONFLICT (\"User_Email\") DO NOTHING;
-          "
-          
-          # Create a test incident with SSL via environment variable
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            INSERT INTO public.\"Incidents\" (
-              \"Incidents_DateT\", \"Incidents_Longitude\", \"Incidents_Latitude\", \"Incident_Severity\", \"Incident_Status\", \"Incident_Reporter\"
-            )
-            SELECT NOW(), -26.1438, 28.0406, 'medium', 'ongoing', 'user@gmail.com'
-            WHERE NOT EXISTS (
-              SELECT 1 FROM public.\"Incidents\" 
-              WHERE \"Incidents_Longitude\" = -26.1438 AND \"Incidents_Latitude\" = 28.0406
-            );
-          "
-          
-          # Create a test alert with SSL via environment variable
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            INSERT INTO public.\"Alerts\" (
-              \"Alerts_IncidentID\", \"Alerts_Message\", \"Alert_recipients\"
-            )
-            SELECT 1, 'Traffic incident reported', '{\"user@gmail.com\"}'
-            WHERE NOT EXISTS (
-              SELECT 1 FROM public.\"Alerts\" WHERE \"Alerts_Message\" = 'Traffic incident reported'
-            );
-          "
-          echo "Database initialized with test data"
-
+      
       - name: Verify database setup
         run: |
           echo "Verifying remote database setup..."
