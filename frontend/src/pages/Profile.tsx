@@ -28,31 +28,10 @@ const Profile: React.FC = () => {
     theme: 'dark',
   });
   const [tempPreferences, setTempPreferences] = useState<Preferences>({ ...preferences });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [savedPreferences, setSavedPreferences] = useState<Preferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [incidentCount, setIncidentCount] = useState(0);
   const [alertCount, setAlertCount] = useState(0);
-
-  // Helper function to handle API responses including 304
-  const handleApiResponse = async (response: Response) => {
-    if (response.status === 304) {
-      // 304 Not Modified - return empty array or cached data
-      return [];
-    }
-    
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-    }
-    
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return await response.json();
-    }
-    
-    return [];
-  };
 
   // Efficient function to fetch admin stats in a single API call
   const fetchAdminStats = useCallback(async (apiKey: string) => {
@@ -240,13 +219,11 @@ const Profile: React.FC = () => {
 
         console.log('Profile saved preferences:', updatedPrefs);
         setPreferences(updatedPrefs);
-        setSavedPreferences(updatedPrefs);
         localStorage.setItem('theme', updatedPrefs.theme);
         toggleDarkMode(updatedPrefs.theme === 'dark');
       } else {
         console.log('Profile: No User_Preferences in response, using temp');
         setPreferences(validatedPrefs);
-        setSavedPreferences(validatedPrefs);
         localStorage.setItem('theme', validatedPrefs.theme);
         toggleDarkMode(validatedPrefs.theme === 'dark');
       }
@@ -258,8 +235,8 @@ const Profile: React.FC = () => {
   };
 
   const handleSignOut = () => {
-  sessionStorage.removeItem('apiKey');
-  sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem('apiKey');
+    sessionStorage.removeItem('userEmail');
     navigate('/account');
   };
 
