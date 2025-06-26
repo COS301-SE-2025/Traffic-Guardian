@@ -1691,7 +1691,7 @@ def main():
             'api_key': '2fc66075d878832',
             'api_timeout': 5,
             'api_retry_attempts': 2,
-            'incident_location': 'Main Street & 5th Avenue',  # Default location
+            'incident_location': 'UP',  # Default location
             
             # Other settings
         'stopped_vehicle_time': 10,
