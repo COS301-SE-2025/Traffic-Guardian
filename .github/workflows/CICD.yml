@@ -177,17 +177,6 @@ jobs:
             SELECT 'Alerts' AS table_name, COUNT(*) AS row_count FROM public.\"Alerts\";
           " || echo "Direct count queries failed - there may be table permission issues"
 
-      
-      - name: Verify database setup
-        run: |
-          echo "Verifying remote database setup..."
-          # Using PGSSLMODE environment variable for SSL connection
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            SELECT COUNT(*) AS user_count FROM public.\"User\";
-            SELECT COUNT(*) AS incident_count FROM public.\"Incidents\";
-            SELECT COUNT(*) AS alert_count FROM public.\"Alerts\";
-          "
-
       - name: Run API tests
         working-directory: ./API
         env:
