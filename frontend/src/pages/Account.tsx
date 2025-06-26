@@ -13,9 +13,9 @@ const Account: React.FC = () => {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const apiKey = localStorage.getItem('apiKey');
+   const apiKey = sessionStorage.getItem('apiKey');
     const savedTheme = localStorage.getItem('theme');
-    console.log('Account useEffect: apiKey=', apiKey, 'savedTheme=', savedTheme);
+
 
     if (apiKey) {
       const fetchPreferences = async () => {
@@ -112,8 +112,8 @@ const Account: React.FC = () => {
       }
 
       if (data.apiKey) {
-        localStorage.setItem('apiKey', data.apiKey);
-        localStorage.setItem('userEmail', loginData.email);
+        sessionStorage.setItem('apiKey', data.apiKey);
+        sessionStorage.setItem('userEmail', loginData.email);
       }
 
       const prefsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {

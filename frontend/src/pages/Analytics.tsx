@@ -12,7 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import ApiService, { DatabaseIncident, LocationData, CriticalIncidentsData, CategoryData } from '../services/apiService';
+import ApiService, { DatabaseIncident, LocationData } from '../services/apiService';
 import './Analytics.css';
 
 const ChartIcon = () => (
@@ -56,14 +56,8 @@ const Analytics: React.FC = () => {
   const { isDarkMode } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // State for real data
-  const [dbIncidents, setDbIncidents] = useState<DatabaseIncident[]>([]);
-  const [locationData, setLocationData] = useState<LocationData[]>([]);
-  const [criticalData, setCriticalData] = useState<CriticalIncidentsData | null>(null);
-  const [categoryData, setCategoryData] = useState<CategoryData | null>(null);
   
-  // Processed data for charts
+  // Only keep the processed data that's actually used in the UI
   const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([]);
   const [locationHotspots, setLocationHotspots] = useState<LocationHotspot[]>([]);
 
@@ -138,52 +132,46 @@ const Analytics: React.FC = () => {
         categories: categoriesData?.categories.length
       });
 
-      // Process database incidents
-      setDbIncidents(dbData);
+      // Process database incidents for stats
       const dbTotal = dbData.length;
-      const dbCritical = dbData.filter(incident => 
+      const dbCritical = dbData.filter((incident: DatabaseIncident) => 
         incident.Incident_Severity === 'high' || incident.Incident_Severity === 'critical'
       ).length;
 
       console.log('Database stats:', { total: dbTotal, critical: dbCritical });
 
-      // Store raw API data
-      setLocationData(locationsData);
-      setCriticalData(criticalIncidents);
-      setCategoryData(categoriesData);
-
       // Process category breakdown for charts
       let processedCategories: CategoryBreakdown[] = [];
       if (categoriesData) {
-        const totalTrafficIncidents = categoriesData.percentages.reduce((sum, percentage) => sum + percentage, 0);
+        const totalTrafficIncidents = categoriesData.percentages.reduce((sum: number, percentage: number) => sum + percentage, 0);
         
         processedCategories = categoriesData.categories
-          .map((category, index) => ({
+          .map((category: string, index: number) => ({
             category,
             count: categoriesData.percentages[index],
             percentage: totalTrafficIncidents > 0 
               ? Math.round((categoriesData.percentages[index] / totalTrafficIncidents) * 100)
               : 0,
           }))
-          .filter(cat => cat.count > 0) // Only show categories with incidents
-          .sort((a, b) => b.count - a.count); // Sort by count descending
+          .filter((cat: CategoryBreakdown) => cat.count > 0) // Only show categories with incidents
+          .sort((a: CategoryBreakdown, b: CategoryBreakdown) => b.count - a.count); // Sort by count descending
       }
       setCategoryBreakdown(processedCategories);
 
       // Process location hotspots
       const processedLocations: LocationHotspot[] = locationsData
-        .map(location => ({
+        .map((location: LocationData) => ({
           location: location.location,
           incidents: location.amount,
           avgSeverity: 2.0 // Default severity since this data isn't provided by the API
         }))
-        .filter(location => location.incidents > 0)
-        .sort((a, b) => b.incidents - a.incidents); // Sort by incident count descending
+        .filter((location: LocationHotspot) => location.incidents > 0)
+        .sort((a: LocationHotspot, b: LocationHotspot) => b.incidents - a.incidents); // Sort by incident count descending
 
       setLocationHotspots(processedLocations);
 
       // Calculate traffic totals
-      const trafficTotal = locationsData.reduce((sum, location) => sum + location.amount, 0);
+      const trafficTotal = locationsData.reduce((sum: number, location: LocationData) => sum + location.amount, 0);
       const trafficCritical = criticalIncidents?.Amount || 0;
 
       // Update summary stats
@@ -259,7 +247,6 @@ const Analytics: React.FC = () => {
             <p>Real-time traffic incident insights and statistics</p>
           </div>
         </div>
-
 
         <div className="summary-cards">
           <div className="summary-card">

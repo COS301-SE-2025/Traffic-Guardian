@@ -28,66 +28,35 @@ const Profile: React.FC = () => {
     theme: 'dark',
   });
   const [tempPreferences, setTempPreferences] = useState<Preferences>({ ...preferences });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [savedPreferences, setSavedPreferences] = useState<Preferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [incidentCount, setIncidentCount] = useState(0);
   const [alertCount, setAlertCount] = useState(0);
 
-  // Helper function to handle API responses including 304
-  const handleApiResponse = async (response: Response) => {
-    if (response.status === 304) {
-      // 304 Not Modified - return empty array or cached data
-      return [];
-    }
-    
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-    }
-    
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return await response.json();
-    }
-    
-    return [];
-  };
+  // Efficient function to fetch admin stats in a single API call
+  const fetchAdminStats = useCallback(async (apiKey: string) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/stats`, {
+        headers: {
+          'X-API-Key': apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
 
-  // Optimized function to fetch alert counts with proper error handling
-const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) => {
-  let totalAlerts = 0;
-
-  try {
-    const alertPromises = incidents.map(async (incident) => {
-      try {
-        const alertsResponse = await fetch(
-          `${process.env.REACT_APP_API_URL}/api/incidents/${incident.Incidents_ID}/alerts`,
-          {
-            headers: {
-              'X-API-Key': apiKey,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        const alerts = await handleApiResponse(alertsResponse);
-        return Array.isArray(alerts) ? alerts.length : 0;
-      } catch (error) {
-        console.warn(`Failed to fetch alerts for incident ${incident.Incidents_ID}:`, error);
-        return 0;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch admin stats: ${response.status}`);
       }
-    });
 
-    const alertCounts = await Promise.all(alertPromises);
-    totalAlerts = alertCounts.reduce((sum, count) => sum + count, 0);
-  } catch (error) {
-    console.error('Error fetching alert counts:', error);
-  }
-
-  return totalAlerts;
-}, []); // Empty deps — all inputs are passed directly
-
+      const stats = await response.json();
+      setIncidentCount(stats.incidentCount || 0);
+      setAlertCount(stats.alertCount || 0);
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      // Don't fail the entire profile load if admin stats fail
+      setIncidentCount(0);
+      setAlertCount(0);
+    }
+  }, []);
 
   useEffect(() => {
     if (hasInitialized.current) {
@@ -98,7 +67,7 @@ const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) =>
     
     const fetchProfileData = async () => {
       try {
-        const apiKey = localStorage.getItem('apiKey');
+        const apiKey = sessionStorage.getItem('apiKey');
         const savedTheme = localStorage.getItem('theme');
         console.log('Profile useEffect: apiKey=', apiKey, 'savedTheme=', savedTheme);
 
@@ -174,30 +143,9 @@ const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) =>
         setPreferences(currentPrefs);
         setTempPreferences(currentPrefs);
 
-        // Fetch admin data if user is admin
+        // Fetch admin data if user is admin - now using efficient single endpoint
         if (userData.User_Role === 'admin') {
-          try {
-            const incidentsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents`, {
-              headers: {
-                'X-API-Key': apiKey,
-                'Content-Type': 'application/json',
-              },
-            });
-
-            const incidents = await handleApiResponse(incidentsResponse);
-            const incidentsList = Array.isArray(incidents) ? incidents : [];
-            setIncidentCount(incidentsList.length);
-
-            // Fetch alert counts with improved error handling
-            const totalAlerts = await fetchAlertCounts(incidentsList, apiKey);
-            setAlertCount(totalAlerts);
-            
-          } catch (adminError: any) {
-            console.error('Error fetching admin data:', adminError);
-            // Don't fail the entire profile load if admin data fails
-            setIncidentCount(0);
-            setAlertCount(0);
-          }
+          await fetchAdminStats(apiKey);
         }
 
         toggleDarkMode(currentPrefs.theme === 'dark');
@@ -212,7 +160,7 @@ const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) =>
     };
 
     fetchProfileData();
-  }, [fetchAlertCounts, navigate, toggleDarkMode]);
+  }, [fetchAdminStats, navigate, toggleDarkMode]);
 
   const handlePreferenceChange = (key: keyof Preferences, value: any) => {
     setTempPreferences(prev => ({ ...prev, [key]: value }));
@@ -220,7 +168,7 @@ const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) =>
 
   const handleSavePreferences = async () => {
     try {
-      const apiKey = localStorage.getItem('apiKey');
+      const apiKey = sessionStorage.getItem('apiKey');
       if (!apiKey) {
         setError('No API key found. Please log in.');
         navigate('/account');
@@ -271,13 +219,11 @@ const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) =>
 
         console.log('Profile saved preferences:', updatedPrefs);
         setPreferences(updatedPrefs);
-        setSavedPreferences(updatedPrefs);
         localStorage.setItem('theme', updatedPrefs.theme);
         toggleDarkMode(updatedPrefs.theme === 'dark');
       } else {
         console.log('Profile: No User_Preferences in response, using temp');
         setPreferences(validatedPrefs);
-        setSavedPreferences(validatedPrefs);
         localStorage.setItem('theme', validatedPrefs.theme);
         toggleDarkMode(validatedPrefs.theme === 'dark');
       }
@@ -289,8 +235,8 @@ const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) =>
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem('apiKey');
-    localStorage.removeItem('userEmail');
+    sessionStorage.removeItem('apiKey');
+    sessionStorage.removeItem('userEmail');
     navigate('/account');
   };
 
