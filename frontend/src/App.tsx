@@ -1,7 +1,9 @@
 import React from 'react';
 import './App.css';
 import { ThemeProvider } from './consts/ThemeContext';
+import { SocketProvider } from './consts/SocketContext';
 import NavBar from './components/NavBar';
+import GlobalAlertBadge from './components/GlobalAlertBadge';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LiveFeed from './pages/LiveFeed';
@@ -18,6 +20,8 @@ import ProtectedRoute from './utils/ProtectedRoute';
 
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -27,6 +31,9 @@ const AnimatedRoutes = () => {
   return (
     <>
       {!isLandingPage && <NavBar />}
+      
+      {/* Global Alert Badge - appears on all pages except landing, account, signup */}
+      <GlobalAlertBadge />
       
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
@@ -64,7 +71,26 @@ const App: React.FC = () => {
   return (
     <ThemeProvider initialDarkMode={isDarkMode}>
       <Router>
-        <AnimatedRoutes />
+        <SocketProvider>
+          <div className="App">
+            <AnimatedRoutes />
+            
+            {/* Global Toast Container for real-time notifications */}
+            <ToastContainer 
+              position="top-right"
+              autoClose={8000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="dark"
+              style={{ zIndex: 99999 }}
+            />
+          </div>
+        </SocketProvider>
       </Router>
     </ThemeProvider>
   );
