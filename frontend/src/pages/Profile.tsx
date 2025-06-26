@@ -54,40 +54,30 @@ const Profile: React.FC = () => {
     return [];
   };
 
-  // Optimized function to fetch alert counts with proper error handling
-const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) => {
-  let totalAlerts = 0;
+  // Efficient function to fetch admin stats in a single API call
+  const fetchAdminStats = useCallback(async (apiKey: string) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/stats`, {
+        headers: {
+          'X-API-Key': apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
 
-  try {
-    const alertPromises = incidents.map(async (incident) => {
-      try {
-        const alertsResponse = await fetch(
-          `${process.env.REACT_APP_API_URL}/api/incidents/${incident.Incidents_ID}/alerts`,
-          {
-            headers: {
-              'X-API-Key': apiKey,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        const alerts = await handleApiResponse(alertsResponse);
-        return Array.isArray(alerts) ? alerts.length : 0;
-      } catch (error) {
-        console.warn(`Failed to fetch alerts for incident ${incident.Incidents_ID}:`, error);
-        return 0;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch admin stats: ${response.status}`);
       }
-    });
 
-    const alertCounts = await Promise.all(alertPromises);
-    totalAlerts = alertCounts.reduce((sum, count) => sum + count, 0);
-  } catch (error) {
-    console.error('Error fetching alert counts:', error);
-  }
-
-  return totalAlerts;
-}, []); // Empty deps — all inputs are passed directly
-
+      const stats = await response.json();
+      setIncidentCount(stats.incidentCount || 0);
+      setAlertCount(stats.alertCount || 0);
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      // Don't fail the entire profile load if admin stats fail
+      setIncidentCount(0);
+      setAlertCount(0);
+    }
+  }, []);
 
   useEffect(() => {
     if (hasInitialized.current) {
@@ -174,30 +164,9 @@ const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) =>
         setPreferences(currentPrefs);
         setTempPreferences(currentPrefs);
 
-        // Fetch admin data if user is admin
+        // Fetch admin data if user is admin - now using efficient single endpoint
         if (userData.User_Role === 'admin') {
-          try {
-            const incidentsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents`, {
-              headers: {
-                'X-API-Key': apiKey,
-                'Content-Type': 'application/json',
-              },
-            });
-
-            const incidents = await handleApiResponse(incidentsResponse);
-            const incidentsList = Array.isArray(incidents) ? incidents : [];
-            setIncidentCount(incidentsList.length);
-
-            // Fetch alert counts with improved error handling
-            const totalAlerts = await fetchAlertCounts(incidentsList, apiKey);
-            setAlertCount(totalAlerts);
-            
-          } catch (adminError: any) {
-            console.error('Error fetching admin data:', adminError);
-            // Don't fail the entire profile load if admin data fails
-            setIncidentCount(0);
-            setAlertCount(0);
-          }
+          await fetchAdminStats(apiKey);
         }
 
         toggleDarkMode(currentPrefs.theme === 'dark');
@@ -212,7 +181,7 @@ const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) =>
     };
 
     fetchProfileData();
-  }, [fetchAlertCounts, navigate, toggleDarkMode]);
+  }, [fetchAdminStats, navigate, toggleDarkMode]);
 
   const handlePreferenceChange = (key: keyof Preferences, value: any) => {
     setTempPreferences(prev => ({ ...prev, [key]: value }));
