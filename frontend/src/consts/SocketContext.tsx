@@ -130,7 +130,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    const apiKey = localStorage.getItem('apiKey');
+    const apiKey = sessionStorage.getItem('apiKey');
     if (!apiKey) return;
 
     // Request notification permission when component mounts

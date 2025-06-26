@@ -3,7 +3,7 @@ const db = require('../config/db');
 
 const incidentModel = {  async createIncident(incidentData) {
     const { 
-      Incidents_DateT, 
+      Incidents_DateTime, 
       Incidents_Longitude, 
       Incidents_Latitude, 
       Incident_Severity, 
@@ -24,7 +24,7 @@ const incidentModel = {  async createIncident(incidentData) {
     `;
     
     const values = [
-      Incidents_DateT || new Date(), 
+      Incidents_DateTime || new Date(), 
       Incidents_Longitude,
       Incidents_Latitude, 
       Incident_Severity || 'medium', 
@@ -41,7 +41,7 @@ const incidentModel = {  async createIncident(incidentData) {
     return rows[0];
   },async updateIncident(Incidents_ID, incidentData) {
     const allowedFields = [
-      'Incidents_DateT', 
+      'Incidents_DateTime', 
       'Incidents_Longitude', 
       'Incidents_Latitude', 
       'Incident_Severity', 
