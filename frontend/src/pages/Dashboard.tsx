@@ -255,4 +255,472 @@ const Dashboard: React.FC = () => {
     systemHealth: 'healthy',
   });
 
-  
+  // Fetch weather data
+  const fetchWeatherData = async () => {
+    setWeatherLoading(true);
+    setWeatherError(null);
+    
+    try {
+      //  might need to adjust this URL based on our backend setup
+      const response = await fetch('/api/weather');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch weather data');
+      }
+      
+      const data: WeatherData[] = await response.json();
+      setWeatherData(data);
+      setWeatherLastUpdate(new Date());
+      
+      addNotification({
+        title: 'Weather Updated',
+        message: `Weather data refreshed for ${data.length} locations`,
+        type: 'success'
+      });
+    } catch (error) {
+      console.error('Weather fetch error:', error);
+      setWeatherError('Failed to load weather data');
+      
+      // Fallback to mock data for demonstration
+      const mockWeatherData: WeatherData[] = [
+        {
+          location: {
+            name: 'Johannesburg',
+            region: 'Gauteng',
+            country: 'South Africa',
+            lat: -26.2,
+            lon: 28.083,
+            tz_id: 'Africa/Johannesburg',
+            localtime_epoch: 1749900851,
+            localtime: '2025-06-14 13:34'
+          },
+          current: {
+            last_updated_epoch: 1749900600,
+            last_updated: '2025-06-14 13:30',
+            temp_c: 18.2,
+            temp_f: 64.8,
+            is_day: 1,
+            condition: {
+              text: 'Sunny',
+              icon: '//cdn.weatherapi.com/weather/64x64/day/113.png',
+              code: 1000
+            },
+            wind_mph: 6.9,
+            wind_kph: 11.2,
+            wind_degree: 75,
+            wind_dir: 'ENE',
+            pressure_mb: 1037,
+            pressure_in: 30.62,
+            precip_mm: 0,
+            precip_in: 0,
+            humidity: 30,
+            cloud: 0,
+            feelslike_c: 18.2,
+            feelslike_f: 64.8,
+            windchill_c: 17.5,
+            windchill_f: 63.4,
+            heatindex_c: 17.5,
+            heatindex_f: 63.4,
+            dewpoint_c: -7.2,
+            dewpoint_f: 19,
+            vis_km: 10,
+            vis_miles: 6,
+            uv: 4.4,
+            gust_mph: 8,
+            gust_kph: 12.9
+          }
+        },
+        {
+          location: {
+            name: 'Sandton',
+            region: 'Gauteng',
+            country: 'South Africa',
+            lat: -26.1,
+            lon: 28.05,
+            tz_id: 'Africa/Johannesburg',
+            localtime_epoch: 1749900851,
+            localtime: '2025-06-14 13:34'
+          },
+          current: {
+            last_updated_epoch: 1749900600,
+            last_updated: '2025-06-14 13:30',
+            temp_c: 19.1,
+            temp_f: 66.4,
+            is_day: 1,
+            condition: {
+              text: 'Partly cloudy',
+              icon: '//cdn.weatherapi.com/weather/64x64/day/116.png',
+              code: 1003
+            },
+            wind_mph: 7.2,
+            wind_kph: 11.6,
+            wind_degree: 80,
+            wind_dir: 'E',
+            pressure_mb: 1036,
+            pressure_in: 30.59,
+            precip_mm: 0,
+            precip_in: 0,
+            humidity: 28,
+            cloud: 25,
+            feelslike_c: 19.1,
+            feelslike_f: 66.4,
+            windchill_c: 18.2,
+            windchill_f: 64.8,
+            heatindex_c: 18.2,
+            heatindex_f: 64.8,
+            dewpoint_c: -6.8,
+            dewpoint_f: 19.8,
+            vis_km: 10,
+            vis_miles: 6,
+            uv: 4.2,
+            gust_mph: 8.5,
+            gust_kph: 13.7
+          }
+        },
+        {
+          location: {
+            name: 'Rosebank',
+            region: 'Gauteng',
+            country: 'South Africa',
+            lat: -26.14,
+            lon: 28.04,
+            tz_id: 'Africa/Johannesburg',
+            localtime_epoch: 1749900851,
+            localtime: '2025-06-14 13:34'
+          },
+          current: {
+            last_updated_epoch: 1749900600,
+            last_updated: '2025-06-14 13:30',
+            temp_c: 17.8,
+            temp_f: 64.0,
+            is_day: 1,
+            condition: {
+              text: 'Clear',
+              icon: '//cdn.weatherapi.com/weather/64x64/day/113.png',
+              code: 1000
+            },
+            wind_mph: 6.5,
+            wind_kph: 10.5,
+            wind_degree: 70,
+            wind_dir: 'ENE',
+            pressure_mb: 1038,
+            pressure_in: 30.65,
+            precip_mm: 0,
+            precip_in: 0,
+            humidity: 32,
+            cloud: 5,
+            feelslike_c: 17.8,
+            feelslike_f: 64.0,
+            windchill_c: 17.1,
+            windchill_f: 62.8,
+            heatindex_c: 17.1,
+            heatindex_f: 62.8,
+            dewpoint_c: -7.5,
+            dewpoint_f: 18.5,
+            vis_km: 10,
+            vis_miles: 6,
+            uv: 4.6,
+            gust_mph: 7.8,
+            gust_kph: 12.6
+          }
+        }
+      ];
+      
+      setWeatherData(mockWeatherData);
+      setWeatherLastUpdate(new Date());
+      
+      addNotification({
+        title: 'Weather Error',
+        message: 'Using cached weather data. Check connection.',
+        type: 'warning'
+      });
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const updateTimer = setInterval(() => {
+      setLastUpdate(new Date());
+      const healthStates: ('healthy' | 'warning' | 'error')[] = ['healthy', 'healthy', 'healthy', 'warning'];
+      const randomHealth = healthStates[Math.floor(Math.random() * healthStates.length)];
+      setStats(prev => ({ ...prev, systemHealth: randomHealth }));
+    }, 30000); // Update every 30 seconds
+    
+    return () => clearInterval(updateTimer);
+  }, []);
+
+  // Initial weather fetch
+  useEffect(() => {
+    fetchWeatherData();
+    
+    // Auto-refresh weather every 10 minutes
+    const weatherInterval = setInterval(() => {
+      fetchWeatherData();
+    }, 600000);
+    
+    return () => clearInterval(weatherInterval);
+  }, []);
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-ZA', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+
+  const getSeverityClass = (severity: string) => {
+    return severity.toLowerCase();
+  };
+
+  const getStatusClass = (status: string) => {
+    return status.toLowerCase();
+  };
+
+  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: Date.now(),
+      timestamp: new Date()
+    };
+    setNotifications(prev => [...prev, newNotification]);
+    
+    // Auto-remove notification after 5 seconds
+    setTimeout(() => {
+      removeNotification(newNotification.id);
+    }, 5000);
+  };
+
+  const removeNotification = (id: number) => {
+    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  };
+
+  const handleIncidentAction = async (incidentId: number, action: string) => {
+    setLoading(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (action === 'view') {
+        // Fetch detailed incident data
+        const detailedIncident: IncidentDetail = {
+          ...activeIncidents.find(inc => inc.id === incidentId)!,
+          description: 'Multi-vehicle collision involving 3 cars on the southbound lane. Emergency services have been dispatched. Traffic is being diverted via Allandale Road off-ramp.',
+          images: ['incident-photo-1.jpg', 'incident-photo-2.jpg'],
+          responders: ['Paramedic Unit 1', 'Fire Department', 'Traffic Police'],
+          timeline: [
+            { time: '12:13', event: 'Incident detected by AI system' },
+            { time: '12:14', event: 'Emergency services notified' },
+            { time: '12:16', event: 'First responders dispatched' },
+            { time: '12:20', event: 'Traffic diversion implemented' }
+          ]
+        };
+        setSelectedIncident(detailedIncident);
+      } else if (action === 'resolve') {
+        // Update incident status
+        setActiveIncidents(prev => prev.filter(inc => inc.id !== incidentId));
+        setStats(prev => ({ ...prev, activeIncidents: prev.activeIncidents - 1 }));
+        
+        addNotification({
+          title: 'Incident Resolved',
+          message: `Incident #${incidentId} has been marked as resolved.`,
+          type: 'success'
+        });
+      }
+    } catch (error) {
+      addNotification({
+        title: 'Error',
+        message: 'Failed to process incident action. Please try again.',
+        type: 'critical'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'live-feed':
+        addNotification({
+          title: 'Live Feed',
+          message: 'Opening live camera feeds...',
+          type: 'info'
+        });
+        break;
+      case 'report-incident':
+        addNotification({
+          title: 'Report Incident',
+          message: 'Opening incident reporting form...',
+          type: 'info'
+        });
+        break;
+      case 'analytics':
+        addNotification({
+          title: 'Analytics',
+          message: 'Loading traffic analytics dashboard...',
+          type: 'info'
+        });
+        break;
+      case 'archive':
+        addNotification({
+          title: 'Archive',
+          message: 'Opening incident archive...',
+          type: 'info'
+        });
+        break;
+    }
+  };
+
+  const getSystemHealthStatus = () => {
+    switch (stats.systemHealth) {
+      case 'healthy':
+        return { text: 'All Systems Operational', class: 'healthy' };
+      case 'warning':
+        return { text: 'Minor Issues Detected', class: 'warning' };
+      case 'error':
+        return { text: 'System Errors Present', class: 'error' };
+      default:
+        return { text: 'Status Unknown', class: 'error' };
+    }
+  };
+
+  const renderWeatherIcon = (condition: WeatherCondition) => {
+    // Use the API icon if available, otherwise fallback to local icons
+    if (condition.icon) {
+      return (
+        <img 
+          src={`https:${condition.icon}`} 
+          alt={condition.text}
+          className="weather-icon"
+          onError={(e) => {
+            // Fallback to local icon if API icon fails to load
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+      );
+    }
+    
+    // Fallback local icons based on condition code
+    switch (condition.code) {
+      case 1000: // Clear/Sunny
+        return <div className="weather-icon">☀️</div>;
+      case 1003: // Partly cloudy
+        return <div className="weather-icon">⛅</div>;
+      case 1006: // Cloudy
+        return <div className="weather-icon">☁️</div>;
+      case 1009: // Overcast
+        return <div className="weather-icon">☁️</div>;
+      default:
+        return <div className="weather-icon">🌤️</div>;
+    }
+  };
+
+  return (
+    <div className="dashboard" data-cy="dashboard" id="dashboard">
+      <div className="notification-panel" data-cy="notification-panel" role="alert">
+        {notifications.map((notification) => (
+          <div key={notification.id} className={`notification ${notification.type}`} data-cy={`notification-${notification.id}`}>
+            <div className="notification-header" data-cy="notification-header">
+              <div className="notification-title" data-cy="notification-title">{notification.title}</div>
+              <button 
+                className="notification-close"
+                onClick={() => removeNotification(notification.id)}
+                data-cy="notification-close"
+                aria-label="Close notification"
+              >
+                ×
+              </button>
+            </div>
+            <div className="notification-content" data-cy="notification-content">{notification.message}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="dashboard-header" data-cy="dashboard-header" id="dashboard-header">
+        <div className="dashboard-title" data-cy="dashboard-title">
+          <div>
+            <h2 data-cy="dashboard-main-title">Traffic Guardian Dashboard</h2>
+            <div className="dashboard-subtitle" data-cy="dashboard-subtitle">Real-time traffic incident monitoring system</div>
+          </div>
+          <div className="system-status" data-cy="system-status">
+            <div className="status-indicator" data-cy="status-indicator">
+              <div className={`status-dot ${getSystemHealthStatus().class}`} data-cy="status-dot"></div>
+              {getSystemHealthStatus().text}
+            </div>
+          </div>
+        </div>
+        <div className="dashboard-time" data-cy="dashboard-time">
+          <div className="dashboard-time-label" data-cy="dashboard-time-label">Current Time</div>
+          <div className="dashboard-time-value" data-cy="dashboard-time-value">{formatTime(currentTime)}</div>
+        </div>
+      </div>
+
+      <div className="dashboard-content" data-cy="dashboard-content">
+        {loading && (
+          <div className="loading-overlay" data-cy="loading-overlay" aria-busy="true">
+            <div className="loading-spinner" data-cy="loading-spinner"></div>
+            <div className="loading-text" data-cy="loading-text">Processing request...</div>
+          </div>
+        )}
+
+        <div className="stats-grid" data-cy="stats-grid">
+          <div className="stat-card" data-cy="stat-card-active-incidents">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <AlertTriangleIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Active Incidents</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{stats.activeIncidents}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">Requiring immediate attention</div>
+            <div className="progress-bar" data-cy="progress-bar">
+              <div 
+                className="progress-fill critical" 
+                style={{ width: `${(stats.activeIncidents / 10) * 100}%` }}
+                data-cy="progress-fill"
+              ></div>
+            </div>
+          </div>
+
+          <div className="stat-card" data-cy="stat-card-cameras-online">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <CameraIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Cameras Online</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{stats.camerasOnline}/{stats.totalCameras}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">{Math.round((stats.camerasOnline / stats.totalCameras) * 100)}% operational</div>
+            <div className="progress-bar" data-cy="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${(stats.camerasOnline / stats.totalCameras) * 100}%` }}
+                data-cy="progress-fill"
+              ></div>
+            </div>
+          </div>
+
+          <div className="stat-card" data-cy="stat-card-avg-response-time">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <ClockIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Avg Response Time</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{stats.avgResponseTime}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">Last 24 hours</div>
+          </div>
+
+          <div className="stat-card" data-cy="stat-card-incidents-today">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <TrendingUpIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Today's Incidents</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{stats.incidentsToday}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">vs 12 yesterday</div>
+          </div>
+        </div>
