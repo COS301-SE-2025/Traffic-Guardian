@@ -27,22 +27,18 @@ const SignUp: React.FC = () => {
       setError('All fields are required');
       return false;
     }
-
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return false;
     }
-
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters');
       return false;
     }
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       setError('Please enter a valid email address');
       return false;
     }
-
     return true;
   };
 
@@ -65,7 +61,7 @@ const SignUp: React.FC = () => {
           User_Email: formData.email,
           User_Password: formData.password,
           User_Role: 'user',
-          User_Preferences: "{}"
+          User_Preferences: '{}'
         }),
       });
 

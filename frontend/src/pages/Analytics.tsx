@@ -252,6 +252,7 @@ const Analytics: React.FC = () => {
   return (
     <div className={`analytics-container ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
       <div className="analytics-content">
+
         <div className="analytics-header">
           <div className="analytics-title">
             <h1>Traffic Analytics Dashboard</h1>
@@ -259,7 +260,7 @@ const Analytics: React.FC = () => {
           </div>
         </div>
 
-        
+
         <div className="summary-cards">
           <div className="summary-card">
             <div className="card-icon incidents">
