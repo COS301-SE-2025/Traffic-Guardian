@@ -1,6 +1,5 @@
 // src/contexts/SocketContext.tsx
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import io, { Socket } from 'socket.io-client';
 

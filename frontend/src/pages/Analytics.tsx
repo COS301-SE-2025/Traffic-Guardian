@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../consts/ThemeContext';
 import {
   LineChart,
@@ -148,124 +148,131 @@ const Analytics: React.FC = () => {
     '#f97316'
   ];
 
-  useEffect(() => {
-    loadAnalyticsData();
-  }, [dateRange]);
-
-  const loadAnalyticsData = async () => {
-    setIsLoading(true);
-    try {
-      // Simulate API calls - replace with actual API endpoints
-      await Promise.all([
-        loadIncidentTrends(),
-        loadResponseTimeDistribution(),
-        loadCategoryBreakdown(),
-        loadHourlyDistribution(),
-        loadLocationHotspots(),
-        loadPerformanceMetrics(),
-        loadSummaryStatistics()
-      ]);
-    } catch (error) {
-      console.error('Error loading analytics data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Simulated data loaders - replace with actual API calls
-  const loadIncidentTrends = async () => {
-    // Generate sample data for the selected date range
-    const trends: IncidentTrend[] = [];
-    const start = new Date(dateRange.startDate);
-    const end = new Date(dateRange.endDate);
-    
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      trends.push({
-        date: d.toISOString().split('T')[0],
-        count: Math.floor(Math.random() * 50) + 10,
-        severity: {
-          high: Math.floor(Math.random() * 10),
-          medium: Math.floor(Math.random() * 20),
-          low: Math.floor(Math.random() * 20)
-        }
-      });
-    }
-    
-    setIncidentTrends(trends);
-  };
-
-  const loadResponseTimeDistribution = async () => {
-    const data: ResponseTimeData[] = [
-      { range: '0-5 min', count: 145, percentage: 35 },
-      { range: '5-10 min', count: 120, percentage: 29 },
-      { range: '10-15 min', count: 85, percentage: 20 },
-      { range: '15-20 min', count: 45, percentage: 11 },
-      { range: '20+ min', count: 20, percentage: 5 }
-    ];
-    setResponseTimeData(data);
-  };
-
-  const loadCategoryBreakdown = async () => {
-    const data: CategoryBreakdown[] = [
-      { category: 'Vehicle Accident', count: 156, percentage: 28, trend: 'up' },
-      { category: 'Vehicle Breakdown', count: 134, percentage: 24, trend: 'down' },
-      { category: 'Traffic Congestion', count: 98, percentage: 18, trend: 'stable' },
-      { category: 'Road Debris', count: 67, percentage: 12, trend: 'up' },
-      { category: 'Weather Hazard', count: 45, percentage: 8, trend: 'down' },
-      { category: 'Construction Zone', count: 34, percentage: 6, trend: 'stable' },
-      { category: 'Other', count: 22, percentage: 4, trend: 'up' }
-    ];
-    setCategoryBreakdown(data);
-  };
-
-  const loadHourlyDistribution = async () => {
-    const data: HourlyDistribution[] = [];
-    for (let hour = 0; hour < 24; hour++) {
-      data.push({
-        hour,
-        incidents: Math.floor(Math.random() * 40) + 5,
-        avgResponseTime: Math.floor(Math.random() * 15) + 5
-      });
-    }
-    setHourlyDistribution(data);
-  };
-
-  const loadLocationHotspots = async () => {
-    const data: LocationHotspot[] = [
-      { location: 'N1 Western Bypass', incidents: 89, avgSeverity: 2.4 },
-      { location: 'M1 Sandton', incidents: 76, avgSeverity: 2.1 },
-      { location: 'R21 OR Tambo', incidents: 65, avgSeverity: 1.8 },
-      { location: 'N3 Johannesburg South', incidents: 54, avgSeverity: 2.2 },
-      { location: 'N12 East', incidents: 43, avgSeverity: 1.9 }
-    ];
-    setLocationHotspots(data);
-  };
-
-  const loadPerformanceMetrics = async () => {
-    const data: PerformanceMetric[] = [
-      { metric: 'Detection Speed', value: 92, maxValue: 100 },
-      { metric: 'Response Time', value: 85, maxValue: 100 },
-      { metric: 'Resolution Rate', value: 78, maxValue: 100 },
-      { metric: 'System Uptime', value: 99.5, maxValue: 100 },
-      { metric: 'Data Accuracy', value: 94, maxValue: 100 },
-      { metric: 'Coverage', value: 87, maxValue: 100 }
-    ];
-    setPerformanceMetrics(data);
-  };
-
-  const loadSummaryStatistics = async () => {
-    setSummaryStats({
-      totalIncidents: 556,
-      avgResponseTime: 8.5,
-      resolutionRate: 78,
-      criticalIncidents: 45,
-      trendsComparison: {
-        incidents: 12.5,
-        responseTime: -8.3,
-        resolution: 5.2
+  const loadIncidentTrends = useCallback(async () => {
+  const trends: IncidentTrend[] = [];
+  const start = new Date(dateRange.startDate);
+  const end = new Date(dateRange.endDate);
+  
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    trends.push({
+      date: d.toISOString().split('T')[0],
+      count: Math.floor(Math.random() * 50) + 10,
+      severity: {
+        high: Math.floor(Math.random() * 10),
+        medium: Math.floor(Math.random() * 20),
+        low: Math.floor(Math.random() * 20)
       }
     });
-  };
+  }
+
+  setIncidentTrends(trends);
+}, [dateRange]);
+
+const loadResponseTimeDistribution = useCallback(async () => {
+  const data: ResponseTimeData[] = [
+    { range: '0-5 min', count: 145, percentage: 35 },
+    { range: '5-10 min', count: 120, percentage: 29 },
+    { range: '10-15 min', count: 85, percentage: 20 },
+    { range: '15-20 min', count: 45, percentage: 11 },
+    { range: '20+ min', count: 20, percentage: 5 }
+  ];
+  setResponseTimeData(data);
+}, []);
+
+const loadCategoryBreakdown = useCallback(async () => {
+  const data: CategoryBreakdown[] = [
+    { category: 'Vehicle Accident', count: 156, percentage: 28, trend: 'up' },
+    { category: 'Vehicle Breakdown', count: 134, percentage: 24, trend: 'down' },
+    { category: 'Traffic Congestion', count: 98, percentage: 18, trend: 'stable' },
+    { category: 'Road Debris', count: 67, percentage: 12, trend: 'up' },
+    { category: 'Weather Hazard', count: 45, percentage: 8, trend: 'down' },
+    { category: 'Construction Zone', count: 34, percentage: 6, trend: 'stable' },
+    { category: 'Other', count: 22, percentage: 4, trend: 'up' }
+  ];
+  setCategoryBreakdown(data);
+}, []);
+
+const loadHourlyDistribution = useCallback(async () => {
+  const data: HourlyDistribution[] = [];
+  for (let hour = 0; hour < 24; hour++) {
+    data.push({
+      hour,
+      incidents: Math.floor(Math.random() * 40) + 5,
+      avgResponseTime: Math.floor(Math.random() * 15) + 5
+    });
+  }
+  setHourlyDistribution(data);
+}, []);
+
+const loadLocationHotspots = useCallback(async () => {
+  const data: LocationHotspot[] = [
+    { location: 'N1 Western Bypass', incidents: 89, avgSeverity: 2.4 },
+    { location: 'M1 Sandton', incidents: 76, avgSeverity: 2.1 },
+    { location: 'R21 OR Tambo', incidents: 65, avgSeverity: 1.8 },
+    { location: 'N3 Johannesburg South', incidents: 54, avgSeverity: 2.2 },
+    { location: 'N12 East', incidents: 43, avgSeverity: 1.9 }
+  ];
+  setLocationHotspots(data);
+}, []);
+
+const loadPerformanceMetrics = useCallback(async () => {
+  const data: PerformanceMetric[] = [
+    { metric: 'Detection Speed', value: 92, maxValue: 100 },
+    { metric: 'Response Time', value: 85, maxValue: 100 },
+    { metric: 'Resolution Rate', value: 78, maxValue: 100 },
+    { metric: 'System Uptime', value: 99.5, maxValue: 100 },
+    { metric: 'Data Accuracy', value: 94, maxValue: 100 },
+    { metric: 'Coverage', value: 87, maxValue: 100 }
+  ];
+  setPerformanceMetrics(data);
+}, []);
+
+const loadSummaryStatistics = useCallback(async () => {
+  setSummaryStats({
+    totalIncidents: 556,
+    avgResponseTime: 8.5,
+    resolutionRate: 78,
+    criticalIncidents: 45,
+    trendsComparison: {
+      incidents: 12.5,
+      responseTime: -8.3,
+      resolution: 5.2
+    }
+  });
+}, []);
+
+const loadAnalyticsData = useCallback(async () => {
+  setIsLoading(true);
+  try {
+    await Promise.all([
+      loadIncidentTrends(),
+      loadResponseTimeDistribution(),
+      loadCategoryBreakdown(),
+      loadHourlyDistribution(),
+      loadLocationHotspots(),
+      loadPerformanceMetrics(),
+      loadSummaryStatistics()
+    ]);
+  } catch (error) {
+    console.error('Error loading analytics data:', error);
+  } finally {
+    setIsLoading(false);
+  }
+}, [
+  loadIncidentTrends,
+  loadResponseTimeDistribution,
+  loadCategoryBreakdown,
+  loadHourlyDistribution,
+  loadLocationHotspots,
+  loadPerformanceMetrics,
+  loadSummaryStatistics
+]);
+
+
+useEffect(() => {
+  loadAnalyticsData();
+}, [loadAnalyticsData]);
+
 
   const handleDateChange = (type: 'start' | 'end', value: string) => {
     setDateRange(prev => ({

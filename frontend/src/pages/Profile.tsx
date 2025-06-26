@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './Profile.css';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +28,7 @@ const Profile: React.FC = () => {
     theme: 'dark',
   });
   const [tempPreferences, setTempPreferences] = useState<Preferences>({ ...preferences });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [savedPreferences, setSavedPreferences] = useState<Preferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,42 +55,39 @@ const Profile: React.FC = () => {
   };
 
   // Optimized function to fetch alert counts with proper error handling
-  const fetchAlertCounts = async (incidents: any[], apiKey: string) => {
-    let totalAlerts = 0;
-    
-    try {
-      // Make concurrent requests instead of sequential
-      const alertPromises = incidents.map(async (incident) => {
-        try {
-          const alertsResponse = await fetch(
-            `${process.env.REACT_APP_API_URL}/api/incidents/${incident.Incidents_ID}/alerts`,
-            {
-              headers: {
-                'X-API-Key': apiKey,
-                'Content-Type': 'application/json',
-              },
-            }
-          );
-          
-          const alerts = await handleApiResponse(alertsResponse);
-          return Array.isArray(alerts) ? alerts.length : 0;
-        } catch (error) {
-          console.warn(`Failed to fetch alerts for incident ${incident.Incidents_ID}:`, error);
-          return 0; // Return 0 if individual alert fetch fails
-        }
-      });
+const fetchAlertCounts = useCallback(async (incidents: any[], apiKey: string) => {
+  let totalAlerts = 0;
 
-      // Wait for all alert requests to complete
-      const alertCounts = await Promise.all(alertPromises);
-      totalAlerts = alertCounts.reduce((sum, count) => sum + count, 0);
-      
-    } catch (error) {
-      console.error('Error fetching alert counts:', error);
-      // Don't throw here - just log and continue with 0 alerts
-    }
-    
-    return totalAlerts;
-  };
+  try {
+    const alertPromises = incidents.map(async (incident) => {
+      try {
+        const alertsResponse = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/incidents/${incident.Incidents_ID}/alerts`,
+          {
+            headers: {
+              'X-API-Key': apiKey,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        const alerts = await handleApiResponse(alertsResponse);
+        return Array.isArray(alerts) ? alerts.length : 0;
+      } catch (error) {
+        console.warn(`Failed to fetch alerts for incident ${incident.Incidents_ID}:`, error);
+        return 0;
+      }
+    });
+
+    const alertCounts = await Promise.all(alertPromises);
+    totalAlerts = alertCounts.reduce((sum, count) => sum + count, 0);
+  } catch (error) {
+    console.error('Error fetching alert counts:', error);
+  }
+
+  return totalAlerts;
+}, []); // Empty deps — all inputs are passed directly
+
 
   useEffect(() => {
     if (hasInitialized.current) {
@@ -214,7 +212,7 @@ const Profile: React.FC = () => {
     };
 
     fetchProfileData();
-  }, []);
+  }, [fetchAlertCounts, navigate, toggleDarkMode]);
 
   const handlePreferenceChange = (key: keyof Preferences, value: any) => {
     setTempPreferences(prev => ({ ...prev, [key]: value }));
