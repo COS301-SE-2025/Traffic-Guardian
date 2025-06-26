@@ -82,7 +82,8 @@ jobs:
       - name: Test database connectivity
         run: |
           echo "Testing connection to remote PostgreSQL database..."
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }}
+          # Adding sslmode=require for secure connection
+          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} --dbname=${{ secrets.DATABASE_NAME }} -o "sslmode=require"
           if [ $? -eq 0 ]; then
             echo "Remote PostgreSQL connection successful!"
           else
@@ -93,25 +94,26 @@ jobs:
       - name: Verify database schema
         run: |
           echo "Verifying database schema in remote database..."
+          # Adding sslmode=require for secure connection
           PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
             SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'postgres';
-          "
+          " -o "sslmode=require"
           echo "Checking if required tables exist..."
           PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
             SELECT table_name FROM information_schema.tables WHERE table_schema = 'postgres' AND table_type = 'BASE TABLE';
-          "
+          " -o "sslmode=require"
 
       - name: Insert test data
         run: |
           echo "Inserting test data into remote database..."
-          # Insert test user for login tests
+          # Insert test user for login tests with SSL support
           PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
             INSERT INTO \"postgres\".\"User\" (\"User_Email\", \"User_Preferences\", \"User_Username\", \"User_Password\", \"User_Fullname\", \"User_Cellphone\", \"User_Role\", \"User_APIKey\")
             VALUES ('user@gmail.com', '{}', 'user', '\$2b\$10\$9jZqtlSPIbEMhN6FYfDTDeW2tepzewl7ZWI3jj/x1iPnu4HjVCP8q', 'Test User', '5551234567', 'User', '19da0e4d94f8aad')
             ON CONFLICT (\"User_Email\") DO NOTHING;
-          "
+          " -o "sslmode=require"
           
-          # Create a test incident
+          # Create a test incident with SSL support
           PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
             INSERT INTO \"postgres\".\"Incidents\" (
               \"Incidents_DateT\", \"Incidents_Longitude\", \"Incidents_Latitude\", \"Incident_Severity\", \"Incident_Status\", \"Incident_Reporter\"
@@ -121,9 +123,9 @@ jobs:
               SELECT 1 FROM \"postgres\".\"Incidents\" 
               WHERE \"Incidents_Longitude\" = -26.1438 AND \"Incidents_Latitude\" = 28.0406
             );
-          "
+          " -o "sslmode=require"
           
-          # Create a test alert
+          # Create a test alert with SSL support
           PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
             INSERT INTO \"postgres\".\"Alerts\" (
               \"Alerts_IncidentID\", \"Alerts_Message\", \"Alert_recipients\"
@@ -132,17 +134,18 @@ jobs:
             WHERE NOT EXISTS (
               SELECT 1 FROM \"postgres\".\"Alerts\" WHERE \"Alerts_Message\" = 'Traffic incident reported'
             );
-          "
+          " -o "sslmode=require"
           echo "Database initialized with test data"
 
       - name: Verify database setup
         run: |
           echo "Verifying remote database setup..."
+          # Adding SSL support
           PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
             SELECT COUNT(*) AS user_count FROM \"postgres\".\"User\";
             SELECT COUNT(*) AS incident_count FROM \"postgres\".\"Incidents\";
             SELECT COUNT(*) AS alert_count FROM \"postgres\".\"Alerts\";
-          "
+          " -o "sslmode=require"
 
       - name: Run API tests
         working-directory: ./API
@@ -153,6 +156,7 @@ jobs:
           DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
           DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
           DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_SSL: true
           WEATHERAPI: ${{ secrets.WEATHERAPI }}
           TOMTOMAPI: ${{ secrets.TOMTOMAPI }}
         run: |
@@ -306,7 +310,7 @@ jobs:
           # In a real deployment, you would run database migrations here
           if [ -f "dist/database/schema.sql" ]; then
             echo "Database schema found and ready for deployment"
-            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database connectivity verified' AS status;"
+            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database connectivity verified' AS status;" -o "sslmode=require"
           fi
           
           echo "Deploying Frontend component..."
@@ -322,6 +326,7 @@ jobs:
           DATABASE_NAME=${{ secrets.DATABASE_NAME }}
           DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
           DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+          DATABASE_SSL=true
           
           # API Keys
           WEATHERAPI=${{ secrets.WEATHERAPI }}
@@ -385,11 +390,11 @@ jobs:
             echo "Database connection: ${{ secrets.DATABASE_HOST }}"
             # Create a backup before running migrations
             echo "Creating database backup before migration..."
-            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_dump -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -F c -b -v -f "backup_$(date +%Y%m%d%H%M%S).dump"
+            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_dump -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -F c -b -v -f "backup_$(date +%Y%m%d%H%M%S).dump" --sslmode=require
             
             # Apply migrations
             echo "Applying migrations to remote database..."
-            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database migration would be applied here' AS migration_status;"
+            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database migration would be applied here' AS migration_status;" -o "sslmode=require"
             
             echo "Database migrations completed successfully"
           fi
@@ -407,6 +412,7 @@ jobs:
           DATABASE_NAME=${{ secrets.DATABASE_NAME }}
           DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
           DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+          DATABASE_SSL=true
           
           # API Keys
           WEATHERAPI=${{ secrets.WEATHERAPI }}
