@@ -138,7 +138,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     requestNotificationPermission();
 
     // Create socket connection
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
     const newSocket = io(API_BASE_URL, {
       auth: {
         token: apiKey
