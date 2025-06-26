@@ -83,7 +83,7 @@ jobs:
         run: |
           echo "Testing connection to remote PostgreSQL database..."
           # Adding sslmode=require for secure connection
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} --dbname=${{ secrets.DATABASE_NAME }} -o "sslmode=require"
+          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -options="sslmode=require"
           if [ $? -eq 0 ]; then
             echo "Remote PostgreSQL connection successful!"
           else
@@ -95,26 +95,26 @@ jobs:
         run: |
           echo "Verifying database schema in remote database..."
           # Adding sslmode=require for secure connection
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} --set=sslmode=require -c "
             SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'postgres';
-          " -o "sslmode=require"
+          "
           echo "Checking if required tables exist..."
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} --set=sslmode=require -c "
             SELECT table_name FROM information_schema.tables WHERE table_schema = 'postgres' AND table_type = 'BASE TABLE';
-          " -o "sslmode=require"
+          "
 
       - name: Insert test data
         run: |
           echo "Inserting test data into remote database..."
           # Insert test user for login tests with SSL support
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} --set=sslmode=require -c "
             INSERT INTO \"postgres\".\"User\" (\"User_Email\", \"User_Preferences\", \"User_Username\", \"User_Password\", \"User_Fullname\", \"User_Cellphone\", \"User_Role\", \"User_APIKey\")
             VALUES ('user@gmail.com', '{}', 'user', '\$2b\$10\$9jZqtlSPIbEMhN6FYfDTDeW2tepzewl7ZWI3jj/x1iPnu4HjVCP8q', 'Test User', '5551234567', 'User', '19da0e4d94f8aad')
             ON CONFLICT (\"User_Email\") DO NOTHING;
-          " -o "sslmode=require"
+          "
           
           # Create a test incident with SSL support
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} --set=sslmode=require -c "
             INSERT INTO \"postgres\".\"Incidents\" (
               \"Incidents_DateT\", \"Incidents_Longitude\", \"Incidents_Latitude\", \"Incident_Severity\", \"Incident_Status\", \"Incident_Reporter\"
             )
@@ -123,10 +123,10 @@ jobs:
               SELECT 1 FROM \"postgres\".\"Incidents\" 
               WHERE \"Incidents_Longitude\" = -26.1438 AND \"Incidents_Latitude\" = 28.0406
             );
-          " -o "sslmode=require"
+          "
           
           # Create a test alert with SSL support
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} --set=sslmode=require -c "
             INSERT INTO \"postgres\".\"Alerts\" (
               \"Alerts_IncidentID\", \"Alerts_Message\", \"Alert_recipients\"
             )
@@ -134,18 +134,18 @@ jobs:
             WHERE NOT EXISTS (
               SELECT 1 FROM \"postgres\".\"Alerts\" WHERE \"Alerts_Message\" = 'Traffic incident reported'
             );
-          " -o "sslmode=require"
+          "
           echo "Database initialized with test data"
 
       - name: Verify database setup
         run: |
           echo "Verifying remote database setup..."
           # Adding SSL support
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} --set=sslmode=require -c "
             SELECT COUNT(*) AS user_count FROM \"postgres\".\"User\";
             SELECT COUNT(*) AS incident_count FROM \"postgres\".\"Incidents\";
             SELECT COUNT(*) AS alert_count FROM \"postgres\".\"Alerts\";
-          " -o "sslmode=require"
+          "
 
       - name: Run API tests
         working-directory: ./API
@@ -310,7 +310,7 @@ jobs:
           # In a real deployment, you would run database migrations here
           if [ -f "dist/database/schema.sql" ]; then
             echo "Database schema found and ready for deployment"
-            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database connectivity verified' AS status;" -o "sslmode=require"
+            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} --set=sslmode=require -c "SELECT 'Database connectivity verified' AS status;"
           fi
           
           echo "Deploying Frontend component..."
@@ -390,11 +390,11 @@ jobs:
             echo "Database connection: ${{ secrets.DATABASE_HOST }}"
             # Create a backup before running migrations
             echo "Creating database backup before migration..."
-            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_dump -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -F c -b -v -f "backup_$(date +%Y%m%d%H%M%S).dump" --sslmode=require
+            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_dump -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -F c -b -v --set=sslmode=require -f "backup_$(date +%Y%m%d%H%M%S).dump"
             
             # Apply migrations
             echo "Applying migrations to remote database..."
-            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database migration would be applied here' AS migration_status;" -o "sslmode=require"
+            PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} --set=sslmode=require -c "SELECT 'Database migration would be applied here' AS migration_status;"
             
             echo "Database migrations completed successfully"
           fi
