@@ -181,11 +181,11 @@ jobs:
         working-directory: ./API
         env:
           NODE_ENV: test
-          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
-          DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
-          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
           DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
           DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
           DATABASE_SSL: true
           WEATHERAPI: ${{ secrets.WEATHERAPI }}
           TOMTOMAPI: ${{ secrets.TOMTOMAPI }}
@@ -193,7 +193,7 @@ jobs:
           # Start server and run tests in sequence
           echo "Starting server and running tests..."
           npm run dev &
-          sleep 5  # Wait for server to start
+          sleep 10  # Wait for server to start
           npm test
           kill $(jobs -p) || true  # Kill background server process
 
