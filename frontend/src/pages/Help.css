@@ -272,10 +272,6 @@
   gap: var(--space-xl);
 }
 
-.help-qa-item {
-  /* No bottom borders - cleaner look with spacing doing the separation */
-}
-
 .help-qa-question {
   font-size: 1.0625rem;
   font-weight: 500;
