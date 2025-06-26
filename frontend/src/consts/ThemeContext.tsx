@@ -1,5 +1,4 @@
-// src/ThemeContext.tsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 interface ThemeContextType {
   isDarkMode: boolean;
@@ -8,24 +7,18 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    // Initialize from localStorage or default to false
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
+export const ThemeProvider: React.FC<{ children: React.ReactNode; initialDarkMode?: boolean }> = ({ children, initialDarkMode = true }) => {
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(initialDarkMode);
 
   useEffect(() => {
-    // Update localStorage when theme changes
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-    // Apply theme class to document root
     document.documentElement.classList.toggle('dark-mode', isDarkMode);
     document.documentElement.classList.toggle('light-mode', !isDarkMode);
   }, [isDarkMode]);
 
-  const toggleDarkMode = (value: boolean) => {
+  const toggleDarkMode = useCallback((value: boolean) => {
+    console.log('toggleDarkMode called with value:', value, 'at', new Date().toISOString());
     setIsDarkMode(value);
-  };
+  }, []); // Stable reference with no dependencies
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
