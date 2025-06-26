@@ -153,10 +153,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     newSocket.on('connect', () => {
       console.log('Socket connected:', newSocket.id);
       setIsConnected(true);
-      toast.success('Connected to real-time alerts', {
-        position: 'bottom-right',
-        autoClose: 2000,
-      });
+      console.log('Connected to real-time alerts');
     });
 
     newSocket.on('disconnect', (reason) => {
@@ -171,10 +168,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
       setIsConnected(false);
-      toast.error('Failed to connect to real-time alerts', {
-        position: 'bottom-right',
-        autoClose: 5000,
-      });
+      console.log("failed to connect real-time alerts, trying to reconnect...");
     });
 
     // Welcome message handler

@@ -506,14 +506,21 @@
 
 .solution-visual {
     position: relative;
-    height: 400px;
     background: var(--card-dark);
     border: 2px solid var(--accent-orange);
     border-radius: 20px;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-block;
+    width: auto;
+    height: auto;
+}
+
+.demo-video {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    display: block;
+    border-radius: 18px; /* Slightly smaller radius to account for border */
 }
 
 .solution-visual::after {
@@ -527,6 +534,7 @@
     border-radius: 20px;
     font-weight: 600;
 }
+
 
 .demo-placeholder {
     text-align: center;
@@ -826,3 +834,4 @@
         font-size: 2rem;
     }
 }
+

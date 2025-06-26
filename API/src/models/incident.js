@@ -121,7 +121,11 @@ const incidentModel = {  async createIncident(incidentData) {
     
     const { rows } = await db.query(query, values);
     return rows;
-  }
+  }, async getIncidentCount() {
+  const query = 'SELECT COUNT(*) as count FROM "Incidents"';
+  const { rows } = await db.query(query);
+  return parseInt(rows[0].count);
+}
 };
 
 module.exports = incidentModel;
