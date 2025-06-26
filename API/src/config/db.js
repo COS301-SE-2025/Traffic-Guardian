@@ -45,14 +45,7 @@ const pool = new Pool({
   ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
 });
 
-// Log connection attempt but hide sensitive information
-console.log('Database configuration loaded:');
-console.log(`- Host: ${process.env.DATABASE_HOST}`);
-console.log(`- Database: ${process.env.DATABASE_NAME}`);
-console.log(`- User: ${process.env.DATABASE_USERNAME}`);
-console.log(`- Password: [REDACTED]`);
-console.log(`- Port: ${process.env.DATABASE_PORT}`);
-console.log(`- SSL: ${process.env.DATABASE_SSL === 'true' ? 'Enabled (required for AWS RDS)' : 'Disabled'}`);
+
 
 // Test the database connection on startup
 pool.query('SELECT NOW()')
