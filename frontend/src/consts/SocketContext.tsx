@@ -336,7 +336,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     setUnreadAlertCount(0);
   };
 
-  // Add new incident function
+  
   const addNewIncident = (incident: any) => {
     console.log('New incident added locally:', incident);
   };
