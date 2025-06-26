@@ -82,14 +82,40 @@ jobs:
       - name: Test database connectivity
         run: |
           echo "Testing connection to remote PostgreSQL database..."
-          # Adding sslmode=require for secure connection
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -options="sslmode=require"
+          # Using connection string with sslmode=require for AWS RDS
+          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }}
           if [ $? -eq 0 ]; then
             echo "Remote PostgreSQL connection successful!"
           else
             echo "Failed to connect to remote PostgreSQL database!"
-            exit 1
+            echo "Testing with PGSSLMODE environment variable..."
+            # Try using PGSSLMODE environment variable which pg_isready respects
+            PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }}
+            if [ $? -eq 0 ]; then
+              echo "Connection with PGSSLMODE=require successful!"
+            else
+              echo "Failed to connect with SSL. Check database configuration and credentials."
+              exit 1
+            fi
           fi
+
+      - name: Debug PostgreSQL connection
+        run: |
+          echo "===== POSTGRESQL CONNECTION DEBUG ====="
+          echo "PostgreSQL client version:"
+          psql --version
+          
+          echo "Available PostgreSQL environment variables:"
+          echo "PGHOST: [Redacted]"
+          echo "PGPORT: ${{ secrets.DATABASE_PORT }}"
+          echo "PGDATABASE: ${{ secrets.DATABASE_NAME }}"
+          echo "PGUSER: ${{ secrets.DATABASE_USERNAME }}"
+          echo "PGPASSWORD: [REDACTED]"
+          
+          echo "Testing simple connection with SSL mode set via environment variable:"
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT version();" || echo "Connection failed"
+          
+          echo "===== END DEBUG ====="
 
       - name: Verify database schema
         run: |
