@@ -47,7 +47,12 @@ const alertModel = {  async createAlert(alertData) {
     const { rows } = await db.query(query);
 
     return rows;
-  }
+  },
+  async getTotalAlertCount() {
+  const query = 'SELECT COUNT(*) as count FROM "Alerts"';
+  const { rows } = await db.query(query);
+  return parseInt(rows[0].count);
+}
 };
 
 module.exports = alertModel;
