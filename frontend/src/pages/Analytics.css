@@ -411,8 +411,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .trends-table {
-  width: 100%;
-  border-collapse: collapse;
+  background: none;
 }
 
 .trends-table th {
@@ -510,7 +509,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .dark-mode {
-  background-color: #0f172a;
+  background-color: var(--background-color, #1b1b1b);
   color: #e2e8f0;
 }
 
