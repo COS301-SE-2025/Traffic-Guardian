@@ -88,7 +88,7 @@ const Profile: React.FC = () => {
     
     const fetchProfileData = async () => {
       try {
-        const apiKey = localStorage.getItem('apiKey');
+        const apiKey = sessionStorage.getItem('apiKey');
         const savedTheme = localStorage.getItem('theme');
         console.log('Profile useEffect: apiKey=', apiKey, 'savedTheme=', savedTheme);
 
@@ -189,7 +189,7 @@ const Profile: React.FC = () => {
 
   const handleSavePreferences = async () => {
     try {
-      const apiKey = localStorage.getItem('apiKey');
+      const apiKey = sessionStorage.getItem('apiKey');
       if (!apiKey) {
         setError('No API key found. Please log in.');
         navigate('/account');
@@ -258,8 +258,8 @@ const Profile: React.FC = () => {
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem('apiKey');
-    localStorage.removeItem('userEmail');
+  sessionStorage.removeItem('apiKey');
+  sessionStorage.removeItem('userEmail');
     navigate('/account');
   };
 

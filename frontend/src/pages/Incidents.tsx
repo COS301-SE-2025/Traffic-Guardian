@@ -168,7 +168,7 @@ const Incidents: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof ManualIncidentForm, string>>>({});
 
   const apiRequest = useCallback(async (endpoint: string, options: RequestInit = {}) => {
-    const apiKey = localStorage.getItem('apiKey');
+    const apiKey = sessionStorage.getItem('apiKey');
     if (!apiKey) {
       throw new Error('No API key found. Please log in.');
     }
@@ -231,7 +231,7 @@ const Incidents: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      const apiKey = localStorage.getItem('apiKey');
+      const apiKey = sessionStorage.getItem('apiKey');
       if (!apiKey) {
         toast.error('No API key found. Please log in.');
         navigate('/account');
