@@ -143,7 +143,7 @@ const Dashboard: React.FC = () => {
     },
   ]);
 
-  const [cameraFeeds, setCameraFeeds] = useState<Camera[]>([
+  const [cameraFeeds] = useState<Camera[]>([
     { id: 'CAM-N1-03', name: 'N1 Western Bypass', status: 'Active', incidents: 1, lastUpdate: '12:15' },
     { id: 'CAM-M1-15', name: 'M1 Sandton Junction', status: 'Active', incidents: 1, lastUpdate: '12:14' },
     { id: 'CAM-R21-08', name: 'R21 OR Tambo', status: 'Active', incidents: 1, lastUpdate: '12:13' },
