@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Search, AlertTriangle, BarChart3, Archive, Video, Settings, User, HelpCircle, MapPin, Clock, Users, Shield } from 'lucide-react';
+import { ChevronDown, ChevronRight, Search, AlertTriangle, BarChart3, Archive, Video, Settings, User, HelpCircle, Users, Shield } from 'lucide-react';
 import './Help.css'; // Import the professional CSS
 
 // TypeScript interfaces

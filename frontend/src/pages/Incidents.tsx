@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -106,7 +106,6 @@ interface DisplayIncident {
   updatedAt: string;
 }
 
-// Professional incident form matching database schema exactly
 interface ManualIncidentForm {
   Incidents_DateTime: string;
   Incidents_Longitude: string;
@@ -130,7 +129,6 @@ const API_BASE_URL = process.env.REACT_APP_API_URL;
 const Incidents: React.FC = () => {
   const navigate = useNavigate();
   
-  // Use global socket context for real-time alerts
   const { 
     isConnected, 
     realtimeAlerts, 
@@ -140,7 +138,6 @@ const Incidents: React.FC = () => {
     markAllAsRead 
   } = useSocket();
   
-  // Component state
   const [incidents, setIncidents] = useState<DisplayIncident[]>([]);
   const [filteredIncidents, setFilteredIncidents] = useState<DisplayIncident[]>([]);
   const [filters, setFilters] = useState<FilterState>({
@@ -159,9 +156,8 @@ const Incidents: React.FC = () => {
   const [selectedStatuses, setSelectedStatuses] = useState<Record<number, 'open' | 'ongoing' | 'resolved' | 'closed'>>({});
   const [showAlertsPanel, setShowAlertsPanel] = useState(false);
 
-  // Professional incident form state
   const [manualIncident, setManualIncident] = useState<ManualIncidentForm>({
-    Incidents_DateTime: new Date().toISOString().slice(0, 16), // Format for datetime-local input
+    Incidents_DateTime: new Date().toISOString().slice(0, 16),
     Incidents_Longitude: '',
     Incidents_Latitude: '',
     Incident_Severity: 'medium',
@@ -171,8 +167,7 @@ const Incidents: React.FC = () => {
 
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof ManualIncidentForm, string>>>({});
 
-  // API request helper function
-  const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+  const apiRequest = useCallback(async (endpoint: string, options: RequestInit = {}) => {
     const apiKey = localStorage.getItem('apiKey');
     if (!apiKey) {
       throw new Error('No API key found. Please log in.');
@@ -203,10 +198,9 @@ const Incidents: React.FC = () => {
       }
       throw error;
     }
-  };
+  }, [navigate]);
 
-  // Load incidents from API
-  const loadIncidents = async () => {
+  const loadIncidents = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await apiRequest('/api/incidents');
@@ -233,35 +227,32 @@ const Incidents: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [apiRequest]);
 
-  // Initial data loading
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const apiKey = localStorage.getItem('apiKey');
-        if (!apiKey) {
-          toast.error('No API key found. Please log in.');
-          navigate('/account');
-          return;
-        }
-        
-        // Fetch user role
-        const userResponse = await apiRequest('/api/auth/profile');
-        setUserRole(userResponse.User_Role || 'user');
-        await loadIncidents();
-      } catch (error: any) {
-        toast.error(`Error: ${error.message}`);
-        if (error.message.includes('Unauthorized')) {
-          navigate('/account');
-        }
+  const fetchData = useCallback(async () => {
+    try {
+      const apiKey = localStorage.getItem('apiKey');
+      if (!apiKey) {
+        toast.error('No API key found. Please log in.');
+        navigate('/account');
+        return;
       }
-    };
+      
+      const userResponse = await apiRequest('/api/auth/profile');
+      setUserRole(userResponse.User_Role || 'user');
+      await loadIncidents();
+    } catch (error: any) {
+      toast.error(`Error: ${error.message}`);
+      if (error.message.includes('Unauthorized')) {
+        navigate('/account');
+      }
+    }
+  }, [navigate, apiRequest, loadIncidents]);
 
+  useEffect(() => {
     fetchData();
-  }, [navigate]);
+  }, [fetchData]);
 
-  // Listen for new incidents from global socket and update local list
   useEffect(() => {
     if (realtimeAlerts.length > 0) {
       const latestAlert = realtimeAlerts[0];
@@ -281,7 +272,6 @@ const Incidents: React.FC = () => {
           updatedAt: latestAlert.incident.Incidents_DateTime
         };
 
-        // Check if incident already exists in the list
         setIncidents(prev => {
           const exists = prev.some(inc => inc.id === newIncident.id);
           if (!exists) {
@@ -293,7 +283,6 @@ const Incidents: React.FC = () => {
     }
   }, [realtimeAlerts]);
 
-  // Filtering logic
   useEffect(() => {
     let filtered = incidents;
 
@@ -329,7 +318,6 @@ const Incidents: React.FC = () => {
     setCurrentPage(1);
   }, [filters, incidents]);
 
-  // Status change handlers
   const handleStatusChange = (incidentId: number, newStatus: 'open' | 'ongoing' | 'resolved' | 'closed') => {
     setSelectedStatuses(prev => ({ ...prev, [incidentId]: newStatus }));
   };
@@ -367,7 +355,6 @@ const Incidents: React.FC = () => {
     }
   };
 
-  // Incident action handlers
   const handleIncidentAction = async (incidentId: number, action: string) => {
     try {
       switch (action) {
@@ -384,7 +371,6 @@ const Incidents: React.FC = () => {
     }
   };
 
-  // Form handling
   const handleManualIncidentChange = (key: keyof ManualIncidentForm, value: any) => {
     setManualIncident(prev => ({ ...prev, [key]: value }));
 
@@ -393,7 +379,6 @@ const Incidents: React.FC = () => {
     }
   };
 
-  // Professional form validation
   const validateForm = (): boolean => {
     const errors: Partial<Record<keyof ManualIncidentForm, string>> = {};
 
@@ -405,7 +390,6 @@ const Incidents: React.FC = () => {
       errors.Incident_Reporter = 'Reporter name is required';
     }
 
-    // Validate coordinates if provided
     if (manualIncident.Incidents_Latitude && isNaN(parseFloat(manualIncident.Incidents_Latitude))) {
       errors.Incidents_Latitude = 'Invalid latitude format';
     }
@@ -418,7 +402,6 @@ const Incidents: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
-  // Professional form submission
   const handleSubmitManualIncident = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -446,10 +429,8 @@ const Incidents: React.FC = () => {
 
       console.log('Incident created successfully:', response);
 
-      // Reload incidents to get the latest data
       await loadIncidents();
 
-      // Reset form to initial state
       setManualIncident({
         Incidents_DateTime: new Date().toISOString().slice(0, 16),
         Incidents_Longitude: '',
@@ -470,7 +451,6 @@ const Incidents: React.FC = () => {
     }
   };
 
-  // Utility functions
   const formatRelativeTime = (date: Date) => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -521,14 +501,12 @@ const Incidents: React.FC = () => {
     });
   };
 
-  // Show loading animation when page is initially loading
   if (isLoading && incidents.length === 0) {
     return <CarLoadingAnimation />;
   }
 
   return (
     <div className="incidents-page">
-      {/* Professional Real-time Alerts Panel */}
       {showAlertsPanel && (
         <div className="alerts-panel-overlay" onClick={() => setShowAlertsPanel(false)}>
           <div className="alerts-panel" onClick={(e) => e.stopPropagation()}>
@@ -602,7 +580,6 @@ const Incidents: React.FC = () => {
         </div>
       )}
 
-      {/* Professional Header */}
       <div className="incidents-header">
         <div className="incidents-title">
           <div>
@@ -626,7 +603,6 @@ const Incidents: React.FC = () => {
           </div>
         </div>
         <div className="incidents-actions">
-          {/* Professional alerts button */}
           <button 
             className={`btn-alerts ${unreadAlertCount > 0 ? 'has-alerts' : ''}`}
             onClick={() => setShowAlertsPanel(true)}
@@ -656,7 +632,6 @@ const Incidents: React.FC = () => {
         </div>
       </div>
 
-      {/* Professional Filters Section */}
       <div className="incidents-content">
         <div className="incidents-filters">
           <div className="filter-group">
@@ -733,7 +708,6 @@ const Incidents: React.FC = () => {
           </div>
         </div>
 
-        {/* Professional Incidents Table */}
         <div className={`incidents-list ${filteredIncidents.length <= itemsPerPage ? 'small-table' : ''}`}>
           <div className="incidents-list-header">
             <h3 className="incidents-list-title">Incidents</h3>
@@ -841,7 +815,6 @@ const Incidents: React.FC = () => {
             </tbody>
           </table>
 
-          {/* Professional Pagination */}
           {totalPages > 1 && (
             <div className="pagination">
               <button 
@@ -877,7 +850,6 @@ const Incidents: React.FC = () => {
         </div>
       </div>
 
-      {/* Professional Manual Incident Form Modal */}
       {showManualForm && (
         <div className="modal-overlay" onClick={() => setShowManualForm(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -1060,7 +1032,6 @@ const Incidents: React.FC = () => {
         </div>
       )}
 
-      {/* Professional Toast Container */}
       <ToastContainer 
         position="top-right"
         autoClose={3000}

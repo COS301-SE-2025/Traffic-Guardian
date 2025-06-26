@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChevronDown, ChevronUp, Search, Filter, Download, Eye, RotateCcw, Clock, AlertTriangle } from 'lucide-react';
 import { useTheme } from '../consts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -61,7 +61,7 @@ const Archives: React.FC = () => {
   const itemsPerPage: number = 10;
 
   // Load archives from your API
-  const loadArchives = async () => {
+  const loadArchives = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -105,11 +105,12 @@ const Archives: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
-    loadArchives();
-  }, []);
+  loadArchives();
+}, [loadArchives]);
+
 
   // Client-side filtering logic - updated to work with Archive_Incidents
   const filteredArchives = useMemo((): ArchiveRecord[] => {
