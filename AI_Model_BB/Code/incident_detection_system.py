@@ -175,10 +175,10 @@ class AdvancedIncidentDetectionSystem:
         try:
             # Prepare incident data for API
             incident_data = {
-                "Incident_Date": datetime.now().strftime("%Y-%m-%d"),
-                "Incident_Location": self.config['incident_location'],
+                "Incidents_DateTime": datetime.now().strftime("%Y-%m-%d"),
                 "Incident_Severity": self._map_severity_for_api(incident.get('severity', 'MEDIUM')),
-                "Incident_Status": "open"
+                "Incident_Status": "open",
+                "Incident_Reporter": "cam"
             }
             
             headers = {
@@ -477,10 +477,10 @@ class AdvancedIncidentDetectionSystem:
         try:
             # Prepare incident data for API
             incident_data = {
-                "Incident_Date": datetime.now().strftime("%Y-%m-%d"),
-                "Incident_Location": self.config.get('incident_location', 'Traffic Camera Location'),
+                "Incidents_DateTime": datetime.now().strftime("%Y-%m-%d"),
                 "Incident_Severity": self._map_severity_for_api(incident.get('severity', 'MEDIUM')),
-                "Incident_Status": "open"
+                "Incident_Status": "open",
+                "Incident_Reporter": "cam"
             }
             
             headers = {
