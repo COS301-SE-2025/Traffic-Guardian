@@ -234,9 +234,6 @@ const Account: React.FC = () => {
           </span>
         </div>
       </div>
-      <div className="showcase-container">
-        {/* Add image or animation later */}
-      </div>
     </div>
   );
 };
