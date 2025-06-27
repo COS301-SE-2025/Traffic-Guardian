@@ -8,10 +8,11 @@
     },
 
     {
-    "User_Email": "user@gmail.com",
-    "User_Password": "user"
+    "User_Email": "lonwabo@example.com",
+    "User_Password": "StrongPa$$20"
     },
     {
+    "User_Email": "testuser@gmail.com",
     "preferences": {
         "notifications": true,
         "alertLevel": "high",
@@ -27,7 +28,7 @@
     },
     {
     "Incident_Severity": "medium",
-    "Incident_Status": "in-progess-ongoing"
+    "Incident_Status": "ongoing"
     },
     {
     "Alert_IncidentID": 1,
@@ -39,5 +40,32 @@
     },
     {
     "Alert_Status": "sent"
-    }
+    },
+    {
+    "User_Username": "testuser",
+    "User_Password": "password123",
+    "User_Email": ".com",
+    "User_Role": "user",
+    "User_Preferences": "{}"
+    },
+        {
+    "User_Username": "testuser",
+    "User_Password": "password123",
+    "User_Email": "testuser",
+    "User_Role": "user",
+    "User_Preferences": "{}"
+    },
+    {
+    "location": "Hatfield",
+    "incidents": [
+      { "properties": { "magnitudeOfDelay": 4, "iconCategory": "Accident" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 2, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 5, "iconCategory": "Accident" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 1, "iconCategory": "Rain" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 4, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 6, "iconCategory": "Road works" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 2, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 7, "iconCategory": "Accident" }, "geometry": {} }
+    ]
+  }
 ]

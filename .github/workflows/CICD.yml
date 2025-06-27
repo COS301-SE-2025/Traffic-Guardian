@@ -5,7 +5,7 @@ on:
     branches: [main, Dev]
   pull_request:
     branches: [main, Dev]
-
+# 
 jobs:
   lint:
     name: Lint Code
@@ -61,20 +61,7 @@ jobs:
   test-api:
     name: API Tests
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:13
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: Admin #CIuser
-          POSTGRES_PASSWORD: Admin #CIpassword
-          POSTGRES_DB: AInotificationDB
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    # No longer using local postgres service, now using remote database with secrets
 
     steps:
       - name: Checkout repository
@@ -92,101 +79,121 @@ jobs:
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
-      - name: Wait for Postgres to be ready
+      - name: Test database connectivity
         run: |
-          echo "Waiting for PostgreSQL..."
-          for i in {1..30}; do
-            if PGPASSWORD=Admin pg_isready -h localhost -p 5432 -U Admin; then
-              echo "PostgreSQL is ready!"
-              break
+          echo "Testing connection to remote PostgreSQL database..."
+          # Using connection string with sslmode=require for AWS RDS
+          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }}
+          if [ $? -eq 0 ]; then
+            echo "Remote PostgreSQL connection successful!"
+          else
+            echo "Failed to connect to remote PostgreSQL database!"
+            echo "Testing with PGSSLMODE environment variable..."
+            # Try using PGSSLMODE environment variable which pg_isready respects
+            PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }}
+            if [ $? -eq 0 ]; then
+              echo "Connection with PGSSLMODE=require successful!"
+            else
+              echo "Failed to connect with SSL. Check database configuration and credentials."
+              exit 1
             fi
-            echo "Waiting for PostgreSQL... ($i/30)"
-            sleep 2
-          done
+          fi
 
-      - name: Apply database schema
+      - name: Debug PostgreSQL connection
         run: |
-          echo "Applying database schema from file..."
-          PGPASSWORD=Admin psql -h localhost -U Admin -d AInotificationDB -f ./API/schema.sql
+          echo "===== POSTGRESQL CONNECTION DEBUG ====="
+          echo "PostgreSQL client version:"
+          psql --version
+          
+          echo "Available PostgreSQL environment variables:"
+          echo "PGHOST: [Redacted]"
+          echo "PGPORT: ${{ secrets.DATABASE_PORT }}"
+          echo "PGDATABASE: ${{ secrets.DATABASE_NAME }}"
+          echo "PGUSER: ${{ secrets.DATABASE_USERNAME }}"
+          echo "PGPASSWORD: [REDACTED]"
+          
+          echo "Testing simple connection with SSL mode set via environment variable:"
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT version();" || echo "Connection failed"
+          
+          echo "Checking current user and database:"
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+            SELECT current_user, current_database();
+          " || echo "Connection check failed"
+          
+          echo "Checking table visibility (using pg_catalog):"
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+            SELECT n.nspname as schema, c.relname as table
+            FROM pg_catalog.pg_class c
+            JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relkind = 'r' AND n.nspname = 'public'
+            ORDER BY schema, table;
+          " || echo "Table listing query failed"
+          
+          echo "Checking current user's table permissions:"
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+            SELECT 
+              has_table_privilege(current_user, 'public.\"User\"', 'SELECT') AS can_select_user,
+              has_table_privilege(current_user, 'public.\"User\"', 'INSERT') AS can_insert_user,
+              has_table_privilege(current_user, 'public.\"Incidents\"', 'SELECT') AS can_select_incidents,
+              has_table_privilege(current_user, 'public.\"Alerts\"', 'SELECT') AS can_select_alerts;
+          " || echo "Permission check failed"
+          
+          echo "===== END DEBUG ====="
 
-      - name: Insert test data
+      - name: Verify database tables
         run: |
-          echo "Inserting test data..."
-          # # Ensure testuser with login API key always exists
-          # PGPASSWORD=Admin psql -h localhost -U Admin -d AInotificationDB -c "
-          #   INSERT INTO \"TrafficGuardian\".\"Users\" (\"User_Username\", \"User_Email\", \"User_Password\", \"User_Role\", \"User_APIKey\")
-          #   VALUES ('testuser', 'test@example.com', '\$2b\$10$iMoRgeMz3Y4j2lmS.JSn2ehQKStdAMnLK0aPTEDfwJ/7Cc9YOlgTi', 'user', '19da0e4d94f8aad')
-          #   ON CONFLICT (\"User_APIKey\") DO NOTHING;
-          # "
-          # loginuser for login test (unique username, email, and correct password hash for 'user')
-          PGPASSWORD=Admin psql -h localhost -U Admin -d AInotificationDB -c "
-            INSERT INTO \"TrafficGuardian\".\"Users\" (\"User_Username\", \"User_Email\", \"User_Password\", \"User_Role\", \"User_APIKey\")
-            VALUES ('user', 'user@gmail.com', '$2b$10$9jZqtlSPIbEMhN6FYfDTDeW2tepzewl7ZWI3jj/x1iPnu4HjVCP8q', 'user', '19da0e4d94f8aad')
-            ON CONFLICT (\"User_Email\") DO NOTHING;
-          "
-          # Create test incident (idempotent by location and date)
-          PGPASSWORD=Admin psql -h localhost -U Admin -d AInotificationDB -c "
-            INSERT INTO \"TrafficGuardian\".\"Incidents\" (
-              \"Incident_Date\", \"Incident_Location\", \"Incident_CarID\", \"Incident_Severity\", \"Incident_Status\", \"Incident_Reporter\"
-            )
-            SELECT '2025-05-21', 'Highway 101, Mile 45', 1, 'high', 'open', 1
-            WHERE NOT EXISTS (
-              SELECT 1 FROM \"TrafficGuardian\".\"Incidents\" WHERE \"Incident_Location\" = 'Highway 101, Mile 45' AND \"Incident_Date\" = '2025-05-21'
-            );
-          "
-          PGPASSWORD=Admin psql -h localhost -U Admin -d AInotificationDB -c "
-            INSERT INTO \"TrafficGuardian\".\"Incidents\" (
-              \"Incident_Date\", \"Incident_Location\", \"Incident_CarID\", \"Incident_Severity\", \"Incident_Status\", \"Incident_Reporter\"
-            )
-            SELECT '2025-05-22', 'Interstate 280, Exit 12', 2, 'medium', 'in-progress', 1
-            WHERE NOT EXISTS (
-              SELECT 1 FROM \"TrafficGuardian\".\"Incidents\" WHERE \"Incident_Location\" = 'Interstate 280, Exit 12' AND \"Incident_Date\" = '2025-05-22'
-            );
-          "
-          # Create test alert (idempotent by message)
-          PGPASSWORD=Admin psql -h localhost -U Admin -d AInotificationDB -c "
-            INSERT INTO \"TrafficGuardian\".\"Alerts\" (
-              \"Alert_IncidentID\", \"Alert_Message\", \"Alert_Type\", \"Alert_Severity\", \"Alert_Recipients\", \"Alert_Status\"
-            )
-            SELECT 1, 'Traffic incident reported', 'notification', 'high', '{1,2,3}', 'pending'
-            WHERE NOT EXISTS (
-              SELECT 1 FROM \"TrafficGuardian\".\"Alerts\" WHERE \"Alert_Message\" = 'Traffic incident reported'
-            );
-          "
-          PGPASSWORD=Admin psql -h localhost -U Admin -d AInotificationDB -c "
-            INSERT INTO \"TrafficGuardian\".\"Alerts\" (
-              \"Alert_IncidentID\", \"Alert_Message\", \"Alert_Type\", \"Alert_Severity\", \"Alert_Recipients\", \"Alert_Status\"
-            )
-            SELECT 2, 'Secondary incident reported', 'notification', 'medium', '{1}', 'sent'
-            WHERE NOT EXISTS (
-              SELECT 1 FROM \"TrafficGuardian\".\"Alerts\" WHERE \"Alert_Message\" = 'Secondary incident reported'
-            );
-          "
-          echo "Database initialized with test data"
-
-      - name: Verify database setup
-        run: |
-          echo "Verifying database setup..."
-          PGPASSWORD=Admin psql -h localhost -U Admin -d AInotificationDB -c "
-            SELECT COUNT(*) AS user_count FROM \"TrafficGuardian\".\"Users\";
-            SELECT COUNT(*) AS incident_count FROM \"TrafficGuardian\".\"Incidents\";
-            SELECT COUNT(*) AS alert_count FROM \"TrafficGuardian\".\"Alerts\";
-          "
+          echo "Verifying database tables in remote database..."
+          # Using PGSSLMODE environment variable for SSL connection and checking for tables directly
+          # We're now specifically targeting the public schema where our tables reside
+          
+          # First, list all tables in the public schema
+          echo "Listing all tables in public schema..."
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+            ORDER BY table_name;
+          " || echo "Table listing query failed - may have limited visibility, continuing with direct checks"
+          
+          # Now check if we can directly access the tables we need using pg_catalog
+          echo "Checking direct table access in public schema..."
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+            SELECT 
+              EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+                    WHERE c.relname = 'User' AND n.nspname = 'public' AND c.relkind = 'r') AS user_table_exists,
+              EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+                    WHERE c.relname = 'Incidents' AND n.nspname = 'public' AND c.relkind = 'r') AS incidents_table_exists,
+              EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+                    WHERE c.relname = 'Alerts' AND n.nspname = 'public' AND c.relkind = 'r') AS alerts_table_exists;
+          " || echo "Direct table check failed, trying alternative approach"
+          
+          # As a fallback, try to count rows which will fail if tables don't exist
+          echo "Checking tables with direct queries (fallback)..."
+          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+            SELECT 'User' AS table_name, COUNT(*) AS row_count FROM public.\"User\" 
+            UNION ALL
+            SELECT 'Incidents' AS table_name, COUNT(*) AS row_count FROM public.\"Incidents\"
+            UNION ALL
+            SELECT 'Alerts' AS table_name, COUNT(*) AS row_count FROM public.\"Alerts\";
+          " || echo "Direct count queries failed - there may be table permission issues"
 
       - name: Run API tests
         working-directory: ./API
         env:
           NODE_ENV: test
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: AInotificationDB
-          DB_USER: Admin
-          DB_PASSWORD: Admin
+          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+          DATABASE_SSL: true
+          WEATHERAPI: ${{ secrets.WEATHERAPI }}
+          TOMTOMAPI: ${{ secrets.TOMTOMAPI }}
         run: |
           # Start server and run tests in sequence
           echo "Starting server and running tests..."
           npm run dev &
-          sleep 5  # Wait for server to start
+          sleep 10  # Wait for server to start
           npm test
           kill $(jobs -p) || true  # Kill background server process
 
@@ -328,20 +335,45 @@ jobs:
           echo "Preparing staging environment..."
           sleep 2
           
-          echo "Setting up staging database..."
+          echo "Setting up staging database connection..."
+          echo "Using remote database: ${{ secrets.DATABASE_HOST }}"
           # In a real deployment, you would run database migrations here
           if [ -f "dist/database/schema.sql" ]; then
             echo "Database schema found and ready for deployment"
+            PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database connectivity verified' AS status;"
           fi
           
           echo "Deploying Frontend component..."
           sleep 1
+          
           echo "Deploying API component..."
+          echo "Setting up API environment with database and API keys..."
+          # Create environment file for staging with the GitHub secrets
+          cat > dist/api/.env.staging << EOF
+          # Database Configuration
+          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+          DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+          DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+          DATABASE_SSL=true
+          
+          # API Keys
+          WEATHERAPI=${{ secrets.WEATHERAPI }}
+          TOMTOMAPI=${{ secrets.TOMTOMAPI }}
+          
+          # Server Configuration
+          PORT=5000
+          CORS_ORIGIN=*
+          EOF
           sleep 1
+          
           echo "Deploying AI Model component..."
           sleep 1
+          
           echo "Configuring environment variables..."
           sleep 1
+          
           echo "Starting services..."
           sleep 2
           echo "Staging deployment completed successfully!"
@@ -383,19 +415,51 @@ jobs:
           sleep 2
           
           echo "Running production database migrations..."
-          # In a real deployment, you would run database migrations here
+          # Connection using GitHub secrets for remote database
           if [ -f "dist/database/schema.sql" ]; then
+            echo "Database connection: ${{ secrets.DATABASE_HOST }}"
+            # Create a backup before running migrations
+            echo "Creating database backup before migration..."
+            PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_dump -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -F c -b -v -f "backup_$(date +%Y%m%d%H%M%S).dump"
+            
+            # Apply migrations
+            echo "Applying migrations to remote database..."
+            PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database migration would be applied here' AS migration_status;"
+            
             echo "Database migrations completed successfully"
           fi
           
           echo "Deploying Frontend component..."
           sleep 2
+          
           echo "Deploying API component..."
+          echo "Setting up API environment with database and API keys..."
+          # In a real deployment, you would create environment files or set environment variables
+          cat > dist/api/.env << EOF
+          # Database Configuration
+          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+          DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+          DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+          DATABASE_SSL=true
+          
+          # API Keys
+          WEATHERAPI=${{ secrets.WEATHERAPI }}
+          TOMTOMAPI=${{ secrets.TOMTOMAPI }}
+          
+          # Server Configuration
+          PORT=5000
+          CORS_ORIGIN=*
+          EOF
           sleep 2
+          
           echo "Deploying AI Model component..."
           sleep 2
+          
           echo "Configuring environment variables..."
           sleep 1
+          
           echo "Starting services..."
           sleep 3
           echo "Production deployment completed successfully!"

@@ -9,6 +9,9 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const incidentRoutes = require('./routes/incidents');
 const alertRoutes = require('./routes/alerts');
+const trafficRoutes = require('./routes/traffic'); // NEW LINE ADDED
+const archivesRoutes = require('./routes/archives');
+const adminRoutes = require('./routes/admin');
 
 // Create Express application
 const app = express();
@@ -29,6 +32,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/alerts', alertRoutes);
+app.use('/api/traffic', trafficRoutes); // NEW LINE ADDED
+app.use('/api/archives', archivesRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
