@@ -287,3 +287,16 @@ const Dashboard: React.FC = () => {
         type: 'critical'
       });
     });
+
+     newSocket.on('weatherUpdate', (data: WeatherData[]) => {
+      console.log('Received weather update:', data);
+      setWeatherData(data);
+      setWeatherLoading(false);
+      setWeatherLastUpdate(new Date());
+      
+      addNotification({
+        title: 'Weather Updated',
+        message: `Weather data updated for ${data.length} locations`,
+        type: 'info'
+      });
+    });
