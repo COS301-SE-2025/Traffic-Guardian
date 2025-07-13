@@ -463,3 +463,134 @@ const Dashboard: React.FC = () => {
     return weatherData.length > 0 ? weatherData[0] : null;
   };
 
+return (
+    <div className="dashboard" data-cy="dashboard" id="dashboard">
+      <div className="notification-panel" data-cy="notification-panel" role="alert">
+        {notifications.map((notification) => (
+          <div key={notification.id} className={`notification ${notification.type}`} data-cy={`notification-${notification.id}`}>
+            <div className="notification-header" data-cy="notification-header">
+              <div className="notification-title" data-cy="notification-title">{notification.title}</div>
+              <button 
+                className="notification-close"
+                onClick={() => removeNotification(notification.id)}
+                data-cy="notification-close"
+                aria-label="Close notification"
+              >
+                ×
+              </button>
+            </div>
+            <div className="notification-content" data-cy="notification-content">{notification.message}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="dashboard-header" data-cy="dashboard-header" id="dashboard-header">
+        <div className="dashboard-title" data-cy="dashboard-title">
+          <div>
+            <h2 data-cy="dashboard-main-title">Traffic Guardian Dashboard</h2>
+            <div className="dashboard-subtitle" data-cy="dashboard-subtitle">Real-time traffic incident monitoring system</div>
+          </div>
+          <div className="system-status" data-cy="system-status">
+            <div className="status-indicator" data-cy="status-indicator">
+              <div className={`status-dot ${getSystemHealthStatus().class}`} data-cy="status-dot"></div>
+              {getSystemHealthStatus().text}
+            </div>
+          </div>
+        </div>
+        <div className="dashboard-header-right" data-cy="dashboard-header-right">
+          <div className="header-weather" data-cy="header-weather">
+            {weatherLoading ? (
+              <div className="weather-loading" data-cy="weather-loading">
+                <div className="loading-spinner small" data-cy="weather-loading-spinner"></div>
+                <span>Loading weather...</span>
+              </div>
+            ) : getPrimaryWeather() ? (
+              <div className="weather-summary" data-cy="weather-summary">
+                <div className="weather-icon" data-cy="weather-icon">
+                  <WeatherIcon 
+                    condition={getPrimaryWeather()!.current.condition.text} 
+                    isDay={getPrimaryWeather()!.current.is_day === 1} 
+                  />
+                </div>
+                <div className="weather-info" data-cy="weather-info">
+                  <div className="weather-temp" data-cy="weather-temp">
+                    {Math.round(getPrimaryWeather()!.current.temp_c)}°C
+                  </div>
+                  <div className="weather-location" data-cy="weather-location">
+                    {getPrimaryWeather()!.location.name}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="weather-error" data-cy="weather-error">
+                <span>Weather unavailable</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="dashboard-time" data-cy="dashboard-time">
+            <div className="dashboard-time-label" data-cy="dashboard-time-label">Current Time</div>
+            <div className="dashboard-time-value" data-cy="dashboard-time-value">{formatTime(currentTime)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="dashboard-content" data-cy="dashboard-content">
+        {loading && (
+          <div className="loading-overlay" data-cy="loading-overlay" aria-busy="true">
+            <div className="loading-spinner" data-cy="loading-spinner"></div>
+            <div className="loading-text" data-cy="loading-text">Processing request...</div>
+          </div>
+        )}
+
+        <div className="stats-grid" data-cy="stats-grid">
+          <div className="stat-card" data-cy="stat-card-active-incidents">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <AlertTriangleIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Active Incidents</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{stats.activeIncidents}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">Requiring immediate attention</div>
+            <div className="progress-bar" data-cy="progress-bar">
+              <div 
+                className="progress-fill critical" 
+                style={{ width: `${(stats.activeIncidents / 10) * 100}%` }}
+                data-cy="progress-fill"
+              ></div>
+            </div>
+          </div>
+
+          <div className="stat-card" data-cy="stat-card-cameras-online">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <CameraIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Cameras Online</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{stats.camerasOnline}/{stats.totalCameras}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">{Math.round((stats.camerasOnline / stats.totalCameras) * 100)}% operational</div>
+            <div className="progress-bar" data-cy="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${(stats.camerasOnline / stats.totalCameras) * 100}%` }}
+                data-cy="progress-fill"
+              ></div>
+            </div>
+          </div>
+
+          <div className="stat-card" data-cy="stat-card-avg-response-time">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <ClockIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Avg Response Time</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{stats.avgResponseTime}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">Last 24 hours</div>
+          </div>
+
+          <div className="stat-card" data-cy="stat-card-incidents-today">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <TrendingUpIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Today's Incidents</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{stats.incidentsToday}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">vs 12 yesterday</div>
+          </div>
+        </div>
