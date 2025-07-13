@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
+import React, { useState, useEffect, useCallback } from 'react';
+import io from 'socket.io-client';
 import './Dashboard.css';
+
+type SocketType = ReturnType<typeof io>;
 
 const AlertTriangleIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-cy="alert-triangle-icon">
@@ -135,6 +137,16 @@ interface WeatherData {
   current: CurrentWeather;
 }
 
+interface SocketError {
+  message: string;
+  type?: string;
+  description?: string;
+}
+
+interface TrafficData {
+  [key: string]: any; // Generic for now, can be made more specific based on actual traffic data structure
+}
+
 interface Incident {
   id: number;
   type: string;
@@ -191,7 +203,6 @@ const Dashboard: React.FC = () => {
   const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherLastUpdate, setWeatherLastUpdate] = useState<Date | null>(null);
-  const [socket, setSocket] = useState<Socket | null>(null);
   
   const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
     {
@@ -250,6 +261,20 @@ const Dashboard: React.FC = () => {
     systemHealth: 'healthy',
   });
 
+  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: Date.now(),
+      timestamp: new Date()
+    };
+    setNotifications(prev => [...prev, newNotification]);
+    
+    // Auto-remove notification after 5 seconds
+    setTimeout(() => {
+      removeNotification(newNotification.id);
+    }, 5000);
+  }, []);
+
   useEffect(() => {
     const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
     
@@ -258,8 +283,6 @@ const Dashboard: React.FC = () => {
       transports: ['websocket', 'polling'],
       timeout: 20000,
     });
-
-    setSocket(newSocket);
 
     newSocket.on('connect', () => {
       console.log('Connected to Socket.IO server with ID:', newSocket.id);
@@ -279,7 +302,7 @@ const Dashboard: React.FC = () => {
       });
     });
 
-    newSocket.on('connect_error', (error) => {
+    newSocket.on('connect_error', (error: SocketError) => {
       console.error('Socket.IO connection error:', error);
       addNotification({
         title: 'Connection Error',
@@ -288,7 +311,7 @@ const Dashboard: React.FC = () => {
       });
     });
 
-     newSocket.on('weatherUpdate', (data: WeatherData[]) => {
+    newSocket.on('weatherUpdate', (data: WeatherData[]) => {
       console.log('Received weather update:', data);
       setWeatherData(data);
       setWeatherLoading(false);
@@ -301,11 +324,11 @@ const Dashboard: React.FC = () => {
       });
     });
 
-    newSocket.on('trafficUpdate', (data) => {
+    newSocket.on('trafficUpdate', (data: TrafficData) => {
       console.log('Received traffic update:', data);
     });
 
-    newSocket.on('criticalIncidents', (data) => {
+    newSocket.on('criticalIncidents', (data: TrafficData) => {
       console.log('Received critical incidents:', data);
     });
 
@@ -313,7 +336,7 @@ const Dashboard: React.FC = () => {
       console.log('Cleaning up Socket.IO connection');
       newSocket.close();
     };
-  }, []);
+  }, [addNotification]); 
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -348,20 +371,6 @@ const Dashboard: React.FC = () => {
 
   const getStatusClass = (status: string) => {
     return status.toLowerCase();
-  };
-
-  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: Date.now(),
-      timestamp: new Date()
-    };
-    setNotifications(prev => [...prev, newNotification]);
-    
-    // Auto-remove notification after 5 seconds
-    setTimeout(() => {
-      removeNotification(newNotification.id);
-    }, 5000);
   };
 
   const removeNotification = (id: number) => {
@@ -463,7 +472,7 @@ const Dashboard: React.FC = () => {
     return weatherData.length > 0 ? weatherData[0] : null;
   };
 
-return (
+  return (
     <div className="dashboard" data-cy="dashboard" id="dashboard">
       <div className="notification-panel" data-cy="notification-panel" role="alert">
         {notifications.map((notification) => (
@@ -595,7 +604,7 @@ return (
           </div>
         </div>
 
-         <div className="weather-section" data-cy="weather-section" id="weather-section">
+        <div className="weather-section" data-cy="weather-section" id="weather-section">
           <div className="weather-header" data-cy="weather-header">
             <h3 data-cy="weather-title">Weather Conditions</h3>
             {weatherLastUpdate && (
