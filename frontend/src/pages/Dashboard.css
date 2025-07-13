@@ -442,3 +442,11 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
 }
+
+.weather-card {
+  background-color: var(--weather-card-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid var(--weather-card-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
