@@ -30,6 +30,7 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "autocannon": "^8.0.0",
     "axios": "^1.9.0",
     "jest": "^29.7.0",
     "nodemon": "^2.0.22",

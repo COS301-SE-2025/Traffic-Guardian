@@ -102,14 +102,24 @@ const incidentController = {
         return res.status(400).json({ error: 'Invalid longitude format' });
       }
       
-      const updatedIncident = await incidentModel.updateIncident(Incidents_ID, {
-        Incidents_DateTime,
-        Incidents_Longitude: Incidents_Longitude ? parseFloat(Incidents_Longitude) : null,
-        Incidents_Latitude: Incidents_Latitude ? parseFloat(Incidents_Latitude) : null,
-        Incident_Severity,
-        Incident_Status,
-        Incident_Reporter
-      });
+      // Make sure we're only sending valid data (not undefined or null)
+      const updateData = {
+        Incidents_DateTime: Incidents_DateTime || undefined,
+        Incident_Severity: Incident_Severity || undefined,
+        Incident_Status: Incident_Status || undefined,
+        Incident_Reporter: Incident_Reporter || undefined
+      };
+
+      // Only add coordinates if they exist and can be parsed
+      if (Incidents_Longitude && !isNaN(parseFloat(Incidents_Longitude))) {
+        updateData.Incidents_Longitude = parseFloat(Incidents_Longitude);
+      }
+      
+      if (Incidents_Latitude && !isNaN(parseFloat(Incidents_Latitude))) {
+        updateData.Incidents_Latitude = parseFloat(Incidents_Latitude);
+      }
+      
+      const updatedIncident = await incidentModel.updateIncident(Incidents_ID, updateData);
       
       return res.status(200).json({
         message: 'Incident updated successfully',
