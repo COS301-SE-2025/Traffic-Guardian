@@ -314,3 +314,152 @@ const Dashboard: React.FC = () => {
       newSocket.close();
     };
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const updateTimer = setInterval(() => {
+      setLastUpdate(new Date());
+      const healthStates: ('healthy' | 'warning' | 'error')[] = ['healthy', 'healthy', 'healthy', 'warning'];
+      const randomHealth = healthStates[Math.floor(Math.random() * healthStates.length)];
+      setStats(prev => ({ ...prev, systemHealth: randomHealth }));
+    }, 30000); // Update every 30 seconds
+    
+    return () => clearInterval(updateTimer);
+  }, []);
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-ZA', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+
+  const getSeverityClass = (severity: string) => {
+    return severity.toLowerCase();
+  };
+
+  const getStatusClass = (status: string) => {
+    return status.toLowerCase();
+  };
+
+  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: Date.now(),
+      timestamp: new Date()
+    };
+    setNotifications(prev => [...prev, newNotification]);
+    
+    // Auto-remove notification after 5 seconds
+    setTimeout(() => {
+      removeNotification(newNotification.id);
+    }, 5000);
+  };
+
+  const removeNotification = (id: number) => {
+    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  };
+
+  const handleIncidentAction = async (incidentId: number, action: string) => {
+    setLoading(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (action === 'view') {
+        // Fetch detailed incident data
+        const detailedIncident: IncidentDetail = {
+          ...activeIncidents.find(inc => inc.id === incidentId)!,
+          description: 'Multi-vehicle collision involving 3 cars on the southbound lane. Emergency services have been dispatched. Traffic is being diverted via Allandale Road off-ramp.',
+          images: ['incident-photo-1.jpg', 'incident-photo-2.jpg'],
+          responders: ['Paramedic Unit 1', 'Fire Department', 'Traffic Police'],
+          timeline: [
+            { time: '12:13', event: 'Incident detected by AI system' },
+            { time: '12:14', event: 'Emergency services notified' },
+            { time: '12:16', event: 'First responders dispatched' },
+            { time: '12:20', event: 'Traffic diversion implemented' }
+          ]
+        };
+        setSelectedIncident(detailedIncident);
+      } else if (action === 'resolve') {
+        // Update incident status
+        setActiveIncidents(prev => prev.filter(inc => inc.id !== incidentId));
+        setStats(prev => ({ ...prev, activeIncidents: prev.activeIncidents - 1 }));
+        
+        addNotification({
+          title: 'Incident Resolved',
+          message: `Incident #${incidentId} has been marked as resolved.`,
+          type: 'success'
+        });
+      }
+    } catch (error) {
+      addNotification({
+        title: 'Error',
+        message: 'Failed to process incident action. Please try again.',
+        type: 'critical'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'live-feed':
+        addNotification({
+          title: 'Live Feed',
+          message: 'Opening live camera feeds...',
+          type: 'info'
+        });
+        break;
+      case 'report-incident':
+        addNotification({
+          title: 'Report Incident',
+          message: 'Opening incident reporting form...',
+          type: 'info'
+        });
+        break;
+      case 'analytics':
+        addNotification({
+          title: 'Analytics',
+          message: 'Loading traffic analytics dashboard...',
+          type: 'info'
+        });
+        break;
+      case 'archive':
+        addNotification({
+          title: 'Archive',
+          message: 'Opening incident archive...',
+          type: 'info'
+        });
+        break;
+    }
+  };
+
+  const getSystemHealthStatus = () => {
+    switch (stats.systemHealth) {
+      case 'healthy':
+        return { text: 'All Systems Operational', class: 'healthy' };
+      case 'warning':
+        return { text: 'Minor Issues Detected', class: 'warning' };
+      case 'error':
+        return { text: 'System Errors Present', class: 'error' };
+      default:
+        return { text: 'Status Unknown', class: 'error' };
+    }
+  };
+
+  // Get primary weather location (first in the array, usually Johannesburg)
+  const getPrimaryWeather = (): WeatherData | null => {
+    return weatherData.length > 0 ? weatherData[0] : null;
+  };
+
