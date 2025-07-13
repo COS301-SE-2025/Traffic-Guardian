@@ -594,3 +594,339 @@ return (
             <div className="stat-card-subtitle" data-cy="stat-card-subtitle">vs 12 yesterday</div>
           </div>
         </div>
+
+         <div className="weather-section" data-cy="weather-section" id="weather-section">
+          <div className="weather-header" data-cy="weather-header">
+            <h3 data-cy="weather-title">Weather Conditions</h3>
+            {weatherLastUpdate && (
+              <div className="weather-last-update" data-cy="weather-last-update">
+                Last updated: {formatTime(weatherLastUpdate)}
+              </div>
+            )}
+          </div>
+          
+          {weatherLoading ? (
+            <div className="weather-loading-section" data-cy="weather-loading-section">
+              <div className="loading-spinner" data-cy="weather-section-spinner"></div>
+              <div className="loading-text" data-cy="weather-section-loading-text">Loading weather data...</div>
+            </div>
+          ) : weatherData.length > 0 ? (
+            <div className="weather-grid" data-cy="weather-grid">
+              {weatherData.map((weather, index) => (
+                <div key={index} className="weather-card" data-cy={`weather-card-${index}`}>
+                  <div className="weather-card-header" data-cy="weather-card-header">
+                    <div className="weather-location-name" data-cy="weather-location-name">
+                      {weather.location.name}
+                    </div>
+                    <div className="weather-icon-large" data-cy="weather-icon-large">
+                      <WeatherIcon 
+                        condition={weather.current.condition.text} 
+                        isDay={weather.current.is_day === 1} 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="weather-main-temp" data-cy="weather-main-temp">
+                    {Math.round(weather.current.temp_c)}°C
+                  </div>
+                  
+                  <div className="weather-condition" data-cy="weather-condition">
+                    {weather.current.condition.text}
+                  </div>
+                  
+                  <div className="weather-details" data-cy="weather-details">
+                    <div className="weather-detail-item" data-cy="weather-detail-humidity">
+                      <span className="weather-detail-label">Humidity</span>
+                      <span className="weather-detail-value">{weather.current.humidity}%</span>
+                    </div>
+                    <div className="weather-detail-item" data-cy="weather-detail-wind">
+                      <span className="weather-detail-label">Wind</span>
+                      <span className="weather-detail-value">{weather.current.wind_kph} km/h {weather.current.wind_dir}</span>
+                    </div>
+                    <div className="weather-detail-item" data-cy="weather-detail-pressure">
+                      <span className="weather-detail-label">Pressure</span>
+                      <span className="weather-detail-value">{weather.current.pressure_mb} mb</span>
+                    </div>
+                    <div className="weather-detail-item" data-cy="weather-detail-visibility">
+                      <span className="weather-detail-label">Visibility</span>
+                      <span className="weather-detail-value">{weather.current.vis_km} km</span>
+                    </div>
+                  </div>
+                  
+                  <div className="weather-update-time" data-cy="weather-update-time">
+                    Updated: {weather.current.last_updated}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="weather-error-section" data-cy="weather-error-section">
+              <div className="weather-error-message" data-cy="weather-error-message">
+                Unable to load weather data. Please check your connection.
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="dashboard-main-grid" data-cy="dashboard-main-grid">
+          <div className="incidents-section" data-cy="incidents-section" id="incidents-section">
+            <div className="incidents-header" data-cy="incidents-header">
+              <h3 data-cy="incidents-title">Active Incidents</h3>
+              <div className="incidents-badge" data-cy="incidents-badge">{stats.activeIncidents} Active</div>
+            </div>
+            <div className="incidents-list" data-cy="incidents-list">
+              {activeIncidents.map((incident) => (
+                <div key={incident.id} className={`incident-item ${getSeverityClass(incident.severity)}`} data-cy={`incident-item-${incident.id}`}>
+                  <div className="incident-header" data-cy="incident-header">
+                    <div className="incident-type" data-cy="incident-type">
+                      <AlertTriangleIcon />
+                      {incident.type}
+                    </div>
+                    <div className={`severity-badge ${getSeverityClass(incident.severity)}`} data-cy="severity-badge">
+                      {incident.severity}
+                    </div>
+                  </div>
+                  
+                  <div className="incident-details" data-cy="incident-details">
+                    <div className="incident-detail" data-cy="incident-detail-location">
+                      <MapPinIcon />
+                      {incident.location}
+                    </div>
+                    <div className="incident-detail" data-cy="incident-detail-camera">
+                      <CameraIcon />
+                      {incident.camera}
+                    </div>
+                    <div className="incident-detail" data-cy="incident-detail-time">
+                      <ClockIcon />
+                      Started at {incident.time} ({incident.duration})
+                    </div>
+                  </div>
+
+                  <div className="incident-metadata" data-cy="incident-metadata">
+                    <div className="metadata-item" data-cy="metadata-status">
+                      <div className="metadata-label">Status</div>
+                      <div className={`status-badge ${getStatusClass(incident.status)}`} data-cy="metadata-value-status">{incident.status}</div>
+                    </div>
+                    <div className="metadata-item" data-cy="metadata-reported-by">
+                      <div className="metadata-label">Reported By</div>
+                      <div className="metadata-value">{incident.reportedBy}</div>
+                    </div>
+                    <div className="metadata-item" data-cy="metadata-assigned-to">
+                      <div className="metadata-label">Assigned To</div>
+                      <div className="metadata-value">{incident.assignedTo}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="incident-actions" data-cy="incident-actions">
+                    <button 
+                      className="incident-action"
+                      onClick={() => handleIncidentAction(incident.id, 'view')}
+                      disabled={loading}
+                      data-cy="incident-action-view"
+                      aria-busy={loading}
+                      aria-label={`View details for incident ${incident.id}`}
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      className="incident-action"
+                      onClick={() => handleIncidentAction(incident.id, 'resolve')}
+                      disabled={loading}
+                      data-cy="incident-action-resolve"
+                      aria-busy={loading}
+                      aria-label={`Mark incident ${incident.id} as resolved`}
+                    >
+                      Mark Resolved
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="last-updated" data-cy="last-updated-incidents">
+              <div className="update-indicator" data-cy="update-indicator"></div>
+              Last updated: {formatTime(lastUpdate)}
+            </div>
+          </div>
+
+          <div className="camera-section" data-cy="camera-section" id="camera-section">
+            <div className="camera-header" data-cy="camera-header">
+              <h3 data-cy="camera-title">Camera Status</h3>
+            </div>
+            <div className="camera-list" data-cy="camera-list">
+              {cameraFeeds.map((camera) => (
+                <div key={camera.id} className="camera-item" data-cy={`camera-item-${camera.id}`}>
+                  <div className="camera-info" data-cy="camera-info">
+                    <div className={`camera-status-dot ${camera.status.toLowerCase()}`} data-cy="camera-status-dot"></div>
+                    <div className="camera-details" data-cy="camera-details">
+                      <h4 data-cy="camera-name">{camera.name}</h4>
+                      <p data-cy="camera-id">{camera.id}</p>
+                    </div>
+                  </div>
+                  <div className="camera-status" data-cy="camera-status">
+                    <div className={`camera-status-text ${camera.status.toLowerCase()}`} data-cy="camera-status-text">
+                      {camera.status}
+                    </div>
+                    {camera.incidents > 0 && (
+                      <div className="camera-incidents" data-cy="camera-incidents">
+                        {camera.incidents} incident{camera.incidents > 1 ? 's' : ''}
+                      </div>
+                    )}
+                    <div style={{ color: 'var(--form-help-text)', fontSize: '0.7rem', marginTop: '0.25rem' }} data-cy="camera-last-update">
+                      Last: {camera.lastUpdate}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="last-updated" data-cy="last-updated-cameras">
+              <div className="update-indicator" data-cy="update-indicator"></div>
+              Feeds updating live
+            </div>
+          </div>
+        </div>
+
+        <div className="quick-actions" data-cy="quick-actions" id="quick-actions">
+          <h3 data-cy="quick-actions-title">Quick Actions</h3>
+          <div className="actions-grid" data-cy="actions-grid">
+            <button 
+              className="action-button" 
+              onClick={() => handleQuickAction('live-feed')}
+              data-cy="action-button-live-feed"
+              aria-label="Open live camera feeds"
+            >
+              <EyeIcon />
+              <span>Live Feed</span>
+            </button>
+            <button 
+              className="action-button" 
+              onClick={() => handleQuickAction('report-incident')}
+              data-cy="action-button-report-incident"
+              aria-label="Report a new incident"
+            >
+              <AlertTriangleIcon />
+              <span>Report Incident</span>
+            </button>
+            <button 
+              className="action-button" 
+              onClick={() => handleQuickAction('analytics')}
+              data-cy="action-button-analytics"
+              aria-label="View traffic analytics"
+            >
+              <ActivityIcon />
+              <span>Analytics</span>
+            </button>
+            <button 
+              className="action-button" 
+              onClick={() => handleQuickAction('archive')}
+              data-cy="action-button-archive"
+              aria-label="View incident archive"
+            >
+              <UsersIcon />
+              <span>Archive</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {selectedIncident && (
+        <div className="modal-overlay" data-cy="modal-overlay" role="dialog" aria-labelledby="modal-title" onClick={() => setSelectedIncident(null)}>
+          <div className="modal-content" data-cy="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header" data-cy="modal-header">
+              <h3 className="modal-title" data-cy="modal-title" id="modal-title">Incident Details - #{selectedIncident.id}</h3>
+              <button 
+                className="modal-close" 
+                onClick={() => setSelectedIncident(null)}
+                data-cy="modal-close"
+                aria-label="Close incident details modal"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body" data-cy="modal-body">
+              <div className="incident-metadata" data-cy="modal-incident-metadata">
+                <div className="metadata-item" data-cy="modal-metadata-type">
+                  <div className="metadata-label">Type</div>
+                  <div className="metadata-value">{selectedIncident.type}</div>
+                </div>
+                <div className="metadata-item" data-cy="modal-metadata-severity">
+                  <div className="metadata-label">Severity</div>
+                  <div className={`severity-badge ${getSeverityClass(selectedIncident.severity)}`}>{selectedIncident.severity}</div>
+                </div>
+                <div className="metadata-item" data-cy="modal-metadata-status">
+                  <div className="metadata-label">Status</div>
+                  <div className={`status-badge ${getStatusClass(selectedIncident.status)}`}>{selectedIncident.status}</div>
+                </div>
+                <div className="metadata-item" data-cy="modal-metadata-duration">
+                  <div className="metadata-label">Duration</div>
+                  <div className="metadata-value">{selectedIncident.duration}</div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1.5rem' }} data-cy="modal-location">
+                <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-location-title">Location</h4>
+                <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} data-cy="modal-location-content">
+                  <MapPinIcon />
+                  {selectedIncident.location}
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '1.5rem' }} data-cy="modal-description">
+                <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-description-title">Description</h4>
+                <p data-cy="modal-description-content">{selectedIncident.description}</p>
+              </div>
+
+              {selectedIncident.responders && (
+                <div style={{ marginBottom: '1.5rem' }} data-cy="modal-responders">
+                  <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-responders-title">Response Teams</h4>
+                  <ul style={{ listStyle: 'none', padding: 0 }} data-cy="modal-responders-list">
+                    {selectedIncident.responders.map((responder, index) => (
+                      <li 
+                        key={index} 
+                        style={{ 
+                          padding: '0.5rem', 
+                          backgroundColor: 'var(--uploaded-file-bg)', 
+                          borderRadius: '4px',
+                          marginBottom: '0.25rem'
+                        }}
+                        data-cy={`modal-responder-${index}`}
+                      >
+                        {responder}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {selectedIncident.timeline && (
+                <div data-cy="modal-timeline">
+                  <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-timeline-title">Timeline</h4>
+                  <div style={{ borderLeft: '2px solid var(--form-section-title)', paddingLeft: '1rem' }} data-cy="modal-timeline-content">
+                    {selectedIncident.timeline.map((event, index) => (
+                      <div key={index} style={{ marginBottom: '1rem', position: 'relative' }} data-cy={`modal-timeline-event-${index}`}>
+                        <div style={{ 
+                          position: 'absolute', 
+                          left: '-1.5rem', 
+                          top: '0.25rem',
+                          width: '8px', 
+                          height: '8px', 
+                          backgroundColor: 'var(--form-section-title)', 
+                          borderRadius: '50%' 
+                        }} data-cy="timeline-indicator"></div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--form-help-text)', marginBottom: '0.25rem' }} data-cy="timeline-time">
+                          {event.time}
+                        </div>
+                        <div data-cy="timeline-event">{event.event}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Dashboard;
