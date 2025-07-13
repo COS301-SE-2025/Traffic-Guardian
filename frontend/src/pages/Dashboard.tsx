@@ -261,4 +261,20 @@ const Dashboard: React.FC = () => {
 
     setSocket(newSocket);
 
-    
+    newSocket.on('connect', () => {
+      console.log('Connected to Socket.IO server with ID:', newSocket.id);
+      addNotification({
+        title: 'Connected',
+        message: 'Real-time data connection established',
+        type: 'success'
+      });
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('Disconnected from Socket.IO server');
+      addNotification({
+        title: 'Disconnected',
+        message: 'Real-time data connection lost',
+        type: 'warning'
+      });
+    });
