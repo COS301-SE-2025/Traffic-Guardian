@@ -250,4 +250,15 @@ const Dashboard: React.FC = () => {
     systemHealth: 'healthy',
   });
 
-  
+  useEffect(() => {
+    const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+    
+    console.log('Connecting to Socket.IO server at:', SERVER_URL);
+    const newSocket = io(SERVER_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+    });
+
+    setSocket(newSocket);
+
+    
