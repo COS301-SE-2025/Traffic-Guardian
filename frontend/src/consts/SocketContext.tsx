@@ -1,7 +1,10 @@
 // src/contexts/SocketContext.tsx
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { toast } from 'react-toastify';
-import io, { Socket } from 'socket.io-client';
+import io from 'socket.io-client';
+
+// Fix Socket type to avoid TypeScript errors
+type SocketType = ReturnType<typeof io>;
 
 interface ApiIncident {
   Incidents_ID: number;
@@ -20,8 +23,64 @@ interface RealTimeAlert {
   acknowledged: boolean;
 }
 
+// Weather interfaces - ADDED FOR WEATHER INTEGRATION
+interface WeatherCondition {
+  text: string;
+  icon: string;
+  code: number;
+}
+
+interface CurrentWeather {
+  last_updated_epoch: number;
+  last_updated: string;
+  temp_c: number;
+  temp_f: number;
+  is_day: number;
+  condition: WeatherCondition;
+  wind_mph: number;
+  wind_kph: number;
+  wind_degree: number;
+  wind_dir: string;
+  pressure_mb: number;
+  pressure_in: number;
+  precip_mm: number;
+  precip_in: number;
+  humidity: number;
+  cloud: number;
+  feelslike_c: number;
+  feelslike_f: number;
+  windchill_c: number;
+  windchill_f: number;
+  heatindex_c: number;
+  heatindex_f: number;
+  dewpoint_c: number;
+  dewpoint_f: number;
+  vis_km: number;
+  vis_miles: number;
+  uv: number;
+  gust_mph: number;
+  gust_kph: number;
+}
+
+interface WeatherLocation {
+  name: string;
+  region: string;
+  country: string;
+  lat: number;
+  lon: number;
+  tz_id: string;
+  localtime_epoch: number;
+  localtime: string;
+}
+
+interface WeatherData {
+  location: WeatherLocation;
+  current: CurrentWeather;
+}
+
+// Enhanced context type with weather data
 interface SocketContextType {
-  socket: Socket | null;
+  socket: SocketType | null;
   isConnected: boolean;
   realtimeAlerts: RealTimeAlert[];
   unreadAlertCount: number;
@@ -29,6 +88,10 @@ interface SocketContextType {
   clearAllAlerts: () => void;
   markAllAsRead: () => void;
   addNewIncident?: (incident: any) => void;
+  // ADDED FOR WEATHER INTEGRATION
+  weatherData: WeatherData[];
+  weatherLoading: boolean;
+  weatherLastUpdate: Date | null;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -46,11 +109,16 @@ interface SocketProviderProps {
 }
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socket, setSocket] = useState<SocketType | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [realtimeAlerts, setRealtimeAlerts] = useState<RealTimeAlert[]>([]);
   const [unreadAlertCount, setUnreadAlertCount] = useState(0);
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<SocketType | null>(null);
+
+  // ADDED FOR WEATHER INTEGRATION
+  const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [weatherLastUpdate, setWeatherLastUpdate] = useState<Date | null>(null);
 
   // Function to play notification sound
   const playNotificationSound = (severity: string) => {
@@ -156,7 +224,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       console.log('Connected to real-time alerts');
     });
 
-    newSocket.on('disconnect', (reason) => {
+    newSocket.on('disconnect', (reason: string) => {
       console.log('Socket disconnected:', reason);
       setIsConnected(false);
       toast.warn('Disconnected from real-time alerts', {
@@ -165,7 +233,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       });
     });
 
-    newSocket.on('connect_error', (error) => {
+    newSocket.on('connect_error', (error: any) => {
       console.error('Socket connection error:', error);
       setIsConnected(false);
       console.log("failed to connect real-time alerts, trying to reconnect...");
@@ -276,24 +344,42 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       }
     });
 
-    // Other socket event handlers
-    newSocket.on('weatherUpdate', (data) => {
+    // WEATHER EVENT HANDLERS - ADDED FOR WEATHER INTEGRATION
+    newSocket.on('weatherUpdate', (data: WeatherData[]) => {
       console.log('Weather update received:', data);
+      setWeatherData(data);
+      setWeatherLoading(false);
+      setWeatherLastUpdate(new Date());
     });
 
-    newSocket.on('trafficUpdate', (data) => {
+    newSocket.on('weatherAlert', (weatherAlertData: any) => {
+      console.log('Weather alert received:', weatherAlertData);
+      
+      // Show weather alert as toast notification
+      toast.info(`Weather Alert: ${weatherAlertData.message || 'Weather conditions have changed'}`, {
+        position: 'top-right',
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    });
+
+    // Other socket event handlers (unchanged)
+    newSocket.on('trafficUpdate', (data: any) => {
       console.log('Traffic update received:', data);
     });
 
-    newSocket.on('criticalIncidents', (data) => {
+    newSocket.on('criticalIncidents', (data: any) => {
       console.log('Critical incidents update:', data);
     });
 
-    newSocket.on('incidentCategory', (data) => {
+    newSocket.on('incidentCategory', (data: any) => {
       console.log('Incident category update:', data);
     });
 
-    newSocket.on('incidentLocations', (data) => {
+    newSocket.on('incidentLocations', (data: any) => {
       console.log('Incident locations update:', data);
     });
 
@@ -334,6 +420,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     console.log('New incident added locally:', incident);
   };
 
+  // Enhanced context value with weather data
   const value: SocketContextType = {
     socket,
     isConnected,
@@ -343,6 +430,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     clearAllAlerts,
     markAllAsRead,
     addNewIncident,
+    // ADDED FOR WEATHER INTEGRATION
+    weatherData,
+    weatherLoading,
+    weatherLastUpdate,
   };
 
   return (
