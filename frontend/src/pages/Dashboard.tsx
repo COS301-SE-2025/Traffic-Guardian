@@ -300,3 +300,17 @@ const Dashboard: React.FC = () => {
         type: 'info'
       });
     });
+
+    newSocket.on('trafficUpdate', (data) => {
+      console.log('Received traffic update:', data);
+    });
+
+    newSocket.on('criticalIncidents', (data) => {
+      console.log('Received critical incidents:', data);
+    });
+
+    return () => {
+      console.log('Cleaning up Socket.IO connection');
+      newSocket.close();
+    };
+  }, []);
