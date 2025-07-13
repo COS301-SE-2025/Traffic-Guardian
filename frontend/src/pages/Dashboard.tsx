@@ -278,3 +278,12 @@ const Dashboard: React.FC = () => {
         type: 'warning'
       });
     });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('Socket.IO connection error:', error);
+      addNotification({
+        title: 'Connection Error',
+        message: 'Failed to connect to real-time data service',
+        type: 'critical'
+      });
+    });
