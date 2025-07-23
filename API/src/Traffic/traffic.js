@@ -164,13 +164,31 @@ function incidentLocations(incidentsArr){
 
 }
 
+function setRegions(){
+    var res = new Map();
+    for(let i=0; i<regions.length; i++){
+        var lat = regions[i].split(",")[0];
+        var lng = regions[i].split(",")[1];
+        var data = {
+            location : regionNames[i],
+            coordinates : {latitude : lat, longitude : lng},
+            level : 0
+        }
+        res.set(regionNames[i], data);
+    }
+
+    return res;
+}
+
 module.exports = {
     getTraffic,
     criticalIncidents,
     incidentCategory,
     incidentLocations,
     distToLat,
-    distToLong
+    distToLong,
+    setRegions,
+    regions
 }
 
 

@@ -18,9 +18,9 @@ socket.on('welcome', (msg)=>{
     eventLog.appendChild(ev);
 });
 
-var map = L.map('map').setView([51.5, -0.09], 13);
-let carLat = 51.5;
-let carLng = -0.09;
+var map = L.map('map').setView([-25.98, 28.13], 13);
+let carLat = -25.98;
+let carLng = 28.13;
 var car  = L.icon({
     iconUrl : 'car.png',
     iconSize : [38, 38],
@@ -28,7 +28,7 @@ var car  = L.icon({
     popupAnchor:  [-3, -76]
 });
 
-var carMarker = L.marker([51.5, -0.09], {icon : car}).addTo(map);
+var carMarker = L.marker([-25.98, 28.13], {icon : car}).addTo(map);
 
 function mapClick(e){
     const now = new Date();
@@ -177,3 +177,8 @@ const updateLocation = async ()=>{
 
 //updateLocation();
 //setInterval(updateLocation, 5000);
+
+socket.on('new-alert', (data)=>{
+    console.log(data);
+    addEvent(data.description);
+})
