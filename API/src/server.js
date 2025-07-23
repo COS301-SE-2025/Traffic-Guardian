@@ -7,7 +7,6 @@ const FormData = require('form-data');
 const weather = require('../src/Weather/weather');
 const traffic = require('../src/Traffic/traffic');
 const IncidentLocationMapping = require('../src/IncidentLocationMapping/IncidentLocationMapping');
-const incidentModel = require('./models/incident');
 
 const server = http.createServer(app);
 
@@ -26,7 +25,7 @@ const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
 var connectedUsers = new Map();
-var incidents = new Map();
+var regions = traffic.setRegions();
 
 io.on('connection',(socket)=>{
   connectedUsers.set(socket.id, {});
@@ -70,24 +69,13 @@ io.on('connection',(socket)=>{
     //update users location
     socket.on('new-location', async (newLocation)=>{
       connectedUsers.set(socket.id, newLocation);
-      //console.log(connectedUsers);
+      const data = IncidentLocationMapping.notifyUsersTraffic(connectedUsers, regions);
+      console.log(`notified users : ${data.length}`);
+      data.forEach((alert) => {
+        console.log(`Alerting ${alert.userID}`);
+        io.to(alert.userID).emit('new-alert', alert);
+      })
     });
-
-    //new incident dummy
-    socket.on('new-incident-location', (newLocation)=>{
-      incidents.set(new Date().getTime(), newLocation);
-      console.log('Incidents : ');
-      /*incidents.forEach((value, key)=>{
-        console.log(`(${key} : ${JSON.stringify(value)})`);
-      })*/
-    })
-
-    //notify users of incident
-    setInterval(()=>{
-      const data = IncidentLocationMapping.notifyUsers(connectedUsers, incidents);
-      console.log(data);
-    }, 5000);
-
 
 
   io.on('disconnect',()=>{
