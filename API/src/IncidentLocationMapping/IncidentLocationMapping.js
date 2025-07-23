@@ -1,17 +1,14 @@
-async function notifyUsers(connectedUsers){
-    //console.log(`Connected users = ${connectedUsers}`);
-    var res =  "";
-    connectedUsers.forEach(user => {
-        res += user + " ";
+async function notifyUsers(connectedUsers, incidents){
+    connectedUsers.forEach((id, location) => {
+        console.log(`${id} : ${JSON.stringify(location)}`);
     });
-    return `Connected users = ${res}`;
+
+    incidents.forEach((id, location) => {
+        console.log(`${id} : ${JSON.stringify(location)}`);
+    });
 }
 
-async function updateUsersLocation(connectedUsers, newLocation){
-
-}
 
 module.exports = {
-    notifyUsers,
-    updateUsersLocation
+    notifyUsers
 }
