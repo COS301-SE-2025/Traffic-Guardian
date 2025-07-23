@@ -111,8 +111,13 @@ document.addEventListener('keypress',(event)=>{
             break;
     }
 
+    const pos = {
+        latitude : carLat,
+        longitude : carLng
+    };
+    socket.emit('new-location', pos);
     carMarker.setLatLng([carLat, carLng]);
-    hitOrMiss();
+    //hitOrMiss();
 });
 
 function hitOrMiss(){
@@ -150,8 +155,8 @@ const getLocation = ()=>{
     return new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition((position)=>{
             resolve({
-                lat : position.coords.latitude,
-                long : position.coords.longitude
+                latitude : position.coords.latitude,
+                longitude : position.coords.longitude
             });
         },
             (error)=>{
