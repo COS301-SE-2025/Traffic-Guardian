@@ -70,20 +70,23 @@ io.on('connection',(socket)=>{
     //update users location
     socket.on('new-location', async (newLocation)=>{
       connectedUsers.set(socket.id, newLocation);
-      console.log(connectedUsers);
+      //console.log(connectedUsers);
     });
 
     //new incident dummy
     socket.on('new-incident-location', (newLocation)=>{
       incidents.set(new Date().getTime(), newLocation);
       console.log('Incidents : ');
-      incidents.forEach((value, key)=>{
+      /*incidents.forEach((value, key)=>{
         console.log(`(${key} : ${JSON.stringify(value)})`);
-      })
+      })*/
     })
 
     //notify users of incident
-    setInterval(IncidentLocationMapping.notifyUsers(connectedUsers, incidents), 5000);
+    setInterval(()=>{
+      const data = IncidentLocationMapping.notifyUsers(connectedUsers, incidents);
+      console.log(data);
+    }, 5000);
 
 
 
