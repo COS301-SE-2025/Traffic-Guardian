@@ -126,7 +126,7 @@ function hitOrMiss(){
     }
 }
 
-socket.on('trafficUpdate',(data)=>{
+/* socket.on('trafficUpdate',(data)=>{
     console.log(data);
 });
 
@@ -144,4 +144,28 @@ socket.on('incidentLocations', (data)=>{
 
 socket.on('newAlert', (data)=>{
     addEvent(data);
-})
+}) */
+
+setInterval(async ()=>{
+    try{
+        const data = await getLocation();
+        console.log(data);
+    }catch(error){
+        console.error("Cant get Location: " + error);
+    }
+}, 5000);
+
+
+const getLocation = async ()=>{
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition((position)=>{
+            resolve({
+                lat : position.coords.latitude,
+                long : position.coords.longitude
+            });
+        },
+            (error)=>{
+            reject(error);
+            })
+    })
+}

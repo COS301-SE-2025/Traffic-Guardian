@@ -6,6 +6,8 @@ const axios = require('axios');
 const FormData = require('form-data');
 const weather = require('../src/Weather/weather');
 const traffic = require('../src/Traffic/traffic');
+const IncidentLocationMapping = require('../src/IncidentLocationMapping/IncidentLocationMapping');
+const incidentModel = require('./models/incident');
 
 const server = http.createServer(app);
 
@@ -23,12 +25,12 @@ const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
-var connectedUsers = [];
+var connectedUsers = new Map();
 
 io.on('connection',(socket)=>{
-  connectedUsers.push(socket);
+  connectedUsers.set(socket.id, {});
   console.log(socket.id + ' connected');
-  console.log('Number of users connected' + connectedUsers.length);
+  console.log('Number of users connected ' + connectedUsers.size);
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
@@ -62,6 +64,13 @@ io.on('connection',(socket)=>{
       const data = await traffic.getTraffic();
       socket.emit('trafficUpdate', data);
     }, 30*60*1000); //30 min interval
+
+
+    //Incident location mapping
+    socket.on('new-location', async (newLocation)=>{
+      connectedUsers.set(socket.id, newLocation);
+      console.log(connectedUsers);
+    });
 
 
 
@@ -103,5 +112,6 @@ db.query('SELECT NOW()')
 
 
   module.exports = {
-    io
+    io,
+    connectedUsers
   };
