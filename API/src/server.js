@@ -25,7 +25,7 @@ const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
 var connectedUsers = new Map();
-var regions = traffic.setRegions();
+var regions = new IncidentLocationMapping.Regions;
 
 io.on('connection',(socket)=>{
   connectedUsers.set(socket.id, {});
