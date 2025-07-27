@@ -24,17 +24,17 @@ const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
-var connectedUsers = new Map();
-var regions = new IncidentLocationMapping.Regions;
+var ILM = new IncidentLocationMapping.ILM;
 
 io.on('connection',(socket)=>{
-  connectedUsers.set(socket.id, {});
+  ILM.addUser(socket.id, {});
   console.log(socket.id + ' connected');
-  console.log('Number of users connected ' + connectedUsers.size);
+  ILM.showUsers();
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
     
+  /*
     //weather prt
     weather.getWeather().then((data)=>{
       socket.emit('weatherUpdate', data);
@@ -43,10 +43,15 @@ io.on('connection',(socket)=>{
       const weatherD = await weather.getWeather();
       socket.emit('weatherUpdate',weatherD);
     }, 60*60*1000); //1hr interval
+    */
 
+    /*
     //traffic prt
     traffic.getTraffic().then((data)=>{
       socket.emit('trafficUpdate', data);
+
+      //update regions Traffic
+      ILM.updateTraffic(data);
 
       //critical incidents
       const res = traffic.criticalIncidents(data);
@@ -60,21 +65,23 @@ io.on('connection',(socket)=>{
       const res_incidentLocations =  traffic.incidentLocations(data);
       socket.emit('incidentLocations', res_incidentLocations);
     })
+    */
+   /*
     setInterval(async()=>{
       const data = await traffic.getTraffic();
       socket.emit('trafficUpdate', data);
     }, 30*60*1000); //30 min interval
+    */
 
 
     //update users location
     socket.on('new-location', async (newLocation)=>{
-      connectedUsers.set(socket.id, newLocation);
-      const data = IncidentLocationMapping.notifyUsersTraffic(connectedUsers, regions);
-      console.log(`notified users : ${data.length}`);
-      data.forEach((alert) => {
-        console.log(`Alerting ${alert.userID}`);
-        io.to(alert.userID).emit('new-alert', alert);
-      })
+     ILM.updateUserLocation(socket.id, newLocation);
+     const notifiedUsers = ILM.notifyUsers();
+     //console.log(notifiedUsers);
+     notifiedUsers.forEach((notification)=>{
+      io.to(notification.userID).emit('new-alert', notification.notification);
+     })
     });
 
 
@@ -116,6 +123,5 @@ db.query('SELECT NOW()')
 
 
   module.exports = {
-    io,
-    connectedUsers
+    io
   };

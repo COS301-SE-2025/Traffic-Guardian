@@ -131,7 +131,8 @@ function hitOrMiss(){
     }
 }
 
-/* socket.on('trafficUpdate',(data)=>{
+/*
+socket.on('trafficUpdate',(data)=>{
     console.log(data);
 });
 
@@ -180,5 +181,5 @@ const updateLocation = async ()=>{
 
 socket.on('new-alert', (data)=>{
     console.log(data);
-    addEvent(data.description);
+    addEvent(JSON.stringify(data, null, 2));
 })
