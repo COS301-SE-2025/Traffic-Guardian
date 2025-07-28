@@ -425,7 +425,7 @@ const LiveFeed: React.FC = () => {
                 )}
               </div>
               <div className="play-overlay">
-                <div className="play-button">play</div>
+                <div className="play-button">▶</div>
               </div>
               <div className="update-frequency">
                 Updates every {feed.updateFrequency || '?'} min
@@ -519,21 +519,24 @@ const LiveFeed: React.FC = () => {
                         className="timelapse-btn" 
                         onClick={goToPreviousFrame}
                         disabled={isPlayingTimelapse}
+                        title="Previous frame"
                       >
-                        Previous
+                        ◀
                       </button>
                       <button 
                         className="timelapse-btn primary" 
                         onClick={toggleTimelapse}
+                        title={isPlayingTimelapse ? 'Pause timelapse' : 'Play timelapse'}
                       >
-                        {isPlayingTimelapse ? 'Pause' : 'Play'}
+                        {isPlayingTimelapse ? '⏸' : '▶'}
                       </button>
                       <button 
                         className="timelapse-btn" 
                         onClick={goToNextFrame}
                         disabled={isPlayingTimelapse}
+                        title="Next frame"
                       >
-                        Next
+                        ▶
                       </button>
                     </div>
                   )}
