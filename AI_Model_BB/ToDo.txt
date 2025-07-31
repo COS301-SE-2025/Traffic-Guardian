@@ -1,4 +1,23 @@
+Coding:
+
 1) Train the module
 2) Multi Cam footage
 3) removing all mock data
 4) incident classification
+
+Testing:
+
+1) Unit Testing vs Integration Testing
+--needs big improvements from last demo 
+
+
+Documentation:
+
+1) * Architectural structural design & requirements
+2) * Quality requirements
+3) * Deployment Model
+4) * Service Contracts
+5) Coding standards document
+6) User manual
+7) Technical installation manual
+8) Requirements and design specifications
