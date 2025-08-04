@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import HlsPlayer from 'react-hls-player';
 import './LiveFeed.css';
 
 interface CalTransCameraData {
@@ -66,6 +67,7 @@ interface CameraFeed {
   imageDescription?: string;
   updateFrequency?: string;
   historicalImages?: string[];
+  hasLiveStream: boolean; // Added to track live stream availability
 }
 
 const LiveFeed: React.FC = () => {
@@ -84,6 +86,10 @@ const LiveFeed: React.FC = () => {
   const [viewMode, setViewMode] = useState<'video' | 'images'>('video');
   const [loadingProgress, setLoadingProgress] = useState(0);
 
+  // Add refs for HLS players
+  const modalPlayerRef = useRef<any>(null);
+  const gridPlayerRefs = useRef<{ [key: string]: any }>({});
+
   const convertToHttps = useCallback((originalUrl: string): string => {
     if (originalUrl && originalUrl.startsWith('http://cwwp2.dot.ca.gov')) {
       return originalUrl.replace('http://cwwp2.dot.ca.gov', 'https://caltrans.blinktag.com/api');
@@ -96,12 +102,12 @@ const LiveFeed: React.FC = () => {
 
     const validCameras = data.data.filter((item) => 
       item.cctv.inService === 'true' && 
-      item.cctv.imageData.static.currentImageURL && 
-      item.cctv.imageData.static.currentImageURL !== 'Not Reported'
+      ((item.cctv.imageData.streamingVideoURL && item.cctv.imageData.streamingVideoURL !== 'Not Reported') ||
+       (item.cctv.imageData.static.currentImageURL && item.cctv.imageData.static.currentImageURL !== 'Not Reported'))
     );
 
     return validCameras
-      .slice(0, 8) // Reduced from 12 to 8 for faster initial load
+      .slice(0, 8)
       .map((item) => {
         const camera = item.cctv;
         const location = camera.location;
@@ -116,10 +122,12 @@ const LiveFeed: React.FC = () => {
           imageData.static.referenceImage6UpdatesAgoURL,
         ].filter(url => url && url !== 'Not Reported')
          .map(url => convertToHttps(url))
-         .slice(0, 6); // Reduced historical images for faster load
+         .slice(0, 6);
         
         const httpsImageUrl = convertToHttps(imageData.static.currentImageURL);
-        const videoUrl = imageData.streamingVideoURL ? convertToHttps(imageData.streamingVideoURL) : undefined;
+        const videoUrl = imageData.streamingVideoURL && imageData.streamingVideoURL !== 'Not Reported' 
+          ? convertToHttps(imageData.streamingVideoURL) 
+          : undefined;
         
         return {
           id: `CALTRANS-D${district}-${camera.index}`,
@@ -136,6 +144,7 @@ const LiveFeed: React.FC = () => {
           imageDescription: imageData.imageDescription,
           updateFrequency: imageData.static.currentImageUpdateFrequency || 'Unknown',
           historicalImages,
+          hasLiveStream: !!videoUrl,
         };
       });
   }, [convertToHttps]);
@@ -145,7 +154,7 @@ const LiveFeed: React.FC = () => {
       const url = `https://cwwp2.dot.ca.gov/data/d${district}/cctv/cctvStatusD${district.toString().padStart(2, '0')}.json`;
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -173,10 +182,8 @@ const LiveFeed: React.FC = () => {
       setError(null);
       setLoadingProgress(0);
       
-      // Fetch all districts in parallel instead of sequentially
       const districtPromises = selectedDistricts.map((district, index) => 
         fetchDistrictData(district).then(cameras => {
-          // Update progress as each district completes
           setLoadingProgress(prev => Math.max(prev, ((index + 1) / selectedDistricts.length) * 100));
           return cameras;
         })
@@ -238,10 +245,18 @@ const LiveFeed: React.FC = () => {
     );
   }, []);
 
+  const handleVideoError = useCallback((feedId: string) => {
+    setCameraFeeds(prevFeeds =>
+      prevFeeds.map(feed =>
+        feed.id === feedId ? { ...feed, status: 'Offline', hasLiveStream: false } : feed
+      )
+    );
+  }, []);
+
   const handleCameraClick = useCallback((camera: CameraFeed) => {
     setSelectedCamera(camera);
     setShowVideoModal(true);
-    setViewMode(camera.videoUrl ? 'video' : 'images');
+    setViewMode(camera.hasLiveStream ? 'video' : 'images');
     
     if (camera.historicalImages && camera.historicalImages.length > 0) {
       const allImages = [camera.image, ...camera.historicalImages];
@@ -310,6 +325,14 @@ const LiveFeed: React.FC = () => {
   const getStatusClass = useCallback((status: string) => status.toLowerCase(), []);
 
   const memoizedCameraFeeds = useMemo(() => cameraFeeds, [cameraFeeds]);
+
+  // Function to get or create a ref for a specific feed
+  const getGridPlayerRef = useCallback((feedId: string) => {
+    if (!gridPlayerRefs.current[feedId]) {
+      gridPlayerRefs.current[feedId] = React.createRef();
+    }
+    return gridPlayerRefs.current[feedId];
+  }, []);
 
   if (loading && cameraFeeds.length === 0) {
     return (
@@ -407,20 +430,34 @@ const LiveFeed: React.FC = () => {
             onClick={() => handleCameraClick(feed)}
           >
             <div className="feed-image-container">
-              <img
-                src={feed.image}
-                alt={`Camera feed from ${feed.location}`}
-                className="feed-image"
-                loading="lazy" // Added lazy loading
-                onError={() => handleImageError(feed.id)}
-                onLoad={() => handleImageLoad(feed.id)}
-                data-cy="feed-image"
-              />
+              {feed.hasLiveStream && feed.videoUrl ? (
+                <HlsPlayer
+                  src={feed.videoUrl}
+                  autoPlay={false}
+                  controls={false}
+                  width="100%"
+                  height="auto"
+                  className="feed-video"
+                  playerRef={getGridPlayerRef(feed.id)}
+                  onError={() => handleVideoError(feed.id)}
+                  onLoad={() => handleImageLoad(feed.id)}
+                />
+              ) : (
+                <img
+                  src={feed.image}
+                  alt={`Camera feed from ${feed.location}`}
+                  className="feed-image"
+                  loading="lazy"
+                  onError={() => handleImageError(feed.id)}
+                  onLoad={() => handleImageLoad(feed.id)}
+                  data-cy="feed-image"
+                />
+              )}
               <div className="live-feed-overlay" data-cy="live-feed-overlay">
                 <div className={`status-badge ${getStatusClass(feed.status)}`} data-cy="feed-status">
                   {feed.status}
                 </div>
-                {feed.videoUrl && (
+                {feed.hasLiveStream && (
                   <div className="video-available-badge">Live Video</div>
                 )}
               </div>
@@ -483,15 +520,17 @@ const LiveFeed: React.FC = () => {
             </div>
             
             <div className="video-modal-content">
-              {selectedCamera.videoUrl && viewMode === 'video' ? (
+              {selectedCamera.hasLiveStream && selectedCamera.videoUrl && viewMode === 'video' ? (
                 <div className="video-container">
-                  <video
+                  <HlsPlayer
                     src={selectedCamera.videoUrl}
-                    autoPlay
-                    muted
-                    loop
+                    autoPlay={true}
+                    controls={true}
+                    width="100%"
+                    height="auto"
                     className="camera-video"
-                    onError={() => console.error(`Video failed to load for ${selectedCamera.id}`)}
+                    playerRef={modalPlayerRef}
+                    onError={() => handleVideoError(selectedCamera.id)}
                   />
                   {selectedCamera.historicalImages && selectedCamera.historicalImages.length > 0 && (
                     <button onClick={() => setViewMode('images')} className="switch-view-btn">
@@ -541,7 +580,7 @@ const LiveFeed: React.FC = () => {
                     </div>
                   )}
                   
-                  {selectedCamera.videoUrl && (
+                  {selectedCamera.hasLiveStream && selectedCamera.videoUrl && (
                     <button onClick={() => setViewMode('video')} className="switch-view-btn">
                       View Live Video
                     </button>
