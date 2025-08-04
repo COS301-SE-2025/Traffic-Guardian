@@ -74,7 +74,7 @@ const LiveFeed: React.FC = () => {
   const [cameraFeeds, setCameraFeeds] = useState<CameraFeed[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDistricts] = useState([7, 4, 11]);
+  const [selectedDistricts] = useState([7, 4, 11]); // Prioritize District 7 (Bay Area) first
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
   const [selectedCamera, setSelectedCamera] = useState<CameraFeed | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -85,6 +85,7 @@ const LiveFeed: React.FC = () => {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'video' | 'images'>('video');
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [progressiveLoading, setProgressiveLoading] = useState(false);
 
   // Add refs for HLS players
   const modalPlayerRef = useRef<any>(null);
@@ -107,7 +108,7 @@ const LiveFeed: React.FC = () => {
     );
 
     return validCameras
-      .slice(0, 8)
+      .slice(0, 6) // Reduced from 8 to 6 cameras per district for faster loading
       .map((item) => {
         const camera = item.cctv;
         const location = camera.location;
@@ -181,40 +182,80 @@ const LiveFeed: React.FC = () => {
     try {
       setError(null);
       setLoadingProgress(0);
+      setProgressiveLoading(true);
       
-      const districtPromises = selectedDistricts.map((district, index) => 
-        fetchDistrictData(district).then(cameras => {
-          setLoadingProgress(prev => Math.max(prev, ((index + 1) / selectedDistricts.length) * 100));
+      // Clear existing feeds for fresh start
+      if (!progressiveLoading) {
+        setCameraFeeds([]);
+      }
+      
+      // Priority loading: Load District 7 (Bay Area) first, then others
+      const priorityDistrict = 7;
+      const otherDistricts = selectedDistricts.filter(d => d !== priorityDistrict);
+      const processedDistricts = new Set<number>();
+      
+      // Load priority district first
+      try {
+        const priorityCameras = await fetchDistrictData(priorityDistrict);
+        if (priorityCameras.length > 0) {
+          setCameraFeeds(priorityCameras);
+        }
+        processedDistricts.add(priorityDistrict);
+        setLoadingProgress((processedDistricts.size / selectedDistricts.length) * 100);
+      } catch (error) {
+        console.error(`Error fetching priority District ${priorityDistrict}:`, error);
+        processedDistricts.add(priorityDistrict);
+      }
+      
+      // Then load other districts in parallel
+      const otherPromises = otherDistricts.map(async (district) => {
+        try {
+          const cameras = await fetchDistrictData(district);
+          
+          if (cameras.length > 0) {
+            setCameraFeeds(prevFeeds => {
+              const existingIds = new Set(prevFeeds.map(feed => feed.id));
+              const newCameras = cameras.filter(camera => !existingIds.has(camera.id));
+              return [...prevFeeds, ...newCameras];
+            });
+          }
+          
+          processedDistricts.add(district);
+          setLoadingProgress((processedDistricts.size / selectedDistricts.length) * 100);
+          
           return cameras;
-        })
-      );
-
-      const districtResults = await Promise.allSettled(districtPromises);
-      
-      const allCameras: CameraFeed[] = [];
-      districtResults.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          allCameras.push(...result.value);
+        } catch (error) {
+          console.error(`Error fetching District ${district}:`, error);
+          processedDistricts.add(district);
+          setLoadingProgress((processedDistricts.size / selectedDistricts.length) * 100);
+          return [];
         }
       });
 
-      if (allCameras.length > 0) {
-        setCameraFeeds(allCameras);
+      await Promise.allSettled(otherPromises);
+      
+      // Final check
+      if (processedDistricts.size === selectedDistricts.length) {
+        setCameraFeeds(prevFeeds => {
+          if (prevFeeds.length === 0) {
+            setError('No camera feeds available at this time.');
+          }
+          return prevFeeds;
+        });
         setLastRefresh(new Date());
-      } else {
-        setError('No camera feeds available at this time.');
       }
     } catch (err) {
       console.error('Error fetching camera data:', err);
       setError('Failed to load camera feeds. Please try again later.');
     } finally {
       setLoading(false);
+      setProgressiveLoading(false);
     }
-  }, [selectedDistricts, fetchDistrictData]);
+  }, [selectedDistricts, fetchDistrictData, progressiveLoading]);
 
   useEffect(() => {
     fetchCameraData();
-    const interval = setInterval(fetchCameraData, 10 * 60 * 1000);
+    const interval = setInterval(fetchCameraData, 15 * 60 * 1000); // Increased from 10 to 15 minutes
     setRefreshInterval(interval);
 
     return () => {
@@ -226,6 +267,7 @@ const LiveFeed: React.FC = () => {
   const handleRefresh = useCallback(() => {
     setLoading(true);
     setLoadingProgress(0);
+    setCameraFeeds([]); // Clear existing feeds when manually refreshing
     fetchCameraData();
   }, [fetchCameraData]);
 
@@ -352,7 +394,9 @@ const LiveFeed: React.FC = () => {
                 style={{ width: `${loadingProgress}%` }}
               ></div>
             </div>
-            <div className="progress-text">{Math.round(loadingProgress)}% loaded</div>
+            <div className="progress-text">
+              {Math.round(loadingProgress)}% loaded • Loading from {selectedDistricts.length} districts
+            </div>
           </div>
         </div>
       </div>
@@ -392,6 +436,9 @@ const LiveFeed: React.FC = () => {
           </button>
           <div className="feed-info">
             Showing {cameraFeeds.length} cameras from major California metro areas
+            {progressiveLoading && (
+              <span className="loading-more"> • Loading more...</span>
+            )}
           </div>
           <div className="last-refresh">
             Last refreshed: {lastRefresh.toLocaleTimeString()}
@@ -417,7 +464,7 @@ const LiveFeed: React.FC = () => {
         </div>
         <div className="status-item">
           <span className="status-label">Auto-refresh:</span>
-          <span className="status-value">Every 10 minutes</span>
+          <span className="status-value">Every 15 minutes</span>
         </div>
       </div>
 
