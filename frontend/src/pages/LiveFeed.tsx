@@ -67,14 +67,14 @@ interface CameraFeed {
   imageDescription?: string;
   updateFrequency?: string;
   historicalImages?: string[];
-  hasLiveStream: boolean; // Added to track live stream availability
+  hasLiveStream: boolean;
 }
 
 const LiveFeed: React.FC = () => {
   const [cameraFeeds, setCameraFeeds] = useState<CameraFeed[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDistricts] = useState([7, 4, 11]); // Prioritize District 7 (Bay Area) first
+  const [selectedDistricts] = useState([12]); // Orange County (District 12)
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
   const [selectedCamera, setSelectedCamera] = useState<CameraFeed | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -108,7 +108,7 @@ const LiveFeed: React.FC = () => {
     );
 
     return validCameras
-      .slice(0, 6) // Reduced from 8 to 6 cameras per district for faster loading
+      .slice(0, 10) // Get more cameras since we're only using one district
       .map((item) => {
         const camera = item.cctv;
         const location = camera.location;
@@ -189,64 +189,29 @@ const LiveFeed: React.FC = () => {
         setCameraFeeds([]);
       }
       
-      // Priority loading: Load District 7 (Bay Area) first, then others
-      const priorityDistrict = 7;
-      const otherDistricts = selectedDistricts.filter(d => d !== priorityDistrict);
-      const processedDistricts = new Set<number>();
-      
-      // Load priority district first
+      // Load Orange County (District 12) cameras
       try {
-        const priorityCameras = await fetchDistrictData(priorityDistrict);
-        if (priorityCameras.length > 0) {
-          setCameraFeeds(priorityCameras);
+        const orangeCountyCameras = await fetchDistrictData(12);
+        if (orangeCountyCameras.length > 0) {
+          setCameraFeeds(orangeCountyCameras);
         }
-        processedDistricts.add(priorityDistrict);
-        setLoadingProgress((processedDistricts.size / selectedDistricts.length) * 100);
+        setLoadingProgress(100);
       } catch (error) {
-        console.error(`Error fetching priority District ${priorityDistrict}:`, error);
-        processedDistricts.add(priorityDistrict);
+        console.error(`Error fetching Orange County District 12:`, error);
+        setError('Failed to load Orange County camera feeds. Please try again later.');
       }
-      
-      // Then load other districts in parallel
-      const otherPromises = otherDistricts.map(async (district) => {
-        try {
-          const cameras = await fetchDistrictData(district);
-          
-          if (cameras.length > 0) {
-            setCameraFeeds(prevFeeds => {
-              const existingIds = new Set(prevFeeds.map(feed => feed.id));
-              const newCameras = cameras.filter(camera => !existingIds.has(camera.id));
-              return [...prevFeeds, ...newCameras];
-            });
-          }
-          
-          processedDistricts.add(district);
-          setLoadingProgress((processedDistricts.size / selectedDistricts.length) * 100);
-          
-          return cameras;
-        } catch (error) {
-          console.error(`Error fetching District ${district}:`, error);
-          processedDistricts.add(district);
-          setLoadingProgress((processedDistricts.size / selectedDistricts.length) * 100);
-          return [];
-        }
-      });
-
-      await Promise.allSettled(otherPromises);
       
       // Final check
-      if (processedDistricts.size === selectedDistricts.length) {
-        setCameraFeeds(prevFeeds => {
-          if (prevFeeds.length === 0) {
-            setError('No camera feeds available at this time.');
-          }
-          return prevFeeds;
-        });
-        setLastRefresh(new Date());
-      }
+      setCameraFeeds(prevFeeds => {
+        if (prevFeeds.length === 0) {
+          setError('No Orange County camera feeds available at this time.');
+        }
+        return prevFeeds;
+      });
+      setLastRefresh(new Date());
     } catch (err) {
       console.error('Error fetching camera data:', err);
-      setError('Failed to load camera feeds. Please try again later.');
+      setError('Failed to load Orange County camera feeds. Please try again later.');
     } finally {
       setLoading(false);
       setProgressiveLoading(false);
@@ -255,7 +220,7 @@ const LiveFeed: React.FC = () => {
 
   useEffect(() => {
     fetchCameraData();
-    const interval = setInterval(fetchCameraData, 15 * 60 * 1000); // Increased from 10 to 15 minutes
+    const interval = setInterval(fetchCameraData, 15 * 60 * 1000); // Refresh every 15 minutes
     setRefreshInterval(interval);
 
     return () => {
@@ -380,9 +345,9 @@ const LiveFeed: React.FC = () => {
     return (
       <div className="livefeed-page" data-cy="livefeed-page">
         <div className="livefeed-header">
-          <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
+          <h2 data-cy="livefeed-title">Orange County Live Camera Feeds</h2>
           <div className="livefeed-subtitle" data-cy="livefeed-subtitle">
-            Loading California highway cameras...
+            Loading Orange County highway cameras...
           </div>
         </div>
         <div className="loading-spinner">
@@ -395,7 +360,7 @@ const LiveFeed: React.FC = () => {
               ></div>
             </div>
             <div className="progress-text">
-              {Math.round(loadingProgress)}% loaded • Loading from {selectedDistricts.length} districts
+              {Math.round(loadingProgress)}% loaded • Loading Orange County District 12
             </div>
           </div>
         </div>
@@ -407,9 +372,9 @@ const LiveFeed: React.FC = () => {
     return (
       <div className="livefeed-page" data-cy="livefeed-page">
         <div className="livefeed-header">
-          <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
+          <h2 data-cy="livefeed-title">Orange County Live Camera Feeds</h2>
           <div className="livefeed-subtitle" data-cy="livefeed-subtitle">
-            Real-time traffic monitoring
+            Real-time Orange County traffic monitoring
           </div>
         </div>
         <div className="error-state">
@@ -425,7 +390,7 @@ const LiveFeed: React.FC = () => {
   return (
     <div className="livefeed-page" data-cy="livefeed-page">
       <div className="livefeed-header">
-        <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
+        <h2 data-cy="livefeed-title">Orange County Live Camera Feeds</h2>
         <div className="livefeed-controls">
           <button 
             onClick={handleRefresh} 
@@ -435,7 +400,7 @@ const LiveFeed: React.FC = () => {
             {loading ? 'Refreshing...' : 'Refresh Feeds'}
           </button>
           <div className="feed-info">
-            Showing {cameraFeeds.length} cameras from major California metro areas
+            Showing {cameraFeeds.length} cameras from Orange County (District 12)
             {progressiveLoading && (
               <span className="loading-more"> • Loading more...</span>
             )}
@@ -455,8 +420,8 @@ const LiveFeed: React.FC = () => {
 
       <div className="status-info">
         <div className="status-item">
-          <span className="status-label">Status:</span>
-          <span className="status-value">Using BlinkTag HTTPS Proxy</span>
+          <span className="status-label">Location:</span>
+          <span className="status-value">Orange County, CA (District 12)</span>
         </div>
         <div className="status-item">
           <span className="status-label">Update Frequency:</span>
@@ -550,7 +515,7 @@ const LiveFeed: React.FC = () => {
 
       {cameraFeeds.length === 0 && !loading && (
         <div className="no-feeds-message">
-          <h3>No camera feeds available</h3>
+          <h3>No Orange County camera feeds available</h3>
           <p>Please try refreshing or check back later.</p>
           <button onClick={handleRefresh} className="retry-button">
             Refresh
