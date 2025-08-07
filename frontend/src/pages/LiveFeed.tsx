@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import HlsPlayer from 'react-hls-player';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import './LiveFeed.css';
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
 
 interface CalTransCameraData {
   data: Array<{
@@ -68,7 +79,22 @@ interface CameraFeed {
   updateFrequency?: string;
   historicalImages?: string[];
   hasLiveStream: boolean;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
+
+// Map component to handle center changes
+const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [map, center]);
+  
+  return null;
+};
 
 const LiveFeed: React.FC = () => {
   const [cameraFeeds, setCameraFeeds] = useState<CameraFeed[]>([]);
@@ -83,7 +109,7 @@ const LiveFeed: React.FC = () => {
   const [isPlayingTimelapse, setIsPlayingTimelapse] = useState(false);
   const [timelapseInterval, setTimelapseInterval] = useState<NodeJS.Timeout | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<'video' | 'images'>('video');
+  const [viewMode, setViewMode] = useState<'video' | 'images' | 'map'>('video');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [progressiveLoading, setProgressiveLoading] = useState(false);
 
@@ -96,6 +122,22 @@ const LiveFeed: React.FC = () => {
       return originalUrl.replace('http://cwwp2.dot.ca.gov', 'https://caltrans.blinktag.com/api');
     }
     return originalUrl;
+  }, []);
+
+  const parseCoordinates = useCallback((lat: string, lng: string): { lat: number; lng: number } | null => {
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+    
+    if (isNaN(latitude) || isNaN(longitude)) {
+      return null;
+    }
+    
+    // Validate coordinates are within reasonable bounds for California
+    if (latitude < 32 || latitude > 42 || longitude < -125 || longitude > -114) {
+      return null;
+    }
+    
+    return { lat: latitude, lng: longitude };
   }, []);
 
   const processDistrictData = useCallback((data: CalTransCameraData, district: number): CameraFeed[] => {
@@ -130,6 +172,8 @@ const LiveFeed: React.FC = () => {
           ? convertToHttps(imageData.streamingVideoURL) 
           : undefined;
         
+        const coordinates = parseCoordinates(location.latitude, location.longitude) || undefined;
+        
         return {
           id: `CALTRANS-D${district}-${camera.index}`,
           location: location.locationName || location.nearbyPlace || `District ${district} Camera`,
@@ -146,9 +190,10 @@ const LiveFeed: React.FC = () => {
           updateFrequency: imageData.static.currentImageUpdateFrequency || 'Unknown',
           historicalImages,
           hasLiveStream: !!videoUrl,
+          coordinates,
         };
       });
-  }, [convertToHttps]);
+  }, [convertToHttps, parseCoordinates]);
 
   const fetchDistrictData = useCallback(async (district: number): Promise<CameraFeed[]> => {
     try {
@@ -263,7 +308,15 @@ const LiveFeed: React.FC = () => {
   const handleCameraClick = useCallback((camera: CameraFeed) => {
     setSelectedCamera(camera);
     setShowVideoModal(true);
-    setViewMode(camera.hasLiveStream ? 'video' : 'images');
+    
+    // Determine initial view mode based on available features
+    if (camera.hasLiveStream) {
+      setViewMode('video');
+    } else if (camera.coordinates) {
+      setViewMode('map');
+    } else {
+      setViewMode('images');
+    }
     
     if (camera.historicalImages && camera.historicalImages.length > 0) {
       const allImages = [camera.image, ...camera.historicalImages];
@@ -340,6 +393,20 @@ const LiveFeed: React.FC = () => {
     }
     return gridPlayerRefs.current[feedId];
   }, []);
+
+  const cameraIcon = useMemo(() => 
+    new L.Icon({
+      iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+          <circle cx="12" cy="12" r="10" fill="#ff4444" stroke="#fff" stroke-width="2"/>
+          <path d="M8 12l4-4v3h4v2h-4v3z" fill="#fff"/>
+        </svg>
+      `),
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -12]
+    }), []
+  );
 
   if (loading && cameraFeeds.length === 0) {
     return (
@@ -503,6 +570,11 @@ const LiveFeed: React.FC = () => {
                       Milepost: {feed.milepost}
                     </div>
                   )}
+                  {feed.coordinates && (
+                    <div className="feed-coordinates">
+                      Location: {feed.coordinates.lat.toFixed(4)}, {feed.coordinates.lng.toFixed(4)}
+                    </div>
+                  )}
                   <div className="feed-last-update">
                     Loaded: {feed.lastUpdate}
                   </div>
@@ -528,11 +600,35 @@ const LiveFeed: React.FC = () => {
           <div className="video-modal" onClick={(e) => e.stopPropagation()}>
             <div className="video-modal-header">
               <h3>{selectedCamera.location}</h3>
+              <div className="view-mode-selector">
+                {selectedCamera.hasLiveStream && selectedCamera.videoUrl && (
+                  <button 
+                    className={viewMode === 'video' ? 'active' : ''}
+                    onClick={() => setViewMode('video')}
+                  >
+                    Live Video
+                  </button>
+                )}
+                <button 
+                  className={viewMode === 'images' ? 'active' : ''}
+                  onClick={() => setViewMode('images')}
+                >
+                  Images
+                </button>
+                {selectedCamera.coordinates && (
+                  <button 
+                    className={viewMode === 'map' ? 'active' : ''}
+                    onClick={() => setViewMode('map')}
+                  >
+                    Location
+                  </button>
+                )}
+              </div>
               <button className="close-modal" onClick={closeVideoModal}>×</button>
             </div>
             
             <div className="video-modal-content">
-              {selectedCamera.hasLiveStream && selectedCamera.videoUrl && viewMode === 'video' ? (
+              {viewMode === 'video' && selectedCamera.hasLiveStream && selectedCamera.videoUrl ? (
                 <div className="video-container">
                   <HlsPlayer
                     src={selectedCamera.videoUrl}
@@ -544,11 +640,46 @@ const LiveFeed: React.FC = () => {
                     playerRef={modalPlayerRef}
                     onError={() => handleVideoError(selectedCamera.id)}
                   />
-                  {selectedCamera.historicalImages && selectedCamera.historicalImages.length > 0 && (
-                    <button onClick={() => setViewMode('images')} className="switch-view-btn">
-                      View Historical Images
-                    </button>
-                  )}
+                </div>
+              ) : viewMode === 'map' && selectedCamera.coordinates ? (
+                <div className="map-container">
+                  <MapContainer
+                    center={[selectedCamera.coordinates.lat, selectedCamera.coordinates.lng]}
+                    zoom={15}
+                    style={{ height: '400px', width: '100%' }}
+                    className="camera-map"
+                  >
+                    <MapUpdater center={[selectedCamera.coordinates.lat, selectedCamera.coordinates.lng]} />
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    <Marker 
+                      position={[selectedCamera.coordinates.lat, selectedCamera.coordinates.lng]}
+                      icon={cameraIcon}
+                    >
+                      <Popup>
+                        <div className="map-popup">
+                          <h4>{selectedCamera.location}</h4>
+                          <p><strong>Route:</strong> {selectedCamera.route}</p>
+                          {selectedCamera.direction && (
+                            <p><strong>Direction:</strong> {selectedCamera.direction}</p>
+                          )}
+                          {selectedCamera.county && (
+                            <p><strong>County:</strong> {selectedCamera.county}</p>
+                          )}
+                          {selectedCamera.milepost && (
+                            <p><strong>Milepost:</strong> {selectedCamera.milepost}</p>
+                          )}
+                          <p><strong>Coordinates:</strong> {selectedCamera.coordinates.lat.toFixed(6)}, {selectedCamera.coordinates.lng.toFixed(6)}</p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                  <div className="map-info">
+                    <p><strong>Camera Location:</strong> {selectedCamera.coordinates.lat.toFixed(6)}, {selectedCamera.coordinates.lng.toFixed(6)}</p>
+                    <p><strong>Viewing:</strong> {selectedCamera.imageDescription || 'Highway conditions'}</p>
+                  </div>
                 </div>
               ) : (
                 <div className="timelapse-container">
@@ -591,12 +722,6 @@ const LiveFeed: React.FC = () => {
                       </button>
                     </div>
                   )}
-                  
-                  {selectedCamera.hasLiveStream && selectedCamera.videoUrl && (
-                    <button onClick={() => setViewMode('video')} className="switch-view-btn">
-                      View Live Video
-                    </button>
-                  )}
                 </div>
               )}
             </div>
@@ -618,6 +743,9 @@ const LiveFeed: React.FC = () => {
                   <p><strong>View:</strong> {selectedCamera.imageDescription}</p>
                 )}
                 <p><strong>Update Frequency:</strong> Every {selectedCamera.updateFrequency || '?'} minutes</p>
+                {selectedCamera.coordinates && (
+                  <p><strong>Coordinates:</strong> {selectedCamera.coordinates.lat.toFixed(6)}, {selectedCamera.coordinates.lng.toFixed(6)}</p>
+                )}
               </div>
             </div>
           </div>
