@@ -767,3 +767,123 @@
     padding: 0.4rem 0.75rem;
   }
 }
+
+/* Map Styles */
+.leaflet-container {
+  background-color: var(--feed-tile-bg);
+  border-radius: 8px;
+  border: 1px solid var(--feed-tile-border);
+}
+
+.leaflet-control {
+  background-color: var(--feed-tile-bg);
+  color: var(--feed-info-text);
+  border: 1px solid var(--feed-tile-border);
+}
+
+.leaflet-control a {
+  color: var(--feed-info-text);
+}
+
+.leaflet-control a:hover {
+  background-color: var(--feed-tile-hover-bg);
+}
+
+.leaflet-control-attribution {
+  font-size: 0.7rem;
+  background-color: var(--feed-details-bg);
+  color: var(--feed-info-subtext);
+}
+
+/* Modal Header Enhancements */
+.video-modal-header {
+  padding: 1.5rem 2rem;
+}
+
+.view-mode-selector {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.view-mode-selector button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--feed-tile-border);
+  background-color: var(--feed-details-bg);
+  color: var(--feed-info-text);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-mode-selector button.active {
+  background-color: var(--livefeed-title);
+  color: white;
+  border-color: var(--livefeed-title);
+}
+
+.view-mode-selector button:hover:not(.active) {
+  background-color: var(--feed-tile-hover-bg);
+}
+
+.close-modal {
+  font-size: 1.8rem;
+  color: var(--feed-info-subtext);
+  transition: color 0.2s ease;
+}
+
+.close-modal:hover {
+  color: var(--error-text);
+}
+
+/* Video Container Styling */
+.video-container {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Timelapse Enhancements */
+.timelapse-info {
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.timelapse-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.timelapse-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.2rem;
+  border-radius: 8px;
+}
+
+/* Map Info Styling */
+.map-info {
+  padding: 1rem;
+  background-color: var(--feed-details-bg);
+  border-radius: 0 0 8px 8px;
+  text-align: center;
+}
+
+.map-info p {
+  margin: 0.5rem 0;
+  color: var(--feed-info-text);
+  font-size: 0.9rem;
+}
+
+.map-info strong {
+  color: var(--livefeed-title);
+}
+.camera-map {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--feed-tile-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
