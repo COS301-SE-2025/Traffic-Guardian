@@ -131,12 +131,13 @@ class AdvancedIncidentDetectionSystem:
             'incident_location': os.getenv('INCIDENT_LOCATION', 'Traffic Camera Location'),
             
             # MULTI-LAYER COLLISION DETECTION SETTINGS
-            'collision_distance_threshold': 25,        # Reduced from 35
-            'prediction_horizon': 8,                   # Reduced from 12  
-            'min_collision_speed': 8.0,               # Increased from 5.0
-            'collision_angle_threshold': 20,          # Reduced from 30
-            'min_trajectory_length': 12,              # Increased from 8
-            'collision_persistence': 8,               # Increased from 5
+            'collision_distance_threshold': 35,    # Even tighter
+            'prediction_horizon': 12,              # Shorter prediction
+            'min_tracking_confidence': 0.7,        # Higher confidence
+            'min_collision_speed': 5.0,            # Must be moving faster
+            'collision_angle_threshold': 30,       # More restrictive angle
+            'min_trajectory_length': 8,            # Longer history required
+            'collision_persistence': 5,            # Must persist longer
             
             # DEPTH ESTIMATION SETTINGS
             'depth_analysis_enabled': True,
@@ -145,7 +146,7 @@ class AdvancedIncidentDetectionSystem:
             
             # OPTICAL FLOW SETTINGS  
             'optical_flow_enabled': True,
-            'flow_magnitude_threshold': 25.0,      # Sudden motion change
+            'flow_magnitude_threshold': 20.0,      # Sudden motion change
             'flow_direction_change_threshold': 45,  # Direction change in degrees
             
             # PHYSICS VALIDATION SETTINGS
@@ -157,7 +158,7 @@ class AdvancedIncidentDetectionSystem:
             # FINAL VALIDATION REQUIREMENTS
             'require_all_layers': False,           # True = all layers must agree
             'minimum_layer_agreement': 3,          # At least 3 layers must agree
-            'collision_confidence_threshold': 0.85, # Final confidence threshold
+            'collision_confidence_threshold': 0.8, # Final confidence threshold
             
             # Other incident detection thresholds
             'stopped_vehicle_time': 10,
@@ -1657,7 +1658,7 @@ def main():
         # ADVANCED MULTI-LAYER COLLISION DETECTION
         'collision_distance_threshold': 35,    # Tighter threshold
         'prediction_horizon': 12,              # Shorter horizon
-        'min_tracking_confidence': 0.75,        # Higher confidence
+        'min_tracking_confidence': 0.7,        # Higher confidence
         'min_collision_speed': 5.0,            # Faster moving required
         'collision_angle_threshold': 30,       # More restrictive
         'min_trajectory_length': 8,            # Longer history
@@ -1670,19 +1671,19 @@ def main():
         
         # OPTICAL FLOW SETTINGS  
         'optical_flow_enabled': True,
-        'flow_magnitude_threshold': 25.0,
+        'flow_magnitude_threshold': 20.0,
         'flow_direction_change_threshold': 45,
         
         # PHYSICS VALIDATION SETTINGS
         'physics_validation_enabled': True,
         'max_realistic_acceleration': 15.0,
         'momentum_change_threshold': 25.0,
-        'deceleration_threshold': 15.0,
+        'deceleration_threshold': 12.0,
         
         # FINAL VALIDATION REQUIREMENTS
         'require_all_layers': False,           # Don't require ALL layers
         'minimum_layer_agreement': 3,          # At least 3 layers must agree
-        'collision_confidence_threshold': 0.85, # High confidence threshold
+        'collision_confidence_threshold': 0.75, # High confidence threshold
         
                     # API Integration Settings
             'api_enabled': True,                   # Enable/disable API reporting
