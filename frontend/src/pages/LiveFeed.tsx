@@ -100,7 +100,7 @@ const LiveFeed: React.FC = () => {
   const [cameraFeeds, setCameraFeeds] = useState<CameraFeed[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDistricts] = useState([12]); // Orange County (District 12)
+  const [selectedDistricts] = useState([12]); 
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
   const [selectedCamera, setSelectedCamera] = useState<CameraFeed | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -234,7 +234,7 @@ const LiveFeed: React.FC = () => {
         setCameraFeeds([]);
       }
       
-      // Load Orange County (District 12) cameras
+      // Load (District 12) cameras
       try {
         const orangeCountyCameras = await fetchDistrictData(12);
         if (orangeCountyCameras.length > 0) {
@@ -242,21 +242,21 @@ const LiveFeed: React.FC = () => {
         }
         setLoadingProgress(100);
       } catch (error) {
-        console.error(`Error fetching Orange County District 12:`, error);
-        setError('Failed to load Orange County camera feeds. Please try again later.');
+        console.error(`Error fetching District 12:`, error);
+        setError('Failed to load camera feeds. Please try again later.');
       }
       
       // Final check
       setCameraFeeds(prevFeeds => {
         if (prevFeeds.length === 0) {
-          setError('No Orange County camera feeds available at this time.');
+          setError('No camera feeds available at this time.');
         }
         return prevFeeds;
       });
       setLastRefresh(new Date());
     } catch (err) {
       console.error('Error fetching camera data:', err);
-      setError('Failed to load Orange County camera feeds. Please try again later.');
+      setError('Failed to load camera feeds. Please try again later.');
     } finally {
       setLoading(false);
       setProgressiveLoading(false);
@@ -412,9 +412,9 @@ const LiveFeed: React.FC = () => {
     return (
       <div className="livefeed-page" data-cy="livefeed-page">
         <div className="livefeed-header">
-          <h2 data-cy="livefeed-title">Orange County Live Camera Feeds</h2>
+          <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
           <div className="livefeed-subtitle" data-cy="livefeed-subtitle">
-            Loading Orange County highway cameras...
+            Loading highway cameras...
           </div>
         </div>
         <div className="loading-spinner">
@@ -427,7 +427,7 @@ const LiveFeed: React.FC = () => {
               ></div>
             </div>
             <div className="progress-text">
-              {Math.round(loadingProgress)}% loaded • Loading Orange County District 12
+              {Math.round(loadingProgress)}% loaded • Loading District 12
             </div>
           </div>
         </div>
@@ -439,9 +439,9 @@ const LiveFeed: React.FC = () => {
     return (
       <div className="livefeed-page" data-cy="livefeed-page">
         <div className="livefeed-header">
-          <h2 data-cy="livefeed-title">Orange County Live Camera Feeds</h2>
+          <h2 data-cy="livefeed-title"> Live Camera Feeds</h2>
           <div className="livefeed-subtitle" data-cy="livefeed-subtitle">
-            Real-time Orange County traffic monitoring
+            Real-time traffic monitoring
           </div>
         </div>
         <div className="error-state">
@@ -457,7 +457,7 @@ const LiveFeed: React.FC = () => {
   return (
     <div className="livefeed-page" data-cy="livefeed-page">
       <div className="livefeed-header">
-        <h2 data-cy="livefeed-title">Orange County Live Camera Feeds</h2>
+        <h2 data-cy="livefeed-title"> Live Camera Feeds</h2>
         <div className="livefeed-controls">
           <button 
             onClick={handleRefresh} 
@@ -467,7 +467,7 @@ const LiveFeed: React.FC = () => {
             {loading ? 'Refreshing...' : 'Refresh Feeds'}
           </button>
           <div className="feed-info">
-            Showing {cameraFeeds.length} cameras from Orange County (District 12)
+            Showing {cameraFeeds.length} cameras from District 12
             {progressiveLoading && (
               <span className="loading-more"> • Loading more...</span>
             )}
@@ -520,6 +520,7 @@ const LiveFeed: React.FC = () => {
                   playerRef={getGridPlayerRef(feed.id)}
                   onError={() => handleVideoError(feed.id)}
                   onLoad={() => handleImageLoad(feed.id)}
+                  preload="metadata" 
                 />
               ) : (
                 <img
@@ -587,7 +588,7 @@ const LiveFeed: React.FC = () => {
 
       {cameraFeeds.length === 0 && !loading && (
         <div className="no-feeds-message">
-          <h3>No Orange County camera feeds available</h3>
+          <h3>No camera feeds available</h3>
           <p>Please try refreshing or check back later.</p>
           <button onClick={handleRefresh} className="retry-button">
             Refresh
@@ -631,15 +632,16 @@ const LiveFeed: React.FC = () => {
               {viewMode === 'video' && selectedCamera.hasLiveStream && selectedCamera.videoUrl ? (
                 <div className="video-container">
                   <HlsPlayer
-                    src={selectedCamera.videoUrl}
-                    autoPlay={true}
-                    controls={true}
-                    width="100%"
-                    height="auto"
-                    className="camera-video"
-                    playerRef={modalPlayerRef}
-                    onError={() => handleVideoError(selectedCamera.id)}
-                  />
+  src={selectedCamera.videoUrl}
+  autoPlay={true}
+  controls={true}
+  width="100%"
+  height="auto"
+  className="camera-video"
+  playerRef={modalPlayerRef}
+  onError={() => handleVideoError(selectedCamera.id)}
+  poster={selectedCamera.image}  // Show still image while video loads
+/>
                 </div>
               ) : viewMode === 'map' && selectedCamera.coordinates ? (
                 <div className="map-container">
