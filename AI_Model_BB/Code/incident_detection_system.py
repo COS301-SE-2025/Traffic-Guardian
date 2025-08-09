@@ -16,7 +16,10 @@ load_dotenv()
 
 class AdvancedIncidentDetectionSystem:
     def __init__(self, camera_config=None, config=None):
-
+        """
+        Advanced incident detection system with multi-layer collision detection.
+        Modified for multi-camera support and video clip recording.
+        """
         self.camera_config = camera_config  # Single camera config
         self.config = config or self._default_config()
         
@@ -79,7 +82,7 @@ class AdvancedIncidentDetectionSystem:
             },
             'api_reports_sent': 0,
             'api_failures': 0,
-            'clips_recorded': 0  # NEW
+            'clips_recorded': 0 
         }
         
         self.api_config = self._load_api_config()
@@ -208,56 +211,103 @@ class AdvancedIncidentDetectionSystem:
         """Record video clip of incident instead of calling API."""
         try:
             if len(self.frame_buffer) < 30:  # Need at least 1 second of footage
-                print("⚠️ Not enough frames buffered for clip recording")
+                print("Not enough frames buffered for clip recording")
                 return
             
             # Create unique filename with timestamp and camera ID
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Include milliseconds
             camera_id = self.camera_config['camera_id']
             incident_type = incident.get('type', 'unknown')
             
             filename = f"{self.incident_clips_folder}/incident_{camera_id}_{timestamp}_{incident_type}.mp4"
             
-            # Get video properties from capture
-            fps = int(self.cap.get(cv2.CAP_PROP_FPS)) or 30
-            width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or 1280
-            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or 720
+            # Get video properties - use actual frame dimensions instead of capture properties
+            sample_frame = None
+            for frame in self.frame_buffer:
+                if frame is not None:
+                    sample_frame = frame
+                    break
             
-            # Create video writer
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter(filename, fourcc, fps, (width, height))
+            if sample_frame is None:
+                print("✗ No valid frames in buffer")
+                return
             
-            if not out.isOpened():
-                print(f"✗ Failed to create video writer for {filename}")
+            height, width = sample_frame.shape[:2]
+            fps = 30  # Use fixed FPS for consistency
+            
+            # Try different codecs for better compatibility
+            codecs_to_try = [
+                ('mp4v', '.mp4'),
+                ('XVID', '.avi'), 
+                ('MJPG', '.avi')
+            ]
+            
+            out = None
+            final_filename = filename
+            
+            for codec, extension in codecs_to_try:
+                try:
+                    test_filename = filename.replace('.mp4', extension)
+                    fourcc = cv2.VideoWriter_fourcc(*codec)
+                    out = cv2.VideoWriter(test_filename, fourcc, fps, (width, height))
+                    
+                    if out.isOpened():
+                        final_filename = test_filename
+                        print(f"✓ Using codec {codec} for video recording")
+                        break
+                    else:
+                        out.release()
+                        out = None
+                except Exception as e:
+                    if out:
+                        out.release()
+                    out = None
+                    continue
+            
+            if out is None:
+                print(f"✗ Failed to create video writer with any codec")
                 return
             
             # Write frames from buffer (includes lead-up to incident)
             frames_written = 0
+            print(f"Recording incident clip with {len(self.frame_buffer)} frames...")
+            
             for frame in self.frame_buffer:
                 if frame is not None:
-                    # Resize frame if needed
+                    # Ensure frame dimensions match
                     if frame.shape[:2] != (height, width):
                         frame = cv2.resize(frame, (width, height))
-                    out.write(frame)
-                    frames_written += 1
+                    
+                    # Ensure frame is in BGR format
+                    if len(frame.shape) == 3 and frame.shape[2] == 3:
+                        out.write(frame)
+                        frames_written += 1
             
+            # Properly close the video writer
             out.release()
+            out = None
             
             if frames_written > 0:
                 self.analytics['clips_recorded'] += 1
-                print(f"🎥 Incident clip recorded: {filename}")
+                print(f"   Incident clip recorded: {final_filename}")
                 print(f"   Frames: {frames_written}, Duration: {frames_written/fps:.1f}s")
+                print(f"   Resolution: {width}x{height}")
+                
+                # Small delay to ensure file is fully written
+                time.sleep(0.5)
                 
                 # Call classification.py with camera_id
                 self._call_classification(camera_id)
             else:
-                print(f"✗ No frames written to {filename}")
+                print(f"✗ No frames written to {final_filename}")
                 # Clean up empty file
-                if os.path.exists(filename):
-                    os.remove(filename)
+                if os.path.exists(final_filename):
+                    os.remove(final_filename)
                     
         except Exception as e:
             print(f"✗ Error recording incident clip: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _call_classification(self, camera_id):
         """Call classification.py with camera_id."""
@@ -267,7 +317,7 @@ class AdvancedIncidentDetectionSystem:
                 'python', 'classification.py', camera_id
             ], cwd='.', stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
-            print(f"📊 Classification called for camera: {camera_id}")
+            print(f"Classification called for camera: {camera_id}")
             
         except Exception as e:
             print(f"✗ Error calling classification.py: {e}")
@@ -279,8 +329,8 @@ class AdvancedIncidentDetectionSystem:
             return
         
         camera_id = self.camera_config['camera_id']
-        print(f"🚀 Starting detection for camera: {camera_id}")
-        print("🔍 Multi-layer collision detection enabled:")
+        print(f"Starting detection for camera: {camera_id}")
+        print("  Multi-layer collision detection enabled:")
         print("  Layer 1: Trajectory Prediction")
         print("  Layer 2: Depth Analysis") 
         print("  Layer 3: Optical Flow Analysis")
@@ -294,16 +344,25 @@ class AdvancedIncidentDetectionSystem:
         
         frame_count = 0
         is_fullscreen = False
+        video_ended = False
+        last_incident_frame = -1  # Track when last incident occurred
         
         try:
             while True:
                 ret, frame = self.cap.read()
                 if not ret:
                     if self.camera_config['url'].endswith(('.mp4', '.avi', '.mov')):  # Video file
+                        # Video ended - wait a moment before restarting to allow video writing to complete
+                        print(f" Video ended for camera {camera_id}")
+                        video_ended = True
+                        time.sleep(2)  # Give time for any ongoing video writing to complete
+                        
+                        # Check if user wants to exit instead of looping
+                        print(f" Restarting video for camera {camera_id} (press 'q' to quit)")
                         self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Restart video
                         continue
                     else:  # Stream - try to reconnect
-                        print(f"⚠️ Camera {camera_id} disconnected, attempting reconnection...")
+                        print(f" Camera {camera_id} disconnected, attempting reconnection...")
                         if not self.initialize_capture():
                             break
                         continue
@@ -328,7 +387,12 @@ class AdvancedIncidentDetectionSystem:
                 self._update_analytics(detection_results, incidents)
                 
                 # Process alerts and record clips instead of API calls
-                self._process_alerts_and_record(incidents)
+                if incidents:
+                    # Only process if it's been a while since the last incident (avoid duplicates)
+                    if frame_count - last_incident_frame > 90:  # 3 seconds gap at 30fps
+                        self._process_alerts_and_record(incidents)
+                        last_incident_frame = frame_count
+                        print(f"Incident recorded at frame {frame_count}. Press 'q' to exit after recording completes.")
                 
                 # Create visualization
                 annotated_frame = self._create_visualization(frame, detection_results, incidents)
@@ -342,9 +406,12 @@ class AdvancedIncidentDetectionSystem:
                 # Store previous frame for optical flow
                 self.previous_frame = frame.copy()
                 
-                # Handle keyboard input
+                # Handle keyboard input with improved timing
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q'):
+                    print(f" Quit requested for camera {camera_id}")
+                    # Give a moment for any ongoing video writing to complete
+                    time.sleep(1)
                     break
                 elif key == ord('s'):
                     self._save_frame(annotated_frame, frame_count, manual=True)
@@ -357,11 +424,11 @@ class AdvancedIncidentDetectionSystem:
                     if is_fullscreen:
                         cv2.setWindowProperty(window_name, 
                                             cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                        print("🖥️ Switched to fullscreen mode (Press ESC or 'f' to exit)")
+                        print("Switched to fullscreen mode (Press ESC or 'f' to exit)")
                     else:
                         cv2.setWindowProperty(window_name, 
                                             cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
-                        print("🪟 Switched to windowed mode")
+                        print("Switched to windowed mode")
                 elif key == 27:  # ESC key
                     if is_fullscreen:
                         window_name = f"Camera {camera_id} - Advanced Incident Detection"
@@ -371,8 +438,9 @@ class AdvancedIncidentDetectionSystem:
                         print("🪟 Exited fullscreen mode")
                 
         except KeyboardInterrupt:
-            print(f"\n⏹️ Detection stopped for camera {camera_id}")
+            print(f"\n Detection stopped for camera {camera_id}")
         finally:
+            print(f"Cleaning up camera {camera_id}...")
             self._cleanup()
     
     def _detect_objects(self, frame):
@@ -1116,7 +1184,7 @@ class AdvancedIncidentDetectionSystem:
                 confidence = incident.get('confidence', 0)
                 layers = incident.get('validation_layers', {})
                 
-                print(f"🚨 {severity} COLLISION ALERT:")
+                print(f"   {severity} COLLISION ALERT:")
                 print(f"   Camera: {self.camera_config['camera_id']}")
                 print(f"   Vehicles: {vehicles}")
                 print(f"   Time to collision: {ttc:.1f}s")
@@ -1137,14 +1205,14 @@ class AdvancedIncidentDetectionSystem:
                     self._record_incident_clip(incident)
             
             elif incident_type == 'pedestrian_on_road':
-                print(f"🚶 {severity} ALERT: Pedestrian detected on roadway!")
+                print(f"  {severity} ALERT: Pedestrian detected on roadway!")
                 print(f"   Camera: {self.camera_config['camera_id']}")
                 self._record_incident_clip(incident)
             
             elif incident_type == 'sudden_speed_change':
                 vehicle_class = incident['vehicle_class']
                 speed_change = incident['speed_change']
-                print(f"⚡ {severity} ALERT: {vehicle_class} sudden speed change ({speed_change:.1f}x)")
+                print(f"  {severity} ALERT: {vehicle_class} sudden speed change ({speed_change:.1f}x)")
                 print(f"   Camera: {self.camera_config['camera_id']}")
                 
                 # Only record clips for significant speed changes
@@ -1474,7 +1542,7 @@ class AdvancedIncidentDetectionSystem:
         filename += ".jpg"
         
         cv2.imwrite(filename, frame)
-        print(f"💾 Frame saved: {filename}")
+        print(f" Frame saved: {filename}")
     
     def _reset_analytics(self):
         """Reset analytics counters."""
@@ -1504,16 +1572,33 @@ class AdvancedIncidentDetectionSystem:
         self.flow_points.clear()
         self.next_vehicle_id = 0
         
-        print(f"📊 Analytics and tracking data reset for camera {self.camera_config['camera_id']}")
+        print(f" Analytics and tracking data reset for camera {self.camera_config['camera_id']}")
     
     def _cleanup(self):
         """Cleanup resources and save final report."""
+        camera_id = self.camera_config['camera_id']
+        print(f" Cleaning up resources for camera {camera_id}...")
+        
+        # Wait a moment for any ongoing video writing to complete
+        time.sleep(1)
+        
+        # Release video capture
         if self.cap:
             self.cap.release()
-        cv2.destroyAllWindows()
+            print(f" Released video capture for camera {camera_id}")
+        
+        # Close OpenCV windows for this camera
+        try:
+            window_name = f"Camera {camera_id} - Advanced Incident Detection"
+            cv2.destroyWindow(window_name)
+            cv2.waitKey(1)  # Allow window destruction to complete
+        except:
+            pass
         
         # Generate final report
         self._generate_final_report()
+        
+        print(f" Cleanup completed for camera {camera_id}")
     
     def _generate_final_report(self):
         """Generate and save final detection report."""
@@ -1521,29 +1606,49 @@ class AdvancedIncidentDetectionSystem:
         layers = self.analytics['collision_layers']
         camera_id = self.camera_config['camera_id']
         
+        # Convert any numpy types to native Python types for JSON serialization
+        def convert_to_json_serializable(obj):
+            """Convert numpy types and other non-serializable types to JSON-serializable types."""
+            if hasattr(obj, 'tolist'):  # numpy arrays
+                return obj.tolist()
+            elif hasattr(obj, 'item'):  # numpy scalars
+                return obj.item()
+            elif isinstance(obj, np.bool_):
+                return bool(obj)
+            elif isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, dict):
+                return {k: convert_to_json_serializable(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_to_json_serializable(item) for item in obj]
+            else:
+                return obj
+        
         report = {
-            'camera_id': camera_id,
+            'camera_id': str(camera_id),
             'session_summary': {
-                'runtime_seconds': runtime,
-                'total_frames': self.analytics['total_frames'],
-                'total_detections': self.analytics['total_detections'],
-                'total_incidents': self.analytics['incidents_detected'],
-                'average_fps': self.analytics['total_frames'] / runtime if runtime > 0 else 0
+                'runtime_seconds': float(runtime),
+                'total_frames': int(self.analytics['total_frames']),
+                'total_detections': int(self.analytics['total_detections']),
+                'total_incidents': int(self.analytics['incidents_detected']),
+                'average_fps': float(self.analytics['total_frames'] / runtime if runtime > 0 else 0)
             },
-            'detection_summary': self.analytics['class_totals'],
+            'detection_summary': {k: int(v) for k, v in self.analytics['class_totals'].items()},
             'incident_summary': {},
             'collision_layer_performance': {
-                'layer1_trajectory_detected': layers['trajectory_detected'],
-                'layer2_depth_confirmed': layers['depth_confirmed'],
-                'layer3_flow_confirmed': layers['flow_confirmed'],
-                'layer4_physics_confirmed': layers['physics_confirmed'],
-                'final_confirmed_collisions': layers['final_confirmed'],
-                'false_positive_reduction': (layers['trajectory_detected'] - layers['final_confirmed']) / max(layers['trajectory_detected'], 1)
+                'layer1_trajectory_detected': int(layers['trajectory_detected']),
+                'layer2_depth_confirmed': int(layers['depth_confirmed']),
+                'layer3_flow_confirmed': int(layers['flow_confirmed']),
+                'layer4_physics_confirmed': int(layers['physics_confirmed']),
+                'final_confirmed_collisions': int(layers['final_confirmed']),
+                'false_positive_reduction': float((layers['trajectory_detected'] - layers['final_confirmed']) / max(layers['trajectory_detected'], 1))
             },
-            'all_incidents': self.analytics['incident_log'],
+            'all_incidents': convert_to_json_serializable(self.analytics['incident_log']),
             'clip_recording': {
-                'clips_recorded': self.analytics['clips_recorded'],
-                'clips_folder': self.incident_clips_folder
+                'clips_recorded': int(self.analytics['clips_recorded']),
+                'clips_folder': str(self.incident_clips_folder)
             },
             'advanced_features': [
                 'Multi-camera support with threading',
@@ -1564,57 +1669,66 @@ class AdvancedIncidentDetectionSystem:
                 report['incident_summary'][incident_type] = 0
             report['incident_summary'][incident_type] += 1
         
-        # Save report
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"advanced_incident_report_{camera_id}_{timestamp}.json"
-        
-        with open(filename, 'w') as f:
-            json.dump(report, f, indent=2)
-        
-        # Print summary
-        print(f"\n{'='*60}")
-        print(f"🏁 CAMERA {camera_id} - INCIDENT DETECTION REPORT")
-        print(f"{'='*60}")
-        print(f"Runtime: {runtime:.1f} seconds")
-        print(f"Frames processed: {self.analytics['total_frames']}")
-        print(f"Average FPS: {report['session_summary']['average_fps']:.1f}")
-        print(f"Total detections: {self.analytics['total_detections']}")
-        print(f"Total incidents: {self.analytics['incidents_detected']}")
-        print(f"Clips recorded: {self.analytics['clips_recorded']}")
-        
-        print(f"\n🔍 COLLISION DETECTION LAYER PERFORMANCE:")
-        print(f"  Layer 1 (Trajectory): {layers['trajectory_detected']} detected")
-        print(f"  Layer 2 (Depth): {layers['depth_confirmed']} confirmed")
-        print(f"  Layer 3 (Optical Flow): {layers['flow_confirmed']} confirmed")
-        print(f"  Layer 4 (Physics): {layers['physics_confirmed']} confirmed")
-        print(f"  FINAL Collisions: {layers['final_confirmed']} confirmed")
-        
-        if layers['trajectory_detected'] > 0:
-            reduction = (layers['trajectory_detected'] - layers['final_confirmed']) / layers['trajectory_detected'] * 100
-            print(f"  False Positive Reduction: {reduction:.1f}%")
-        
-        if report['incident_summary']:
-            print(f"\nIncident breakdown:")
-            for incident_type, count in report['incident_summary'].items():
-                print(f"  {incident_type}: {count}")
-        else:
-            print("\n✅ No incidents detected during session")
-        
-        print(f"\n🎥 VIDEO CLIPS:")
-        print(f"  Clips recorded: {self.analytics['clips_recorded']}")
-        print(f"  Clips folder: {self.incident_clips_folder}")
-        
-        print(f"\n📄 Detailed report saved to: {filename}")
+        # Save report with error handling
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"advanced_incident_report_{camera_id}_{timestamp}.json"
+            
+            with open(filename, 'w') as f:
+                json.dump(report, f, indent=2, default=str)  # Use default=str as fallback
+            
+            # Print summary
+            print(f"\n{'='*60}")
+            print(f"CAMERA {camera_id} - INCIDENT DETECTION REPORT")
+            print(f"{'='*60}")
+            print(f"Runtime: {runtime:.1f} seconds")
+            print(f"Frames processed: {self.analytics['total_frames']}")
+            print(f"Average FPS: {report['session_summary']['average_fps']:.1f}")
+            print(f"Total detections: {self.analytics['total_detections']}")
+            print(f"Total incidents: {self.analytics['incidents_detected']}")
+            print(f"Clips recorded: {self.analytics['clips_recorded']}")
+            
+            print(f"\n COLLISION DETECTION LAYER PERFORMANCE:")
+            print(f"  Layer 1 (Trajectory): {layers['trajectory_detected']} detected")
+            print(f"  Layer 2 (Depth): {layers['depth_confirmed']} confirmed")
+            print(f"  Layer 3 (Optical Flow): {layers['flow_confirmed']} confirmed")
+            print(f"  Layer 4 (Physics): {layers['physics_confirmed']} confirmed")
+            print(f"  FINAL Collisions: {layers['final_confirmed']} confirmed")
+            
+            if layers['trajectory_detected'] > 0:
+                reduction = (layers['trajectory_detected'] - layers['final_confirmed']) / layers['trajectory_detected'] * 100
+                print(f"  False Positive Reduction: {reduction:.1f}%")
+            
+            if report['incident_summary']:
+                print(f"\nIncident breakdown:")
+                for incident_type, count in report['incident_summary'].items():
+                    print(f"  {incident_type}: {count}")
+            else:
+                print("\n No incidents detected during session")
+            
+            print(f"\n VIDEO CLIPS:")
+            print(f"  Clips recorded: {self.analytics['clips_recorded']}")
+            print(f"  Clips folder: {self.incident_clips_folder}")
+            
+            print(f"\n Detailed report saved to: {filename}")
+            
+        except Exception as e:
+            print(f"Error saving report: {e}")
+            print("Analytics data:")
+            print(f"  Runtime: {runtime:.1f}s")
+            print(f"  Frames: {self.analytics['total_frames']}")
+            print(f"  Incidents: {self.analytics['incidents_detected']}")
+            print(f"  Clips: {self.analytics['clips_recorded']}")
 
 
 def load_camera_configurations():
-    """Load camera configurations from Cameras/camera.json."""
+    """Load camera configurations from cameras/cameras.json."""
     try:
         with open('Cameras/camera.json', 'r') as f:
             data = json.load(f)
             return data.get('cameras', [])
     except FileNotFoundError:
-        print("✗ Cameras/camera.json not found")
+        print("✗ cameras/cameras.json not found")
         return []
     except json.JSONDecodeError as e:
         print(f"✗ Error parsing cameras.json: {e}")
@@ -1678,7 +1792,7 @@ def main():
         'pedestrian_road_threshold': 50,
     }
     
-    print("🚀 Initializing ADVANCED Multi-Camera Incident Detection System...")
+    print(" Initializing ADVANCED Multi-Camera Incident Detection System...")
     print("="*70)
     
     # Load camera configurations
@@ -1688,41 +1802,51 @@ def main():
         print("✗ No camera configurations found")
         return
     
-    print(f"📹 Found {len(cameras)} camera(s):")
+    print(f" Found {len(cameras)} camera(s):")
     for cam in cameras:
         print(f"   Camera ID: {cam.get('camera_id', 'Unknown')}")
         print(f"   URL: {cam.get('url', 'Unknown')}")
     
-  
     
     # Create and start detection threads for each camera
     threads = []
     
     for camera_config in cameras:
         if not camera_config.get('camera_id') or not camera_config.get('url'):
-            print(f"⚠️ Skipping invalid camera config: {camera_config}")
+            print(f" Skipping invalid camera config: {camera_config}")
             continue
             
         thread = threading.Thread(
             target=run_camera_detection,
             args=(camera_config, config),
-            name=f"Camera-{camera_config['camera_id']}"
+            name=f"Camera-{camera_config['camera_id']}",
+            daemon=True  # Make threads daemon so they'll exit when main exits
         )
         threads.append(thread)
         thread.start()
-        print(f"🎬 Started detection thread for camera: {camera_config['camera_id']}")
+        print(f" Started detection thread for camera: {camera_config['camera_id']}")
+        time.sleep(1)  # Small delay between camera starts
     
     if not threads:
         print("✗ No valid camera configurations found")
         return
+    
+    print(f"\n {len(threads)} camera thread(s) running. Press Ctrl+C to stop all cameras.")
     
     try:
         # Wait for all threads to complete
         for thread in threads:
             thread.join()
     except KeyboardInterrupt:
-        print("\n⏹️ Stopping all camera detection threads...")
-        # Threads will stop naturally when their detection loops exit
+        print("\nStopping all camera detection threads...")
+        print("   Waiting for cleanup to complete...")
+        time.sleep(3)  # Give time for cleanup
+        
+    print(" All camera threads stopped.")
+    
+    # Final cleanup of any remaining OpenCV windows
+    cv2.destroyAllWindows()
+    cv2.waitKey(1)
 
 
 if __name__ == "__main__":
