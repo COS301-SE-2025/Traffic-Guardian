@@ -248,7 +248,7 @@ const LiveFeed: React.FC = () => {
       
       // Final check
       setCameraFeeds(prevFeeds => {
-        if (prevFeeds.length === 0) {
+        if (prevFeeds.length === 0 && !progressiveLoading) {
           setError('No camera feeds available at this time.');
         }
         return prevFeeds;
@@ -303,6 +303,17 @@ const LiveFeed: React.FC = () => {
         feed.id === feedId ? { ...feed, status: 'Offline', hasLiveStream: false } : feed
       )
     );
+  }, []);
+
+  const handleVideoLoadStart = useCallback((feedId: string) => {
+    // Set a timeout to mark as Online if no error occurs within 3 seconds
+    setTimeout(() => {
+      setCameraFeeds(prevFeeds =>
+        prevFeeds.map(feed =>
+          feed.id === feedId && feed.status === 'Loading' ? { ...feed, status: 'Online' } : feed
+        )
+      );
+    }, 3000);
   }, []);
 
   const handleCameraClick = useCallback((camera: CameraFeed) => {
@@ -408,7 +419,7 @@ const LiveFeed: React.FC = () => {
     }), []
   );
 
-  if (loading && cameraFeeds.length === 0) {
+  if (loading && cameraFeeds.length === 0 && !progressiveLoading) {
     return (
       <div className="livefeed-page" data-cy="livefeed-page">
         <div className="livefeed-header">
@@ -520,6 +531,7 @@ const LiveFeed: React.FC = () => {
                   playerRef={getGridPlayerRef(feed.id)}
                   onError={() => handleVideoError(feed.id)}
                   onLoad={() => handleImageLoad(feed.id)}
+                  onLoadStart={() => handleVideoLoadStart(feed.id)}
                   preload="metadata" 
                 />
               ) : (
@@ -586,7 +598,7 @@ const LiveFeed: React.FC = () => {
         ))}
       </div>
 
-      {cameraFeeds.length === 0 && !loading && (
+      {cameraFeeds.length === 0 && !loading && !progressiveLoading && (
         <div className="no-feeds-message">
           <h3>No camera feeds available</h3>
           <p>Please try refreshing or check back later.</p>
