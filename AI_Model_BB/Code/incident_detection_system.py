@@ -117,6 +117,8 @@ class AdvancedIncidentDetectionSystem:
             'enabled': True
         }
     
+
+    
     def _default_config(self):
         """Enhanced configuration with advanced collision detection settings."""
         return {
@@ -206,6 +208,80 @@ class AdvancedIncidentDetectionSystem:
             print(f"Camera {self.camera_config['camera_id']} connection attempt {attempt+1}/{max_retries} failed...")
             time.sleep(2)
         return False
+
+
+    def _is_duplicate_incident(self, incident, current_frame):
+        """Check if this incident is a duplicate of a recent one."""
+        incident_type = incident['type']
+        current_time = time.time()
+        
+        # Define cooldown periods for different incident types (in seconds)
+        cooldown_periods = {
+            'collision': 10,  # 10 seconds between collision recordings
+            'stopped_vehicle': 30,  # 30 seconds between stopped vehicle recordings
+            'pedestrian_on_road': 15,  # 15 seconds between pedestrian recordings
+            'sudden_speed_change': 20  # 20 seconds between speed change recordings
+        }
+        
+        cooldown_period = cooldown_periods.get(incident_type, 15)
+        
+        # Check if this incident type is in cooldown
+        if incident_type in self.incident_cooldown:
+            time_since_last = current_time - self.incident_cooldown[incident_type]
+            if time_since_last < cooldown_period:
+                return True  # Still in cooldown, this is a duplicate
+        
+        # For collision incidents, also check vehicle positions to avoid duplicates
+        if incident_type == 'collision':
+            incident_pos = incident.get('positions', [])
+            
+            # Check recent incidents for similar collision positions
+            for recent_incident in self.recent_incidents[-5:]:  # Check last 5 incidents
+                if (recent_incident['type'] == 'collision' and 
+                    current_time - recent_incident['timestamp'] < cooldown_period):
+                    
+                    recent_pos = recent_incident.get('positions', [])
+                    
+                    # Calculate distance between incident positions
+                    if incident_pos and recent_pos:
+                        try:
+                            pos1 = incident_pos[0] if incident_pos else [0, 0]
+                            pos2 = recent_pos[0] if recent_pos else [0, 0]
+                            
+                            distance = ((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)**0.5
+                            
+                            # If positions are very close (within 50 pixels), consider it duplicate
+                            if distance < 50:
+                                return True
+                        except (IndexError, TypeError):
+                            pass
+        
+        return False
+
+    def _record_incident_if_not_duplicate(self, incident, current_frame):
+        """Record incident only if it's not a duplicate."""
+        if self._is_duplicate_incident(incident, current_frame):
+            return False  # Skip recording, it's a duplicate
+        
+        # Record the incident
+        self._record_incident_clip(incident)
+        
+        # Update cooldown and recent incidents
+        incident_type = incident['type']
+        current_time = time.time()
+        
+        self.incident_cooldown[incident_type] = current_time
+        
+        # Add to recent incidents with timestamp
+        incident_with_timestamp = incident.copy()
+        incident_with_timestamp['timestamp'] = current_time
+        self.recent_incidents.append(incident_with_timestamp)
+        
+        # Keep only last 10 recent incidents
+        if len(self.recent_incidents) > 10:
+            self.recent_incidents.pop(0)
+        
+        return True  # Successfully recorded
 
     def _record_incident_clip(self, incident):
         """Record video clip of incident instead of calling API."""
@@ -1740,80 +1816,6 @@ def run_camera_detection(camera_config, config):
     detector = AdvancedIncidentDetectionSystem(camera_config=camera_config, config=config)
     detector.run_detection()
 
-
-
-def _is_duplicate_incident(self, incident, current_frame):
-    """Check if this incident is a duplicate of a recent one."""
-    incident_type = incident['type']
-    current_time = time.time()
-    
-    # Define cooldown periods for different incident types (in seconds)
-    cooldown_periods = {
-        'collision': 10,  # 10 seconds between collision recordings
-        'stopped_vehicle': 30,  # 30 seconds between stopped vehicle recordings
-        'pedestrian_on_road': 15,  # 15 seconds between pedestrian recordings
-        'sudden_speed_change': 20  # 20 seconds between speed change recordings
-    }
-    
-    cooldown_period = cooldown_periods.get(incident_type, 15)
-    
-    # Check if this incident type is in cooldown
-    if incident_type in self.incident_cooldown:
-        time_since_last = current_time - self.incident_cooldown[incident_type]
-        if time_since_last < cooldown_period:
-            return True  # Still in cooldown, this is a duplicate
-    
-    # For collision incidents, also check vehicle positions to avoid duplicates
-    if incident_type == 'collision':
-        incident_pos = incident.get('positions', [])
-        
-        # Check recent incidents for similar collision positions
-        for recent_incident in self.recent_incidents[-5:]:  # Check last 5 incidents
-            if (recent_incident['type'] == 'collision' and 
-                current_time - recent_incident['timestamp'] < cooldown_period):
-                
-                recent_pos = recent_incident.get('positions', [])
-                
-                # Calculate distance between incident positions
-                if incident_pos and recent_pos:
-                    try:
-                        pos1 = incident_pos[0] if incident_pos else [0, 0]
-                        pos2 = recent_pos[0] if recent_pos else [0, 0]
-                        
-                        distance = ((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)**0.5
-                        
-                        # If positions are very close (within 50 pixels), consider it duplicate
-                        if distance < 50:
-                            return True
-                    except (IndexError, TypeError):
-                        pass
-    
-    return False
-
-def _record_incident_if_not_duplicate(self, incident, current_frame):
-    """Record incident only if it's not a duplicate."""
-    if self._is_duplicate_incident(incident, current_frame):
-        return False  # Skip recording, it's a duplicate
-    
-    # Record the incident
-    self._record_incident_clip(incident)
-    
-    # Update cooldown and recent incidents
-    incident_type = incident['type']
-    current_time = time.time()
-    
-    self.incident_cooldown[incident_type] = current_time
-    
-    # Add to recent incidents with timestamp
-    incident_with_timestamp = incident.copy()
-    incident_with_timestamp['timestamp'] = current_time
-    self.recent_incidents.append(incident_with_timestamp)
-    
-    # Keep only last 10 recent incidents
-    if len(self.recent_incidents) > 10:
-        self.recent_incidents.pop(0)
-    
-    return True  # Successfully recorded
 
 def main():
     """Main function to run multi-camera incident detection system."""
