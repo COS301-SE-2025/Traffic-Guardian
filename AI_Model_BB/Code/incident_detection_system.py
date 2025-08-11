@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class AdvancedIncidentDetectionSystem:
-    def __init__(self, stream_url="Videos/Demo2.mp4", config=None):
+    def __init__(self, stream_url="Videos/Traffic_Video2.mp4", config=None):
         """
         Advanced incident detection system with multi-layer collision detection.
         """
@@ -58,6 +58,12 @@ class AdvancedIncidentDetectionSystem:
             'pedestrian_on_road': [],
             'sudden_speed_change': []
         }
+        
+        # Incident tracking for folder organization
+        self.active_incidents = {}  # Track ongoing incidents
+        self.incident_counters = {}  # Count frames per incident type
+        self.incident_folders = {}  # Track created folders per incident
+        self.next_incident_id = 1  # Unique incident ID counter
         
         # Analytics and logging
         self.analytics = {
@@ -295,6 +301,10 @@ class AdvancedIncidentDetectionSystem:
                 # Update analytics
                 self._update_analytics(detection_results, incidents)
                 
+                # Cleanup old incidents periodically
+                if frame_count % 100 == 0:  # Every ~3 seconds
+                    self._cleanup_old_incidents(frame_count)
+                
                 # Generate alerts
                 self._process_alerts(incidents)
                 
@@ -309,6 +319,7 @@ class AdvancedIncidentDetectionSystem:
                 
                 if self.config['save_incidents'] and incidents:
                     self._save_incident_frame(annotated_frame, incidents, frame_count)
+                    self._save_incident_frame_clean(frame, incidents, frame_count)
                 
                 # Store previous frame for optical flow
                 self.previous_frame = frame.copy()
@@ -1481,16 +1492,43 @@ class AdvancedIncidentDetectionSystem:
             self.analytics['alerts'].append(incident)
     
     def _save_incident_frame(self, frame, incidents, frame_number):
-        """Save frame when incidents are detected."""
+        """Save annotated frame when incidents are detected - organized by incident."""
+        if not incidents:
+            return
+            
         import os
-        os.makedirs('incident_frames', exist_ok=True)
         
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        incident_types = "_".join([inc['type'] for inc in incidents])
-        filename = f"incident_frames/incident_{timestamp}_{frame_number}_{incident_types}.jpg"
-        
-        cv2.imwrite(filename, frame)
-        print(f"💾 Incident frame saved: {filename}")
+        for incident in incidents:
+            incident_id = self._get_or_create_incident_id(incident, frame_number)
+            
+            # Create incident folder if it doesn't exist
+            if incident_id not in self.incident_folders:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                incident_folder_name = f"incident_{incident_id:03d}_{timestamp}_{incident['type']}"
+                incident_folder_path = f"incident_frames/{incident_folder_name}"
+                os.makedirs(incident_folder_path, exist_ok=True)
+                
+                self.incident_folders[incident_id] = {
+                    'path': incident_folder_path,
+                    'start_frame': frame_number,
+                    'frame_count': 0,
+                    'incident_type': incident['type'],
+                    'severity': incident.get('severity', 'MEDIUM')
+                }
+                
+                print(f"📁 New incident folder created: {incident_folder_path}")
+            
+            # Save annotated frame in the incident folder
+            folder_info = self.incident_folders[incident_id]
+            folder_info['frame_count'] += 1
+            
+            frame_filename = f"{folder_info['path']}/annotated_frame_{folder_info['frame_count']:03d}.jpg"
+            cv2.imwrite(frame_filename, frame)
+            
+            # Update incident metadata
+            self._update_incident_metadata(incident_id, incident, frame_number)
+            
+        print(f"💾 Incident frames saved for {len(incidents)} incidents")
     
     def _save_frame(self, frame, frame_number, manual=False):
         """Save frame manually."""
@@ -1505,6 +1543,141 @@ class AdvancedIncidentDetectionSystem:
         
         cv2.imwrite(filename, frame)
         print(f"💾 Frame saved: {filename}")
+
+    def _save_incident_frame_clean(self, frame, incidents, frame_number):
+        """Save clean frame when incidents are detected - organized by incident."""
+        if not incidents:
+            return
+            
+        import os
+        
+        for incident in incidents:
+            incident_id = self._get_or_create_incident_id(incident, frame_number)
+            
+            # Create clean incident folder if it doesn't exist
+            clean_folder_key = f"clean_{incident_id}"
+            if clean_folder_key not in self.incident_folders:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                incident_folder_name = f"incident_{incident_id:03d}_{timestamp}_{incident['type']}"
+                incident_folder_path = f"incident_frames_clean/{incident_folder_name}"
+                os.makedirs(incident_folder_path, exist_ok=True)
+                
+                self.incident_folders[clean_folder_key] = {
+                    'path': incident_folder_path,
+                    'start_frame': frame_number,
+                    'frame_count': 0,
+                    'incident_type': incident['type'],
+                    'severity': incident.get('severity', 'MEDIUM')
+                }
+                
+                print(f"📁 New clean incident folder created: {incident_folder_path}")
+            
+            # Save clean frame in the incident folder
+            folder_info = self.incident_folders[clean_folder_key]
+            folder_info['frame_count'] += 1
+            
+            frame_filename = f"{folder_info['path']}/clean_frame_{folder_info['frame_count']:03d}.jpg"
+            cv2.imwrite(frame_filename, frame)
+            
+            # Update incident metadata for clean folder
+            self._update_incident_metadata(clean_folder_key, incident, frame_number)
+            
+        print(f"�️ Clean incident frames saved for {len(incidents)} incidents")
+    
+    def _save_frame(self, frame, frame_number, manual=False):
+        """Save frame manually."""
+        import os
+        os.makedirs('saved_frames', exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"saved_frames/frame_{timestamp}_{frame_number}"
+        if manual:
+            filename += "_manual"
+        filename += ".jpg"
+        
+        cv2.imwrite(filename, frame)
+        print(f"💾 Frame saved: {filename}")
+
+    def _get_or_create_incident_id(self, incident, frame_number):
+        """Get existing incident ID or create new one for incident tracking."""
+        incident_type = incident['type']
+        
+        # For collision incidents, use vehicle IDs to create unique incident identifier
+        if incident_type == 'collision' and 'vehicle_ids' in incident:
+            vehicle_ids = tuple(sorted(incident['vehicle_ids']))
+            incident_key = f"collision_{vehicle_ids}"
+        elif incident_type == 'stopped_vehicle' and 'vehicle_id' in incident:
+            incident_key = f"stopped_{incident['vehicle_id']}"
+        elif incident_type == 'pedestrian_on_road':
+            # Group pedestrian incidents by proximity/time
+            pos = incident.get('position', [0, 0])
+            incident_key = f"pedestrian_{int(pos[0]//100)}_{int(pos[1]//100)}"
+        else:
+            # Generic incident grouping by type and approximate time
+            time_window = frame_number // 30  # Group by ~1 second windows
+            incident_key = f"{incident_type}_{time_window}"
+        
+        # Check if this incident already has an ID
+        if incident_key in self.active_incidents:
+            incident_id = self.active_incidents[incident_key]
+            # Update last seen frame
+            self.incident_counters[incident_id]['last_frame'] = frame_number
+        else:
+            # Create new incident ID
+            incident_id = self.next_incident_id
+            self.next_incident_id += 1
+            
+            self.active_incidents[incident_key] = incident_id
+            self.incident_counters[incident_id] = {
+                'start_frame': frame_number,
+                'last_frame': frame_number,
+                'incident_type': incident_type,
+                'incident_key': incident_key
+            }
+        
+        return incident_id
+    
+    def _update_incident_metadata(self, folder_key, incident, frame_number):
+        """Update incident metadata file with current incident information."""
+        import json
+        
+        folder_info = self.incident_folders[folder_key]
+        metadata_file = f"{folder_info['path']}/incident_info.json"
+        
+        # Prepare metadata
+        incident_metadata = {
+            'incident_id': folder_key,
+            'incident_type': incident['type'],
+            'severity': incident.get('severity', 'MEDIUM'),
+            'start_frame': folder_info['start_frame'],
+            'latest_frame': frame_number,
+            'total_frames_captured': folder_info['frame_count'],
+            'timestamp_created': datetime.now().isoformat(),
+            'detection_details': incident,
+            'folder_path': folder_info['path']
+        }
+        
+        # Save metadata
+        with open(metadata_file, 'w') as f:
+            json.dump(incident_metadata, f, indent=2, default=str)
+    
+    def _cleanup_old_incidents(self, current_frame):
+        """Clean up incident tracking for incidents that are no longer active."""
+        # Remove incidents that haven't been seen for a while (5 seconds = 150 frames)
+        inactive_threshold = 150
+        
+        keys_to_remove = []
+        for incident_key, incident_id in self.active_incidents.items():
+            if incident_id in self.incident_counters:
+                last_frame = self.incident_counters[incident_id]['last_frame']
+                if current_frame - last_frame > inactive_threshold:
+                    keys_to_remove.append(incident_key)
+        
+        for key in keys_to_remove:
+            incident_id = self.active_incidents[key]
+            print(f"📋 Incident {incident_id} completed: {key}")
+            del self.active_incidents[key]
+            del self.incident_counters[incident_id]
     
     def _reset_analytics(self):
         """Reset analytics counters."""
