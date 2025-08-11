@@ -1250,7 +1250,7 @@ class AdvancedIncidentDetectionSystem:
         
         return road_left <= x <= road_right and road_top <= y <= road_bottom
 
-    def _process_alerts_and_record(self, incidents):
+    def _process_alerts_and_record(self, incidents, current_frame):
         """Process alerts and record clips instead of API calls."""
         for incident in incidents:
             incident_type = incident['type']
@@ -1269,23 +1269,33 @@ class AdvancedIncidentDetectionSystem:
                 print(f"   Multi-layer confidence: {confidence:.2f}")
                 print(f"   Validation layers: {layers}")
                 
-                # Record clip instead of API call
-                self._record_incident_clip(incident)
+                # Record clip only if not duplicate
+                if self._record_incident_if_not_duplicate(incident, current_frame):
+                    print(f" Recording collision incident clip")
+                else:
+                    print(f" Skipping duplicate collision incident")
             
             elif incident_type == 'stopped_vehicle':
                 duration = incident['stopped_duration']
                 vehicle_class = incident['vehicle_class']
-                print(f"⚠️ {severity} ALERT: {vehicle_class} stopped for {duration:.1f}s")
+                print(f" {severity} ALERT: {vehicle_class} stopped for {duration:.1f}s")
                 print(f"   Camera: {self.camera_config['camera_id']}")
                 
-                # Record clip for stopped vehicle incidents too
+                # Record clip for stopped vehicle incidents 
                 if duration > 15:  # Only record for longer stops
-                    self._record_incident_clip(incident)
+                    if self._record_incident_if_not_duplicate(incident, current_frame):
+                        print(f" Recording stopped vehicle incident clip")
+                    else:
+                        print(f" Skipping duplicate stopped vehicle incident")
             
             elif incident_type == 'pedestrian_on_road':
                 print(f"  {severity} ALERT: Pedestrian detected on roadway!")
                 print(f"   Camera: {self.camera_config['camera_id']}")
-                self._record_incident_clip(incident)
+                
+                if self._record_incident_if_not_duplicate(incident, current_frame):
+                    print(f" Recording pedestrian incident clip")
+                else:
+                    print(f" Skipping duplicate pedestrian incident")
             
             elif incident_type == 'sudden_speed_change':
                 vehicle_class = incident['vehicle_class']
@@ -1295,10 +1305,13 @@ class AdvancedIncidentDetectionSystem:
                 
                 # Only record clips for significant speed changes
                 if speed_change > 1.5:
-                    self._record_incident_clip(incident)
+                    if self._record_incident_if_not_duplicate(incident, current_frame):
+                        print(f"🎥 Recording speed change incident clip")
+                    else:
+                        print(f"⏭️ Skipping duplicate speed change incident")
             
             self.analytics['alerts'].append(incident)
-    
+        
     def _create_visualization(self, frame, detection_results, incidents):
         """Create annotated frame with advanced visualizations."""
         viz_frame = frame.copy()
