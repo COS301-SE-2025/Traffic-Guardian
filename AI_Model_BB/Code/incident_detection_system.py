@@ -296,8 +296,8 @@ class AdvancedIncidentDetectionSystem:
                 # Small delay to ensure file is fully written
                 time.sleep(0.5)
                 
-                # Call classification.py with camera_id
-                self._call_classification(camera_id)
+                # Call video_incident_classifier.py with camera_id
+                self._call_classification()
             else:
                 print(f"✗ No frames written to {final_filename}")
                 # Clean up empty file
@@ -309,18 +309,18 @@ class AdvancedIncidentDetectionSystem:
             import traceback
             traceback.print_exc()
 
-    def _call_classification(self, camera_id):
-        """Call classification.py with camera_id."""
+    def _call_classification(self):
+        """Call video_incident_classifier.py without camera_id."""
         try:
-            # Run classification.py as subprocess with camera_id parameter
+            # Run video_incident_classifier.py as subprocess
             subprocess.Popen([
-                'python', 'classification.py', camera_id
+                'python', 'video_incident_classifier.py'
             ], cwd='.', stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            
-            print(f"Classification called for camera: {camera_id}")
+
+            print(f"Classification called")
             
         except Exception as e:
-            print(f"✗ Error calling classification.py: {e}")
+            print(f"✗ Error calling video_incident_classifier.py: {e}")
     
     def run_detection(self):
         """Main detection loop with advanced multi-layer collision detection."""
