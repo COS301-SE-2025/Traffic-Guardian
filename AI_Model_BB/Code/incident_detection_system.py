@@ -1662,6 +1662,8 @@ class AdvancedIncidentDetectionSystem:
         self.acceleration_history.clear()
         self.flow_points.clear()
         self.next_vehicle_id = 0
+        self.recent_incidents.clear()
+        self.incident_cooldown.clear()
         
         print(f" Analytics and tracking data reset for camera {self.camera_config['camera_id']}")
     
