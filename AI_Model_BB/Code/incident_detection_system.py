@@ -33,14 +33,13 @@ class AdvancedIncidentDetectionSystem:
         self.next_vehicle_id = 0
         self.history_length = 20  # Increased for better physics analysis
         
-        # VIDEO CLIP RECORDING - NEW
         self.frame_buffer = deque(maxlen=300)  # Store last 10 seconds at 30fps
         self.recording_incident = False
         self.incident_clips_folder = "incident_for_classification"
         os.makedirs(self.incident_clips_folder, exist_ok=True)
-        # INCIDENT DEDUPLICATION 
         self.recent_incidents = []  # Store recent incidents to prevent duplicates
         self.incident_cooldown = {}  # Cooldown periods for different incident types
+        
         # ADVANCED COLLISION DETECTION COMPONENTS
         self.previous_frame = None
         self.collision_verification_layers = {
@@ -219,10 +218,10 @@ class AdvancedIncidentDetectionSystem:
         
         # Define cooldown periods for different incident types (in seconds)
         cooldown_periods = {
-            'collision': 10,  # 10 seconds between collision recordings
-            'stopped_vehicle': 30,  # 30 seconds between stopped vehicle recordings
-            'pedestrian_on_road': 15,  # 15 seconds between pedestrian recordings
-            'sudden_speed_change': 20  # 20 seconds between speed change recordings
+            'collision': 10,  
+            'stopped_vehicle': 30,  
+            'pedestrian_on_road': 15, 
+            'sudden_speed_change': 20  
         }
         
         cooldown_period = cooldown_periods.get(incident_type, 15)
@@ -429,7 +428,7 @@ class AdvancedIncidentDetectionSystem:
             while True:
                 ret, frame = self.cap.read()
                 if not ret:
-                    if self.camera_config['url'].endswith(('.mp4', '.avi', '.mov')):  # Video file
+                    if self.camera_config['url'].endswith(('.mp4', '.avi', '.mov')):  
                         # Video ended - wait a moment before restarting to allow video writing to complete
                         print(f" Video ended for camera {camera_id}")
                         video_ended = True
@@ -1281,7 +1280,6 @@ class AdvancedIncidentDetectionSystem:
                 print(f" {severity} ALERT: {vehicle_class} stopped for {duration:.1f}s")
                 print(f"   Camera: {self.camera_config['camera_id']}")
                 
-                # Record clip for stopped vehicle incidents 
                 if duration > 15:  # Only record for longer stops
                     if self._record_incident_if_not_duplicate(incident, current_frame):
                         print(f" Recording stopped vehicle incident clip")
@@ -1306,9 +1304,9 @@ class AdvancedIncidentDetectionSystem:
                 # Only record clips for significant speed changes
                 if speed_change > 1.5:
                     if self._record_incident_if_not_duplicate(incident, current_frame):
-                        print(f"🎥 Recording speed change incident clip")
+                        print(f" Recording speed change incident clip")
                     else:
-                        print(f"⏭️ Skipping duplicate speed change incident")
+                        print(f" Skipping duplicate speed change incident")
             
             self.analytics['alerts'].append(incident)
         
@@ -1672,7 +1670,6 @@ class AdvancedIncidentDetectionSystem:
         camera_id = self.camera_config['camera_id']
         print(f" Cleaning up resources for camera {camera_id}...")
         
-        # Wait a moment for any ongoing video writing to complete
         time.sleep(1)
         
         # Release video capture
@@ -1742,17 +1739,7 @@ class AdvancedIncidentDetectionSystem:
             'clip_recording': {
                 'clips_recorded': int(self.analytics['clips_recorded']),
                 'clips_folder': str(self.incident_clips_folder)
-            },
-            'advanced_features': [
-                'Multi-camera support with threading',
-                'Video clip recording instead of API calls',
-                'Automatic classification.py invocation',
-                'Multi-layer collision detection with 4 validation layers',
-                'Depth estimation from intensity and shadow analysis',
-                'Optical flow analysis for sudden motion detection',
-                'Physics-based validation using acceleration patterns',
-                'Enhanced confidence scoring and layer agreement requirements'
-            ]
+            }
         }
         
         # Summarize incidents by type
