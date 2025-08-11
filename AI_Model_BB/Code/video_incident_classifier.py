@@ -83,6 +83,9 @@ class CrashReport:
     milliseconds: str = None
     full_timestamp: str = None
     original_incident_type: str = None
+    # Display fields (for compatibility)
+    severity: str = None
+    description: str = None
     # Additional display fields
     severity: str = None
     description: str = None
@@ -1152,17 +1155,25 @@ class EnhancedCrashClassifier:
         # Extract motion values
         motion_values = [d['motion_pixels'] for d in motion_data]
         
-        # Filter vehicle detections to remove false positives
+        # Filter vehicle detections to remove false positives (relaxed criteria)
         filtered_vehicle_positions = []
         for positions in vehicle_positions:
             # Filter out extremely small or unusually large detections (likely noise)
+            # Relaxed filtering to avoid removing valid small vehicles
             filtered = [p for p in positions if 
-                       1000 <= p.get('area', 0) <= 50000 and
-                       0.5 <= p.get('aspect_ratio', 1.0) <= 3.0]
+                       500 <= p.get('area', 0) <= 100000 and  # Relaxed area range
+                       0.3 <= p.get('aspect_ratio', 1.0) <= 4.0]  # Relaxed aspect ratio
             filtered_vehicle_positions.append(filtered)
             
         # Get more accurate vehicle counts after filtering
         vehicle_counts = [len(positions) for positions in filtered_vehicle_positions]
+        
+        # Debug logging for vehicle detection
+        total_detections_before = sum(len(positions) for positions in vehicle_positions)
+        total_detections_after = sum(vehicle_counts)
+        if total_detections_before > 0:
+            logger.debug(f"Vehicle detection: {total_detections_before} raw → {total_detections_after} filtered")
+            logger.debug(f"Vehicle counts per frame: {vehicle_counts[:10]}...")  # Show first 10 frames
         
         # Crash detection based on multiple criteria
         crash_detected = len(impact_events) > 0
@@ -1178,18 +1189,52 @@ class EnhancedCrashClassifier:
             motion_data, filtered_vehicle_positions, impact_events
         )
         
-        # Estimate vehicles involved in crash (not all vehicles in frame)
+        # Estimate vehicles involved in crash (minimum 1, never 0)
         # For T-bone collisions, typically 2 vehicles are involved
         if crash_type == "tbone_side_impact":
             vehicles_involved = 2
-        else:
-            # For other types, use the mode of detected vehicles with a reasonable cap
+        elif crash_type in ["vehicle_pedestrian", "vehicle_fixed_object"]:
+            vehicles_involved = 1  # These are truly single-vehicle incidents
+        elif crash_type == "single_vehicle_rollover":
+            # For rollovers, check if multiple vehicles were detected (could be multi-vehicle incident causing rollover)
             if vehicle_counts:
-                vehicle_counter = Counter(vehicle_counts)
-                most_common_count = vehicle_counter.most_common(1)[0][0]
-                vehicles_involved = min(most_common_count, 8)  # Cap at 8 for reasonableness
+                non_zero_counts = [count for count in vehicle_counts if count > 0]
+                if non_zero_counts:
+                    non_zero_counts.sort()
+                    max_detected = max(non_zero_counts)
+                    if max_detected >= 3:
+                        vehicles_involved = min(max_detected, 8)  # Use actual count if 3+ vehicles detected
+                        logger.debug(f"Multi-vehicle rollover: {vehicles_involved} vehicles detected")
+                    else:
+                        vehicles_involved = 1  # Single vehicle rollover
+                        logger.debug(f"Single vehicle rollover: 1 vehicle")
+                else:
+                    vehicles_involved = 1  # Default single vehicle
             else:
-                vehicles_involved = 1
+                vehicles_involved = 1  # Default single vehicle
+        else:
+            # For collision types, use intelligent vehicle counting with minimum 2
+            if vehicle_counts:
+                # Remove zero counts (empty frames) and get meaningful counts
+                non_zero_counts = [count for count in vehicle_counts if count > 0]
+                if non_zero_counts:
+                    # Use 75th percentile for more robust counting
+                    non_zero_counts.sort()
+                    percentile_75_idx = min(len(non_zero_counts)-1, int(len(non_zero_counts)*0.75))
+                    vehicles_involved = non_zero_counts[percentile_75_idx]
+                    vehicles_involved = min(max(vehicles_involved, 2), 8)  # Ensure 2-8 range for collisions
+                    logger.debug(f"Vehicle counting: non_zero_counts={non_zero_counts}, 75th percentile={vehicles_involved}")
+                else:
+                    # No valid detections found - default to 2 for collisions
+                    vehicles_involved = 2  # Minimum for collision types
+                    logger.debug(f"No valid detections - defaulted to {vehicles_involved} vehicles for collision type: {crash_type}")
+            else:
+                # No vehicle count data - default to 2 for collisions
+                vehicles_involved = 2  # Minimum for collision types
+                logger.debug(f"No vehicle count data - defaulted to {vehicles_involved} vehicles for collision type: {crash_type}")
+        
+        # Final safety check - ensure vehicles_involved is never 0 for any crash
+        vehicles_involved = max(vehicles_involved, 1)
                 
         # This variable is used later in the return dict and confidence calculation
         max_vehicles = vehicles_involved
@@ -1451,8 +1496,11 @@ class EnhancedCrashClassifier:
                 
         elif max_vehicles == 2:
             if max_impact_severity in ['critical', 'high']:
+                # Check for rollover pattern even with multiple vehicles
+                if peak_motion > 25000 and motion_variance > 40000000:
+                    return "single_vehicle_rollover"  # Multi-vehicle incident causing rollover
                 # Direction-based detection has priority
-                if perpendicular_detected:
+                elif perpendicular_detected:
                     return "tbone_side_impact"
                 elif opposite_detected:
                     return "head_on_collision"
@@ -1472,8 +1520,11 @@ class EnhancedCrashClassifier:
                 return "sideswipe_collision"
                 
         else:  # 3+ vehicles
+            # Check for rollover pattern even with multiple vehicles
+            if peak_motion > 25000 and motion_variance > 40000000:
+                return "single_vehicle_rollover"  # Multi-vehicle incident causing rollover
             # With multiple vehicles, prioritize direction analysis
-            if perpendicular_detected and max_vehicles <= 4:
+            elif perpendicular_detected and max_vehicles <= 4:
                 return "tbone_side_impact"
             elif opposite_detected and max_vehicles <= 4:
                 return "head_on_collision"
@@ -1524,9 +1575,34 @@ class EnhancedCrashClassifier:
             if not vehicle_positions:
                 return {'analysis': 'no_vehicles_detected', 'patterns': []}
             
+            # Convert list of positions to vehicle tracking dictionary
+            vehicle_tracks = {}
+            
+            # Process each frame's vehicle positions
+            for frame_idx, positions in enumerate(vehicle_positions):
+                if not positions:
+                    continue
+                    
+                for pos_idx, vehicle in enumerate(positions):
+                    # Create a simple vehicle ID based on position and frame
+                    vehicle_id = f"vehicle_{pos_idx}"
+                    
+                    if vehicle_id not in vehicle_tracks:
+                        vehicle_tracks[vehicle_id] = []
+                    
+                    # Extract center coordinates
+                    if isinstance(vehicle, dict):
+                        center_x = vehicle.get('center_x', vehicle.get('x', 0))
+                        center_y = vehicle.get('center_y', vehicle.get('y', 0))
+                    else:
+                        # Fallback if vehicle is not a dict
+                        center_x, center_y = 0, 0
+                    
+                    vehicle_tracks[vehicle_id].append((center_x, center_y))
+            
             direction_patterns = []
             
-            for vehicle_id, positions in vehicle_positions.items():
+            for vehicle_id, positions in vehicle_tracks.items():
                 if len(positions) < 2:
                     continue
                 
@@ -1570,7 +1646,7 @@ class EnhancedCrashClassifier:
                         'vehicle_id': vehicle_id,
                         'primary_direction': direction,
                         'avg_angle': avg_angle,
-                        'movement_consistency': 1.0 - (angle_variance / 180.0),
+                        'movement_consistency': 1.0 - (angle_variance / 180.0) if angle_variance < 180 else 0.0,
                         'direction_changes': direction_changes,
                         'total_movement': sum(v['magnitude'] for v in vectors)
                     })
@@ -1729,6 +1805,10 @@ class EnhancedCrashClassifier:
                 max_frame_diff = max(frame_diffs) if frame_diffs else 0
                 
                 # Enhanced classification logic using multiple features
+
+
+# Will need to change these
+
                 # High-impact collisions (T-bone, head-on)
                 if frame_variance > 0.15 and avg_edge_density > 0.1:
                     if max_frame_diff > 0.35:  # Very significant change = severe impact
@@ -1820,11 +1900,44 @@ class EnhancedCrashClassifier:
                     # Use CNN prediction only with default values for other fields
                     logger.warning(f"Low latency mode activated: using faster processing pipeline")
                     
-                    # Create a deterministic motion analysis result based on video characteristics
-                    vehicles_count = 2 + (video_hash % 3)  # 2-4 vehicles based on hash
-                    damage_level = ['minor', 'moderate', 'severe'][int(frame_variance * 10) % 3]
+                    # Create a more realistic fallback motion analysis based on video content
+                    # Use actual video characteristics for better estimation
+                    crash_type_pred = self.CRASH_TYPES.get(predicted_class.item(), "intersection_collision")
+                    
+                    # Intelligent vehicle count based on crash type and video analysis
+                    if crash_type_pred in ["vehicle_pedestrian", "vehicle_fixed_object"]:
+                        vehicles_count = 1
+                    elif crash_type_pred == "single_vehicle_rollover":
+                        # Check frame variance - high variance might indicate multi-vehicle rollover
+                        vehicles_count = 3 if frame_variance > 0.12 else 1
+                    elif crash_type_pred in ["tbone_side_impact", "head_on_collision", "rear_end_collision"]:
+                        vehicles_count = 2  # Logical minimum for collisions
+                    else:
+                        # For intersection/highway collisions, estimate based on motion intensity
+                        if max_frame_diff > 0.3:  # High motion = more vehicles
+                            vehicles_count = min(4, 2 + int(frame_variance * 20))
+                        else:
+                            vehicles_count = 2
+                    
+                    # Damage assessment based on actual motion analysis
+                    if max_frame_diff > 0.35:
+                        damage_level = 'severe'
+                    elif max_frame_diff > 0.2:
+                        damage_level = 'moderate'
+                    else:
+                        damage_level = 'minor'
+                    
                     crash_phase = ['pre_impact', 'impact', 'post_impact'][video_hash % 3]
-                    impact_severity = ['low', 'medium', 'high'][int(frame_variance * 15) % 3]
+                    
+                    # Impact severity based on motion characteristics
+                    if frame_variance > 0.15 and max_frame_diff > 0.3:
+                        impact_severity = 'critical'
+                    elif frame_variance > 0.1 or max_frame_diff > 0.2:
+                        impact_severity = 'high'
+                    elif frame_variance > 0.05:
+                        impact_severity = 'medium'
+                    else:
+                        impact_severity = 'low'# inmproved fall back might need changing?!
                     
                     motion_analysis = {
                         'crash_detected': True,
@@ -2001,19 +2114,58 @@ class EnhancedCrashClassifier:
         camera_location = self.CAMERA_LOCATIONS.get(camera_id or 'default', 
                                                    self.CAMERA_LOCATIONS['default'])
         
-        # Determine severity
+        # Enhanced severity determination with multiple factors
         base_severity = self.CRASH_SEVERITY_MAP.get(crash_type, 'medium')
         damage_assessment = motion_analysis.get('damage_assessment', 'moderate')
+        vehicles_involved = motion_analysis.get('vehicles_involved', 1)
         
-        # Adjust severity based on damage assessment
-        severity_adjustments = {
-            ('low', 'severe'): 'medium',
-            ('medium', 'severe'): 'high',
-            ('high', 'severe'): 'critical',
-            ('low', 'minimal'): 'low',
-            ('critical', 'minimal'): 'high'
+        # Get motion intensity for severity adjustment
+        motion_summary = motion_analysis.get('motion_summary', {})
+        max_motion = motion_summary.get('max_motion', 0)
+        motion_variance = motion_summary.get('motion_variance', 0)
+        
+        # Enhanced severity calculation based on multiple factors
+        severity_score = 0
+        
+        # Base severity points
+        severity_points = {
+            'low': 1, 'medium': 2, 'high': 3, 'critical': 4
         }
-        final_severity = severity_adjustments.get((base_severity, damage_assessment), base_severity)
+        severity_score += severity_points.get(base_severity, 2)
+        
+        # Damage assessment factor
+        damage_points = {
+            'minimal': 0, 'moderate': 1, 'severe': 2
+        }
+        severity_score += damage_points.get(damage_assessment, 1)
+        
+        # Vehicle count factor (more vehicles = higher severity)
+        if vehicles_involved >= 3:
+            severity_score += 1
+        elif vehicles_involved >= 2:
+            severity_score += 0.5
+        
+        # Motion intensity factor
+        if max_motion > 20000:  # High motion
+            severity_score += 1
+        elif max_motion > 10000:  # Medium motion
+            severity_score += 0.5
+        
+        # Motion variance factor (chaotic motion = higher severity)
+        if motion_variance > 50000000:
+            severity_score += 1
+        elif motion_variance > 20000000:
+            severity_score += 0.5
+        
+        # Convert score back to severity level
+        if severity_score >= 5.5:
+            final_severity = 'critical'
+        elif severity_score >= 4:
+            final_severity = 'high'
+        elif severity_score >= 2.5:
+            final_severity = 'medium'
+        else:
+            final_severity = 'low'
         
         # Get vehicles involved
         vehicles_involved = motion_analysis.get('vehicles_involved', 1)
@@ -2518,8 +2670,8 @@ def main():
                 if camera_info:
                     crash_report.camera_location = f"{camera_info['name']} at {camera_info['location']}"
                 
-                # Set display attributes
-                crash_report.severity = crash_report.impact_severity
+                # Set display attributes - use incident_severity (the calculated final severity)
+                crash_report.severity = crash_report.incident_severity  # Use the enhanced calculated severity
                 crash_report.description = f"{crash_report.incident_type.replace('_', ' ').title()} detected with {crash_report.confidence:.1%} confidence"
                 
                 # Compare filename incident type with our classification
@@ -2554,23 +2706,13 @@ def main():
             print("\n=== Processing Summary ===")
             for i, report in enumerate(all_reports, 1):
                 print(f"Report {i}:")
-                print(f"  Camera ID: {report.camera_id}")#uses filename
-                print(f"  Location: {report.camera_location}")#Update to use API endpoints
-                print(f"  Timestamp: {report.timestamp}")#uses filename
-                print(f"  Severity: {report.severity}")
+                print(f"  Camera ID: {report.camera_id}")
+                print(f"  Location: {report.camera_location}")
+                print(f"  Timestamp: {report.timestamp}")
+                print(f"  Severity: {report.severity or report.incident_severity}")
                 print(f"  Vehicles Involved: {report.vehicles_involved}")
-                print(f"  Description: {report.description[:100]}...")
-                
-                # # Generate and print full detailed alert message
-                # full_alert_message = classifier._generate_detailed_alert_message(
-                #     report.incident_type, 
-                #     report.severity, 
-                #     report.vehicles_involved, 
-                #     {'impact_events': [], 'damage_assessment': report.damage_assessment, 'analysis_confidence': report.confidence}, 
-                #     report.video_path
-                # )
-                # print(f"  Full Alert Message: {full_alert_message}")
-                print()
+                print(f"  Description: {(report.description or report.alerts_message)[:100]}...")
+                print()  # Add blank line between reports
                 
     else:
         print(f"Incident folder '{folder_path}' not found. Creating it...")
@@ -2580,6 +2722,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-
+# latest
 # if __name__ == "__main__":
 #     main()
