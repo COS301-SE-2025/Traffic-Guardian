@@ -38,7 +38,9 @@ class AdvancedIncidentDetectionSystem:
         self.recording_incident = False
         self.incident_clips_folder = "incident_for_classification"
         os.makedirs(self.incident_clips_folder, exist_ok=True)
-        
+        # INCIDENT DEDUPLICATION 
+        self.recent_incidents = []  # Store recent incidents to prevent duplicates
+        self.incident_cooldown = {}  # Cooldown periods for different incident types
         # ADVANCED COLLISION DETECTION COMPONENTS
         self.previous_frame = None
         self.collision_verification_layers = {
