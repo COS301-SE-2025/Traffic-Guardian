@@ -468,7 +468,7 @@ class AdvancedIncidentDetectionSystem:
                 if incidents:
                     # Only process if it's been a while since the last incident (avoid duplicates)
                     if frame_count - last_incident_frame > 90:  # 3 seconds gap at 30fps
-                        self._process_alerts_and_record(incidents)
+                        self._process_alerts_and_record(incidents, frame_count)
                         last_incident_frame = frame_count
                         print(f"Incident recorded at frame {frame_count}. Press 'q' to exit after recording completes.")
                 
