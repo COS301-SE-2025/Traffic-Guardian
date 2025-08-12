@@ -367,6 +367,9 @@ class EnhancedCrashClassifier:
         # Cache for preprocessed videos to avoid reprocessing the same video
         self.video_cache = LRUCache(50)  # Store up to 50 recent video results
         
+        # Load API configuration
+        self.api_config = self._load_api_config()
+        
         # Valid (basic) incident types from filename classification
         self.incident_types = {
             'collision': [],
@@ -2597,8 +2600,8 @@ class EnhancedCrashClassifier:
         return {
             # Required database fields
             'Incidents_DateTime': crash_report.incident_datetime,
-            'Incidents_Longitude': float(crash_report.incidents_longitude),  # Mock data for now
-            'Incidents_Latitude': float(crash_report.incidents_latitude),   # Mock data for now
+            'Incidents_Longitude': float(crash_report.incident_longitude),  # Mock data for now
+            'Incidents_Latitude': float(crash_report.incident_latitude),   # Mock data for now
             'Incident_Severity': severity_mapping.get(crash_report.incident_severity, 'medium'),
             'Incident_Status': status_mapping.get(crash_report.incident_status, 'ongoing'),  # Default as specified
             'Incident_Reporter': 'TrafficGuardianAI',  # Fixed as specified
@@ -2646,9 +2649,8 @@ class EnhancedCrashClassifier:
             # Prepare headers
             headers = {
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {self.api_config["api_key"]}',
-                'User-Agent': 'TrafficGuardian-AI-Classifier/1.0'
-            }#CHANGE USER-AGENT TO USERNAME?
+                'Authorization': {self.api_config["api_key"]},#ADD AI APIKEY TO GITHUB REPO SECRETS
+            }
             
             # Submit to API with retry logic
             for attempt in range(self.api_config['retry_attempts']):
