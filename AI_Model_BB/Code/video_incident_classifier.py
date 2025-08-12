@@ -2619,6 +2619,8 @@ class EnhancedCrashClassifier:
             'processing_timestamp': crash_report.processing_timestamp
         }
 
+
+    # API PART
     def submit_incident_to_api(self, crash_report: CrashReport) -> Dict:
         """
         Submit incident report to API endpoint.
@@ -2871,6 +2873,8 @@ class EnhancedCrashClassifier:
             'processing_timestamp': datetime.now(timezone.utc).isoformat()
         }
 
+# API Above
+
 def main():
     """Main function to run the enhanced crash detection system."""
     print("🚗💥ENHANCED CAR CRASH DETECTION & CLASSIFICATION SYSTEM")
@@ -3072,6 +3076,8 @@ def main():
         print("Please place incident video files in the created folder and run again.")
 
 
+
+# API
 def demo_api_integration():
     """
     Demonstrate API integration functionality.
