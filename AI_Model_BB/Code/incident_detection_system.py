@@ -33,11 +33,12 @@ class AdvancedIncidentDetectionSystem:
         self.next_vehicle_id = 0
         self.history_length = 20  # Increased for better physics analysis
         
-        # VIDEO CLIP RECORDING - NEW
         self.frame_buffer = deque(maxlen=300)  # Store last 10 seconds at 30fps
         self.recording_incident = False
         self.incident_clips_folder = "incident_for_classification"
         os.makedirs(self.incident_clips_folder, exist_ok=True)
+        self.recent_incidents = []  # Store recent incidents to prevent duplicates
+        self.incident_cooldown = {}  # Cooldown periods for different incident types
         
         # ADVANCED COLLISION DETECTION COMPONENTS
         self.previous_frame = None
@@ -116,6 +117,8 @@ class AdvancedIncidentDetectionSystem:
             'retry_attempts': int(os.getenv('API_RETRY_ATTEMPTS', '2')),
             'enabled': True
         }
+    
+
     
     def _default_config(self):
         """Enhanced configuration with advanced collision detection settings."""
@@ -206,6 +209,80 @@ class AdvancedIncidentDetectionSystem:
             print(f"Camera {self.camera_config['camera_id']} connection attempt {attempt+1}/{max_retries} failed...")
             time.sleep(2)
         return False
+
+
+    def _is_duplicate_incident(self, incident, current_frame):
+        """Check if this incident is a duplicate of a recent one."""
+        incident_type = incident['type']
+        current_time = time.time()
+        
+        # Define cooldown periods for different incident types (in seconds)
+        cooldown_periods = {
+            'collision': 10,  
+            'stopped_vehicle': 30,  
+            'pedestrian_on_road': 15, 
+            'sudden_speed_change': 20  
+        }
+        
+        cooldown_period = cooldown_periods.get(incident_type, 15)
+        
+        # Check if this incident type is in cooldown
+        if incident_type in self.incident_cooldown:
+            time_since_last = current_time - self.incident_cooldown[incident_type]
+            if time_since_last < cooldown_period:
+                return True  # Still in cooldown, this is a duplicate
+        
+        # For collision incidents, also check vehicle positions to avoid duplicates
+        if incident_type == 'collision':
+            incident_pos = incident.get('positions', [])
+            
+            # Check recent incidents for similar collision positions
+            for recent_incident in self.recent_incidents[-5:]:  # Check last 5 incidents
+                if (recent_incident['type'] == 'collision' and 
+                    current_time - recent_incident['timestamp'] < cooldown_period):
+                    
+                    recent_pos = recent_incident.get('positions', [])
+                    
+                    # Calculate distance between incident positions
+                    if incident_pos and recent_pos:
+                        try:
+                            pos1 = incident_pos[0] if incident_pos else [0, 0]
+                            pos2 = recent_pos[0] if recent_pos else [0, 0]
+                            
+                            distance = ((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)**0.5
+                            
+                            # If positions are very close (within 50 pixels), consider it duplicate
+                            if distance < 50:
+                                return True
+                        except (IndexError, TypeError):
+                            pass
+        
+        return False
+
+    def _record_incident_if_not_duplicate(self, incident, current_frame):
+        """Record incident only if it's not a duplicate."""
+        if self._is_duplicate_incident(incident, current_frame):
+            return False  # Skip recording, it's a duplicate
+        
+        # Record the incident
+        self._record_incident_clip(incident)
+        
+        # Update cooldown and recent incidents
+        incident_type = incident['type']
+        current_time = time.time()
+        
+        self.incident_cooldown[incident_type] = current_time
+        
+        # Add to recent incidents with timestamp
+        incident_with_timestamp = incident.copy()
+        incident_with_timestamp['timestamp'] = current_time
+        self.recent_incidents.append(incident_with_timestamp)
+        
+        # Keep only last 10 recent incidents
+        if len(self.recent_incidents) > 10:
+            self.recent_incidents.pop(0)
+        
+        return True  # Successfully recorded
 
     def _record_incident_clip(self, incident):
         """Record video clip of incident instead of calling API."""
@@ -351,7 +428,7 @@ class AdvancedIncidentDetectionSystem:
             while True:
                 ret, frame = self.cap.read()
                 if not ret:
-                    if self.camera_config['url'].endswith(('.mp4', '.avi', '.mov')):  # Video file
+                    if self.camera_config['url'].endswith(('.mp4', '.avi', '.mov')):  
                         # Video ended - wait a moment before restarting to allow video writing to complete
                         print(f" Video ended for camera {camera_id}")
                         video_ended = True
@@ -390,7 +467,7 @@ class AdvancedIncidentDetectionSystem:
                 if incidents:
                     # Only process if it's been a while since the last incident (avoid duplicates)
                     if frame_count - last_incident_frame > 90:  # 3 seconds gap at 30fps
-                        self._process_alerts_and_record(incidents)
+                        self._process_alerts_and_record(incidents, frame_count)
                         last_incident_frame = frame_count
                         print(f"Incident recorded at frame {frame_count}. Press 'q' to exit after recording completes.")
                 
@@ -1172,7 +1249,7 @@ class AdvancedIncidentDetectionSystem:
         
         return road_left <= x <= road_right and road_top <= y <= road_bottom
 
-    def _process_alerts_and_record(self, incidents):
+    def _process_alerts_and_record(self, incidents, current_frame):
         """Process alerts and record clips instead of API calls."""
         for incident in incidents:
             incident_type = incident['type']
@@ -1191,23 +1268,32 @@ class AdvancedIncidentDetectionSystem:
                 print(f"   Multi-layer confidence: {confidence:.2f}")
                 print(f"   Validation layers: {layers}")
                 
-                # Record clip instead of API call
-                self._record_incident_clip(incident)
+                # Record clip only if not duplicate
+                if self._record_incident_if_not_duplicate(incident, current_frame):
+                    print(f" Recording collision incident clip")
+                else:
+                    print(f" Skipping duplicate collision incident")
             
             elif incident_type == 'stopped_vehicle':
                 duration = incident['stopped_duration']
                 vehicle_class = incident['vehicle_class']
-                print(f"⚠️ {severity} ALERT: {vehicle_class} stopped for {duration:.1f}s")
+                print(f" {severity} ALERT: {vehicle_class} stopped for {duration:.1f}s")
                 print(f"   Camera: {self.camera_config['camera_id']}")
                 
-                # Record clip for stopped vehicle incidents too
                 if duration > 15:  # Only record for longer stops
-                    self._record_incident_clip(incident)
+                    if self._record_incident_if_not_duplicate(incident, current_frame):
+                        print(f" Recording stopped vehicle incident clip")
+                    else:
+                        print(f" Skipping duplicate stopped vehicle incident")
             
             elif incident_type == 'pedestrian_on_road':
                 print(f"  {severity} ALERT: Pedestrian detected on roadway!")
                 print(f"   Camera: {self.camera_config['camera_id']}")
-                self._record_incident_clip(incident)
+                
+                if self._record_incident_if_not_duplicate(incident, current_frame):
+                    print(f" Recording pedestrian incident clip")
+                else:
+                    print(f" Skipping duplicate pedestrian incident")
             
             elif incident_type == 'sudden_speed_change':
                 vehicle_class = incident['vehicle_class']
@@ -1217,10 +1303,13 @@ class AdvancedIncidentDetectionSystem:
                 
                 # Only record clips for significant speed changes
                 if speed_change > 1.5:
-                    self._record_incident_clip(incident)
+                    if self._record_incident_if_not_duplicate(incident, current_frame):
+                        print(f" Recording speed change incident clip")
+                    else:
+                        print(f" Skipping duplicate speed change incident")
             
             self.analytics['alerts'].append(incident)
-    
+        
     def _create_visualization(self, frame, detection_results, incidents):
         """Create annotated frame with advanced visualizations."""
         viz_frame = frame.copy()
@@ -1571,6 +1660,8 @@ class AdvancedIncidentDetectionSystem:
         self.acceleration_history.clear()
         self.flow_points.clear()
         self.next_vehicle_id = 0
+        self.recent_incidents.clear()
+        self.incident_cooldown.clear()
         
         print(f" Analytics and tracking data reset for camera {self.camera_config['camera_id']}")
     
@@ -1579,7 +1670,6 @@ class AdvancedIncidentDetectionSystem:
         camera_id = self.camera_config['camera_id']
         print(f" Cleaning up resources for camera {camera_id}...")
         
-        # Wait a moment for any ongoing video writing to complete
         time.sleep(1)
         
         # Release video capture
@@ -1649,17 +1739,7 @@ class AdvancedIncidentDetectionSystem:
             'clip_recording': {
                 'clips_recorded': int(self.analytics['clips_recorded']),
                 'clips_folder': str(self.incident_clips_folder)
-            },
-            'advanced_features': [
-                'Multi-camera support with threading',
-                'Video clip recording instead of API calls',
-                'Automatic classification.py invocation',
-                'Multi-layer collision detection with 4 validation layers',
-                'Depth estimation from intensity and shadow analysis',
-                'Optical flow analysis for sudden motion detection',
-                'Physics-based validation using acceleration patterns',
-                'Enhanced confidence scoring and layer agreement requirements'
-            ]
+            }
         }
         
         # Summarize incidents by type

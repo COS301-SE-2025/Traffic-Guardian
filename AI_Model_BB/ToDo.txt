@@ -1,9 +1,9 @@
 Coding:
 
-1) Train the module
-2) Multi Cam footage
-3) removing all mock data
-4) incident classification
+1) Train the module -- hold 
+2) Multi Cam footage -- complete 
+3) removing all mock data -- in progress
+4) incident classification -- in progress
 
 Testing:
 
@@ -14,10 +14,10 @@ Testing:
 Documentation:
 
 1) * Architectural structural design & requirements
-2) * Quality requirements
+2) * Quality requirements -- few changes
 3) * Deployment Model
 4) * Service Contracts
-5) Coding standards document
-6) User manual
+5) Coding standards document -- consistent
+6) User manual -- consistent
 7) Technical installation manual
 8) Requirements and design specifications
