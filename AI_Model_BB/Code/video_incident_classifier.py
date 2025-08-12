@@ -17,7 +17,7 @@ import requests
 import glob
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 import logging
 from dataclasses import dataclass
 from collections import deque, Counter
@@ -30,6 +30,7 @@ warnings.filterwarnings('ignore')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# May need to move these other classes into a different file?
 # Simple LRU Cache implementation
 class LRUCache:
     def __init__(self, capacity: int):
@@ -337,10 +338,10 @@ class EnhancedCrashClassifier:
     }
     
     CAMERA_LOCATIONS = {#Will get from API
-        'default': {'latitude': 37.7749, 'longitude': -122.4194, 'name': 'Main Traffic Camera'},
-        'intersection_1': {'latitude': 37.7849, 'longitude': -122.4094, 'name': 'Highway 101 Intersection'},
-        'highway_1': {'latitude': 37.7649, 'longitude': -122.4294, 'name': 'Downtown Highway'},
-        'bridge_cam': {'latitude': 37.7549, 'longitude': -122.4394, 'name': 'Bridge Monitoring'}
+        'default': {'latitude': 37.7749, 'longitude': -122.4194},
+        'intersection_1': {'latitude': 37.7849, 'longitude': -122.4094},
+        'highway_1': {'latitude': 37.7649, 'longitude': -122.4294},
+        'bridge_cam': {'latitude': 37.7549, 'longitude': -122.4394}
     }
     
     def __init__(self, config: Dict = None):
