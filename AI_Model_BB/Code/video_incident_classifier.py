@@ -337,7 +337,7 @@ class EnhancedCrashClassifier:
         "parking_lot_incident": "low"
     }
     
-    CAMERA_LOCATIONS = {#Will get from API
+    CAMERA_LOCATIONS = {#Will get from API or parsed through file name
         'default': {'latitude': 37.7749, 'longitude': -122.4194},
         'intersection_1': {'latitude': 37.7849, 'longitude': -122.4094},
         'highway_1': {'latitude': 37.7649, 'longitude': -122.4294},
