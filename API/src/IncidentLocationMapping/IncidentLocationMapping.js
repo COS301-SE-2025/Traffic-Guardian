@@ -6,6 +6,7 @@ class ILM{
         this.regionNames =  ['Rosebank', 'Sandton', 'Midrand', 'Centurion', 'Pretoria', 'Soweto', 'Randburg', 'Boksburg', 'Vereeniging', 'Alberton', 'Hatfield'];
         this.regions = new Map();
         this.users = new Map();
+        this.reportedIncidents = new Map();
         this.initRegions();
     }
 
@@ -120,10 +121,19 @@ class ILM{
         console.log("from ILM:" + newIncident);
 
         this.users.forEach((uValue, uKey)=>{
+            console.log("User="+uValue.coordinates);
+            console.dir(uValue.coordinates, {depth: null, colors: true});
+            console.log("Incident="+incidentLocation);
+            console.dir(incidentLocation, {depth : null, colors: true});
             if(this.isNearby(uValue.coordinates, incidentLocation)){
                 io.to(uKey).emit('new-incident', newIncident);
             }
         });
+    }
+
+    /*Wont use just yet*/
+    addReportedIncidents(newIncident){
+        this.reportedIncidents.set(newIncident.Incidents_ID, newIncident);
     }
 
     removeUser(userID){

@@ -39,7 +39,6 @@ const incidentController = {
       const io = req.app.get('io');
       //io.emit('newAlert', incident);
       ILM.notifyUsersIncident(incident, io);
-      console.log('Emitting newAlert:', incident);
 
       return res.status(201).json({
         message: 'Incident created successfully',
