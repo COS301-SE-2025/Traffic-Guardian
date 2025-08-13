@@ -64,7 +64,6 @@ io.on('connection',(socket)=>{
     socket.on('new-location', async (newLocation)=>{
      ILM.updateUserLocation(socket.id, newLocation);
      const notifiedUsers = ILM.notifyUsers();
-     //console.log(notifiedUsers);
      notifiedUsers.forEach((notificationData)=>{
       io.to(notificationData.userID).emit('new-traffic', notificationData.notification);
       //console.log(notificationData.notification.incidents.length);

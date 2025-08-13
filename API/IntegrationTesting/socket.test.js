@@ -1,48 +1,43 @@
-const ioClient = require('socket.io-client');
+const { io } = require('socket.io-client');
 
-let clientSocket;
+describe('Socket.IO Server', () => {
+  let socket;
 
-jest.setTimeout(5000); //5s
-
-
-beforeAll((done) => {
-  clientSocket = ioClient('http://localhost:5000');
-  clientSocket.on('connect', done);
-
-  clientSocket.on('connect_error', (err) => {
-    console.error('Connection error:', err);
-    done(err);
-  });
-});
-
-afterAll((done) => {
-  if (clientSocket.connected) {
-    clientSocket.disconnect();
-  }
-  done();
-});
-
-
-describe('Traffic sockets', ()=>{
-
-      test('receives trafficUpdate (mocked)', (done) => {
-    const fakeSocket = {
-      on: jest.fn((event, callback) => {
-        if (event === 'trafficUpdate') {
-          callback([{ id: 1 }]);
-        }
-      }),
-    };
-
-    fakeSocket.on('trafficUpdate', (data) => {
-      try {
-        expect(Array.isArray(data)).toBe(true);
-        done();
-      } catch (e) {
-        done(e);
-      }
+  beforeAll((done) => {
+    socket = io('http://localhost:5000');
+    socket.on('connect', () => {
+      console.log('Connected with ID:', socket.id);
+      done();
+    });
+    socket.on('connect_error', (err) => {
+      console.error('Connection error:', err);
+      done(err);
     });
   });
 
+  afterAll(() => {
+    if (socket.connected) {
+      socket.disconnect();
+    }
+  });
 
-})
+  test('should receive welcome message', (done) => {
+    socket.onAny((event, ...args) => {
+      console.log('Received event:', event, args);
+    });
+
+    socket.on('welcome', (msg) => {
+      console.log('Received welcome message:', msg);
+      try {
+        expect(msg).toContain(socket.id);
+        done();
+      } catch (err) {
+        done(err);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      done(new Error('Socket disconnected prematurely'));
+    });
+  }, 15000);
+});
