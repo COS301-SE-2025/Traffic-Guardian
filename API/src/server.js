@@ -45,7 +45,7 @@ io.on('connection',(socket)=>{
     }, 60*60*1000); //1hr interval
     */
 
-    /*
+    
     //traffic prt
     traffic.getTraffic().then((data)=>{
       socket.emit('trafficUpdate', data);
@@ -65,13 +65,13 @@ io.on('connection',(socket)=>{
       const res_incidentLocations =  traffic.incidentLocations(data);
       socket.emit('incidentLocations', res_incidentLocations);
     })
-    */
-   /*
+    
     setInterval(async()=>{
       const data = await traffic.getTraffic();
       socket.emit('trafficUpdate', data);
+      ILM.updateTraffic(data);
     }, 30*60*1000); //30 min interval
-    */
+    
 
 
     //update users location
@@ -79,8 +79,9 @@ io.on('connection',(socket)=>{
      ILM.updateUserLocation(socket.id, newLocation);
      const notifiedUsers = ILM.notifyUsers();
      //console.log(notifiedUsers);
-     notifiedUsers.forEach((notification)=>{
-      io.to(notification.userID).emit('new-alert', notification.notification);
+     notifiedUsers.forEach((userID)=>{
+      io.to(userID).emit('new-alert', ILM.users.get(userID).incidents);
+      console.log(ILM.users.get(userID).incidents.length);
      })
     });
 

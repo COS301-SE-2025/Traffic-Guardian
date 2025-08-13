@@ -1,3 +1,5 @@
+const util = require('util');
+
 class ILM{
     constructor(){
         this.regionsCoords = ['-26.1438,28.0406', '-26.09108017449409,28.08474153621201', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658', '-26.0936,27.9931', '-26.2259,28.1598', '-26.6667,27.9167', '-26.3333,28.1667', '-25.7487,28.2380'];
@@ -7,7 +9,7 @@ class ILM{
         this.initRegions();
     }
 
-    /*Incidents/traffic methods */
+    /*Incidents/traffic methods*/
     initRegions(){
         for(let i=0; i<this.regionNames.length; i++){
             var coords = this.regionsCoords[i].split(",");
@@ -54,8 +56,21 @@ class ILM{
             coordinates : {
                 latitude : location.latitude ?? null,
                 longitude : location.longitude ?? null
-            }
+            },
+            incidents : []
         };
+        this.users.set(userID, userData);
+    }
+
+    updateUserIncidents(userID, incidentData){
+        const userData = {
+            ID : userID,
+            coordinates : {
+                latitude : this.users.get(userID).coordinates.latitude ?? null,
+                longitude : this.users.get(userID).coordinates.longitude ?? null
+            },
+            incidents : incidentData
+        }
         this.users.set(userID, userData);
     }
 
@@ -65,7 +80,8 @@ class ILM{
             coordinates : {
                 latitude : location.latitude ?? null,
                 longitude : location.longitude ?? null
-            }
+            },
+            incidents : this.users.get(id).incidents
         };
         this.users.set(id, newData);
     }
@@ -75,12 +91,15 @@ class ILM{
         this.users.forEach((uvalue, ukey)=>{
             this.regions.forEach((rvalue, rkey)=>{
                 if(this.isNearby(uvalue.coordinates, rvalue.coordinates)){
-                    const notificationData = {
-                        userID : ukey,
-                        notification : rvalue
-                    };
-                    res.push(notificationData);
+                    //if(JSON.stringify(uvalue.incidents) !== JSON.stringify(rvalue.incidents)){
+                    if(!util.isDeepStrictEqual(uvalue.incidents, rvalue.incidents)){
+                        //console.log("User=" ,uvalue.incidents);
+                        //console.log("inc=", rvalue.incidents);
+                        this.updateUserIncidents(uvalue.ID, rvalue.incidents);
+                        
+                    res.push(uvalue.ID);
                 }
+            }
             })
         })
         return res;
@@ -93,11 +112,14 @@ class ILM{
         const d = 0.1;
         if(!Object.hasOwn(locationA, 'latitude') || !Object.hasOwn(locationA, 'longitude')) return false;
         if(!Object.hasOwn(locationB, 'latitude') || !Object.hasOwn(locationB, 'longitude')) return false;
-        return (d >= Math.sqrt((locationA.latitude - locationB.latitude) + (locationA.longitude - locationB.longitude)));
+        return (d >= Math.sqrt(
+            Math.pow(locationA.latitude - locationB.latitude, 2) +
+            Math.pow(locationA.longitude - locationB.longitude, 2)
+        ));
     }
 
     emptyObject(obj){
-        return (Object.keys.length === 0);
+        return (Object.keys(obj).length === 0);
     }
 
     showRegions(){
