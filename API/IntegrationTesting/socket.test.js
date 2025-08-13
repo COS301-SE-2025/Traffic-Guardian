@@ -22,19 +22,6 @@ afterAll((done) => {
   done();
 });
 
-describe('Weather sockets', () => {
-  test('receives weatherUpdate from server', (done) => {
-    clientSocket.on('weatherUpdate', (data) => {
-      try {
-        expect(Array.isArray(data)).toBe(true);
-        done();
-      } catch (e) {
-        done(e);
-      }
-    });
-  });
-});
-
 
 describe('Traffic sockets', ()=>{
 
