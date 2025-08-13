@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import HlsPlayer from 'react-hls-player';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './LiveFeed.css';
-import { LiveFeedDatabaseIntegration } from '../services/CameraDataService';
+import { useLiveFeed, CameraFeed } from '../contexts/LiveFeedContext';
+import CarLoadingAnimation from '../components/CarLoadingAnimation';
 
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -14,77 +15,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-interface CalTransCameraData {
-  data: Array<{
-    cctv: {
-      index: string;
-      recordTimestamp: {
-        recordDate: string;
-        recordTime: string;
-      };
-      location: {
-        district: string;
-        locationName: string;
-        nearbyPlace: string;
-        longitude: string;
-        latitude: string;
-        elevation: string;
-        direction: string;
-        county: string;
-        route: string;
-        routeSuffix: string;
-        postmilePrefix: string;
-        postmile: string;
-        alignment: string;
-        milepost: string;
-      };
-      inService: string;
-      imageData: {
-        imageDescription: string;
-        streamingVideoURL: string;
-        static: {
-          currentImageUpdateFrequency: string;
-          currentImageURL: string;
-          referenceImageUpdateFrequency: string;
-          referenceImage1UpdateAgoURL: string;
-          referenceImage2UpdatesAgoURL: string;
-          referenceImage3UpdatesAgoURL: string;
-          referenceImage4UpdatesAgoURL: string;
-          referenceImage5UpdatesAgoURL: string;
-          referenceImage6UpdatesAgoURL: string;
-          referenceImage7UpdatesAgoURL: string;
-          referenceImage8UpdatesAgoURL: string;
-          referenceImage9UpdatesAgoURL: string;
-          referenceImage10UpdatesAgoURL: string;
-          referenceImage11UpdatesAgoURL: string;
-          referenceImage12UpdatesAgoURL: string;
-        };
-      };
-    };
-  }>;
-}
-
-interface CameraFeed {
-  id: string;
-  location: string;
-  status: 'Online' | 'Offline' | 'Loading';
-  image: string;
-  videoUrl?: string;
-  district: string;
-  route: string;
-  lastUpdate: string;
-  direction?: string;
-  county?: string;
-  milepost?: string;
-  imageDescription?: string;
-  updateFrequency?: string;
-  historicalImages?: string[];
-  hasLiveStream: boolean;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
-}
+// CameraFeed interface now imported from context
 
 // Map component to handle center changes
 const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
@@ -98,273 +29,51 @@ const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
 };
 
 const LiveFeed: React.FC = () => {
-  const [cameraFeeds, setCameraFeeds] = useState<CameraFeed[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedDistricts] = useState([12]); 
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
+  // Use context for camera feeds data
+  const { 
+    cameraFeeds, 
+    loading, 
+    error, 
+    lastRefresh, 
+    refreshFeeds, 
+    setCameraStatus
+  } = useLiveFeed();
+
   const [selectedCamera, setSelectedCamera] = useState<CameraFeed | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [timelapseImages, setTimelapseImages] = useState<string[]>([]);
   const [currentTimelapseIndex, setCurrentTimelapseIndex] = useState(0);
   const [isPlayingTimelapse, setIsPlayingTimelapse] = useState(false);
   const [timelapseInterval, setTimelapseInterval] = useState<NodeJS.Timeout | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'video' | 'images' | 'map'>('video');
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [progressiveLoading, setProgressiveLoading] = useState(false);
-
-  // Database integration service
-  const [dbIntegration] = useState(() => 
-    new LiveFeedDatabaseIntegration(process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000')
-  );
 
   // Add refs for HLS players
   const modalPlayerRef = useRef<any>(null);
   const gridPlayerRefs = useRef<{ [key: string]: any }>({});
 
-  const convertToHttps = useCallback((originalUrl: string): string => {
-    if (originalUrl && originalUrl.startsWith('http://cwwp2.dot.ca.gov')) {
-      return originalUrl.replace('http://cwwp2.dot.ca.gov', 'https://caltrans.blinktag.com/api');
-    }
-    return originalUrl;
-  }, []);
-
-  const parseCoordinates = useCallback((lat: string, lng: string): { lat: number; lng: number } | null => {
-    const latitude = parseFloat(lat);
-    const longitude = parseFloat(lng);
-    
-    if (isNaN(latitude) || isNaN(longitude)) {
-      return null;
-    }
-    
-    // Validate coordinates are within reasonable bounds for California
-    if (latitude < 32 || latitude > 42 || longitude < -125 || longitude > -114) {
-      return null;
-    }
-    
-    return { lat: latitude, lng: longitude };
-  }, []);
-
-  const processDistrictData = useCallback((data: CalTransCameraData, district: number): CameraFeed[] => {
-    if (!data?.data || !Array.isArray(data.data)) return [];
-
-    const validCameras = data.data.filter((item) => 
-      item.cctv.inService === 'true' && 
-      ((item.cctv.imageData.streamingVideoURL && item.cctv.imageData.streamingVideoURL !== 'Not Reported') ||
-       (item.cctv.imageData.static.currentImageURL && item.cctv.imageData.static.currentImageURL !== 'Not Reported'))
-    );
-
-    return validCameras
-      .slice(0, 10) // Get more cameras since we're only using one district
-      .map((item) => {
-        const camera = item.cctv;
-        const location = camera.location;
-        const imageData = camera.imageData;
-        
-        const historicalImages = [
-          imageData.static.referenceImage1UpdateAgoURL,
-          imageData.static.referenceImage2UpdatesAgoURL,
-          imageData.static.referenceImage3UpdatesAgoURL,
-          imageData.static.referenceImage4UpdatesAgoURL,
-          imageData.static.referenceImage5UpdatesAgoURL,
-          imageData.static.referenceImage6UpdatesAgoURL,
-        ].filter(url => url && url !== 'Not Reported')
-         .map(url => convertToHttps(url))
-         .slice(0, 6);
-        
-        const httpsImageUrl = convertToHttps(imageData.static.currentImageURL);
-        const videoUrl = imageData.streamingVideoURL && imageData.streamingVideoURL !== 'Not Reported' 
-          ? convertToHttps(imageData.streamingVideoURL) 
-          : undefined;
-        
-        const coordinates = parseCoordinates(location.latitude, location.longitude) || undefined;
-        
-        return {
-          id: `CALTRANS-D${district}-${camera.index}`,
-          location: location.locationName || location.nearbyPlace || `District ${district} Camera`,
-          status: 'Loading' as const,
-          image: httpsImageUrl,
-          videoUrl,
-          district: `District ${district}`,
-          route: location.route || 'Unknown Route',
-          lastUpdate: new Date().toLocaleTimeString(),
-          direction: location.direction,
-          county: location.county,
-          milepost: location.milepost,
-          imageDescription: imageData.imageDescription,
-          updateFrequency: imageData.static.currentImageUpdateFrequency || 'Unknown',
-          historicalImages,
-          hasLiveStream: !!videoUrl,
-          coordinates,
-        };
-      });
-  }, [convertToHttps, parseCoordinates]);
-
-  const fetchDistrictData = useCallback(async (district: number): Promise<CameraFeed[]> => {
-    try {
-      const url = `https://cwwp2.dot.ca.gov/data/d${district}/cctv/cctvStatusD${district.toString().padStart(2, '0')}.json`;
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch District ${district} cameras: ${response.status}`);
-        return [];
-      }
-
-      const data: CalTransCameraData = await response.json();
-      return processDistrictData(data, district);
-    } catch (error) {
-      console.error(`Error fetching District ${district}:`, error);
-      return [];
-    }
-  }, [processDistrictData]);
-
-  const fetchCameraData = useCallback(async () => {
-    try {
-      setError(null);
-      setLoadingProgress(0);
-      setProgressiveLoading(true);
-      
-      // Clear existing feeds for fresh start
-      if (!progressiveLoading) {
-        setCameraFeeds([]);
-      }
-      
-      // Load (District 12) cameras
-      try {
-        const orangeCountyCameras = await fetchDistrictData(12);
-        if (orangeCountyCameras.length > 0) {
-          setCameraFeeds(orangeCountyCameras);
-          
-          // Sync camera data with database
-          try {
-            await dbIntegration.syncCamerasWithDatabase(orangeCountyCameras);
-            console.log('Camera metadata synced with database');
-          } catch (dbError) {
-            console.error('Failed to sync camera data, but continuing with display:', dbError);
-            // Don't throw - still show cameras even if DB sync fails
-          }
-        }
-        setLoadingProgress(100);
-      } catch (error) {
-        console.error(`Error fetching District 12:`, error);
-        setError('Failed to load camera feeds. Please try again later.');
-      }
-      
-      // Final check
-      setCameraFeeds(prevFeeds => {
-        if (prevFeeds.length === 0 && !progressiveLoading) {
-          setError('No camera feeds available at this time.');
-        }
-        return prevFeeds;
-      });
-      setLastRefresh(new Date());
-    } catch (err) {
-      console.error('Error fetching camera data:', err);
-      setError('Failed to load camera feeds. Please try again later.');
-    } finally {
-      setLoading(false);
-      setProgressiveLoading(false);
-    }
-  }, [selectedDistricts, fetchDistrictData, progressiveLoading, dbIntegration]);
-
-  useEffect(() => {
-    fetchCameraData();
-    const interval = setInterval(fetchCameraData, 15 * 60 * 1000); // Refresh every 15 minutes
-    setRefreshInterval(interval);
-
-    return () => {
-      if (refreshInterval) clearInterval(refreshInterval);
-      if (interval) clearInterval(interval);
-    };
-  }, [fetchCameraData]);
-
-  // Database monitoring effect
-  useEffect(() => {
-    if (cameraFeeds.length > 0) {
-      // Start status monitoring every 10 minutes
-      dbIntegration.startStatusMonitoring(cameraFeeds, 10);
-    }
-    
-    return () => {
-      dbIntegration.stopStatusMonitoring();
-    };
-  }, [cameraFeeds, dbIntegration]);
-
+  // Refresh handler using context
   const handleRefresh = useCallback(() => {
-    setLoading(true);
-    setLoadingProgress(0);
-    setCameraFeeds([]); // Clear existing feeds when manually refreshing
-    fetchCameraData();
-  }, [fetchCameraData]);
+    refreshFeeds();
+  }, [refreshFeeds]);
 
-  const handleImageError = useCallback(async (feedId: string) => {
-    setCameraFeeds(prevFeeds =>
-      prevFeeds.map(feed =>
-        feed.id === feedId ? { ...feed, status: 'Offline' as const } : feed
-      )
-    );
-    
-    // Track status in database
-    try {
-      await dbIntegration.trackCameraStatus(feedId, 'offline', undefined, 'Image failed to load');
-    } catch (error) {
-      console.error('Failed to track camera status:', error);
-      // Don't throw - camera display should still work
-    }
-  }, [dbIntegration]);
+  const handleImageError = useCallback((feedId: string) => {
+    setCameraStatus(feedId, 'Offline');
+  }, [setCameraStatus]);
 
-  const handleImageLoad = useCallback(async (feedId: string) => {
-    setCameraFeeds(prevFeeds =>
-      prevFeeds.map(feed =>
-        feed.id === feedId ? { ...feed, status: 'Online' as const } : feed
-      )
-    );
-    
-    // Track status in database
-    try {
-      await dbIntegration.trackCameraStatus(feedId, 'online');
-    } catch (error) {
-      console.error('Failed to track camera status:', error);
-      // Don't throw - camera display should still work
-    }
-  }, [dbIntegration]);
+  const handleImageLoad = useCallback((feedId: string) => {
+    setCameraStatus(feedId, 'Online');
+  }, [setCameraStatus]);
 
-  const handleVideoError = useCallback(async (feedId: string) => {
-    setCameraFeeds(prevFeeds =>
-      prevFeeds.map(feed =>
-        feed.id === feedId ? { ...feed, status: 'Offline', hasLiveStream: false } : feed
-      )
-    );
-    
-    // Track status in database
-    try {
-      await dbIntegration.trackCameraStatus(feedId, 'offline', undefined, 'Video stream failed');
-    } catch (error) {
-      console.error('Failed to track camera status:', error);
-    }
-  }, [dbIntegration]);
+  const handleVideoError = useCallback((feedId: string) => {
+    setCameraStatus(feedId, 'Offline');
+  }, [setCameraStatus]);
 
   const handleVideoLoadStart = useCallback((feedId: string) => {
     // Set a timeout to mark as Online if no error occurs within 3 seconds
     setTimeout(() => {
-      setCameraFeeds(prevFeeds =>
-        prevFeeds.map(feed =>
-          feed.id === feedId && feed.status === 'Loading' ? { ...feed, status: 'Online' } : feed
-        )
-      );
+      setCameraStatus(feedId, 'Online');
     }, 3000);
-  }, []);
+  }, [setCameraStatus]);
 
   const handleCameraClick = useCallback((camera: CameraFeed) => {
     setSelectedCamera(camera);
@@ -469,31 +178,8 @@ const LiveFeed: React.FC = () => {
     }), []
   );
 
-  if (loading && cameraFeeds.length === 0 && !progressiveLoading) {
-    return (
-      <div className="livefeed-page" data-cy="livefeed-page">
-        <div className="livefeed-header">
-          <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
-          <div className="livefeed-subtitle" data-cy="livefeed-subtitle">
-            Loading highway cameras...
-          </div>
-        </div>
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <div className="loading-progress">
-            <div className="progress-bar">
-              <div 
-                className="progress-fill" 
-                style={{ width: `${loadingProgress}%` }}
-              ></div>
-            </div>
-            <div className="progress-text">
-              {Math.round(loadingProgress)}% loaded • Loading District 12
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  if (loading && cameraFeeds.length === 0) {
+    return <CarLoadingAnimation />;
   }
 
   if (error && cameraFeeds.length === 0) {
@@ -529,9 +215,6 @@ const LiveFeed: React.FC = () => {
           </button>
           <div className="feed-info">
             Showing {cameraFeeds.length} cameras from District 12
-            {progressiveLoading && (
-              <span className="loading-more"> • Loading more...</span>
-            )}
           </div>
           <div className="last-refresh">
             Last refreshed: {lastRefresh.toLocaleTimeString()}
@@ -542,7 +225,6 @@ const LiveFeed: React.FC = () => {
       {error && (
         <div className="error-banner">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="close-error">×</button>
         </div>
       )}
 
@@ -648,7 +330,7 @@ const LiveFeed: React.FC = () => {
         ))}
       </div>
 
-      {cameraFeeds.length === 0 && !loading && !progressiveLoading && (
+      {cameraFeeds.length === 0 && !loading && (
         <div className="no-feeds-message">
           <h3>No camera feeds available</h3>
           <p>Please try refreshing or check back later.</p>
