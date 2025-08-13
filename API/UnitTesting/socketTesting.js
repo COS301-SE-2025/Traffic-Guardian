@@ -179,7 +179,12 @@ const updateLocation = async ()=>{
 //updateLocation();
 //setInterval(updateLocation, 5000);
 
-socket.on('new-alert', (data)=>{
+socket.on('new-traffic', (data)=>{
+    console.log(data);
+    addEvent(JSON.stringify(data, null, 2));
+})
+
+socket.on('new-incident', (data)=>{
     console.log(data);
     addEvent(JSON.stringify(data, null, 2));
 })

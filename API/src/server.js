@@ -4,9 +4,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios');
 const FormData = require('form-data');
-const weather = require('../src/Weather/weather');
 const traffic = require('../src/Traffic/traffic');
-const IncidentLocationMapping = require('../src/IncidentLocationMapping/IncidentLocationMapping');
+const ILM = require('../src/IncidentLocationMapping/ilmInstance');
 
 const server = http.createServer(app);
 
@@ -24,7 +23,6 @@ const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
-var ILM = new IncidentLocationMapping.ILM;
 
 io.on('connection',(socket)=>{
   ILM.addUser(socket.id, {});
@@ -33,18 +31,6 @@ io.on('connection',(socket)=>{
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
-    
-  /*
-    //weather prt
-    weather.getWeather().then((data)=>{
-      socket.emit('weatherUpdate', data);
-    })
-    setInterval(async()=>{
-      const weatherD = await weather.getWeather();
-      socket.emit('weatherUpdate',weatherD);
-    }, 60*60*1000); //1hr interval
-    */
-
     
     //traffic prt
     traffic.getTraffic().then((data)=>{
@@ -80,14 +66,14 @@ io.on('connection',(socket)=>{
      const notifiedUsers = ILM.notifyUsers();
      //console.log(notifiedUsers);
      notifiedUsers.forEach((notificationData)=>{
-      io.to(notificationData.userID).emit('new-alert', notificationData.notification);
-      console.log(notificationData.notification.incidents.length);
+      io.to(notificationData.userID).emit('new-traffic', notificationData.notification);
+      //console.log(notificationData.notification.incidents.length);
      })
     });
 
 
-  io.on('disconnect',()=>{
-    console.log(socket.id + ' disconnected');
+  socket.on('disconnect',()=>{
+    ILM.removeUser(socket.id);
   })
 });
 
@@ -124,5 +110,5 @@ db.query('SELECT NOW()')
 
 
   module.exports = {
-    io
+    io,
   };
