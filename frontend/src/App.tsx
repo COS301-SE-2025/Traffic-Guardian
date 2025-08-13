@@ -2,6 +2,7 @@ import React from 'react';
 import './App.css';
 import { ThemeProvider } from './consts/ThemeContext';
 import { SocketProvider } from './consts/SocketContext';
+import { LiveFeedProvider } from './contexts/LiveFeedContext';
 import NavBar from './components/NavBar';
 import GlobalAlertBadge from './components/GlobalAlertBadge';
 import LandingPage from './pages/LandingPage';
@@ -72,24 +73,26 @@ const App: React.FC = () => {
     <ThemeProvider initialDarkMode={isDarkMode}>
       <Router>
         <SocketProvider>
-          <div className="App">
-            <AnimatedRoutes />
-            
-            {/* Global Toast Container for real-time notifications */}
-            <ToastContainer 
-              position="top-right"
-              autoClose={8000}
-              hideProgressBar={false}
-              newestOnTop
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="dark"
-              style={{ zIndex: 99999 }}
-            />
-          </div>
+          <LiveFeedProvider>
+            <div className="App">
+              <AnimatedRoutes />
+              
+              {/* Global Toast Container for real-time notifications */}
+              <ToastContainer 
+                position="top-right"
+                autoClose={8000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="dark"
+                style={{ zIndex: 99999 }}
+              />
+            </div>
+          </LiveFeedProvider>
         </SocketProvider>
       </Router>
     </ThemeProvider>
