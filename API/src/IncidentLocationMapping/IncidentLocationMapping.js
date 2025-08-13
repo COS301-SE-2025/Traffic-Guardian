@@ -114,15 +114,33 @@ class ILM{
 
 
     /*Helper functions */
-    isNearby(locationA, locationB){
-        const d = 0.1;
-        if(!Object.hasOwn(locationA, 'latitude') || !Object.hasOwn(locationA, 'longitude')) return false;
-        if(!Object.hasOwn(locationB, 'latitude') || !Object.hasOwn(locationB, 'longitude')) return false;
-        return (d >= Math.sqrt(
-            Math.pow(locationA.latitude - locationB.latitude, 2) +
-            Math.pow(locationA.longitude - locationB.longitude, 2)
-        ));
-    }
+   isNearby(locationA, locationB) {
+    if (!Object.hasOwn(locationA, 'latitude') || !Object.hasOwn(locationA, 'longitude')) return false;
+    if (!Object.hasOwn(locationB, 'latitude') || !Object.hasOwn(locationB, 'longitude')) return false;
+
+    const toRad = deg => deg * Math.PI / 180;
+    const R = 6371;
+
+    const lat1 = parseFloat(locationA.latitude);
+    const lon1 = parseFloat(locationA.longitude);
+    const lat2 = parseFloat(locationB.latitude);
+    const lon2 = parseFloat(locationB.longitude);
+
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLon / 2) ** 2;
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    return distance <= 5;
+}
+
+
+
 
     emptyObject(obj){
         return (Object.keys(obj).length === 0);
