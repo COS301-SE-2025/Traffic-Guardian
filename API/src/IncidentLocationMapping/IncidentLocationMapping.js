@@ -111,6 +111,26 @@ class ILM{
         return res;
     }
 
+    notifyUsersIncident(newIncident, io){
+        const incidentLocation = {
+            latitude : newIncident.Incidents_Latitude,
+            longitude : newIncident.Incidents_Longitude
+        };
+
+        console.log("from ILM:" + newIncident);
+
+        this.users.forEach((uValue, uKey)=>{
+            if(this.isNearby(uValue.coordinates, incidentLocation)){
+                io.to(uKey).emit('new-incident', newIncident);
+            }
+        });
+    }
+
+    removeUser(userID){
+        this.users.delete(userID);
+        console.log(userID + ' disconnected');
+    }
+
 
 
     /*Helper functions */
@@ -118,7 +138,7 @@ class ILM{
     if (!Object.hasOwn(locationA, 'latitude') || !Object.hasOwn(locationA, 'longitude')) return false;
     if (!Object.hasOwn(locationB, 'latitude') || !Object.hasOwn(locationB, 'longitude')) return false;
 
-    const toRad = deg => deg * Math.PI / 180;
+    const toRad = (deg) => deg * Math.PI / 180;
     const R = 6371;
 
     const lat1 = parseFloat(locationA.latitude);

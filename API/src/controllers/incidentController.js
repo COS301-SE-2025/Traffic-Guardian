@@ -1,5 +1,6 @@
 const incidentModel = require('../models/incident');
 const alertModel = require('../models/alert');
+const ILM = require("../IncidentLocationMapping/ilmInstance")
 
 const incidentController = {
   createIncident: async (req, res) => {
@@ -10,24 +11,34 @@ const incidentController = {
       Incident_CarID, 
       Incident_Severity, 
       Incident_Status, 
-      Incident_Reporter
+      Incident_Reporter,
+      Incidents_Latitude,
+      Incidents_Longitude
       } = req.body;
+
+      //console.log("Recieving:" + req.body);
+      //console.dir(req.body, {depth: null, colors: true});
+      //return res.status(400).json({ error: 'Not adding for now' });
+
         // Validate required fields
       if (!Incident_Date || !Incident_Location || !Incident_Status) {
         return res.status(400).json({ error: 'Date, Location, and Status are required' });
       }
-        // Create incident with the provided reporter or from request user
+  
       const incident = await incidentModel.createIncident({
         Incident_Date, 
         Incident_Location, 
         Incident_CarID, 
         Incident_Severity: Incident_Severity || 'medium', 
         Incident_Status, 
-        Incident_Reporter: Incident_Reporter || (req.user ? req.user.id : null)
+        Incident_Reporter: Incident_Reporter || (req.user ? req.user.id : null),
+        Incidents_Latitude,
+        Incidents_Longitude
       });
       
       const io = req.app.get('io');
-      io.emit('newAlert', incident);
+      //io.emit('newAlert', incident);
+      ILM.notifyUsersIncident(incident, io);
       console.log('Emitting newAlert:', incident);
 
       return res.status(201).json({
