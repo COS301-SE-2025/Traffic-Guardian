@@ -96,8 +96,14 @@ class ILM{
                         //console.log("User=" ,uvalue.incidents);
                         //console.log("inc=", rvalue.incidents);
                         this.updateUserIncidents(uvalue.ID, rvalue.incidents);
-                        
-                    res.push(uvalue.ID);
+                        const notificationData = {
+                            userID : uvalue.ID,
+                            notification : { 
+                                location : rvalue.location,
+                                incidents : this.users.get(uvalue.ID).incidents
+                            }
+                        }
+                    res.push(notificationData);
                 }
             }
             })
