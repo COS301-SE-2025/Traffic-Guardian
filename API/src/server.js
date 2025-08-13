@@ -79,9 +79,9 @@ io.on('connection',(socket)=>{
      ILM.updateUserLocation(socket.id, newLocation);
      const notifiedUsers = ILM.notifyUsers();
      //console.log(notifiedUsers);
-     notifiedUsers.forEach((userID)=>{
-      io.to(userID).emit('new-alert', ILM.users.get(userID).incidents);
-      console.log(ILM.users.get(userID).incidents.length);
+     notifiedUsers.forEach((notificationData)=>{
+      io.to(notificationData.userID).emit('new-alert', notificationData.notification);
+      console.log(notificationData.notification.incidents.length);
      })
     });
 
