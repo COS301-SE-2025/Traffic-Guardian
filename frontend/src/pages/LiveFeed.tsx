@@ -4,8 +4,9 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './LiveFeed.css';
+import { LiveFeedDatabaseIntegration } from '../services/CameraDataService';
 
-// Fix for default markers in react-leaflet
+
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -112,6 +113,11 @@ const LiveFeed: React.FC = () => {
   const [viewMode, setViewMode] = useState<'video' | 'images' | 'map'>('video');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [progressiveLoading, setProgressiveLoading] = useState(false);
+
+  // Database integration service
+  const [dbIntegration] = useState(() => 
+    new LiveFeedDatabaseIntegration(process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000')
+  );
 
   // Add refs for HLS players
   const modalPlayerRef = useRef<any>(null);
@@ -239,6 +245,15 @@ const LiveFeed: React.FC = () => {
         const orangeCountyCameras = await fetchDistrictData(12);
         if (orangeCountyCameras.length > 0) {
           setCameraFeeds(orangeCountyCameras);
+          
+          // Sync camera data with database
+          try {
+            await dbIntegration.syncCamerasWithDatabase(orangeCountyCameras);
+            console.log('Camera metadata synced with database');
+          } catch (dbError) {
+            console.error('Failed to sync camera data, but continuing with display:', dbError);
+            // Don't throw - still show cameras even if DB sync fails
+          }
         }
         setLoadingProgress(100);
       } catch (error) {
@@ -261,7 +276,7 @@ const LiveFeed: React.FC = () => {
       setLoading(false);
       setProgressiveLoading(false);
     }
-  }, [selectedDistricts, fetchDistrictData, progressiveLoading]);
+  }, [selectedDistricts, fetchDistrictData, progressiveLoading, dbIntegration]);
 
   useEffect(() => {
     fetchCameraData();
@@ -274,6 +289,18 @@ const LiveFeed: React.FC = () => {
     };
   }, [fetchCameraData]);
 
+  // Database monitoring effect
+  useEffect(() => {
+    if (cameraFeeds.length > 0) {
+      // Start status monitoring every 10 minutes
+      dbIntegration.startStatusMonitoring(cameraFeeds, 10);
+    }
+    
+    return () => {
+      dbIntegration.stopStatusMonitoring();
+    };
+  }, [cameraFeeds, dbIntegration]);
+
   const handleRefresh = useCallback(() => {
     setLoading(true);
     setLoadingProgress(0);
@@ -281,29 +308,52 @@ const LiveFeed: React.FC = () => {
     fetchCameraData();
   }, [fetchCameraData]);
 
-  const handleImageError = useCallback((feedId: string) => {
+  const handleImageError = useCallback(async (feedId: string) => {
     setCameraFeeds(prevFeeds =>
       prevFeeds.map(feed =>
         feed.id === feedId ? { ...feed, status: 'Offline' as const } : feed
       )
     );
-  }, []);
+    
+    // Track status in database
+    try {
+      await dbIntegration.trackCameraStatus(feedId, 'offline', undefined, 'Image failed to load');
+    } catch (error) {
+      console.error('Failed to track camera status:', error);
+      // Don't throw - camera display should still work
+    }
+  }, [dbIntegration]);
 
-  const handleImageLoad = useCallback((feedId: string) => {
+  const handleImageLoad = useCallback(async (feedId: string) => {
     setCameraFeeds(prevFeeds =>
       prevFeeds.map(feed =>
         feed.id === feedId ? { ...feed, status: 'Online' as const } : feed
       )
     );
-  }, []);
+    
+    // Track status in database
+    try {
+      await dbIntegration.trackCameraStatus(feedId, 'online');
+    } catch (error) {
+      console.error('Failed to track camera status:', error);
+      // Don't throw - camera display should still work
+    }
+  }, [dbIntegration]);
 
-  const handleVideoError = useCallback((feedId: string) => {
+  const handleVideoError = useCallback(async (feedId: string) => {
     setCameraFeeds(prevFeeds =>
       prevFeeds.map(feed =>
         feed.id === feedId ? { ...feed, status: 'Offline', hasLiveStream: false } : feed
       )
     );
-  }, []);
+    
+    // Track status in database
+    try {
+      await dbIntegration.trackCameraStatus(feedId, 'offline', undefined, 'Video stream failed');
+    } catch (error) {
+      console.error('Failed to track camera status:', error);
+    }
+  }, [dbIntegration]);
 
   const handleVideoLoadStart = useCallback((feedId: string) => {
     // Set a timeout to mark as Online if no error occurs within 3 seconds
@@ -450,7 +500,7 @@ const LiveFeed: React.FC = () => {
     return (
       <div className="livefeed-page" data-cy="livefeed-page">
         <div className="livefeed-header">
-          <h2 data-cy="livefeed-title"> Live Camera Feeds</h2>
+          <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
           <div className="livefeed-subtitle" data-cy="livefeed-subtitle">
             Real-time traffic monitoring
           </div>
@@ -468,7 +518,7 @@ const LiveFeed: React.FC = () => {
   return (
     <div className="livefeed-page" data-cy="livefeed-page">
       <div className="livefeed-header">
-        <h2 data-cy="livefeed-title"> Live Camera Feeds</h2>
+        <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
         <div className="livefeed-controls">
           <button 
             onClick={handleRefresh} 
@@ -644,16 +694,16 @@ const LiveFeed: React.FC = () => {
               {viewMode === 'video' && selectedCamera.hasLiveStream && selectedCamera.videoUrl ? (
                 <div className="video-container">
                   <HlsPlayer
-  src={selectedCamera.videoUrl}
-  autoPlay={true}
-  controls={true}
-  width="100%"
-  height="auto"
-  className="camera-video"
-  playerRef={modalPlayerRef}
-  onError={() => handleVideoError(selectedCamera.id)}
-  poster={selectedCamera.image}  // Show still image while video loads
-/>
+                    src={selectedCamera.videoUrl}
+                    autoPlay={true}
+                    controls={true}
+                    width="100%"
+                    height="auto"
+                    className="camera-video"
+                    playerRef={modalPlayerRef}
+                    onError={() => handleVideoError(selectedCamera.id)}
+                    poster={selectedCamera.image}  // Show still image while video loads
+                  />
                 </div>
               ) : viewMode === 'map' && selectedCamera.coordinates ? (
                 <div className="map-container">
