@@ -66,6 +66,10 @@ class AdvancedIncidentDetectionSystem:
             'sudden_speed_change': []
         }
         
+        # Traffic density monitoring for adaptive thresholds
+        self.traffic_density_history = deque(maxlen=30)  # Last 30 frames
+        self.current_density_level = 'normal'  # low, normal, high, very_high
+        
         # Analytics and logging
         self.analytics = {
             'total_frames': 0,
@@ -138,14 +142,14 @@ class AdvancedIncidentDetectionSystem:
             # Location configuration from environment
             'incident_location': os.getenv('INCIDENT_LOCATION', 'Traffic Camera Location'),
             
-            # MULTI-LAYER COLLISION DETECTION SETTINGS
-            'collision_distance_threshold': 35,    # Even tighter
-            'prediction_horizon': 12,              # Shorter prediction
-            'min_tracking_confidence': 0.7,        # Higher confidence
-            'min_collision_speed': 5.0,            # Must be moving faster
-            'collision_angle_threshold': 30,       # More restrictive angle
-            'min_trajectory_length': 8,            # Longer history required
-            'collision_persistence': 5,            # Must persist longer
+            # MULTI-LAYER COLLISION DETECTION SETTINGS (Optimized for busy roads)
+            'collision_distance_threshold': 25,    # Tighter for true collisions
+            'prediction_horizon': 15,              # Longer prediction window
+            'min_tracking_confidence': 0.8,        # Much higher confidence required
+            'min_collision_speed': 8.0,            # Higher speed threshold (filters out normal traffic)
+            'collision_angle_threshold': 20,       # Very restrictive angle (head-on/perpendicular only)
+            'min_trajectory_length': 15,           # Much longer history for reliable prediction
+            'collision_persistence': 8,            # Must persist much longer
             
             # DEPTH ESTIMATION SETTINGS
             'depth_analysis_enabled': True,
@@ -163,10 +167,10 @@ class AdvancedIncidentDetectionSystem:
             'momentum_change_threshold': 25.0,     # Significant momentum change
             'deceleration_threshold': 12.0,        # Sudden stop indicator
             
-            # FINAL VALIDATION REQUIREMENTS
-            'require_all_layers': False,           # True = all layers must agree
-            'minimum_layer_agreement': 3,          # At least 3 layers must agree
-            'collision_confidence_threshold': 0.8, # Final confidence threshold
+            # FINAL VALIDATION REQUIREMENTS (Stricter for busy roads)
+            'require_all_layers': True,            # ALL layers must agree for busy roads
+            'minimum_layer_agreement': 4,          # All 4 layers must agree
+            'collision_confidence_threshold': 0.9, # Much higher confidence threshold
             
             # Other incident detection thresholds
             'stopped_vehicle_time': 10,
@@ -474,7 +478,10 @@ class AdvancedIncidentDetectionSystem:
                 # Vehicle tracking and trajectory analysis
                 tracking_results = self._update_vehicle_tracking(detection_results['detections'])
                 
-                # ADVANCED Multi-Layer Incident Detection
+                # Update traffic density for adaptive thresholds
+                self._update_traffic_density(detection_results['detections'])
+                
+                # ADVANCED Multi-Layer Incident Detection with adaptive thresholds
                 incidents = self._detect_incidents_multilayer(frame, detection_results, tracking_results)
                 
                 # Update analytics
@@ -659,6 +666,84 @@ class AdvancedIncidentDetectionSystem:
         incidents.extend(speed_incidents)
         
         return incidents
+    
+    def _update_traffic_density(self, detections):
+        """Monitor traffic density and adjust sensitivity accordingly."""
+        # Count vehicles only (exclude pedestrians)
+        vehicle_count = len([d for d in detections if d['class'] in ['car', 'truck', 'bus', 'motorcycle']])
+        
+        # Store in history
+        self.traffic_density_history.append(vehicle_count)
+        
+        # Calculate average density over recent frames
+        if len(self.traffic_density_history) >= 10:
+            avg_density = sum(self.traffic_density_history) / len(self.traffic_density_history)
+            
+            # Determine density level and adjust thresholds
+            previous_level = self.current_density_level
+            
+            if avg_density >= 15:
+                self.current_density_level = 'very_high'
+            elif avg_density >= 10:
+                self.current_density_level = 'high'
+            elif avg_density >= 5:
+                self.current_density_level = 'normal'
+            else:
+                self.current_density_level = 'low'
+            
+            # Log density changes
+            if previous_level != self.current_density_level:
+                print(f"   Traffic density changed: {previous_level} → {self.current_density_level} (avg: {avg_density:.1f} vehicles)")
+                self._adjust_thresholds_for_density()
+    
+    def _adjust_thresholds_for_density(self):
+        """Dynamically adjust detection thresholds based on traffic density."""
+        base_config = self._default_config()
+        
+        if self.current_density_level == 'very_high':
+            # Very conservative settings for heavy traffic
+            self.config['collision_distance_threshold'] = 20
+            self.config['min_collision_speed'] = 12.0
+            self.config['min_trajectory_length'] = 20
+            self.config['collision_confidence_threshold'] = 0.95
+            self.config['require_all_layers'] = True
+            
+        elif self.current_density_level == 'high':
+            # Conservative settings for busy traffic
+            self.config['collision_distance_threshold'] = 25
+            self.config['min_collision_speed'] = 10.0
+            self.config['min_trajectory_length'] = 15
+            self.config['collision_confidence_threshold'] = 0.9
+            self.config['require_all_layers'] = True
+            
+        elif self.current_density_level == 'normal':
+            # Balanced settings
+            self.config['collision_distance_threshold'] = 30
+            self.config['min_collision_speed'] = 8.0
+            self.config['min_trajectory_length'] = 12
+            self.config['collision_confidence_threshold'] = 0.8
+            self.config['require_all_layers'] = False
+            self.config['minimum_layer_agreement'] = 3
+            
+        else:  # low density
+            # More sensitive settings for sparse traffic
+            self.config['collision_distance_threshold'] = 35
+            self.config['min_collision_speed'] = 6.0
+            self.config['min_trajectory_length'] = 10
+            self.config['collision_confidence_threshold'] = 0.75
+            self.config['require_all_layers'] = False
+            self.config['minimum_layer_agreement'] = 2
+    
+    def _get_adaptive_thresholds(self):
+        """Get current adaptive thresholds based on traffic density."""
+        return {
+            'density_level': self.current_density_level,
+            'collision_distance': self.config['collision_distance_threshold'],
+            'min_speed': self.config['min_collision_speed'],
+            'trajectory_length': self.config['min_trajectory_length'],
+            'confidence_threshold': self.config['collision_confidence_threshold'],
+            'require_all_layers': self.config['require_all_layers']
+        }
     
     def _detect_trajectory_collisions(self, active_tracks):
         """LAYER 1: Basic trajectory-based collision detection."""
@@ -1081,7 +1166,7 @@ class AdvancedIncidentDetectionSystem:
             if angle > self.config['collision_angle_threshold']:
                 return False
         
-        return approach_rate < -2.0  # Stricter approach threshold
+        return approach_rate < -5.0  # Much stricter approach threshold for busy roads
     
     def _predict_basic_collision(self, track1, track2, horizon):
         """Basic collision prediction for Layer 1."""
@@ -1200,16 +1285,25 @@ class AdvancedIncidentDetectionSystem:
         return incidents
     
     def _find_best_match(self, vehicle, current_frame):
-        """Find the best matching tracked vehicle."""
+        """Find the best matching tracked vehicle with improved busy road filtering."""
         best_match = None
-        min_distance = 80  # Stricter matching
+        min_distance = 60  # Even stricter matching for busy roads
         
         for track_id, tracked in self.tracked_vehicles.items():
-            if current_frame - tracked['last_seen'] > 5:
+            if current_frame - tracked['last_seen'] > 3:  # Shorter tolerance
                 continue
             
             distance = np.sqrt((vehicle['center'][0] - tracked['center'][0])**2 + 
                              (vehicle['center'][1] - tracked['center'][1])**2)
+            
+            # Additional filter: ensure similar sizes (prevents cars matching with trucks)
+            if 'bbox' in tracked and 'bbox' in vehicle:
+                tracked_area = tracked['bbox'][2] * tracked['bbox'][3]
+                vehicle_area = vehicle['bbox'][2] * vehicle['bbox'][3]
+                size_ratio = max(tracked_area, vehicle_area) / max(min(tracked_area, vehicle_area), 1)
+                
+                if size_ratio > 2.0:  # Skip if size difference is too large
+                    continue
             
             if distance < min_distance:
                 min_distance = distance
@@ -1506,13 +1600,23 @@ class AdvancedIncidentDetectionSystem:
         runtime = time.time() - self.analytics['start_time']
         layers = self.analytics['collision_layers']
         
-        # Create responsive overlay text with camera ID
+        # Get current adaptive thresholds
+        adaptive_info = self._get_adaptive_thresholds()
+        current_vehicles = len([d for d in self.tracked_vehicles.values() 
+                               if self.analytics['total_frames'] - d.get('last_seen', 0) <= 10])
+        
+        # Create responsive overlay text with camera ID and adaptive info
         overlay_text = [
             f"Camera {self.camera_config['camera_id']} - Traffic Monitor",
             "",
             f"Runtime: {runtime:.0f}s",
-            f"Vehicles: {len(self.tracked_vehicles)}",
+            f"Current Vehicles: {current_vehicles}",
             f"Frames: {self.analytics['total_frames']:,}",
+            "",
+            f"Traffic Density: {adaptive_info['density_level'].upper()}",
+            f"  Distance Threshold: {adaptive_info['collision_distance']}px",
+            f"  Min Speed: {adaptive_info['min_speed']:.1f}",
+            f"  Trajectory Length: {adaptive_info['trajectory_length']}",
             "",
             "Multi-Layer Detection:",
             f"  Trajectory: {layers['trajectory_detected']}",
@@ -1853,14 +1957,14 @@ def main():
         'log_detections': True,
         'frame_skip': 2,
         
-        # ADVANCED MULTI-LAYER COLLISION DETECTION
-        'collision_distance_threshold': 35,
-        'prediction_horizon': 12,
-        'min_tracking_confidence': 0.7,
-        'min_collision_speed': 5.0,
-        'collision_angle_threshold': 30,
-        'min_trajectory_length': 8,
-        'collision_persistence': 5,
+        # ADVANCED MULTI-LAYER COLLISION DETECTION (Optimized for busy roads)
+        'collision_distance_threshold': 25,
+        'prediction_horizon': 15,
+        'min_tracking_confidence': 0.8,
+        'min_collision_speed': 8.0,
+        'collision_angle_threshold': 20,
+        'min_trajectory_length': 15,
+        'collision_persistence': 8,
         
         # DEPTH ANALYSIS SETTINGS
         'depth_analysis_enabled': True,
@@ -1878,10 +1982,10 @@ def main():
         'momentum_change_threshold': 25.0,
         'deceleration_threshold': 12.0,
         
-        # FINAL VALIDATION REQUIREMENTS
-        'require_all_layers': False,
-        'minimum_layer_agreement': 3,
-        'collision_confidence_threshold': 0.75,
+        # FINAL VALIDATION REQUIREMENTS (Stricter for busy roads)
+        'require_all_layers': True,
+        'minimum_layer_agreement': 4,
+        'collision_confidence_threshold': 0.9,
         
         # Other settings
         'stopped_vehicle_time': 10,
