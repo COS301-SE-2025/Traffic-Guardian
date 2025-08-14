@@ -6,6 +6,9 @@ import 'leaflet/dist/leaflet.css';
 import './LiveFeed.css';
 import { useLiveFeed, CameraFeed } from '../contexts/LiveFeedContext';
 import CarLoadingAnimation from '../components/CarLoadingAnimation';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from 'react-router-dom';
 
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -46,10 +49,45 @@ const LiveFeed: React.FC = () => {
   const [isPlayingTimelapse, setIsPlayingTimelapse] = useState(false);
   const [timelapseInterval, setTimelapseInterval] = useState<NodeJS.Timeout | null>(null);
   const [viewMode, setViewMode] = useState<'video' | 'images' | 'map'>('video');
+  const [showIncidentForm, setShowIncidentForm] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Add refs for HLS players
   const modalPlayerRef = useRef<any>(null);
   const gridPlayerRefs = useRef<{ [key: string]: any }>({});
+
+  // Incident form state
+  const [incidentForm, setIncidentForm] = useState({
+    severity: 'medium' as 'high' | 'medium' | 'low',
+    description: ''
+  });
+
+  // Check user role on component mount
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const apiKey = sessionStorage.getItem('apiKey');
+        if (!apiKey) return;
+        
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/profile`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey,
+          }
+        });
+        
+        if (response.ok) {
+          const userResponse = await response.json();
+          setUserRole(userResponse.User_Role || 'user');
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+      }
+    };
+    
+    fetchUserRole();
+  }, []);
 
   // Refresh handler using context
   const handleRefresh = useCallback(() => {
@@ -105,6 +143,8 @@ const LiveFeed: React.FC = () => {
     setTimelapseImages([]);
     setCurrentTimelapseIndex(0);
     setViewMode('video');
+    setShowIncidentForm(false);
+    setIncidentForm({ severity: 'medium', description: '' });
     if (timelapseInterval) {
       clearInterval(timelapseInterval);
       setTimelapseInterval(null);
@@ -177,6 +217,108 @@ const LiveFeed: React.FC = () => {
       popupAnchor: [0, -12]
     }), []
   );
+
+  // API request helper
+  const apiRequest = useCallback(async (endpoint: string, options: RequestInit = {}) => {
+    const apiKey = sessionStorage.getItem('apiKey');
+    if (!apiKey) {
+      throw new Error('No API key found. Please log in.');
+    }
+
+    const url = `${process.env.REACT_APP_API_URL}${endpoint}`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-API-Key': apiKey,
+      ...options.headers,
+    };
+
+    try {
+      const response = await fetch(url, { ...options, headers });
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthorized: Invalid or missing API key');
+        }
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error: any) {
+      if (error.message.includes('Unauthorized') || error.message.includes('API key')) {
+        navigate('/account');
+      }
+      throw error;
+    }
+  }, [navigate]);
+
+  // Handle incident reporting
+  const handleReportIncident = useCallback(async () => {
+    if (!selectedCamera || !userRole || userRole !== 'admin') {
+      toast.error('Only administrators can report incidents');
+      return;
+    }
+
+    if (!incidentForm.description.trim()) {
+      toast.error('Please provide a description of the incident');
+      return;
+    }
+
+    try {
+      const currentUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const reporterName = currentUser.User_FirstName ? 
+        `${currentUser.User_FirstName} ${currentUser.User_LastName || ''}`.trim() : 
+        currentUser.User_Email || 'Admin User';
+
+      // Look up the database Camera_ID using the external ID
+      let databaseCameraID = null;
+      try {
+        const cameraResponse = await apiRequest(`/api/cameras/external/${encodeURIComponent(selectedCamera.id)}`);
+        console.log('Full camera response:', cameraResponse);
+        databaseCameraID = cameraResponse.Camera_ID;
+        console.log(`Mapped external ID ${selectedCamera.id} to database Camera_ID ${databaseCameraID}`);
+      } catch (cameraError) {
+        console.warn('Could not find camera in database:', selectedCamera.id, cameraError);
+        toast.warning('Camera not found in database, but incident will still be reported');
+      }
+
+      const apiPayload = {
+        Incidents_DateTime: new Date().toISOString(),
+        Incidents_Latitude: selectedCamera.coordinates?.lat || null,
+        Incidents_Longitude: selectedCamera.coordinates?.lng || null,
+        Incident_Severity: incidentForm.severity,
+        Incident_Status: 'open',
+        Incident_Reporter: reporterName,
+        Incident_CameraID: databaseCameraID,
+        Incident_Description: `${incidentForm.description}\n\nCamera: ${selectedCamera.location} (${selectedCamera.id})\nImage: ${selectedCamera.image}`
+      };
+      
+      console.log('Incident API payload:', apiPayload);
+
+      await apiRequest('/api/incidents', {
+        method: 'POST',
+        body: JSON.stringify(apiPayload)
+      });
+
+      toast.success('Incident reported successfully! All users have been alerted.', {
+        autoClose: 5000,
+      });
+
+      // Reset form and close modal
+      setIncidentForm({ severity: 'medium', description: '' });
+      setShowIncidentForm(false);
+      closeVideoModal();
+      
+    } catch (error: any) {
+      toast.error(`Failed to report incident: ${error.message}`);
+    }
+  }, [selectedCamera, userRole, incidentForm, apiRequest, closeVideoModal]);
+
+  // Handle showing incident form
+  const handleShowIncidentForm = useCallback(() => {
+    if (!userRole || userRole !== 'admin') {
+      toast.error('Only administrators can report incidents');
+      return;
+    }
+    setShowIncidentForm(true);
+  }, [userRole]);
 
   if (loading && cameraFeeds.length === 0) {
     return <CarLoadingAnimation />;
@@ -493,10 +635,137 @@ const LiveFeed: React.FC = () => {
                   <p><strong>Coordinates:</strong> {selectedCamera.coordinates.lat.toFixed(6)}, {selectedCamera.coordinates.lng.toFixed(6)}</p>
                 )}
               </div>
+              
+              {userRole === 'admin' && (
+                <div className="incident-reporting-section">
+                  <div className="incident-actions">
+                    {!showIncidentForm ? (
+                      <button 
+                        className="report-incident-btn"
+                        onClick={handleShowIncidentForm}
+                        style={{
+                          backgroundColor: '#ff4444',
+                          color: 'white',
+                          border: 'none',
+                          padding: '10px 20px',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          marginTop: '10px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                         Report Incident
+                      </button>
+                    ) : (
+                      <div className="incident-form" style={{
+                        marginTop: '15px',
+                        padding: '15px',
+                        border: '2px solid #ff4444',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(255, 68, 68, 0.05)'
+                      }}>
+                        <h4 style={{ color: '#ff4444', marginBottom: '10px' }}>Report Incident</h4>
+                        
+                        <div style={{ marginBottom: '10px' }}>
+                          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Severity:</label>
+                          <select 
+                            value={incidentForm.severity}
+                            onChange={(e) => setIncidentForm(prev => ({ 
+                              ...prev, 
+                              severity: e.target.value as 'high' | 'medium' | 'low' 
+                            }))}
+                            style={{
+                              width: '100%',
+                              padding: '8px',
+                              borderRadius: '4px',
+                              border: '1px solid #ccc'
+                            }}
+                          >
+                            <option value="low">Low - Minor disruption</option>
+                            <option value="medium">Medium - Moderate impact</option>
+                            <option value="high">High - Critical incident</option>
+                          </select>
+                        </div>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Description:</label>
+                          <textarea
+                            value={incidentForm.description}
+                            onChange={(e) => setIncidentForm(prev => ({ 
+                              ...prev, 
+                              description: e.target.value 
+                            }))}
+                            placeholder="Describe what you see in the camera feed..."
+                            rows={3}
+                            style={{
+                              width: '100%',
+                              padding: '8px',
+                              borderRadius: '4px',
+                              border: '1px solid #ccc',
+                              resize: 'vertical',
+                              minHeight: '60px'
+                            }}
+                            required
+                          />
+                        </div>
+                        
+                        <div className="incident-form-actions" style={{ 
+                          display: 'flex', 
+                          gap: '10px' 
+                        }}>
+                          <button 
+                            onClick={handleReportIncident}
+                            disabled={!incidentForm.description.trim()}
+                            style={{
+                              backgroundColor: '#ff4444',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 16px',
+                              borderRadius: '4px',
+                              cursor: incidentForm.description.trim() ? 'pointer' : 'not-allowed',
+                              opacity: incidentForm.description.trim() ? 1 : 0.5
+                            }}
+                          >
+                            Submit Report
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setShowIncidentForm(false);
+                              setIncidentForm({ severity: 'medium', description: '' });
+                            }}
+                            style={{
+                              backgroundColor: '#666',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 16px',
+                              borderRadius: '4px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 };
