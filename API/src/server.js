@@ -26,10 +26,11 @@ const HOST = process.env.HOST || 'localhost';
 var welcomeMsg;
 var ILM = new IncidentLocationMapping.ILM;
 
+// Additional user statistics tracking (separate from ILM)
 class UserStatsManager {
   constructor() {
     this.userTimeline = [];
-    this.userLocations = new Map(); 
+    this.userLocations = new Map(); // Track user locations separately
     this.regionNames = ['Rosebank', 'Sandton', 'Midrand', 'Centurion', 'Pretoria', 'Soweto', 'Randburg', 'Boksburg', 'Vereeniging', 'Alberton', 'Hatfield'];
     this.regionsCoords = ['-26.1438,28.0406', '-26.09108017449409,28.08474153621201', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658', '-26.0936,27.9931', '-26.2259,28.1598', '-26.6667,27.9167', '-26.3333,28.1667', '-25.7487,28.2380'];
   }
@@ -41,9 +42,10 @@ class UserStatsManager {
       connectedAt: new Date(),
       region: this.getUserRegion(location)
     };
-
+    
     this.userLocations.set(userID, userData);
     
+    // Track connection in timeline
     this.userTimeline.push({
       timestamp: new Date(),
       action: 'connect',
@@ -51,6 +53,7 @@ class UserStatsManager {
       totalUsers: this.userLocations.size
     });
 
+    // Keep only last 100 timeline entries
     if (this.userTimeline.length > 100) {
       this.userTimeline = this.userTimeline.slice(-100);
     }
@@ -60,6 +63,7 @@ class UserStatsManager {
     if (this.userLocations.has(userID)) {
       this.userLocations.delete(userID);
       
+      // Track disconnection in timeline
       this.userTimeline.push({
         timestamp: new Date(),
         action: 'disconnect',
@@ -67,12 +71,14 @@ class UserStatsManager {
         totalUsers: this.userLocations.size
       });
 
+      // Keep only last 100 timeline entries
       if (this.userTimeline.length > 100) {
         this.userTimeline = this.userTimeline.slice(-100);
       }
     }
+  }
 
-    updateUserLocation(userID, location) {
+  updateUserLocation(userID, location) {
     if (this.userLocations.has(userID)) {
       const userData = this.userLocations.get(userID);
       userData.location = location;
@@ -181,6 +187,7 @@ class UserStatsManager {
 
 const userStatsManager = new UserStatsManager();
 
+// Function to get today's incidents from database
 async function getTodaysIncidents() {
   try {
     const today = new Date();
@@ -201,18 +208,22 @@ async function getTodaysIncidents() {
   }
 }
 
+// Function to emit user statistics
 function emitUserStats() {
   const userStats = userStatsManager.getUserStats();
   io.emit('userStatsUpdate', userStats);
 }
 
+// Function to emit today's incidents count
 async function emitTodaysIncidents() {
   const count = await getTodaysIncidents();
   io.emit('todaysIncidentsUpdate', { count, date: new Date().toISOString().split('T')[0] });
 }
 
 io.on('connection',(socket)=>{
+  // Use existing ILM methods
   ILM.addUser(socket.id, {});
+  // Also track in our user stats manager
   userStatsManager.addUser(socket.id, {});
   
   console.log(socket.id + ' connected');
@@ -221,10 +232,51 @@ io.on('connection',(socket)=>{
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
 
+  /*
+    //weather prt
+    weather.getWeather().then((data)=>{
+      socket.emit('weatherUpdate', data);
+    })
+    setInterval(async()=>{
+      const weatherD = await weather.getWeather();
+      socket.emit('weatherUpdate',weatherD);
+    }, 60*60*1000); //1hr interval
+    */
+
+    /*
+    //traffic prt
+    traffic.getTraffic().then((data)=>{
+      socket.emit('trafficUpdate', data);
+
+      //update regions Traffic
+      ILM.updateTraffic(data);
+
+      //critical incidents
+      const res = traffic.criticalIncidents(data);
+      socket.emit('criticalIncidents', res);
+
+      //incident Category
+      const res_incidentCategory = traffic.incidentCategory(data);
+      socket.emit('incidentCategory', res_incidentCategory);
+
+      //incident Locations
+      const res_incidentLocations =  traffic.incidentLocations(data);
+      socket.emit('incidentLocations', res_incidentLocations);
+    })
+    */
+   /*
+    setInterval(async()=>{
+      const data = await traffic.getTraffic();
+      socket.emit('trafficUpdate', data);
+    }, 30*60*1000); //30 min interval
+    */
+
+  // Send initial user statistics
   emitUserStats();
 
+  // Send initial today's incidents
   emitTodaysIncidents();
-
+    
   // Weather data - enabled for real-time updates
   weather.getWeather().then((data)=>{
     socket.emit('weatherUpdate', data);
@@ -319,4 +371,41 @@ io.on('connection',(socket)=>{
   });
 });
 
- 
+app.set('io', io);
+
+// Emit user statistics every 30 seconds
+setInterval(() => {
+  emitUserStats();
+}, 30000);
+
+// Emit today's incidents count every 5 minutes
+setInterval(() => {
+  emitTodaysIncidents();
+}, 5*60*1000);
+
+// Test database connection before starting server
+db.query('SELECT NOW()')
+  .then(() => {
+    console.log('Database connection established');
+    
+    // Start the server
+    server.listen(PORT, () => {
+      console.log(`Database connection established`);
+      console.log(`Server running on port ${PORT}`);
+      console.log(`API available at: http://${HOST}:${PORT}`);
+      console.log(`API documentation available at: https://documenter.getpostman.com/view/34423164/2sB2qak34y`);
+    });
+  }).catch(err => {
+    console.error('Database connection failed:', err);
+    console.error('Please ensure all required GitHub Codespace secrets are properly configured:');
+    console.error('- DATABASE_USERNAME');
+    console.error('- DATABASE_HOST');
+    console.error('- DATABASE_NAME');
+    console.error('- DATABASE_PASSWORD');
+    console.error('- DATABASE_PORT');
+    process.exit(1);
+   });
+
+module.exports = {
+  io
+};
