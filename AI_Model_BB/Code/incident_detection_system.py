@@ -11,6 +11,7 @@ import os
 import threading
 import subprocess
 from dotenv import load_dotenv
+from hls_stream_adapter import StreamCapture
 
 load_dotenv()
 
@@ -192,25 +193,28 @@ class AdvancedIncidentDetectionSystem:
                 return None
     
     def initialize_capture(self):
-        """Initialize video capture for single camera."""
+        """Initialize video capture for single camera with HLS support."""
         if not self.camera_config:
-            print("✗ No camera configuration provided")
+            print("No camera configuration provided")
             return False
             
         stream_url = self.camera_config['url']
-        max_retries = 5
+        camera_id = self.camera_config['camera_id']
         
-        for attempt in range(max_retries):
-            self.cap = cv2.VideoCapture(stream_url)
-            if self.cap.isOpened():
-                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                print(f"✓ Camera {self.camera_config['camera_id']} connected: {stream_url}")
-                return True
-            print(f"Camera {self.camera_config['camera_id']} connection attempt {attempt+1}/{max_retries} failed...")
-            time.sleep(2)
-        return False
-
-
+        print(f"Initializing camera {camera_id}...")
+        
+        # Use StreamCapture wrapper for both MP4 and HLS streams
+        self.cap = StreamCapture(stream_url, max_retries=5)
+        
+        if self.cap.open():
+            print(f" Camera {camera_id} connected successfully")
+            print(f"   URL: {stream_url}")
+            return True
+        else:
+            print(f" Failed to connect camera {camera_id}")
+            print(f"   URL: {stream_url}")
+            return False
+    
     def _is_duplicate_incident(self, incident, current_frame):
         """Check if this incident is a duplicate of a recent one."""
         incident_type = incident['type']
