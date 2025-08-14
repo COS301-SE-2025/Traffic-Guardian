@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import io from 'socket.io-client';
 import './Dashboard.css';
 
-// Icon components (unchanged)
+type SocketType = ReturnType<typeof io>;
+
 const AlertTriangleIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-cy="alert-triangle-icon">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -51,6 +53,99 @@ const UsersIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a4 4 0 11-8 0 4 4 0 018 0z" />
   </svg>
 );
+
+const WeatherIcon = ({ condition, isDay }: { condition: string; isDay: boolean }) => {
+  if (condition.toLowerCase().includes('sunny') || condition.toLowerCase().includes('clear')) {
+    return (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-cy="weather-sunny-icon">
+        <circle cx="12" cy="12" r="5" />
+        <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+    );
+  } else if (condition.toLowerCase().includes('cloud')) {
+    return (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-cy="weather-cloud-icon">
+        <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z" />
+      </svg>
+    );
+  } else if (condition.toLowerCase().includes('rain')) {
+    return (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-cy="weather-rain-icon">
+        <path d="M16 13v8m-8-8v8m4-12v8M8 21l1-1 1 1m8 0l1-1 1 1m-8-8l1-1 1 1M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z" />
+      </svg>
+    );
+  } else {
+    return (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-cy="weather-default-icon">
+        <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z" />
+      </svg>
+    );
+  }
+};
+
+interface WeatherCondition {
+  text: string;
+  icon: string;
+  code: number;
+}
+
+interface CurrentWeather {
+  last_updated_epoch: number;
+  last_updated: string;
+  temp_c: number;
+  temp_f: number;
+  is_day: number;
+  condition: WeatherCondition;
+  wind_mph: number;
+  wind_kph: number;
+  wind_degree: number;
+  wind_dir: string;
+  pressure_mb: number;
+  pressure_in: number;
+  precip_mm: number;
+  precip_in: number;
+  humidity: number;
+  cloud: number;
+  feelslike_c: number;
+  feelslike_f: number;
+  windchill_c: number;
+  windchill_f: number;
+  heatindex_c: number;
+  heatindex_f: number;
+  dewpoint_c: number;
+  dewpoint_f: number;
+  vis_km: number;
+  vis_miles: number;
+  uv: number;
+  gust_mph: number;
+  gust_kph: number;
+}
+
+interface WeatherLocation {
+  name: string;
+  region: string;
+  country: string;
+  lat: number;
+  lon: number;
+  tz_id: string;
+  localtime_epoch: number;
+  localtime: string;
+}
+
+interface WeatherData {
+  location: WeatherLocation;
+  current: CurrentWeather;
+}
+
+interface SocketError {
+  message: string;
+  type?: string;
+  description?: string;
+}
+
+interface TrafficData {
+  [key: string]: any; // Generic for now, can be made more specific based on actual traffic data structure
+}
 
 interface Incident {
   id: number;
@@ -104,6 +199,11 @@ const Dashboard: React.FC = () => {
   const [selectedIncident, setSelectedIncident] = useState<IncidentDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  
+  const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [weatherLastUpdate, setWeatherLastUpdate] = useState<Date | null>(null);
+  
   const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
     {
       id: 1,
@@ -161,6 +261,83 @@ const Dashboard: React.FC = () => {
     systemHealth: 'healthy',
   });
 
+  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: Date.now(),
+      timestamp: new Date()
+    };
+    setNotifications(prev => [...prev, newNotification]);
+    
+    // Auto-remove notification after 5 seconds
+    setTimeout(() => {
+      removeNotification(newNotification.id);
+    }, 5000);
+  }, []);
+
+  useEffect(() => {
+    const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+    
+    console.log('Connecting to Socket.IO server at:', SERVER_URL);
+    const newSocket = io(SERVER_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Connected to Socket.IO server with ID:', newSocket.id);
+      addNotification({
+        title: 'Connected',
+        message: 'Real-time data connection established',
+        type: 'success'
+      });
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('Disconnected from Socket.IO server');
+      addNotification({
+        title: 'Disconnected',
+        message: 'Real-time data connection lost',
+        type: 'warning'
+      });
+    });
+
+    newSocket.on('connect_error', (error: SocketError) => {
+      console.error('Socket.IO connection error:', error);
+      addNotification({
+        title: 'Connection Error',
+        message: 'Failed to connect to real-time data service',
+        type: 'critical'
+      });
+    });
+
+    newSocket.on('weatherUpdate', (data: WeatherData[]) => {
+      console.log('Received weather update:', data);
+      setWeatherData(data);
+      setWeatherLoading(false);
+      setWeatherLastUpdate(new Date());
+      
+      addNotification({
+        title: 'Weather Updated',
+        message: `Weather data updated for ${data.length} locations`,
+        type: 'info'
+      });
+    });
+
+    newSocket.on('trafficUpdate', (data: TrafficData) => {
+      console.log('Received traffic update:', data);
+    });
+
+    newSocket.on('criticalIncidents', (data: TrafficData) => {
+      console.log('Received critical incidents:', data);
+    });
+
+    return () => {
+      console.log('Cleaning up Socket.IO connection');
+      newSocket.close();
+    };
+  }, [addNotification]); 
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -194,20 +371,6 @@ const Dashboard: React.FC = () => {
 
   const getStatusClass = (status: string) => {
     return status.toLowerCase();
-  };
-
-  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: Date.now(),
-      timestamp: new Date()
-    };
-    setNotifications(prev => [...prev, newNotification]);
-    
-    // Auto-remove notification after 5 seconds
-    setTimeout(() => {
-      removeNotification(newNotification.id);
-    }, 5000);
   };
 
   const removeNotification = (id: number) => {
@@ -304,6 +467,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Get primary weather location (first in the array, usually Johannesburg)
+  const getPrimaryWeather = (): WeatherData | null => {
+    return weatherData.length > 0 ? weatherData[0] : null;
+  };
+
   return (
     <div className="dashboard" data-cy="dashboard" id="dashboard">
       <div className="notification-panel" data-cy="notification-panel" role="alert">
@@ -338,9 +506,41 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="dashboard-time" data-cy="dashboard-time">
-          <div className="dashboard-time-label" data-cy="dashboard-time-label">Current Time</div>
-          <div className="dashboard-time-value" data-cy="dashboard-time-value">{formatTime(currentTime)}</div>
+        <div className="dashboard-header-right" data-cy="dashboard-header-right">
+          <div className="header-weather" data-cy="header-weather">
+            {weatherLoading ? (
+              <div className="weather-loading" data-cy="weather-loading">
+                <div className="loading-spinner small" data-cy="weather-loading-spinner"></div>
+                <span>Loading weather...</span>
+              </div>
+            ) : getPrimaryWeather() ? (
+              <div className="weather-summary" data-cy="weather-summary">
+                <div className="weather-icon" data-cy="weather-icon">
+                  <WeatherIcon 
+                    condition={getPrimaryWeather()!.current.condition.text} 
+                    isDay={getPrimaryWeather()!.current.is_day === 1} 
+                  />
+                </div>
+                <div className="weather-info" data-cy="weather-info">
+                  <div className="weather-temp" data-cy="weather-temp">
+                    {Math.round(getPrimaryWeather()!.current.temp_c)}°C
+                  </div>
+                  <div className="weather-location" data-cy="weather-location">
+                    {getPrimaryWeather()!.location.name}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="weather-error" data-cy="weather-error">
+                <span>Weather unavailable</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="dashboard-time" data-cy="dashboard-time">
+            <div className="dashboard-time-label" data-cy="dashboard-time-label">Current Time</div>
+            <div className="dashboard-time-value" data-cy="dashboard-time-value">{formatTime(currentTime)}</div>
+          </div>
         </div>
       </div>
 
@@ -402,6 +602,79 @@ const Dashboard: React.FC = () => {
             <div className="stat-card-value" data-cy="stat-card-value">{stats.incidentsToday}</div>
             <div className="stat-card-subtitle" data-cy="stat-card-subtitle">vs 12 yesterday</div>
           </div>
+        </div>
+
+        <div className="weather-section" data-cy="weather-section" id="weather-section">
+          <div className="weather-header" data-cy="weather-header">
+            <h3 data-cy="weather-title">Weather Conditions</h3>
+            {weatherLastUpdate && (
+              <div className="weather-last-update" data-cy="weather-last-update">
+                Last updated: {formatTime(weatherLastUpdate)}
+              </div>
+            )}
+          </div>
+          
+          {weatherLoading ? (
+            <div className="weather-loading-section" data-cy="weather-loading-section">
+              <div className="loading-spinner" data-cy="weather-section-spinner"></div>
+              <div className="loading-text" data-cy="weather-section-loading-text">Loading weather data...</div>
+            </div>
+          ) : weatherData.length > 0 ? (
+            <div className="weather-grid" data-cy="weather-grid">
+              {weatherData.map((weather, index) => (
+                <div key={index} className="weather-card" data-cy={`weather-card-${index}`}>
+                  <div className="weather-card-header" data-cy="weather-card-header">
+                    <div className="weather-location-name" data-cy="weather-location-name">
+                      {weather.location.name}
+                    </div>
+                    <div className="weather-icon-large" data-cy="weather-icon-large">
+                      <WeatherIcon 
+                        condition={weather.current.condition.text} 
+                        isDay={weather.current.is_day === 1} 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="weather-main-temp" data-cy="weather-main-temp">
+                    {Math.round(weather.current.temp_c)}°C
+                  </div>
+                  
+                  <div className="weather-condition" data-cy="weather-condition">
+                    {weather.current.condition.text}
+                  </div>
+                  
+                  <div className="weather-details" data-cy="weather-details">
+                    <div className="weather-detail-item" data-cy="weather-detail-humidity">
+                      <span className="weather-detail-label">Humidity</span>
+                      <span className="weather-detail-value">{weather.current.humidity}%</span>
+                    </div>
+                    <div className="weather-detail-item" data-cy="weather-detail-wind">
+                      <span className="weather-detail-label">Wind</span>
+                      <span className="weather-detail-value">{weather.current.wind_kph} km/h {weather.current.wind_dir}</span>
+                    </div>
+                    <div className="weather-detail-item" data-cy="weather-detail-pressure">
+                      <span className="weather-detail-label">Pressure</span>
+                      <span className="weather-detail-value">{weather.current.pressure_mb} mb</span>
+                    </div>
+                    <div className="weather-detail-item" data-cy="weather-detail-visibility">
+                      <span className="weather-detail-label">Visibility</span>
+                      <span className="weather-detail-value">{weather.current.vis_km} km</span>
+                    </div>
+                  </div>
+                  
+                  <div className="weather-update-time" data-cy="weather-update-time">
+                    Updated: {weather.current.last_updated}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="weather-error-section" data-cy="weather-error-section">
+              <div className="weather-error-message" data-cy="weather-error-message">
+                Unable to load weather data. Please check your connection.
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="dashboard-main-grid" data-cy="dashboard-main-grid">
