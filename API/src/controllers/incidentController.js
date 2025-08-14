@@ -5,47 +5,25 @@ const incidentController = {
   createIncident: async (req, res) => {
     try {
       const { 
-        Incidents_DateTime, 
-        Incidents_Longitude, 
-        Incidents_Latitude, 
-        Incident_Severity, 
-        Incident_Status, 
-        Incident_Reporter
+      Incident_Date, 
+      Incident_Location, 
+      Incident_CarID, 
+      Incident_Severity, 
+      Incident_Status, 
+      Incident_Reporter
       } = req.body;
-      
-      // Validate required fields
-      if (!Incidents_DateTime || !Incident_Status) {
-        return res.status(400).json({ error: 'Date and time, and status are required' });
+        // Validate required fields
+      if (!Incident_Date || !Incident_Location || !Incident_Status) {
+        return res.status(400).json({ error: 'Date, Location, and Status are required' });
       }
-      
-      // Validate coordinates if provided
-      if (Incidents_Latitude && isNaN(parseFloat(Incidents_Latitude))) {
-        return res.status(400).json({ error: 'Invalid latitude format' });
-      }
-      if (Incidents_Longitude && isNaN(parseFloat(Incidents_Longitude))) {
-        return res.status(400).json({ error: 'Invalid longitude format' });
-      }
-      
-      // Validate Incident_Severity
-      const validSeverities = ['low', 'medium', 'high'];
-      if (Incident_Severity && !validSeverities.includes(Incident_Severity)) {
-        return res.status(400).json({ error: 'Invalid severity level' });
-      }
-      
-      // Validate Incident_Status
-      const validStatuses = ['open', 'ongoing', 'resolved', 'closed'];
-      if (!validStatuses.includes(Incident_Status)) {
-        return res.status(400).json({ error: 'Invalid status' });
-      }
-      
-      // Create incident
+        // Create incident with the provided reporter or from request user
       const incident = await incidentModel.createIncident({
-        Incidents_DateTime,
-        Incidents_Longitude: Incidents_Longitude ? parseFloat(Incidents_Longitude) : null,
-        Incidents_Latitude: Incidents_Latitude ? parseFloat(Incidents_Latitude) : null,
-        Incident_Severity: Incident_Severity || 'medium',
-        Incident_Status,
-        Incident_Reporter: Incident_Reporter || (req.user ? req.user.User_Email : null)
+        Incident_Date, 
+        Incident_Location, 
+        Incident_CarID, 
+        Incident_Severity: Incident_Severity || 'medium', 
+        Incident_Status, 
+        Incident_Reporter: Incident_Reporter || (req.user ? req.user.id : null)
       });
       
       const io = req.app.get('io');
@@ -57,14 +35,14 @@ const incidentController = {
         incident
       });
     } catch (error) {
-      console.error('Create incident error:', error.message, error.stack);
-      return res.status(500).json({ error: 'Internal server error', details: error.message });
+      console.error('Create incident error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
     }
   },
-  getIncident: async (req, res) => {
+    getIncident: async (req, res) => {
     try {
-      const Incidents_ID = req.params.id;
-      const incident = await incidentModel.getIncidentById(Incidents_ID);
+      const Incident_ID = req.params.id;
+      const incident = await incidentModel.getIncidentById(Incident_ID);
       
       if (!incident) {
         return res.status(404).json({ error: 'Incident not found' });
@@ -72,66 +50,37 @@ const incidentController = {
       
       return res.status(200).json(incident);
     } catch (error) {
-      console.error('Get incident error:', error.message, error.stack);
-      return res.status(500).json({ error: 'Internal server error', details: error.message });
+      console.error('Get incident error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
     }
   },
-  updateIncident: async (req, res) => {
+    updateIncident: async (req, res) => {
     try {
-      const Incidents_ID = req.params.id;
-      const { 
-        Incidents_DateTime, 
-        Incidents_Longitude, 
-        Incidents_Latitude, 
-        Incident_Severity, 
-        Incident_Status, 
-        Incident_Reporter 
-      } = req.body;
+      const Incident_ID = req.params.id;
+      const incidentData = req.body;
       
-      const existingIncident = await incidentModel.getIncidentById(Incidents_ID);
+      // First check if incident exists
+      const existingIncident = await incidentModel.getIncidentById(Incident_ID);
       
       if (!existingIncident) {
         return res.status(404).json({ error: 'Incident not found' });
       }
       
-      // Validate coordinates if provided
-      if (Incidents_Latitude && isNaN(parseFloat(Incidents_Latitude))) {
-        return res.status(400).json({ error: 'Invalid latitude format' });
-      }
-      if (Incidents_Longitude && isNaN(parseFloat(Incidents_Longitude))) {
-        return res.status(400).json({ error: 'Invalid longitude format' });
-      }
-      
-      // Make sure we're only sending valid data (not undefined or null)
-      const updateData = {
-        Incidents_DateTime: Incidents_DateTime || undefined,
-        Incident_Severity: Incident_Severity || undefined,
-        Incident_Status: Incident_Status || undefined,
-        Incident_Reporter: Incident_Reporter || undefined
-      };
-
-      // Only add coordinates if they exist and can be parsed
-      if (Incidents_Longitude && !isNaN(parseFloat(Incidents_Longitude))) {
-        updateData.Incidents_Longitude = parseFloat(Incidents_Longitude);
-      }
-      
-      if (Incidents_Latitude && !isNaN(parseFloat(Incidents_Latitude))) {
-        updateData.Incidents_Latitude = parseFloat(Incidents_Latitude);
-      }
-      
-      const updatedIncident = await incidentModel.updateIncident(Incidents_ID, updateData);
+      // Update the incident
+      const updatedIncident = await incidentModel.updateIncident(Incident_ID, incidentData);
       
       return res.status(200).json({
         message: 'Incident updated successfully',
         incident: updatedIncident
       });
     } catch (error) {
-      console.error('Update incident error:', error.message, error.stack);
-      return res.status(500).json({ error: 'Internal server error', details: error.message });
+      console.error('Update incident error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
     }
   },
-  getIncidents: async (req, res) => {
+    getIncidents: async (req, res) => {
     try {
+      // Extract filter parameters from query string
       const {
         Incident_Status,
         Incident_Severity,
@@ -150,10 +99,36 @@ const incidentController = {
       
       return res.status(200).json(incidents);
     } catch (error) {
-      console.error('Get incidents error:', error.message, error.stack);
-      return res.status(500).json({ error: 'Internal server error', details: error.message });
+      console.error('Get incidents error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
     }
-  }
-};
+  },
 
-module.exports = incidentController;
+  // New endpoint for today's incidents
+  getTodaysIncidents: async (req, res) => {
+    try {
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+      
+      const query = `
+        SELECT * FROM "Incidents" 
+        WHERE "Incidents_DateTime" >= $1 AND "Incidents_DateTime" <= $2
+        ORDER BY "Incidents_DateTime" DESC
+      `;
+      
+      const db = require('../config/db');
+      const { rows } = await db.query(query, [startOfDay, endOfDay]);
+      
+      return res.status(200).json({
+        count: rows.length,
+        date: today.toISOString().split('T')[0],
+        incidents: rows
+      });
+    } catch (error) {
+      console.error('Get today\'s incidents error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  
