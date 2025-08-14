@@ -8,6 +8,8 @@ router.use(authMiddleware.authenticate);
 
 router.post('/', incidentController.createIncident);
 router.get('/', incidentController.getIncidents);
+router.get('/today', incidentController.getTodaysIncidents);
+router.get('/stats', incidentController.getIncidentStats);
 router.get('/:id', incidentController.getIncident);
 router.put('/:id', incidentController.updateIncident);
 
