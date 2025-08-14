@@ -304,4 +304,19 @@ io.on('connection',(socket)=>{
     emitUserStats();
   });
 
+  // Handle disconnection properly
+  socket.on('disconnect', () => {
+    console.log(socket.id + ' disconnected');
+    // Remove from our user stats manager
+    userStatsManager.removeUser(socket.id);
+    
+    // Clean up intervals
+    clearInterval(weatherInterval);
+    clearInterval(trafficInterval);
+    
+    // Emit updated user stats after disconnection
+    emitUserStats();
+  });
+});
+
  
