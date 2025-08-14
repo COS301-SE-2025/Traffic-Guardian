@@ -6,6 +6,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const weather = require('../src/Weather/weather');
 const traffic = require('../src/Traffic/traffic');
+const IncidentLocationMapping = require('../src/IncidentLocationMapping/IncidentLocationMapping');
 
 const server = http.createServer(app);
 
@@ -23,85 +24,14 @@ const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
-var connectedUsers = [];
+var ILM = new IncidentLocationMapping.ILM;
 
-io.on('connection',(socket)=>{
-  connectedUsers.push(socket);
-  console.log(socket.id + ' connected');
-  console.log('Number of users connected' + connectedUsers.length);
+class UserStatsManager {
+  constructor() {
+    this.userTimeline = [];
+    this.userLocations = new Map(); 
+    this.regionNames = ['Rosebank', 'Sandton', 'Midrand', 'Centurion', 'Pretoria', 'Soweto', 'Randburg', 'Boksburg', 'Vereeniging', 'Alberton', 'Hatfield'];
+    this.regionsCoords = ['-26.1438,28.0406', '-26.09108017449409,28.08474153621201', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658', '-26.0936,27.9931', '-26.2259,28.1598', '-26.6667,27.9167', '-26.3333,28.1667', '-25.7487,28.2380'];
+  }
 
-  welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
-  socket.emit('welcome', welcomeMsg);
-    
-    //weather prt
-    weather.getWeather().then((data)=>{
-      socket.emit('weatherUpdate', data);
-    })
-    setInterval(async()=>{
-      const weatherD = await weather.getWeather();
-      socket.emit('weatherUpdate',weatherD);
-    }, 60*60*1000); //1hr interval
-
-    //traffic prt
-    traffic.getTraffic().then((data)=>{
-      socket.emit('trafficUpdate', data);
-
-      //critical incidents
-      const res = traffic.criticalIncidents(data);
-      socket.emit('criticalIncidents', res);
-
-      //incident Category
-      const res_incidentCategory = traffic.incidentCategory(data);
-      socket.emit('incidentCategory', res_incidentCategory);
-
-      //incident Locations
-      const res_incidentLocations =  traffic.incidentLocations(data);
-      socket.emit('incidentLocations', res_incidentLocations);
-    })
-    setInterval(async()=>{
-      const data = await traffic.getTraffic();
-      socket.emit('trafficUpdate', data);
-    }, 30*60*1000); //30 min interval
-
-
-
-  io.on('disconnect',()=>{
-    console.log(socket.id + ' disconnected');
-  })
-});
-
-  app.set('io', io);
-
- /*  server.listen(PORT, ()=>{
-    console.log('Socket server running');
-  }) */
-
-
-
-// Test database connection before starting server
-db.query('SELECT NOW()')
-  .then(() => {
-    console.log('Database connection established');
-    
-    // Start the server
-    server.listen(PORT, () => {
-      console.log(`Database connection established`);
-      console.log(`Server running on port ${PORT}`);
-      console.log(`API available at: http://${HOST}:${PORT}`);
-      console.log(`API documentation available at: https://documenter.getpostman.com/view/34423164/2sB2qak34y`);
-    });
-  })  .catch(err => {
-    console.error('Database connection failed:', err);
-    console.error('Please ensure all required GitHub Codespace secrets are properly configured:');
-    console.error('- DATABASE_USERNAME');
-    console.error('- DATABASE_HOST');
-    console.error('- DATABASE_NAME');
-    console.error('- DATABASE_PASSWORD');
-    console.error('- DATABASE_PORT');
-    process.exit(1);
-   });
-
-
-  module.exports = {
-    io
-  };
+ 
