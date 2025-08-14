@@ -225,4 +225,83 @@ io.on('connection',(socket)=>{
 
   emitTodaysIncidents();
 
+  // Weather data - enabled for real-time updates
+  weather.getWeather().then((data)=>{
+    socket.emit('weatherUpdate', data);
+  }).catch(error => {
+    console.error('Weather fetch error:', error);
+  });
+
+  // Update weather every hour
+  const weatherInterval = setInterval(async()=>{
+    try {
+      const weatherD = await weather.getWeather();
+      socket.emit('weatherUpdate', weatherD);
+    } catch (error) {
+      console.error('Weather update error:', error);
+    }
+  }, 60*60*1000); // 1hr interval
+
+  // Traffic data - enabled for real-time updates
+  traffic.getTraffic().then((data)=>{
+    socket.emit('trafficUpdate', data);
+
+    // Update regions Traffic
+    ILM.updateTraffic(data);
+
+    // Critical incidents
+    const res = traffic.criticalIncidents(data);
+    socket.emit('criticalIncidents', res);
+
+    // Incident Category
+    const res_incidentCategory = traffic.incidentCategory(data);
+    socket.emit('incidentCategory', res_incidentCategory);
+
+    // Incident Locations
+    const res_incidentLocations = traffic.incidentLocations(data);
+    socket.emit('incidentLocations', res_incidentLocations);
+  }).catch(error => {
+    console.error('Traffic fetch error:', error);
+  });
+
+  // Update traffic every 30 minutes
+  const trafficInterval = setInterval(async()=>{
+    try {
+      const data = await traffic.getTraffic();
+      socket.emit('trafficUpdate', data);
+      
+      // Update regions Traffic
+      ILM.updateTraffic(data);
+
+      // Send updated analytics
+      const criticalRes = traffic.criticalIncidents(data);
+      socket.emit('criticalIncidents', criticalRes);
+
+      const categoryRes = traffic.incidentCategory(data);
+      socket.emit('incidentCategory', categoryRes);
+
+      const locationsRes = traffic.incidentLocations(data);
+      socket.emit('incidentLocations', locationsRes);
+    } catch (error) {
+      console.error('Traffic update error:', error);
+    }
+  }, 30*60*1000); // 30 min interval
+
+  // Update user location
+  socket.on('new-location', async (newLocation)=>{
+    // Use existing ILM method
+    ILM.updateUserLocation(socket.id, newLocation);
+    // Also update in our user stats manager
+    userStatsManager.updateUserLocation(socket.id, newLocation);
+    
+    const notifiedUsers = ILM.notifyUsers();
+    
+    notifiedUsers.forEach((notification)=>{
+      io.to(notification.userID).emit('new-alert', notification.notification);
+    });
+
+    // Emit updated user stats when location changes
+    emitUserStats();
+  });
+
  
