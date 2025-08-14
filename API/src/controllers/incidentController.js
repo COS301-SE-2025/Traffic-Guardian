@@ -131,4 +131,55 @@ const incidentController = {
     }
   },
 
+  // New endpoint for incident statistics
+  getIncidentStats: async (req, res) => {
+    try {
+      const db = require('../config/db');
+      
+      // Get total incidents
+      const totalQuery = 'SELECT COUNT(*) as total FROM "Incidents"';
+      const { rows: totalRows } = await db.query(totalQuery);
+      
+      // Get active incidents (ongoing status)
+      const activeQuery = 'SELECT COUNT(*) as active FROM "Incidents" WHERE "Incident_Status" = $1';
+      const { rows: activeRows } = await db.query(activeQuery, ['ongoing']);
+      
+      // Get today's incidents
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+      
+      const todayQuery = `
+        SELECT COUNT(*) as today 
+        FROM "Incidents" 
+        WHERE "Incidents_DateTime" >= $1 AND "Incidents_DateTime" <= $2
+      `;
+      const { rows: todayRows } = await db.query(todayQuery, [startOfDay, endOfDay]);
+      
+      // Get severity breakdown
+      const severityQuery = `
+        SELECT "Incident_Severity", COUNT(*) as count 
+        FROM "Incidents" 
+        GROUP BY "Incident_Severity"
+      `;
+      const { rows: severityRows } = await db.query(severityQuery);
+      
+      return res.status(200).json({
+        total: parseInt(totalRows[0].total) || 0,
+        active: parseInt(activeRows[0].active) || 0,
+        today: parseInt(todayRows[0].today) || 0,
+        severityBreakdown: severityRows.reduce((acc, row) => {
+          acc[row.Incident_Severity] = parseInt(row.count);
+          return acc;
+        }, {})
+      });
+    } catch (error) {
+      console.error('Get incident stats error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+};
+
+module.exports = incidentController;
+
   
