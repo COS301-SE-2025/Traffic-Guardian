@@ -34,4 +34,12 @@ class UserStatsManager {
     this.regionsCoords = ['-26.1438,28.0406', '-26.09108017449409,28.08474153621201', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658', '-26.0936,27.9931', '-26.2259,28.1598', '-26.6667,27.9167', '-26.3333,28.1667', '-25.7487,28.2380'];
   }
 
+  addUser(userID, location = {}) {
+    const userData = {
+      userID,
+      location,
+      connectedAt: new Date(),
+      region: this.getUserRegion(location)
+    };
+
  
