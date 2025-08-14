@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './Profile.css';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../consts/ThemeContext';
+import CarLoadingAnimation from '../components/CarLoadingAnimation';
 
 interface User {
   name: string;
@@ -11,34 +12,69 @@ interface User {
 }
 
 interface Preferences {
-  receiveAlerts: boolean;
-  darkMode: boolean;
-  alertLevel?: string;
+  notifications: boolean;
+  alertLevel: string;
+  theme: string;
 }
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
-  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { toggleDarkMode } = useTheme();
+  const hasInitialized = useRef(false);
   const [user, setUser] = useState<User>({ name: '', email: '' });
   const [preferences, setPreferences] = useState<Preferences>({
-    receiveAlerts: true,
-    darkMode: isDarkMode,
+    notifications: true,
     alertLevel: 'medium',
+    theme: 'dark',
   });
+  const [tempPreferences, setTempPreferences] = useState<Preferences>({ ...preferences });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [incidentCount, setIncidentCount] = useState(0);
   const [alertCount, setAlertCount] = useState(0);
 
+  // Efficient function to fetch admin stats in a single API call
+  const fetchAdminStats = useCallback(async (apiKey: string) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/stats`, {
+        headers: {
+          'X-API-Key': apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch admin stats: ${response.status}`);
+      }
+
+      const stats = await response.json();
+      setIncidentCount(stats.incidentCount || 0);
+      setAlertCount(stats.alertCount || 0);
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      // Don't fail the entire profile load if admin stats fail
+      setIncidentCount(0);
+      setAlertCount(0);
+    }
+  }, []);
+
   useEffect(() => {
+    if (hasInitialized.current) {
+      return;
+    }
+    
+    hasInitialized.current = true;
+    
     const fetchProfileData = async () => {
       try {
-        const apiKey = localStorage.getItem('apiKey');
+        const apiKey = sessionStorage.getItem('apiKey');
+        const savedTheme = localStorage.getItem('theme');
+        console.log('Profile useEffect: apiKey=', apiKey, 'savedTheme=', savedTheme);
+
         if (!apiKey) {
           throw new Error('No API key found. Please log in.');
         }
 
-        // Fetch user profile
         const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/profile`, {
           headers: {
             'X-API-Key': apiKey,
@@ -57,7 +93,6 @@ const Profile: React.FC = () => {
           role: userData.User_Role,
         });
 
-        // Fetch user preferences
         const prefsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
           headers: {
             'X-API-Key': apiKey,
@@ -65,50 +100,55 @@ const Profile: React.FC = () => {
           },
         });
 
+        let currentPrefs = {
+          notifications: true,
+          alertLevel: 'medium',
+          theme: savedTheme || 'dark',
+        };
+
         if (prefsResponse.ok) {
           const prefsData = await prefsResponse.json();
-          const fetchedPrefs = prefsData.preferences || {
-            receiveAlerts: true,
-            darkMode: false,
-            alertLevel: 'medium',
+          console.log('Profile fetched preferences:', prefsData);
+          let fetchedPrefs;
+          try {
+            fetchedPrefs = typeof prefsData.preferences === 'string' && prefsData.preferences.trim()
+              ? JSON.parse(prefsData.preferences)
+              : prefsData.preferences || {};
+          } catch (err) {
+            console.warn('Profile: Failed to parse preferences, using fallback', err);
+            fetchedPrefs = {};
+          }
+
+          const validTheme = fetchedPrefs.theme === 'dark' || fetchedPrefs.theme === 'light' ? fetchedPrefs.theme : savedTheme || 'dark';
+          currentPrefs = {
+            notifications: fetchedPrefs.notifications ?? true,
+            alertLevel: fetchedPrefs.alertLevel || 'medium',
+            theme: validTheme,
           };
-          setPreferences(fetchedPrefs);
-          toggleDarkMode(fetchedPrefs.darkMode); // Sync with ThemeContext
+
+          console.log('Profile processed preferences:', currentPrefs);
+          localStorage.setItem('theme', currentPrefs.theme);
+        } else {
+          console.warn('Profile: Failed to fetch preferences, using saved theme:', savedTheme);
+          if (savedTheme) {
+            currentPrefs = {
+              notifications: true,
+              alertLevel: 'medium',
+              theme: savedTheme,
+            };
+            localStorage.setItem('theme', currentPrefs.theme);
+          }
         }
 
-        // Fetch incident and alert counts for admins
+        setPreferences(currentPrefs);
+        setTempPreferences(currentPrefs);
+
+        // Fetch admin data if user is admin - now using efficient single endpoint
         if (userData.User_Role === 'admin') {
-          const incidentsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents`, {
-            headers: {
-              'X-API-Key': apiKey,
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (!incidentsResponse.ok) {
-            throw new Error('Failed to fetch incidents');
-          }
-          const incidents = await incidentsResponse.json();
-          setIncidentCount(incidents.length);
-
-          let totalAlerts = 0;
-          for (const incident of incidents) {
-            const alertsResponse = await fetch(
-              `${process.env.REACT_APP_API_URL}/api/incidents/${incident.Incident_ID}/alerts`,
-              {
-                headers: {
-                  'X-API-Key': apiKey,
-                  'Content-Type': 'application/json',
-                },
-              }
-            );
-            if (alertsResponse.ok) {
-              const alerts = await alertsResponse.json();
-              totalAlerts += alerts.length;
-            }
-          }
-          setAlertCount(totalAlerts);
+          await fetchAdminStats(apiKey);
         }
+
+        toggleDarkMode(currentPrefs.theme === 'dark');
       } catch (err: any) {
         setError(err.message);
         if (err.message.includes('unauthorized') || err.message.includes('API key')) {
@@ -120,18 +160,31 @@ const Profile: React.FC = () => {
     };
 
     fetchProfileData();
-  }, [navigate, toggleDarkMode]);
+  }, [fetchAdminStats, navigate, toggleDarkMode]);
 
-  const handlePreferenceChange = async (key: keyof Preferences, value: any) => {
-    const updatedPrefs = { ...preferences, [key]: value };
-    setPreferences(updatedPrefs);
-    if (key === 'darkMode') {
-      toggleDarkMode(value); // Update ThemeContext
-    }
+  const handlePreferenceChange = (key: keyof Preferences, value: any) => {
+    setTempPreferences(prev => ({ ...prev, [key]: value }));
+  };
 
+  const handleSavePreferences = async () => {
     try {
-      const apiKey = localStorage.getItem('apiKey');
-      if (!apiKey) throw new Error('No API key found');
+      const apiKey = sessionStorage.getItem('apiKey');
+      if (!apiKey) {
+        setError('No API key found. Please log in.');
+        navigate('/account');
+        return;
+      }
+
+      if (!user.email) {
+        setError('User email not available. Please try again.');
+        return;
+      }
+
+      const validTheme = tempPreferences.theme === 'dark' || tempPreferences.theme === 'light' ? tempPreferences.theme : 'dark';
+      const validatedPrefs = {
+        ...tempPreferences,
+        theme: validTheme,
+      };
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
         method: 'PUT',
@@ -139,29 +192,56 @@ const Profile: React.FC = () => {
           'X-API-Key': apiKey,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ preferences: updatedPrefs }),
+        body: JSON.stringify({
+          User_Email: user.email,
+          preferences: validatedPrefs,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update preferences');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update preferences');
+      }
+
+      const responseData = await response.json();
+      let updatedPrefs;
+      if (responseData.user && responseData.user.User_Preferences) {
+        try {
+          updatedPrefs = typeof responseData.user.User_Preferences === 'string' && responseData.user.User_Preferences.trim()
+            ? JSON.parse(responseData.user.User_Preferences)
+            : responseData.user.User_Preferences;
+        } catch (err) {
+          console.warn('Profile: Failed to parse updated preferences, using temp', err);
+          updatedPrefs = validatedPrefs;
+        }
+
+        updatedPrefs.theme = updatedPrefs.theme === 'dark' || updatedPrefs.theme === 'light' ? updatedPrefs.theme : validatedPrefs.theme;
+
+        console.log('Profile saved preferences:', updatedPrefs);
+        setPreferences(updatedPrefs);
+        localStorage.setItem('theme', updatedPrefs.theme);
+        toggleDarkMode(updatedPrefs.theme === 'dark');
+      } else {
+        console.log('Profile: No User_Preferences in response, using temp');
+        setPreferences(validatedPrefs);
+        localStorage.setItem('theme', validatedPrefs.theme);
+        toggleDarkMode(validatedPrefs.theme === 'dark');
       }
     } catch (err: any) {
+      console.error('Profile: Error saving preferences:', err);
       setError(err.message);
+      setTempPreferences({ ...preferences });
     }
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem('apiKey');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('apiKey');
+    sessionStorage.removeItem('userEmail');
     navigate('/account');
   };
 
   if (loading) {
-    return (
-      <div className="loading-spinner" data-cy="loading-spinner" aria-busy="true">
-        Loading profile data...
-      </div>
-    );
+    return <CarLoadingAnimation />;
   }
   if (error) {
     return (
@@ -227,41 +307,45 @@ const Profile: React.FC = () => {
           <h3 data-cy="notification-prefs-title" id="notification-prefs-title">
             Notification Preferences
           </h3>
-          <div className="preference-item" data-cy="preference-item-receive-alerts">
-            <label htmlFor="receive-alerts">
+          <div className="preference-item" data-cy="preference-item-notifications">
+            <label htmlFor="notifications">
               <input
                 type="checkbox"
-                id="receive-alerts"
-                checked={preferences.receiveAlerts}
-                onChange={(e) => handlePreferenceChange('receiveAlerts', e.target.checked)}
-                data-cy="receive-alerts-checkbox"
-                aria-label="Receive incident alerts"
+                id="notifications"
+                checked={tempPreferences.notifications}
+                onChange={(e) => handlePreferenceChange('notifications', e.target.checked)}
+                data-cy="notifications-checkbox"
+                aria-label="Receive event notifications"
               />
-              Receive incident alerts
+              Receive event notifications
             </label>
           </div>
-          <div className="preference-item" data-cy="preference-item-dark-mode">
-            <label htmlFor="dark-mode" className="toggle-label">
-              <input
-                type="checkbox"
-                id="dark-mode"
-                checked={preferences.darkMode}
-                onChange={(e) => handlePreferenceChange('darkMode', e.target.checked)}
-                data-cy="dark-mode-toggle"
-                aria-label="Toggle dark mode"
-                className="toggle-input"
-              />
-              <span className="toggle-slider"></span>
-              Enable dark mode
+          <div className="preference-item" data-cy="theme-item">
+            <label htmlFor="theme" data-cy="theme-label">
+              Theme:
             </label>
+            <select
+              id="theme"
+              value={tempPreferences.theme}
+              onChange={(e) => handlePreferenceChange('theme', e.target.value)}
+              data-cy="theme-select"
+              aria-label="Select theme"
+            >
+              <option value="dark" data-cy="theme-option-dark">
+                Dark
+              </option>
+              <option value="light" data-cy="theme-option-light">
+                Light
+              </option>
+            </select>
           </div>
-          <div className="preference-item" data-cy="preference-item-alert-level">
-            <label htmlFor="alert-level" data-cy="alert-level-label">
+          <div className="preference-item" data-cy="alert-level-item">
+            <label htmlFor="alertLevel" data-cy="alert-level-label">
               Alert Level:
             </label>
             <select
-              id="alert-level"
-              value={preferences.alertLevel}
+              id="alertLevel"
+              value={tempPreferences.alertLevel}
               onChange={(e) => handlePreferenceChange('alertLevel', e.target.value)}
               data-cy="alert-level-select"
               aria-label="Select alert level"
@@ -277,6 +361,14 @@ const Profile: React.FC = () => {
               </option>
             </select>
           </div>
+          <div className="preference-item" data-cy="preference-save">
+            <Button
+              label="Save Preferences"
+              onClick={handleSavePreferences}
+              data-cy="save-preferences-button"
+              aria-label="Save preferences"
+            />
+          </div>
         </div>
 
         {user.role === 'admin' && (
@@ -284,52 +376,50 @@ const Profile: React.FC = () => {
             className="profile-section"
             data-cy="admin-dashboard-section"
             id="admin-dashboard-section"
-            role="region"
-            aria-labelledby="admin-dashboard-title"
-          >
-            <h3 data-cy="admin-dashboard-title" id="admin-dashboard-title">
+            aria-labelledby="admin-section-title">
+            <h3 data-testid="admin-section-title" id="admin-section-title">
               Admin Dashboard
             </h3>
-            <div className="stats-container" data-cy="stats-container">
-              <div className="stat-card" data-cy="stat-card-incidents">
-                <div className="stat-value" data-cy="stat-value">
+            <div className="stats-container" data-testid="stats-container">
+              <div className="stats-item" data-testid="stats-incidents">
+                <div className="stats-value" id="incidents-count">
                   {incidentCount}
                 </div>
-                <div className="stat-label" data-cy="stat-label">
+                <div className="stats-label" id="incidents-label">
                   Total Incidents
                 </div>
               </div>
-              <div className="stat-card" data-cy="stat-card-alerts">
-                <div className="stat-value" data-cy="stat-value">
+              <div className="stats-item" data-testid="alerts-sent">
+                <div className="stats-value" id="alerts-value">
                   {alertCount}
                 </div>
-                <div className="stat-label" data-cy="stat-label">
+                <div className="stats-label" id="alerts-label">
                   Alerts Sent
                 </div>
               </div>
             </div>
-            <div className="button-wrapper">
+            <div className="button-container">
               <Button
                 label="Manage Incidents"
                 onClick={() => navigate('/incidents')}
-                data-cy="manage-incidents-button"
-                aria-label="Navigate to incident management"
+                data-testid="manage-incidents-btn"
+                aria-label="Go to incident management"
               />
             </div>
           </div>
         )}
 
-        <div className="profile-actions" data-cy="profile-actions">
+        <div className="profile-actions" data-cy="test-actions">
           <Button
             label="Change Password"
             onClick={() => navigate('/change-password')}
-            data-cy="change-password-button"
-            aria-label="Navigate to change password"
+            data-testid="change-password-btn"
+            aria-label="Go to change password"
           />
           <Button
             label="Sign Out"
             onClick={handleSignOut}
-            data-cy="sign-out-button"
+            data-testid="sign-out-btn"
             aria-label="Sign out"
           />
         </div>

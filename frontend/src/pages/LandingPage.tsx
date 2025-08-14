@@ -159,10 +159,17 @@ const LandingPage: React.FC = () => {
               </ul>
             </div>
             <div className="solution-visual">
-              <div className="demo-placeholder">
-                <p style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎥</p>
-                <p>Live Detection Interface</p>
-                <p style={{ fontSize: '0.9rem', marginTop: '1rem' }}>Computer vision analysing traffic in real-time</p>
+              <video 
+                className="demo-video"
+                autoPlay
+                muted
+                loop
+                playsInline
+              >
+                <source src="/aidetectionvid.MP4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              <div className="video-overlay">
               </div>
             </div>
           </div>
@@ -279,5 +286,3 @@ const LandingPage: React.FC = () => {
 };
 
 export default LandingPage;
-
-        

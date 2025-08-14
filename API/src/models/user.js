@@ -36,7 +36,7 @@ const userModel = {  async findByUsername(username) {
       User_Username, 
       hashedPassword, 
       User_Fullname || '',
-      User_Cellphone || '',
+      User_Cellphone || null,
       User_Role || 'User', 
       apiKey
     ];
