@@ -42,4 +42,34 @@ class UserStatsManager {
       region: this.getUserRegion(location)
     };
 
+    this.userLocations.set(userID, userData);
+    
+    this.userTimeline.push({
+      timestamp: new Date(),
+      action: 'connect',
+      userID: userID,
+      totalUsers: this.userLocations.size
+    });
+
+    if (this.userTimeline.length > 100) {
+      this.userTimeline = this.userTimeline.slice(-100);
+    }
+  }
+
+  removeUser(userID) {
+    if (this.userLocations.has(userID)) {
+      this.userLocations.delete(userID);
+      
+      this.userTimeline.push({
+        timestamp: new Date(),
+        action: 'disconnect',
+        userID: userID,
+        totalUsers: this.userLocations.size
+      });
+
+      if (this.userTimeline.length > 100) {
+        this.userTimeline = this.userTimeline.slice(-100);
+      }
+    }
+
  
