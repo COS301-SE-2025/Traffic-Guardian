@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 const incidentModel = {  async createIncident(incidentData) {
     const { 
-      Incidents_DateT, 
+      Incidents_DateTime, 
       Incidents_Longitude, 
       Incidents_Latitude, 
       Incident_Severity, 
@@ -23,7 +23,7 @@ const incidentModel = {  async createIncident(incidentData) {
     `;
     
     const values = [
-      Incidents_DateT || new Date(), 
+      Incidents_DateTime || new Date(), 
       Incidents_Longitude,
       Incidents_Latitude, 
       Incident_Severity || 'medium', 
@@ -39,7 +39,7 @@ const incidentModel = {  async createIncident(incidentData) {
     return rows[0];
   },async updateIncident(Incidents_ID, incidentData) {
     const allowedFields = [
-      'Incidents_DateT', 
+      'Incidents_DateTime', 
       'Incidents_Longitude', 
       'Incidents_Latitude', 
       'Incident_Severity', 
@@ -47,28 +47,34 @@ const incidentModel = {  async createIncident(incidentData) {
       'Incident_Reporter'
     ];
     
-
-    for (let v in incidentData){
-        if(incidentData[v].length > 10) incidentData[v] = incidentData[v].substring(0, 10);
-        //console.log(incidentData);
-      }
+    // Safely truncate string values to max 10 characters
+    for (let v in incidentData) {
+        // Only apply length check and truncation to string values
+        if (incidentData[v] && typeof incidentData[v] === 'string' && incidentData[v].length > 10) {
+            incidentData[v] = incidentData[v].substring(0, 10);
+        }
+    }
       
     // Filter out undefined fields and only include allowed fields
-    const updates = Object.keys(incidentData)
-      .filter(key => allowedFields.includes(key) && incidentData[key] !== undefined)
-      .map(key => `"${key}" = '${incidentData[key]}'`)
-      .join(', ');
+    const validFields = Object.keys(incidentData)
+      .filter(key => allowedFields.includes(key) && incidentData[key] !== undefined);
     
-    if (!updates) {
+    if (validFields.length === 0) {
       throw new Error('No valid fields to update');
-    }    const query = `
+    }
+    
+    // Build the parameterized query
+    const setClause = validFields.map((key, i) => `"${key}" = $${i + 2}`).join(', ');
+    const queryParams = [Incidents_ID, ...validFields.map(key => incidentData[key])];
+    
+    const query = `
       UPDATE "Incidents"
-      SET ${updates}
+      SET ${setClause}
       WHERE "Incidents_ID" = $1 
       RETURNING *
     `;
     
-    const { rows } = await db.query(query, [Incidents_ID]);
+    const { rows } = await db.query(query, queryParams);
     return rows[0];
   },
 
@@ -119,7 +125,11 @@ const incidentModel = {  async createIncident(incidentData) {
     
     const { rows } = await db.query(query, values);
     return rows;
-  }
+  }, async getIncidentCount() {
+  const query = 'SELECT COUNT(*) as count FROM "Incidents"';
+  const { rows } = await db.query(query);
+  return parseInt(rows[0].count);
+}
 };
 
 module.exports = incidentModel;

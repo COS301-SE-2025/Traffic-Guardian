@@ -23,7 +23,7 @@ const IncidentManagement: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const apiKey = localStorage.getItem('apiKey');
+        const apiKey = sessionStorage.getItem('apiKey');
         if (!apiKey) {
           throw new Error('No API key found. Please log in.');
         }
@@ -77,7 +77,7 @@ const IncidentManagement: React.FC = () => {
 
   const handleStatusChange = async (incidentId: number, newStatus: string) => {
     try {
-      const apiKey = localStorage.getItem('apiKey');
+      const apiKey = sessionStorage.getItem('apiKey');
       if (!apiKey) {
         throw new Error('No API key found');
       }

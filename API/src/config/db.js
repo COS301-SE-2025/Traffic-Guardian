@@ -17,6 +17,12 @@ const requiredSecrets = [
   'DATABASE_PORT'
 ];
 
+// DATABASE_SSL is optional with a default (AWS RDS requires SSL)
+if (!process.env.DATABASE_SSL) {
+  console.log('DATABASE_SSL not set, defaulting to true for AWS RDS compatibility');
+  process.env.DATABASE_SSL = 'true';
+}
+
 const missingSecrets = requiredSecrets.filter(secret => !process.env[secret]);
 if (missingSecrets.length > 0) {
   console.error('Missing required database credentials:', missingSecrets);
@@ -36,7 +42,7 @@ const pool = new Pool({
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
   connectionTimeoutMillis: 50000, // Return an error after 5 seconds if connection could not be established
-  ssl: {rejectUnauthorized: false}
+  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
 });
 
 
