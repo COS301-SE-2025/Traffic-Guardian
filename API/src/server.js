@@ -211,4 +211,18 @@ async function emitTodaysIncidents() {
   io.emit('todaysIncidentsUpdate', { count, date: new Date().toISOString().split('T')[0] });
 }
 
+io.on('connection',(socket)=>{
+  ILM.addUser(socket.id, {});
+  userStatsManager.addUser(socket.id, {});
+  
+  console.log(socket.id + ' connected');
+  ILM.showUsers();
+
+  welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
+  socket.emit('welcome', welcomeMsg);
+
+  emitUserStats();
+
+  emitTodaysIncidents();
+
  
