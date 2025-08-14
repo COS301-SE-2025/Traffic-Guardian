@@ -181,4 +181,34 @@ class UserStatsManager {
 
 const userStatsManager = new UserStatsManager();
 
+async function getTodaysIncidents() {
+  try {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    
+    const query = `
+      SELECT COUNT(*) as count 
+      FROM "Incidents" 
+      WHERE "Incidents_DateTime" >= $1 AND "Incidents_DateTime" <= $2
+    `;
+    
+    const { rows } = await db.query(query, [startOfDay, endOfDay]);
+    return parseInt(rows[0].count) || 0;
+  } catch (error) {
+    console.error('Error fetching today\'s incidents:', error);
+    return 0;
+  }
+}
+
+function emitUserStats() {
+  const userStats = userStatsManager.getUserStats();
+  io.emit('userStatsUpdate', userStats);
+}
+
+async function emitTodaysIncidents() {
+  const count = await getTodaysIncidents();
+  io.emit('todaysIncidentsUpdate', { count, date: new Date().toISOString().split('T')[0] });
+}
+
  
