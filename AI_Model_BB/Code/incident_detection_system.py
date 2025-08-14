@@ -432,19 +432,32 @@ class AdvancedIncidentDetectionSystem:
             while True:
                 ret, frame = self.cap.read()
                 if not ret:
-                    if self.camera_config['url'].endswith(('.mp4', '.avi', '.mov')):  
-                        # Video ended - wait a moment before restarting to allow video writing to complete
-                        print(f" Video ended for camera {camera_id}")
-                        video_ended = True
-                        time.sleep(2)  # Give time for any ongoing video writing to complete
-                        
-                        # Check if user wants to exit instead of looping
-                        print(f" Restarting video for camera {camera_id} (press 'q' to quit)")
+                    stream_url = self.camera_config['url']
+                    is_hls = stream_url.lower().endswith('.m3u8') or 'm3u8' in stream_url.lower()
+                    is_video_file = stream_url.endswith(('.mp4', '.avi', '.mov'))
+                    
+                    if is_hls:
+                        # For HLS streams, try to reconnect using the stream handler
+                        print(f" HLS stream disconnected for camera {camera_id}")
+                        if hasattr(self.cap, 'reconnect') and self.cap.reconnect():
+                            print(f" HLS stream reconnected")
+                            continue
+                        else:
+                            print(f" Failed to reconnect HLS stream")
+                            break
+                            
+                    elif is_video_file:  
+                        # Video file ended - restart from beginning
+                        print(f" Video ended for camera {camera_id}, restarting...")
+                        time.sleep(2)  # Allow video writing to complete
                         self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Restart video
                         continue
-                    else:  # Stream - try to reconnect
-                        print(f" Camera {camera_id} disconnected, attempting reconnection...")
+                        
+                    else:
+                        # Other stream types - try to reconnect
+                        print(f" Stream disconnected for camera {camera_id}, reconnecting...")
                         if not self.initialize_capture():
+                            print(f" Failed to reconnect stream")
                             break
                         continue
                 
