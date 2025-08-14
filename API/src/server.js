@@ -72,4 +72,113 @@ class UserStatsManager {
       }
     }
 
+    updateUserLocation(userID, location) {
+    if (this.userLocations.has(userID)) {
+      const userData = this.userLocations.get(userID);
+      userData.location = location;
+      userData.region = this.getUserRegion(location);
+      this.userLocations.set(userID, userData);
+    }
+  }
+
+  getUserRegion(location) {
+    if (!location.latitude || !location.longitude) return null;
+    
+    let closestRegion = null;
+    let minDistance = Infinity;
+    
+    for (let i = 0; i < this.regionNames.length; i++) {
+      const coords = this.regionsCoords[i].split(",");
+      const regionLat = parseFloat(coords[0]);
+      const regionLon = parseFloat(coords[1]);
+      
+      const distance = this.calculateDistance(
+        location.latitude, 
+        location.longitude,
+        regionLat,
+        regionLon
+      );
+      
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestRegion = this.regionNames[i];
+      }
+    }
+    
+    return minDistance < 20 ? closestRegion : null; // Within ~20km
+  }
+
+  calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  getTotalOnlineUsers() {
+    return this.userLocations.size;
+  }
+
+  getRegionWithMostUsers() {
+    const regionCounts = {};
+    this.regionNames.forEach(region => regionCounts[region] = 0);
+    
+    for (const [userID, userData] of this.userLocations) {
+      if (userData.region && regionCounts.hasOwnProperty(userData.region)) {
+        regionCounts[userData.region]++;
+      }
+    }
+    
+    let maxUsers = 0;
+    let topRegion = null;
+    
+    for (const [region, count] of Object.entries(regionCounts)) {
+      if (count > maxUsers) {
+        maxUsers = count;
+        topRegion = region;
+      }
+    }
+    
+    return {
+      region: topRegion,
+      userCount: maxUsers
+    };
+  }
+
+  getUserTimeline() {
+    return this.userTimeline.slice(-20); // Return last 20 entries
+  }
+
+  getUserStats() {
+    const totalUsers = this.getTotalOnlineUsers();
+    const topRegion = this.getRegionWithMostUsers();
+    const timeline = this.getUserTimeline();
+    
+    const regionCounts = {};
+    this.regionNames.forEach(region => regionCounts[region] = 0);
+    
+    for (const [userID, userData] of this.userLocations) {
+      if (userData.region && regionCounts.hasOwnProperty(userData.region)) {
+        regionCounts[userData.region]++;
+      }
+    }
+    
+    return {
+      totalOnline: totalUsers,
+      topRegion: topRegion,
+      timeline: timeline,
+      regionCounts: Object.entries(regionCounts).map(([region, userCount]) => ({
+        region,
+        userCount
+      }))
+    };
+  }
+}
+
+const userStatsManager = new UserStatsManager();
+
  
