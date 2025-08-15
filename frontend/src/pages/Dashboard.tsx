@@ -209,4 +209,53 @@ const Dashboard: React.FC = () => {
     }, 5000);
   }, []);
 
+  const removeNotification = (id: number) => {
+    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  };
+
+  // Load initial data
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+        
+        // Load incident statistics
+        const stats = await ApiService.fetchIncidentStats();
+        if (stats) {
+          setIncidentStats(stats);
+        }
+        
+        // Load today's incidents
+        const todaysData = await ApiService.fetchTodaysIncidents();
+        if (todaysData) {
+          setTodaysIncidents({ count: todaysData.count, date: todaysData.date });
+        }
+        
+        // Load traffic data
+        const traffic = await ApiService.fetchTrafficIncidents();
+        setTrafficData(traffic);
+        
+        // Load critical incidents
+        const critical = await ApiService.fetchCriticalIncidents();
+        setCriticalIncidents(critical);
+        
+        // Load incident locations
+        const locations = await ApiService.fetchIncidentLocations();
+        setIncidentLocations(locations);
+        
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+        addNotification({
+          title: 'Data Load Error',
+          message: 'Failed to load some dashboard data',
+          type: 'warning'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadInitialData();
+  }, [addNotification]);
+
   
