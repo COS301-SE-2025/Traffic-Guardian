@@ -331,4 +331,214 @@ const Dashboard: React.FC = () => {
       });
     });
 
+    return () => {
+      console.log('Cleaning up Socket.IO connection');
+      newSocket.close();
+    };
+  }, [addNotification]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const updateTimer = setInterval(() => {
+      setLastUpdate(new Date());
+      // Determine system health based on data freshness and connection status
+      const now = Date.now();
+      const weatherAge = weatherLastUpdate ? now - weatherLastUpdate.getTime() : Infinity;
+      
+      if (weatherAge > 2 * 60 * 60 * 1000) { // 2 hours
+        setSystemHealth('error');
+      } else if (weatherAge > 60 * 60 * 1000) { // 1 hour
+        setSystemHealth('warning');
+      } else {
+        setSystemHealth('healthy');
+      }
+    }, 30000); // Update every 30 seconds
+    
+    return () => clearInterval(updateTimer);
+  }, [weatherLastUpdate]);
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-ZA', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'live-feed':
+        addNotification({
+          title: 'Live Feed',
+          message: 'Opening live camera feeds...',
+          type: 'info'
+        });
+        break;
+      case 'report-incident':
+        addNotification({
+          title: 'Report Incident',
+          message: 'Opening incident reporting form...',
+          type: 'info'
+        });
+        break;
+      case 'analytics':
+        addNotification({
+          title: 'Analytics',
+          message: 'Loading traffic analytics dashboard...',
+          type: 'info'
+        });
+        break;
+      case 'archive':
+        addNotification({
+          title: 'Archive',
+          message: 'Opening incident archive...',
+          type: 'info'
+        });
+        break;
+    }
+  };
+
+  const getSystemHealthStatus = () => {
+    switch (systemHealth) {
+      case 'healthy':
+        return { text: 'All Systems Operational', class: 'healthy' };
+      case 'warning':
+        return { text: 'Minor Issues Detected', class: 'warning' };
+      case 'error':
+        return { text: 'System Errors Present', class: 'error' };
+      default:
+        return { text: 'Status Unknown', class: 'error' };
+    }
+  };
+
+  // Get primary weather location (first in the array, usually Johannesburg)
+  const getPrimaryWeather = (): WeatherData | null => {
+    return weatherData.length > 0 ? weatherData[0] : null;
+  };
+
+  return (
+    <div className="dashboard" data-cy="dashboard" id="dashboard">
+      <div className="notification-panel" data-cy="notification-panel" role="alert">
+        {notifications.map((notification) => (
+          <div key={notification.id} className={`notification ${notification.type}`} data-cy={`notification-${notification.id}`}>
+            <div className="notification-header" data-cy="notification-header">
+              <div className="notification-title" data-cy="notification-title">{notification.title}</div>
+              <button 
+                className="notification-close"
+                onClick={() => removeNotification(notification.id)}
+                data-cy="notification-close"
+                aria-label="Close notification"
+              >
+                ×
+              </button>
+            </div>
+            <div className="notification-content" data-cy="notification-content">{notification.message}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="dashboard-header" data-cy="dashboard-header" id="dashboard-header">
+        <div className="dashboard-title" data-cy="dashboard-title">
+          <div>
+            <h2 data-cy="dashboard-main-title">Traffic Guardian Dashboard</h2>
+            <div className="dashboard-subtitle" data-cy="dashboard-subtitle">Real-time traffic incident monitoring system</div>
+          </div>
+          <div className="system-status" data-cy="system-status">
+            <div className="status-indicator" data-cy="status-indicator">
+              <div className={`status-dot ${getSystemHealthStatus().class}`} data-cy="status-dot"></div>
+              {getSystemHealthStatus().text}
+            </div>
+          </div>
+        </div>
+        <div className="dashboard-header-right" data-cy="dashboard-header-right">
+          <div className="header-weather" data-cy="header-weather">
+            {weatherLoading ? (
+              <div className="weather-loading" data-cy="weather-loading">
+                <div className="loading-spinner small" data-cy="weather-loading-spinner"></div>
+                <span>Loading weather...</span>
+              </div>
+            ) : getPrimaryWeather() ? (
+              <div className="weather-summary" data-cy="weather-summary">
+                <div className="weather-icon" data-cy="weather-icon">
+                  <WeatherIcon 
+                    condition={getPrimaryWeather()!.current.condition.text} 
+                    isDay={getPrimaryWeather()!.current.is_day === 1} 
+                  />
+                </div>
+                <div className="weather-info" data-cy="weather-info">
+                  <div className="weather-temp" data-cy="weather-temp">
+                    {Math.round(getPrimaryWeather()!.current.temp_c)}°C
+                  </div>
+                  <div className="weather-location" data-cy="weather-location">
+                    {getPrimaryWeather()!.location.name}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="weather-error" data-cy="weather-error">
+                <span>Weather unavailable</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="dashboard-time" data-cy="dashboard-time">
+            <div className="dashboard-time-label" data-cy="dashboard-time-label">Current Time</div>
+            <div className="dashboard-time-value" data-cy="dashboard-time-value">{formatTime(currentTime)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="dashboard-content" data-cy="dashboard-content">
+        {loading && (
+          <div className="loading-overlay" data-cy="loading-overlay" aria-busy="true">
+            <div className="loading-spinner" data-cy="loading-spinner"></div>
+            <div className="loading-text" data-cy="loading-text">Loading dashboard data...</div>
+          </div>
+        )}
+
+        <div className="stats-grid" data-cy="stats-grid">
+          {/* User Statistics */}
+          <div className="stat-card" data-cy="stat-card-users-online">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <UsersIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Users Online</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{userStats.totalOnline}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">Currently connected</div>
+          </div>
+
+          {/* Active Incidents */}
+          <div className="stat-card" data-cy="stat-card-active-incidents">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <AlertTriangleIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Active Incidents</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{incidentStats?.active || 0}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">Requiring attention</div>
+            <div className="progress-bar" data-cy="progress-bar">
+              <div 
+                className="progress-fill critical" 
+                style={{ width: `${Math.min((incidentStats?.active || 0) / 10 * 100, 100)}%` }}
+                data-cy="progress-fill"
+              ></div>
+            </div>
+          </div>
+
+          {/* Critical Incidents */}
+          <div className="stat-card" data-cy="stat-card-critical-incidents">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <TrendingUpIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Critical Incidents</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{criticalIncidents?.Amount || 0}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">High severity events</div>
+          </div>
+
   
