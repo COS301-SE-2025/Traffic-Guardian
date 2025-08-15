@@ -1,0 +1,13 @@
+{
+    "cameras":
+    [
+        {
+            "camera_id": "1",
+            "url":"Videos/Demo1.mp4"
+        },
+         {
+            "camera_id": "2",
+            "url":"Videos/Demo2.mp4"
+        }
+    ]
+}

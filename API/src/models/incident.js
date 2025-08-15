@@ -7,7 +7,9 @@ const incidentModel = {  async createIncident(incidentData) {
       Incidents_Latitude, 
       Incident_Severity, 
       Incident_Status, 
-      Incident_Reporter
+      Incident_Reporter,
+      Incident_CameraID,
+      Incident_Description
     } = incidentData;
       const query = `
       INSERT INTO "Incidents" (
@@ -16,9 +18,11 @@ const incidentModel = {  async createIncident(incidentData) {
         "Incidents_Latitude", 
         "Incident_Severity", 
         "Incident_Status", 
-        "Incident_Reporter"
+        "Incident_Reporter",
+        "Incident_CameraID",
+        "Incident_Description"
       ) 
-      VALUES ($1, $2, $3, $4, $5, $6) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
       RETURNING *
     `;
     
@@ -28,7 +32,9 @@ const incidentModel = {  async createIncident(incidentData) {
       Incidents_Latitude, 
       Incident_Severity || 'medium', 
       Incident_Status || 'ongoing', 
-      Incident_Reporter
+      Incident_Reporter,
+      Incident_CameraID,
+      Incident_Description
     ];
     
     const { rows } = await db.query(query, values);
@@ -44,7 +50,9 @@ const incidentModel = {  async createIncident(incidentData) {
       'Incidents_Latitude', 
       'Incident_Severity', 
       'Incident_Status', 
-      'Incident_Reporter'
+      'Incident_Reporter',
+      'Incident_CameraID',
+      'Incident_Description'
     ];
     
     // Safely truncate string values to max 10 characters

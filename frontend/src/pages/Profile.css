@@ -64,7 +64,7 @@ svg {
 
 .profile-page {
   padding: 1rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--text-color);
   background-color: var(--background-color);
   min-height: calc(100vh - 2rem);
@@ -156,7 +156,6 @@ svg {
   border-radius: 5px;
 }
 
-
 .toggle-label {
   position: relative;
   display: inline-flex;
@@ -165,7 +164,7 @@ svg {
 }
 
 .toggle-input {
-  opacity: 0;
+  opacity: 0%;
   width: 0;
   height: 0;
 }
@@ -180,7 +179,7 @@ svg {
 }
 
 .toggle-slider::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 16px;
   height: 16px;
@@ -232,8 +231,8 @@ svg {
 }
 
 .button-wrapper {
-  margin-top: 0.8rem; 
-  text-align: center; 
+  margin-top: 0.8rem;
+  text-align: center;
 }
 
 .profile-actions {
@@ -280,7 +279,7 @@ button:hover {
 
 .stats-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
 
 .stats-value {
