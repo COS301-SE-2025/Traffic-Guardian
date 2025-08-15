@@ -49,7 +49,6 @@ class ILM{
     }
 
 
-
     /*Users methods */
     addUser(userID, location){
         const userData = {
@@ -129,6 +128,7 @@ class ILM{
                 io.to(uKey).emit('new-incident', newIncident);
             }
         });
+        io.emit('amt-active-incidents', this.getNumActiveIncidents());
     }
 
     /*Wont use just yet*/
@@ -141,6 +141,21 @@ class ILM{
         console.log(userID + ' disconnected');
     }
 
+    getNumActiveIncidents(){
+        var sum = 0;
+        this.regions.forEach((rValue, rKey)=>{
+            sum += rValue.incidents.length;
+        })
+        return sum + this.reportedIncidents.size;
+    }
+
+    getNumCriticalIncidents(){
+        var sum = 0;
+        this.regions.forEach((rValue, rKey)=>{
+            
+        })
+        return sum;
+    }
 
 
     /*Helper functions */

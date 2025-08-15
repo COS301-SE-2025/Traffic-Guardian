@@ -81,7 +81,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 function addEvent(event){
     var eventLog = document.getElementById('eventLog');
-    while(eventLog.hasChildNodes())eventLog.removeChild(eventLog.firstChild);
+    //while(eventLog.hasChildNodes())eventLog.removeChild(eventLog.firstChild);
 
     const now = new Date();
     const hours = now.getHours();
@@ -187,4 +187,12 @@ socket.on('new-traffic', (data)=>{
 socket.on('new-incident', (data)=>{
     console.log(data);
     addEvent(JSON.stringify(data, null, 2));
+})
+
+socket.on('amt-users-online',(data)=>{
+    addEvent('Amount users online = ' + data);
+})
+
+socket.on('amt-active-incidents', (data)=>{
+    addEvent("Active incidents = " + data);
 })
