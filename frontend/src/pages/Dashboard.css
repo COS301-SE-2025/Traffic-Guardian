@@ -562,4 +562,346 @@ body {
   padding: 1rem;
 }
 
+.magnitude-badge {
+  background-color: var(--magnitude-badge-bg);
+  color: var(--magnitude-badge-text);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.weather-section {
+  background-color: var(--weather-section-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border-left: 4px solid var(--stat-card-border);
+}
+
+.weather-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.weather-header h3 {
+  color: var(--text-color);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.weather-last-update {
+  color: var(--subtitle-color);
+  font-size: 0.8rem;
+}
+
+.weather-loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+}
+
+.weather-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.weather-card {
+  background-color: var(--weather-card-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid var(--weather-card-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.weather-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--weather-card-hover-shadow);
+}
+
+.weather-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.weather-location-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.weather-icon-large svg {
+  width: 32px;
+  height: 32px;
+  color: var(--weather-icon-color);
+}
+
+.weather-main-temp {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--weather-temp-color);
+  margin-bottom: 0.5rem;
+}
+
+.weather-condition {
+  font-size: 1rem;
+  color: var(--text-color);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.weather-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.weather-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.weather-detail-label {
+  color: var(--weather-detail-label);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.weather-detail-value {
+  color: var(--weather-detail-value);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.weather-update-time {
+  color: var(--form-help-text);
+  font-size: 0.75rem;
+  text-align: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--weather-card-border);
+}
+
+.weather-error-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.weather-error-message {
+  color: var(--subtitle-color);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.incidents-section {
+  background-color: var(--stat-card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.incidents-header {
+  background-color: var(--incidents-header-bg);
+  color: var(--incidents-header-text);
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.incidents-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.incidents-badge {
+  background-color: var(--severity-medium-bg);
+  color: var(--severity-medium-text);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.incidents-list {
+  padding: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.incident-item {
+  background-color: var(--incident-item-bg);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 3px solid var(--incident-item-border);
+  transition: border-color 0.2s ease;
+}
+
+.incident-item:last-child {
+  margin-bottom: 0;
+}
+
+.incident-item.critical {
+  border-left-color: var(--severity-critical-text);
+}
+
+.incident-item.medium {
+  border-left-color: var(--severity-medium-text);
+}
+
+.incident-item.low {
+  border-left-color: var(--severity-low-text);
+}
+
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.incident-type {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.incident-type svg {
+  width: 16px;
+  height: 16px;
+  color: var(--title-color);
+}
+
+.severity-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.severity-badge.critical {
+  background-color: var(--severity-critical-bg);
+  color: var(--severity-critical-text);
+}
+
+.severity-badge.medium {
+  background-color: var(--severity-medium-bg);
+  color: var(--severity-medium-text);
+}
+
+.severity-badge.low {
+  background-color: var(--severity-low-bg);
+  color: var(--severity-low-text);
+}
+
+.status-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-badge.active {
+  background-color: var(--status-active-bg);
+  color: var(--status-active-text);
+}
+
+.status-badge.responding {
+  background-color: var(--status-responding-bg);
+  color: var(--status-responding-text);
+}
+
+.status-badge.monitoring {
+  background-color: var(--status-monitoring-bg);
+  color: var(--status-monitoring-text);
+}
+
+.incident-details {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.incident-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--subtitle-color);
+  font-size: 0.85rem;
+}
+
+.incident-detail svg {
+  width: 14px;
+  height: 14px;
+  color: var(--subtitle-color);
+}
+
+.incident-metadata {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.metadata-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metadata-label {
+  color: var(--subtitle-color);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.metadata-value {
+  color: var(--text-color);
+  font-size: 0.8rem;
+}
+
+.incident-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.incident-action {
+  background: none;
+  border: none;
+  color: var(--title-color);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.incident-action:hover {
+  color: var(--button-primary-hover);
+}
+
 
