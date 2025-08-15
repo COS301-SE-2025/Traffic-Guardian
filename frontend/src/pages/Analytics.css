@@ -202,6 +202,15 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
 
+/* Archive-specific summary cards */
+.summary-card.archive-card {
+  border-left: 4px solid #f59e0b;
+}
+
+.dark-mode .summary-card.archive-card {
+  border-left-color: #fbbf24;
+}
+
 .card-icon {
   width: 48px;
   height: 48px;
@@ -232,6 +241,19 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 .card-icon.critical {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Archive-specific card icons */
+.card-icon.archive {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.card-icon.archive-time {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+.card-icon.archive-storage {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
 }
 
 .card-content {
@@ -309,6 +331,27 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0 0 1rem;
+}
+
+/* Archive-specific chart containers */
+.chart-container.archive-trends {
+  border-left: 4px solid #f59e0b;
+}
+
+.dark-mode .chart-container.archive-trends {
+  border-left-color: #fbbf24;
+}
+
+.chart-container.archive-analytics {
+  background: linear-gradient(145deg, 
+    rgb(255 255 255 / 95%) 0%, 
+    rgb(249 250 251 / 90%) 100%);
+}
+
+.dark-mode .chart-container.archive-analytics {
+  background: linear-gradient(145deg, 
+    rgb(31 41 55 / 85%) 0%, 
+    rgb(17 24 39 / 90%) 100%);
 }
 
 .radar-chart-wrapper {
@@ -389,6 +432,188 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 .severity-indicator.severity-low {
   background: rgb(16 185 129 / 10%);
   color: #10b981;
+}
+
+/* Archive-specific elements */
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.archive-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 2%);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border-left: 3px solid #f59e0b;
+}
+
+.dark-mode .archive-item {
+  background: rgb(255 255 255 / 2%);
+  border-left-color: #fbbf24;
+}
+
+.archive-item:hover {
+  background: rgb(245 158 11 / 5%);
+  transform: translateX(4px);
+}
+
+.archive-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.archive-id {
+  font-weight: 700;
+  color: #f59e0b;
+  font-size: 0.875rem;
+}
+
+.archive-type {
+  font-weight: 500;
+  text-transform: capitalize;
+  background: rgb(245 158 11 / 10%);
+  color: #f59e0b;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.archive-date {
+  font-size: 0.875rem;
+  opacity: 70%;
+}
+
+.archive-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-indicator {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-indicator.status-open {
+  background: rgb(59 130 246 / 10%);
+  color: #3b82f6;
+}
+
+.status-indicator.status-ongoing {
+  background: rgb(245 158 11 / 10%);
+  color: #f59e0b;
+}
+
+.status-indicator.status-resolved {
+  background: rgb(16 185 129 / 10%);
+  color: #10b981;
+}
+
+.status-indicator.status-closed {
+  background: rgb(107 114 128 / 10%);
+  color: #6b7280;
+}
+
+.archive-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #f59e0b;
+}
+
+.archive-indicator svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Archive metrics cards */
+.archive-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.archive-metric-card {
+  background: rgb(245 158 11 / 5%);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border-left: 4px solid #f59e0b;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .archive-metric-card {
+  background: rgb(245 158 11 / 10%);
+  border-left-color: #fbbf24;
+}
+
+.archive-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgb(245 158 11 / 20%);
+}
+
+.archive-metric-card h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: #f59e0b;
+}
+
+.archive-metric-card .metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.archive-metric-card .metric-description {
+  font-size: 0.75rem;
+  opacity: 70%;
+}
+
+/* Archive filters */
+.archive-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.archive-filter-button {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #f59e0b;
+  background: transparent;
+  color: #f59e0b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.archive-filter-button:hover,
+.archive-filter-button.active {
+  background: #f59e0b;
+  color: white;
+}
+
+.dark-mode .archive-filter-button {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.dark-mode .archive-filter-button:hover,
+.dark-mode .archive-filter-button.active {
+  background: #fbbf24;
+  color: #111827;
 }
 
 .trends-table-container {
@@ -513,6 +738,73 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   color: #e2e8f0;
 }
 
+/* Archive-specific animations */
+@keyframes archive-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.archive-new-indicator {
+  animation: archive-pulse 2s ease-in-out infinite;
+}
+
+/* Archive loading states */
+.archive-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #f59e0b;
+  font-size: 0.875rem;
+}
+
+.archive-loading svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.5rem;
+  animation: spin 1s linear infinite;
+}
+
+/* Archive empty states */
+.archive-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.archive-empty svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.archive-empty h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.archive-empty p {
+  font-size: 0.875rem;
+  opacity: 70%;
+  margin: 0;
+}
+
 @media (max-width: 1024px) {
   .charts-grid {
     grid-template-columns: 1fr;
@@ -521,6 +813,10 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   .chart-container.full-width,
   .chart-container.half-width {
     grid-column: span 1;
+  }
+
+  .summary-cards {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
@@ -567,6 +863,26 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   .trends-table th,
   .trends-table td {
     padding: 0.5rem;
+  }
+
+  .archive-filters {
+    justify-content: center;
+  }
+
+  .archive-filter-button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .archive-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .location-stats,
+  .archive-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
   }
 }
 
