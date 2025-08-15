@@ -87,6 +87,21 @@ svg {
   --weather-detail-label: #666;
   --weather-detail-value: #333;
   --weather-icon-color: #d97700;
+  /* User section variables */
+  --user-section-bg: #fff;
+  --user-card-bg: #f8f9fa;
+  --user-card-border: #e9ecef;
+  --user-card-hover-shadow: rgb(217 119 0 / 15%);
+  --user-stat-title-color: #666;
+  --user-main-stat-color: #d97700;
+  --user-sub-stat-color: #333;
+  --timeline-item-bg: rgb(217 119 0 / 5%);
+  --timeline-action-connect: #199019;
+  --timeline-action-disconnect: #f44;
+  --timeline-text-color: #333;
+  --timeline-time-color: #666;
+  --magnitude-badge-bg: rgb(217 119 0 / 10%);
+  --magnitude-badge-text: #d97700;
 }
 
 /* Dark mode variables */
@@ -172,9 +187,23 @@ svg {
   --weather-detail-label: #999;
   --weather-detail-value: #ccc;
   --weather-icon-color: #fa3;
+  /* User section dark mode variables */
+  --user-section-bg: #3a3a3a;
+  --user-card-bg: #2a2a2a;
+  --user-card-border: #404040;
+  --user-card-hover-shadow: rgb(255 140 0 / 15%);
+  --user-stat-title-color: #999;
+  --user-main-stat-color: #fa3;
+  --user-sub-stat-color: #ccc;
+  --timeline-item-bg: rgb(255 140 0 / 5%);
+  --timeline-action-connect: #4f4;
+  --timeline-action-disconnect: #f44;
+  --timeline-text-color: #ccc;
+  --timeline-time-color: #999;
+  --magnitude-badge-bg: rgb(255 140 0 / 10%);
+  --magnitude-badge-text: #fa3;
 }
 
-/* Apply variables to styles */
 body {
   background: var(--background-color);
   font-family: "Segoe UI", Arial, sans-serif;
@@ -391,6 +420,11 @@ body {
   margin-top: 0.5rem;
 }
 
+.progress-bar.small {
+  height: 4px;
+  margin-top: 0.25rem;
+}
+
 .progress-fill {
   height: 100%;
   background-color: var(--progress-fill-default);
@@ -399,6 +433,143 @@ body {
 
 .progress-fill.critical {
   background-color: var(--progress-fill-critical);
+}
+
+/* User Section Styles */
+.user-section {
+  background-color: var(--user-section-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border-left: 4px solid var(--stat-card-border);
+}
+
+.user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.user-header h3 {
+  color: var(--text-color);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.user-last-update {
+  color: var(--subtitle-color);
+  font-size: 0.8rem;
+}
+
+.user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.user-card {
+  background-color: var(--user-card-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid var(--user-card-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--user-card-hover-shadow);
+}
+
+.user-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.user-stat-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--user-stat-title-color);
+}
+
+.user-card-header svg {
+  width: 20px;
+  height: 20px;
+  color: var(--title-color);
+}
+
+.user-main-stat {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--user-main-stat-color);
+  margin-bottom: 0.5rem;
+}
+
+.user-sub-stat {
+  font-size: 0.9rem;
+  color: var(--user-sub-stat-color);
+}
+
+.user-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background-color: var(--timeline-item-bg);
+  border-radius: 4px;
+}
+
+.timeline-action {
+  font-size: 0.8rem;
+  width: 20px;
+  text-align: center;
+}
+
+.timeline-action.connect {
+  color: var(--timeline-action-connect);
+}
+
+.timeline-action.disconnect {
+  color: var(--timeline-action-disconnect);
+}
+
+.timeline-text {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--timeline-text-color);
+}
+
+.timeline-time {
+  font-size: 0.7rem;
+  color: var(--timeline-time-color);
+}
+
+.timeline-empty {
+  text-align: center;
+  color: var(--subtitle-color);
+  font-size: 0.9rem;
+  padding: 1rem;
+}
+
+.magnitude-badge {
+  background-color: var(--magnitude-badge-bg);
+  color: var(--magnitude-badge-text);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
 }
 
 .weather-section {
@@ -733,6 +904,71 @@ body {
   color: var(--button-primary-hover);
 }
 
+.regional-stats-section {
+  background-color: var(--camera-section-bg);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.regional-header {
+  background-color: var(--camera-header-bg);
+  color: var(--text-color);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--incident-item-border);
+}
+
+.regional-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.regional-list {
+  padding: 1.5rem;
+}
+
+.regional-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: var(--camera-item-bg);
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+  transition: background-color 0.2s ease;
+}
+
+.regional-item:last-child {
+  margin-bottom: 0;
+}
+
+.regional-item:hover {
+  background-color: var(--camera-item-hover-bg);
+}
+
+.regional-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.regional-details h4 {
+  margin: 0 0 0.25rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.regional-details p {
+  margin: 0;
+  color: var(--subtitle-color);
+  font-size: 0.8rem;
+}
+
+.regional-stats {
+  text-align: right;
+  min-width: 100px;
+}
+
 .camera-section {
   background-color: var(--camera-section-bg);
   border-radius: 8px;
@@ -953,12 +1189,13 @@ body {
 
 .notification-panel {
   position: fixed;
-  top: 1rem;
+  top: 5rem;
   right: 1rem;
-  z-index: 1000;
+  z-index: 10000;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  pointer-events: none;
 }
 
 .notification {
@@ -968,6 +1205,7 @@ body {
   padding: 1rem;
   width: 300px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
+  pointer-events: auto; 
 }
 
 .notification.critical {
@@ -1008,6 +1246,14 @@ body {
   color: var(--text-color);
   cursor: pointer;
   font-size: 1rem;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  border-radius: 50%;
+}
+
+.notification-close:hover {
+  background: rgba(0,0,0,0.08);
 }
 
 .notification-content {
@@ -1062,20 +1308,24 @@ body {
   border-radius: 50%;
 }
 
-.incidents-list::-webkit-scrollbar {
+.incidents-list::-webkit-scrollbar,
+.user-timeline::-webkit-scrollbar {
   width: 6px;
 }
 
-.incidents-list::-webkit-scrollbar-track {
+.incidents-list::-webkit-scrollbar-track,
+.user-timeline::-webkit-scrollbar-track {
   background: var(--scrollbar-track);
 }
 
-.incidents-list::-webkit-scrollbar-thumb {
+.incidents-list::-webkit-scrollbar-thumb,
+.user-timeline::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
-.incidents-list::-webkit-scrollbar-thumb:hover {
+.incidents-list::-webkit-scrollbar-thumb:hover,
+.user-timeline::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
 }
 
@@ -1095,8 +1345,13 @@ body {
     gap: 1rem;
   }
 
-  .weather-grid {
+  .weather-grid,
+  .user-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+
+  .notification-panel {
+    top: 5.5rem;
   }
 }
 
@@ -1113,7 +1368,8 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .weather-grid {
+  .weather-grid,
+  .user-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1130,6 +1386,11 @@ body {
     text-align: center;
     gap: 0.5rem;
   }
+
+  .notification-panel {
+    top: 6rem;
+    right: 0.75rem;
+  }
 }
 
 @media (width <= 480px) {
@@ -1143,12 +1404,18 @@ body {
     gap: 0.5rem;
   }
 
-  .weather-card {
+  .weather-card,
+  .user-card {
     padding: 1rem;
   }
 
   .weather-main-temp {
     font-size: 2rem;
+  }
+
+  .notification-panel {
+    top: 6.5rem;
+    right: 0.5rem;
   }
 }
 
