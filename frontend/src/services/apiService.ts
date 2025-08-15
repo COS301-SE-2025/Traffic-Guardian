@@ -1,5 +1,5 @@
 // Frontend API Service for Analytics
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api';
 
 export interface DatabaseIncident {
   Incident_ID: number;
@@ -46,6 +46,21 @@ export interface TrafficIncident {
   }>;
 }
 
+export interface TodaysIncidentsData {
+  count: number;
+  date: string;
+  incidents: DatabaseIncident[];
+}
+
+export interface IncidentStats {
+  total: number;
+  active: number;
+  today: number;
+  severityBreakdown: {
+    [key: string]: number;
+  };
+}
+
 class ApiService {
   private static getAuthHeaders(): HeadersInit {
     const apiKey = localStorage.getItem('apiKey');
@@ -77,6 +92,40 @@ class ApiService {
     } catch (error) {
       console.error('Error fetching incidents:', error);
       return [];
+    }
+  }
+
+  // Get today's incidents
+  static async fetchTodaysIncidents(): Promise<TodaysIncidentsData | null> {
+    try {
+      console.log('Fetching today\'s incidents...');
+      const response = await fetch(`${API_BASE_URL}/incidents/today`, {
+        headers: this.getAuthHeaders(),
+      });
+      
+      const todaysData = await this.handleResponse<TodaysIncidentsData>(response);
+      console.log(`Fetched ${todaysData.count} incidents for today`);
+      return todaysData;
+    } catch (error) {
+      console.error('Error fetching today\'s incidents:', error);
+      return null;
+    }
+  }
+
+  // Get incident statistics
+  static async fetchIncidentStats(): Promise<IncidentStats | null> {
+    try {
+      console.log('Fetching incident statistics...');
+      const response = await fetch(`${API_BASE_URL}/incidents/stats`, {
+        headers: this.getAuthHeaders(),
+      });
+      
+      const stats = await this.handleResponse<IncidentStats>(response);
+      console.log('Fetched incident statistics:', stats);
+      return stats;
+    } catch (error) {
+      console.error('Error fetching incident stats:', error);
+      return null;
     }
   }
 
@@ -208,3 +257,4 @@ class ApiService {
 }
 
 export default ApiService;
+

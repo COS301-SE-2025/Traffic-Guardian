@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
+import ApiService, { IncidentStats, TodaysIncidentsData, LocationData, CriticalIncidentsData, CategoryData, TrafficIncident } from '../services/apiService';
 import './Dashboard.css';
 
 const AlertTriangleIcon = () => (
@@ -135,45 +136,27 @@ interface WeatherData {
   current: CurrentWeather;
 }
 
-interface SocketError {
-  message: string;
-  type?: string;
-  description?: string;
+interface UserStats {
+  totalOnline: number;
+  topRegion: {
+    region: string | null;
+    userCount: number;
+  };
+  timeline: Array<{
+    timestamp: string;
+    action: 'connect' | 'disconnect';
+    userID: string;
+    totalUsers: number;
+  }>;
+  regionCounts: Array<{
+    region: string;
+    userCount: number;
+  }>;
 }
 
-interface TrafficData {
-  [key: string]: any; // Generic for now, can be made more specific based on actual traffic data structure
-}
-
-interface Incident {
-  id: number;
-  type: string;
-  location: string;
-  severity: 'Critical' | 'Medium' | 'Low';
-  time: string;
-  camera: string;
-  status: 'Active' | 'Responding' | 'Monitoring';
-  duration?: string;
-  reportedBy?: string;
-  assignedTo?: string;
-}
-
-interface Camera {
-  id: string;
-  name: string;
-  status: 'Active' | 'Offline';
-  incidents: number;
-  lastUpdate?: string;
-}
-
-interface Stats {
-  totalIncidents: number;
-  activeIncidents: number;
-  camerasOnline: number;
-  totalCameras: number;
-  avgResponseTime: string;
-  incidentsToday: number;
-  systemHealth: 'healthy' | 'warning' | 'error';
+interface TodaysIncidents {
+  count: number;
+  date: string;
 }
 
 interface Notification {
@@ -184,80 +167,34 @@ interface Notification {
   timestamp: Date;
 }
 
-interface IncidentDetail extends Incident {
-  description: string;
-  images?: string[];
-  responders?: string[];
-  timeline?: { time: string; event: string }[];
-}
+/** Minimal type for the 'newAlert' socket payload to avoid implicit any */
+type NewAlertPayload = { Incident_Location: string; [key: string]: unknown };
 
 const Dashboard: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [selectedIncident, setSelectedIncident] = useState<IncidentDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   
+  // Real data state
   const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherLastUpdate, setWeatherLastUpdate] = useState<Date | null>(null);
   
-  const [activeIncidents, setActiveIncidents] = useState<Incident[]>([
-    {
-      id: 1,
-      type: 'Vehicle Accident',
-      location: 'N1 Western Bypass Southbound',
-      severity: 'Critical',
-      time: '12:13',
-      camera: 'CAM-N1-03',
-      status: 'Active',
-      duration: '45 min',
-      reportedBy: 'AI Detection',
-      assignedTo: 'Response Team Alpha',
-    },
-    {
-      id: 2,
-      type: 'Vehicle Breakdown',
-      location: 'M1 North - Sandton Junction',
-      severity: 'Medium',
-      time: '11:45',
-      camera: 'CAM-M1-15',
-      status: 'Responding',
-      duration: '1hr 15min',
-      reportedBy: 'Public Report',
-      assignedTo: 'Response Team Beta',
-    },
-    {
-      id: 3,
-      type: 'Traffic Congestion',
-      location: 'R21 - OR Tambo Approach',
-      severity: 'Low',
-      time: '11:20',
-      camera: 'CAM-R21-08',
-      status: 'Monitoring',
-      duration: '1hr 40min',
-      reportedBy: 'AI Detection',
-      assignedTo: 'Traffic Control',
-    },
-  ]);
-
-  const [cameraFeeds] = useState<Camera[]>([
-    { id: 'CAM-N1-03', name: 'N1 Western Bypass', status: 'Active', incidents: 1, lastUpdate: '12:15' },
-    { id: 'CAM-M1-15', name: 'M1 Sandton Junction', status: 'Active', incidents: 1, lastUpdate: '12:14' },
-    { id: 'CAM-R21-08', name: 'R21 OR Tambo', status: 'Active', incidents: 1, lastUpdate: '12:13' },
-    { id: 'CAM-N3-12', name: 'N3 Johannesburg South', status: 'Active', incidents: 0, lastUpdate: '12:12' },
-    { id: 'CAM-M2-07', name: 'M2 Germiston East', status: 'Offline', incidents: 0, lastUpdate: '11:30' },
-  ]);
-
-  const [stats, setStats] = useState<Stats>({
-    totalIncidents: 24,
-    activeIncidents: 3,
-    camerasOnline: 4,
-    totalCameras: 5,
-    avgResponseTime: '4.2 min',
-    incidentsToday: 8,
-    systemHealth: 'healthy',
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalOnline: 0,
+    topRegion: { region: null, userCount: 0 },
+    timeline: [],
+    regionCounts: []
   });
+  
+  const [incidentStats, setIncidentStats] = useState<IncidentStats | null>(null);
+  const [todaysIncidents, setTodaysIncidents] = useState<TodaysIncidents>({ count: 0, date: '' });
+  const [trafficData, setTrafficData] = useState<TrafficIncident[]>([]);
+  const [criticalIncidents, setCriticalIncidents] = useState<CriticalIncidentsData | null>(null);
+  const [incidentLocations, setIncidentLocations] = useState<LocationData[]>([]);
+  
+  const [systemHealth, setSystemHealth] = useState<'healthy' | 'warning' | 'error'>('healthy');
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
@@ -273,6 +210,50 @@ const Dashboard: React.FC = () => {
     }, 5000);
   }, []);
 
+  const removeNotification = (id: number) => {
+    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  };
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+        
+        const stats = await ApiService.fetchIncidentStats();
+        if (stats) {
+          setIncidentStats(stats);
+        }
+        
+        const todaysData = await ApiService.fetchTodaysIncidents();
+        if (todaysData) {
+          setTodaysIncidents({ count: todaysData.count, date: todaysData.date });
+        }
+        
+        const traffic = await ApiService.fetchTrafficIncidents();
+        setTrafficData(traffic);
+        
+        const critical = await ApiService.fetchCriticalIncidents();
+        setCriticalIncidents(critical);
+        
+        const locations = await ApiService.fetchIncidentLocations();
+        setIncidentLocations(locations);
+        
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+        addNotification({
+          title: 'Data Load Error',
+          message: 'Failed to load some dashboard data',
+          type: 'warning'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadInitialData();
+  }, [addNotification]);
+
+  // Socket.io connection
   useEffect(() => {
     const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
     
@@ -300,7 +281,8 @@ const Dashboard: React.FC = () => {
       });
     });
 
-    newSocket.on('connect_error', (error: SocketError) => {
+    // Typed: error is an Error
+    newSocket.on('connect_error', (error: Error) => {
       console.error('Socket.IO connection error:', error);
       addNotification({
         title: 'Connection Error',
@@ -309,32 +291,54 @@ const Dashboard: React.FC = () => {
       });
     });
 
+    // Real-time data handlers
     newSocket.on('weatherUpdate', (data: WeatherData[]) => {
       console.log('Received weather update:', data);
       setWeatherData(data);
       setWeatherLoading(false);
       setWeatherLastUpdate(new Date());
-      
-      addNotification({
-        title: 'Weather Updated',
-        message: `Weather data updated for ${data.length} locations`,
-        type: 'info'
-      });
     });
 
-    newSocket.on('trafficUpdate', (data: TrafficData) => {
+    newSocket.on('userStatsUpdate', (data: UserStats) => {
+      console.log('Received user stats update:', data);
+      setUserStats(data);
+    });
+
+    newSocket.on('todaysIncidentsUpdate', (data: TodaysIncidents) => {
+      console.log('Received today\'s incidents update:', data);
+      setTodaysIncidents(data);
+    });
+
+    newSocket.on('trafficUpdate', (data: TrafficIncident[]) => {
       console.log('Received traffic update:', data);
+      setTrafficData(data);
     });
 
-    newSocket.on('criticalIncidents', (data: TrafficData) => {
+    newSocket.on('criticalIncidents', (data: CriticalIncidentsData) => {
       console.log('Received critical incidents:', data);
+      setCriticalIncidents(data);
+    });
+
+    newSocket.on('incidentLocations', (data: LocationData[]) => {
+      console.log('Received incident locations:', data);
+      setIncidentLocations(data);
+    });
+
+    // Typed: incident payload for newAlert
+    newSocket.on('newAlert', (incident: NewAlertPayload) => {
+      console.log('Received new incident alert:', incident);
+      addNotification({
+        title: 'New Incident',
+        message: `Incident reported: ${incident.Incident_Location}`,
+        type: 'critical'
+      });
     });
 
     return () => {
       console.log('Cleaning up Socket.IO connection');
       newSocket.close();
     };
-  }, [addNotification]); 
+  }, [addNotification]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -346,13 +350,21 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const updateTimer = setInterval(() => {
       setLastUpdate(new Date());
-      const healthStates: ('healthy' | 'warning' | 'error')[] = ['healthy', 'healthy', 'healthy', 'warning'];
-      const randomHealth = healthStates[Math.floor(Math.random() * healthStates.length)];
-      setStats(prev => ({ ...prev, systemHealth: randomHealth }));
+      // Determine system health based on data freshness and connection status
+      const now = Date.now();
+      const weatherAge = weatherLastUpdate ? now - weatherLastUpdate.getTime() : Infinity;
+      
+      if (weatherAge > 2 * 60 * 60 * 1000) { // 2 hours
+        setSystemHealth('error');
+      } else if (weatherAge > 60 * 60 * 1000) { // 1 hour
+        setSystemHealth('warning');
+      } else {
+        setSystemHealth('healthy');
+      }
     }, 30000); // Update every 30 seconds
     
     return () => clearInterval(updateTimer);
-  }, []);
+  }, [weatherLastUpdate]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-ZA', {
@@ -361,62 +373,6 @@ const Dashboard: React.FC = () => {
       second: '2-digit',
       hour12: false
     });
-  };
-
-  const getSeverityClass = (severity: string) => {
-    return severity.toLowerCase();
-  };
-
-  const getStatusClass = (status: string) => {
-    return status.toLowerCase();
-  };
-
-  const removeNotification = (id: number) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
-  };
-
-  const handleIncidentAction = async (incidentId: number, action: string) => {
-    setLoading(true);
-    
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (action === 'view') {
-        // Fetch detailed incident data
-        const detailedIncident: IncidentDetail = {
-          ...activeIncidents.find(inc => inc.id === incidentId)!,
-          description: 'Multi-vehicle collision involving 3 cars on the southbound lane. Emergency services have been dispatched. Traffic is being diverted via Allandale Road off-ramp.',
-          images: ['incident-photo-1.jpg', 'incident-photo-2.jpg'],
-          responders: ['Paramedic Unit 1', 'Fire Department', 'Traffic Police'],
-          timeline: [
-            { time: '12:13', event: 'Incident detected by AI system' },
-            { time: '12:14', event: 'Emergency services notified' },
-            { time: '12:16', event: 'First responders dispatched' },
-            { time: '12:20', event: 'Traffic diversion implemented' }
-          ]
-        };
-        setSelectedIncident(detailedIncident);
-      } else if (action === 'resolve') {
-        // Update incident status
-        setActiveIncidents(prev => prev.filter(inc => inc.id !== incidentId));
-        setStats(prev => ({ ...prev, activeIncidents: prev.activeIncidents - 1 }));
-        
-        addNotification({
-          title: 'Incident Resolved',
-          message: `Incident #${incidentId} has been marked as resolved.`,
-          type: 'success'
-        });
-      }
-    } catch (error) {
-      addNotification({
-        title: 'Error',
-        message: 'Failed to process incident action. Please try again.',
-        type: 'critical'
-      });
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleQuickAction = (action: string) => {
@@ -453,7 +409,7 @@ const Dashboard: React.FC = () => {
   };
 
   const getSystemHealthStatus = () => {
-    switch (stats.systemHealth) {
+    switch (systemHealth) {
       case 'healthy':
         return { text: 'All Systems Operational', class: 'healthy' };
       case 'warning':
@@ -546,62 +502,110 @@ const Dashboard: React.FC = () => {
         {loading && (
           <div className="loading-overlay" data-cy="loading-overlay" aria-busy="true">
             <div className="loading-spinner" data-cy="loading-spinner"></div>
-            <div className="loading-text" data-cy="loading-text">Processing request...</div>
+            <div className="loading-text" data-cy="loading-text">Loading dashboard data...</div>
           </div>
         )}
 
         <div className="stats-grid" data-cy="stats-grid">
+          {/* User Statistics */}
+          <div className="stat-card" data-cy="stat-card-users-online">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <UsersIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Users Online</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{userStats.totalOnline}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">Currently connected</div>
+          </div>
+
+          {/* Active Incidents */}
           <div className="stat-card" data-cy="stat-card-active-incidents">
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <AlertTriangleIcon />
             </div>
             <div className="stat-card-title" data-cy="stat-card-title">Active Incidents</div>
-            <div className="stat-card-value" data-cy="stat-card-value">{stats.activeIncidents}</div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">Requiring immediate attention</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{incidentStats?.active || 0}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">Requiring attention</div>
             <div className="progress-bar" data-cy="progress-bar">
               <div 
                 className="progress-fill critical" 
-                style={{ width: `${(stats.activeIncidents / 10) * 100}%` }}
+                style={{ width: `${Math.min((incidentStats?.active || 0) / 10 * 100, 100)}%` }}
                 data-cy="progress-fill"
               ></div>
             </div>
           </div>
 
-          <div className="stat-card" data-cy="stat-card-cameras-online">
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <CameraIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">Cameras Online</div>
-            <div className="stat-card-value" data-cy="stat-card-value">{stats.camerasOnline}/{stats.totalCameras}</div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">{Math.round((stats.camerasOnline / stats.totalCameras) * 100)}% operational</div>
-            <div className="progress-bar" data-cy="progress-bar">
-              <div 
-                className="progress-fill" 
-                style={{ width: `${(stats.camerasOnline / stats.totalCameras) * 100}%` }}
-                data-cy="progress-fill"
-              ></div>
-            </div>
-          </div>
-
-          <div className="stat-card" data-cy="stat-card-avg-response-time">
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <ClockIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">Avg Response Time</div>
-            <div className="stat-card-value" data-cy="stat-card-value">{stats.avgResponseTime}</div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">Last 24 hours</div>
-          </div>
-
-          <div className="stat-card" data-cy="stat-card-incidents-today">
+          {/* Critical Incidents */}
+          <div className="stat-card" data-cy="stat-card-critical-incidents">
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <TrendingUpIcon />
             </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Critical Incidents</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{criticalIncidents?.Amount || 0}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">High severity events</div>
+          </div>
+
+          {/* Today's Incidents */}
+          <div className="stat-card" data-cy="stat-card-incidents-today">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <ClockIcon />
+            </div>
             <div className="stat-card-title" data-cy="stat-card-title">Today's Incidents</div>
-            <div className="stat-card-value" data-cy="stat-card-value">{stats.incidentsToday}</div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">vs 12 yesterday</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{todaysIncidents.count}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">{todaysIncidents.date}</div>
           </div>
         </div>
 
+        {/* User Statistics Section */}
+        <div className="user-section" data-cy="user-section" id="user-section">
+          <div className="user-header" data-cy="user-header">
+            <h3 data-cy="user-title">User Activity</h3>
+            <div className="user-last-update" data-cy="user-last-update">
+              Last updated: {formatTime(lastUpdate)}
+            </div>
+          </div>
+          
+          <div className="user-grid" data-cy="user-grid">
+            <div className="user-card" data-cy="user-card-top-region">
+              <div className="user-card-header" data-cy="user-card-header">
+                <div className="user-stat-title" data-cy="user-stat-title">Top Region</div>
+                <MapPinIcon />
+              </div>
+              <div className="user-main-stat" data-cy="user-main-stat">
+                {userStats.topRegion.region || 'No data'}
+              </div>
+              <div className="user-sub-stat" data-cy="user-sub-stat">
+                {userStats.topRegion.userCount} users
+              </div>
+            </div>
+            
+            <div className="user-card" data-cy="user-card-timeline">
+              <div className="user-card-header" data-cy="user-card-header">
+                <div className="user-stat-title" data-cy="user-stat-title">Recent Activity</div>
+                <ActivityIcon />
+              </div>
+              <div className="user-timeline" data-cy="user-timeline">
+                {userStats.timeline.slice(-5).map((event, index) => (
+                  <div key={index} className="timeline-item" data-cy={`timeline-item-${index}`}>
+                    <span className={`timeline-action ${event.action}`} data-cy="timeline-action">
+                      {event.action === 'connect' ? '➕' : '➖'}
+                    </span>
+                    <span className="timeline-text" data-cy="timeline-text">
+                      User {event.action}ed ({event.totalUsers} online)
+                    </span>
+                    <span className="timeline-time" data-cy="timeline-time">
+                      {new Date(event.timestamp).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
+                {userStats.timeline.length === 0 && (
+                  <div className="timeline-empty" data-cy="timeline-empty">No recent activity</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Weather Section */}
         <div className="weather-section" data-cy="weather-section" id="weather-section">
           <div className="weather-header" data-cy="weather-header">
             <h3 data-cy="weather-title">Weather Conditions</h3>
@@ -619,7 +623,7 @@ const Dashboard: React.FC = () => {
             </div>
           ) : weatherData.length > 0 ? (
             <div className="weather-grid" data-cy="weather-grid">
-              {weatherData.map((weather, index) => (
+              {weatherData.slice(0, 6).map((weather, index) => (
                 <div key={index} className="weather-card" data-cy={`weather-card-${index}`}>
                   <div className="weather-card-header" data-cy="weather-card-header">
                     <div className="weather-location-name" data-cy="weather-location-name">
@@ -675,79 +679,59 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
+        {/* Traffic Incidents Section */}
         <div className="dashboard-main-grid" data-cy="dashboard-main-grid">
           <div className="incidents-section" data-cy="incidents-section" id="incidents-section">
             <div className="incidents-header" data-cy="incidents-header">
-              <h3 data-cy="incidents-title">Active Incidents</h3>
-              <div className="incidents-badge" data-cy="incidents-badge">{stats.activeIncidents} Active</div>
+              <h3 data-cy="incidents-title">Live Traffic Incidents</h3>
+              <div className="incidents-badge" data-cy="incidents-badge">{trafficData.length} Locations</div>
             </div>
             <div className="incidents-list" data-cy="incidents-list">
-              {activeIncidents.map((incident) => (
-                <div key={incident.id} className={`incident-item ${getSeverityClass(incident.severity)}`} data-cy={`incident-item-${incident.id}`}>
+              {trafficData.map((location, index) => (
+                <div key={index} className="incident-item" data-cy={`incident-item-${index}`}>
                   <div className="incident-header" data-cy="incident-header">
                     <div className="incident-type" data-cy="incident-type">
-                      <AlertTriangleIcon />
-                      {incident.type}
+                      <MapPinIcon />
+                      {location.location}
                     </div>
-                    <div className={`severity-badge ${getSeverityClass(incident.severity)}`} data-cy="severity-badge">
-                      {incident.severity}
+                    <div className="severity-badge medium" data-cy="severity-badge">
+                      {location.incidents.length} Incidents
                     </div>
                   </div>
                   
                   <div className="incident-details" data-cy="incident-details">
-                    <div className="incident-detail" data-cy="incident-detail-location">
-                      <MapPinIcon />
-                      {incident.location}
-                    </div>
-                    <div className="incident-detail" data-cy="incident-detail-camera">
-                      <CameraIcon />
-                      {incident.camera}
-                    </div>
-                    <div className="incident-detail" data-cy="incident-detail-time">
-                      <ClockIcon />
-                      Started at {incident.time} ({incident.duration})
-                    </div>
-                  </div>
-
-                  <div className="incident-metadata" data-cy="incident-metadata">
-                    <div className="metadata-item" data-cy="metadata-status">
-                      <div className="metadata-label">Status</div>
-                      <div className={`status-badge ${getStatusClass(incident.status)}`} data-cy="metadata-value-status">{incident.status}</div>
-                    </div>
-                    <div className="metadata-item" data-cy="metadata-reported-by">
-                      <div className="metadata-label">Reported By</div>
-                      <div className="metadata-value">{incident.reportedBy}</div>
-                    </div>
-                    <div className="metadata-item" data-cy="metadata-assigned-to">
-                      <div className="metadata-label">Assigned To</div>
-                      <div className="metadata-value">{incident.assignedTo}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="incident-actions" data-cy="incident-actions">
-                    <button 
-                      className="incident-action"
-                      onClick={() => handleIncidentAction(incident.id, 'view')}
-                      disabled={loading}
-                      data-cy="incident-action-view"
-                      aria-busy={loading}
-                      aria-label={`View details for incident ${incident.id}`}
-                    >
-                      View Details
-                    </button>
-                    <button 
-                      className="incident-action"
-                      onClick={() => handleIncidentAction(incident.id, 'resolve')}
-                      disabled={loading}
-                      data-cy="incident-action-resolve"
-                      aria-busy={loading}
-                      aria-label={`Mark incident ${incident.id} as resolved`}
-                    >
-                      Mark Resolved
-                    </button>
+                    {location.incidents.slice(0, 3).map((incident, incIndex) => (
+                      <div key={incIndex} className="incident-detail" data-cy="incident-detail-item">
+                        <AlertTriangleIcon />
+                        <span>{incident.properties.iconCategory}</span>
+                        <span className="magnitude-badge" data-cy="magnitude-badge">
+                          Severity: {incident.properties.magnitudeOfDelay}
+                        </span>
+                      </div>
+                    ))}
+                    {location.incidents.length > 3 && (
+                      <div className="incident-detail" data-cy="incident-detail-more">
+                        <span>+{location.incidents.length - 3} more incidents</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
+              {trafficData.length === 0 && (
+                <div className="incident-item" data-cy="incident-empty">
+                  <div className="incident-header">
+                    <div className="incident-type">
+                      <AlertTriangleIcon />
+                      No Traffic Data
+                    </div>
+                  </div>
+                  <div className="incident-details">
+                    <div className="incident-detail">
+                      Waiting for traffic updates...
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="last-updated" data-cy="last-updated-incidents">
               <div className="update-indicator" data-cy="update-indicator"></div>
@@ -755,39 +739,47 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="camera-section" data-cy="camera-section" id="camera-section">
-            <div className="camera-header" data-cy="camera-header">
-              <h3 data-cy="camera-title">Camera Status</h3>
+          <div className="regional-stats-section" data-cy="regional-stats-section" id="regional-stats-section">
+            <div className="regional-header" data-cy="regional-header">
+              <h3 data-cy="regional-title">Regional Activity</h3>
             </div>
-            <div className="camera-list" data-cy="camera-list">
-              {cameraFeeds.map((camera) => (
-                <div key={camera.id} className="camera-item" data-cy={`camera-item-${camera.id}`}>
-                  <div className="camera-info" data-cy="camera-info">
-                    <div className={`camera-status-dot ${camera.status.toLowerCase()}`} data-cy="camera-status-dot"></div>
-                    <div className="camera-details" data-cy="camera-details">
-                      <h4 data-cy="camera-name">{camera.name}</h4>
-                      <p data-cy="camera-id">{camera.id}</p>
+            <div className="regional-list" data-cy="regional-list">
+              {userStats.regionCounts
+                .filter(region => region.userCount > 0)
+                .sort((a, b) => b.userCount - a.userCount)
+                .map((region, index) => (
+                <div key={index} className="regional-item" data-cy={`regional-item-${region.region}`}>
+                  <div className="regional-info" data-cy="regional-info">
+                    <div className="regional-details" data-cy="regional-details">
+                      <h4 data-cy="regional-name">{region.region}</h4>
+                      <p data-cy="regional-users">{region.userCount} active users</p>
                     </div>
                   </div>
-                  <div className="camera-status" data-cy="camera-status">
-                    <div className={`camera-status-text ${camera.status.toLowerCase()}`} data-cy="camera-status-text">
-                      {camera.status}
-                    </div>
-                    {camera.incidents > 0 && (
-                      <div className="camera-incidents" data-cy="camera-incidents">
-                        {camera.incidents} incident{camera.incidents > 1 ? 's' : ''}
-                      </div>
-                    )}
-                    <div style={{ color: 'var(--form-help-text)', fontSize: '0.7rem', marginTop: '0.25rem' }} data-cy="camera-last-update">
-                      Last: {camera.lastUpdate}
+                  <div className="regional-stats" data-cy="regional-stats">
+                    <div className="progress-bar small" data-cy="progress-bar-small">
+                      <div 
+                        className="progress-fill" 
+                        style={{ width: `${Math.min((region.userCount / Math.max(userStats.totalOnline, 1)) * 100, 100)}%` }}
+                        data-cy="progress-fill-regional"
+                      ></div>
                     </div>
                   </div>
                 </div>
               ))}
+              {userStats.regionCounts.filter(r => r.userCount > 0).length === 0 && (
+                <div className="regional-item" data-cy="regional-empty">
+                  <div className="regional-info">
+                    <div className="regional-details">
+                      <h4>No Regional Data</h4>
+                      <p>Waiting for user location data...</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="last-updated" data-cy="last-updated-cameras">
+            <div className="last-updated" data-cy="last-updated-regional">
               <div className="update-indicator" data-cy="update-indicator"></div>
-              Feeds updating live
+              Real-time updates
             </div>
           </div>
         </div>
@@ -834,104 +826,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {selectedIncident && (
-        <div className="modal-overlay" data-cy="modal-overlay" role="dialog" aria-labelledby="modal-title" onClick={() => setSelectedIncident(null)}>
-          <div className="modal-content" data-cy="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header" data-cy="modal-header">
-              <h3 className="modal-title" data-cy="modal-title" id="modal-title">Incident Details - #{selectedIncident.id}</h3>
-              <button 
-                className="modal-close" 
-                onClick={() => setSelectedIncident(null)}
-                data-cy="modal-close"
-                aria-label="Close incident details modal"
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body" data-cy="modal-body">
-              <div className="incident-metadata" data-cy="modal-incident-metadata">
-                <div className="metadata-item" data-cy="modal-metadata-type">
-                  <div className="metadata-label">Type</div>
-                  <div className="metadata-value">{selectedIncident.type}</div>
-                </div>
-                <div className="metadata-item" data-cy="modal-metadata-severity">
-                  <div className="metadata-label">Severity</div>
-                  <div className={`severity-badge ${getSeverityClass(selectedIncident.severity)}`}>{selectedIncident.severity}</div>
-                </div>
-                <div className="metadata-item" data-cy="modal-metadata-status">
-                  <div className="metadata-label">Status</div>
-                  <div className={`status-badge ${getStatusClass(selectedIncident.status)}`}>{selectedIncident.status}</div>
-                </div>
-                <div className="metadata-item" data-cy="modal-metadata-duration">
-                  <div className="metadata-label">Duration</div>
-                  <div className="metadata-value">{selectedIncident.duration}</div>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }} data-cy="modal-location">
-                <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-location-title">Location</h4>
-                <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} data-cy="modal-location-content">
-                  <MapPinIcon />
-                  {selectedIncident.location}
-                </p>
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }} data-cy="modal-description">
-                <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-description-title">Description</h4>
-                <p data-cy="modal-description-content">{selectedIncident.description}</p>
-              </div>
-
-              {selectedIncident.responders && (
-                <div style={{ marginBottom: '1.5rem' }} data-cy="modal-responders">
-                  <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-responders-title">Response Teams</h4>
-                  <ul style={{ listStyle: 'none', padding: 0 }} data-cy="modal-responders-list">
-                    {selectedIncident.responders.map((responder, index) => (
-                      <li 
-                        key={index} 
-                        style={{ 
-                          padding: '0.5rem', 
-                          backgroundColor: 'var(--uploaded-file-bg)', 
-                          borderRadius: '4px',
-                          marginBottom: '0.25rem'
-                        }}
-                        data-cy={`modal-responder-${index}`}
-                      >
-                        {responder}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {selectedIncident.timeline && (
-                <div data-cy="modal-timeline">
-                  <h4 style={{ color: 'var(--form-section-title)', marginBottom: '0.5rem' }} data-cy="modal-timeline-title">Timeline</h4>
-                  <div style={{ borderLeft: '2px solid var(--form-section-title)', paddingLeft: '1rem' }} data-cy="modal-timeline-content">
-                    {selectedIncident.timeline.map((event, index) => (
-                      <div key={index} style={{ marginBottom: '1rem', position: 'relative' }} data-cy={`modal-timeline-event-${index}`}>
-                        <div style={{ 
-                          position: 'absolute', 
-                          left: '-1.5rem', 
-                          top: '0.25rem',
-                          width: '8px', 
-                          height: '8px', 
-                          backgroundColor: 'var(--form-section-title)', 
-                          borderRadius: '50%' 
-                        }} data-cy="timeline-indicator"></div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--form-help-text)', marginBottom: '0.25rem' }} data-cy="timeline-time">
-                          {event.time}
-                        </div>
-                        <div data-cy="timeline-event">{event.event}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
