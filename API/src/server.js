@@ -6,6 +6,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const weather = require('../src/Weather/weather');
 const traffic = require('../src/Traffic/traffic');
+const archivesModel = require('./models/archives');
 
 const server = http.createServer(app);
 
@@ -61,22 +62,246 @@ io.on('connection',(socket)=>{
     setInterval(async()=>{
       const data = await traffic.getTraffic();
       socket.emit('trafficUpdate', data);
+
+      //critical incidents
+      const res = traffic.criticalIncidents(data);
+      socket.emit('criticalIncidents', res);
+
+      //incident Category
+      const res_incidentCategory = traffic.incidentCategory(data);
+      socket.emit('incidentCategory', res_incidentCategory);
+
+      //incident Locations
+      const res_incidentLocations =  traffic.incidentLocations(data);
+      socket.emit('incidentLocations', res_incidentLocations);
     }, 30*60*1000); //30 min interval
 
+    // ==================== ARCHIVE ANALYTICS SOCKET EVENTS ====================
+    
+    // Send initial archive statistics on connection
+    archivesModel.getArchiveStats().then((stats) => {
+      socket.emit('archiveStatsUpdate', {
+        stats,
+        timestamp: new Date(),
+        type: 'initial'
+      });
+    }).catch(err => {
+      console.error('Error fetching initial archive stats:', err);
+    });
 
+    // Send recent archives on connection
+    archivesModel.getArchives({ limit: 10, offset: 0 }).then((recentArchives) => {
+      socket.emit('archiveUpdate', {
+        recentArchives,
+        timestamp: new Date(),
+        type: 'initial'
+      });
+    }).catch(err => {
+      console.error('Error fetching recent archives:', err);
+    });
 
-  io.on('disconnect',()=>{
-    console.log(socket.id + ' disconnected');
-  })
+    // Periodic archive statistics updates (every 5 minutes)
+    const archiveStatsInterval = setInterval(async () => {
+      try {
+        const stats = await archivesModel.getArchiveStats();
+        const recentArchives = await archivesModel.getArchives({ limit: 10, offset: 0 });
+        
+        // Calculate additional metrics
+        const totalArchives = stats.reduce((sum, stat) => sum + stat.count, 0);
+        const thisMonth = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        
+        // Get archives for this month
+        const firstDayOfMonth = new Date();
+        firstDayOfMonth.setDate(1);
+        firstDayOfMonth.setHours(0, 0, 0, 0);
+        
+        const monthlyArchives = await archivesModel.getArchives({
+          date_from: firstDayOfMonth.toISOString(),
+          limit: 1000
+        });
+
+        const archiveAnalytics = {
+          totalArchives,
+          archivesThisMonth: monthlyArchives.length,
+          averageArchiveSize: 2048, // Estimated in bytes
+          storageUsed: totalArchives * 2048,
+          statusBreakdown: {},
+          severityBreakdown: {},
+          typeBreakdown: {}
+        };
+
+        // Process breakdowns
+        stats.forEach(stat => {
+          if (!archiveAnalytics.statusBreakdown[stat.status]) {
+            archiveAnalytics.statusBreakdown[stat.status] = 0;
+          }
+          archiveAnalytics.statusBreakdown[stat.status] += stat.count;
+
+          if (!archiveAnalytics.severityBreakdown[stat.severity]) {
+            archiveAnalytics.severityBreakdown[stat.severity] = 0;
+          }
+          archiveAnalytics.severityBreakdown[stat.severity] += stat.count;
+
+          if (!archiveAnalytics.typeBreakdown[stat.type]) {
+            archiveAnalytics.typeBreakdown[stat.type] = 0;
+          }
+          archiveAnalytics.typeBreakdown[stat.type] += stat.count;
+        });
+
+        // Emit comprehensive archive update
+        socket.emit('archiveStatsUpdate', {
+          ...archiveAnalytics,
+          recentArchives,
+          timestamp: new Date(),
+          type: 'periodic'
+        });
+
+        // Also emit to all connected clients
+        io.emit('archiveAnalyticsUpdate', {
+          ...archiveAnalytics,
+          timestamp: new Date()
+        });
+
+      } catch (error) {
+        console.error('Error in archive stats interval:', error);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    // Archive trend analysis (every 30 minutes)
+    const archiveTrendsInterval = setInterval(async () => {
+      try {
+        // Get archives from last 7 days for trend analysis
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        
+        const weeklyArchives = await archivesModel.getArchives({
+          date_from: sevenDaysAgo.toISOString(),
+          limit: 1000
+        });
+
+        // Process daily trends
+        const dailyTrends = {};
+        weeklyArchives.forEach(archive => {
+          const date = new Date(archive.Archive_DateTime);
+          const dayKey = date.toLocaleDateString('en-US');
+          
+          if (!dailyTrends[dayKey]) {
+            dailyTrends[dayKey] = {
+              date: dayKey,
+              total: 0,
+              bySeverity: { high: 0, medium: 0, low: 0 },
+              byStatus: { open: 0, ongoing: 0, resolved: 0, closed: 0 }
+            };
+          }
+          
+          dailyTrends[dayKey].total++;
+          dailyTrends[dayKey].bySeverity[archive.Archive_Severity] = 
+            (dailyTrends[dayKey].bySeverity[archive.Archive_Severity] || 0) + 1;
+          dailyTrends[dayKey].byStatus[archive.Archive_Status] = 
+            (dailyTrends[dayKey].byStatus[archive.Archive_Status] || 0) + 1;
+        });
+
+        socket.emit('archiveTrendsUpdate', {
+          weeklyTrends: Object.values(dailyTrends),
+          totalWeeklyArchives: weeklyArchives.length,
+          timestamp: new Date()
+        });
+
+      } catch (error) {
+        console.error('Error in archive trends interval:', error);
+      }
+    }, 30 * 60 * 1000); // 30 minutes
+
+    // Clean up intervals on disconnect
+    socket.on('disconnect', () => {
+      console.log(socket.id + ' disconnected');
+      clearInterval(archiveStatsInterval);
+      clearInterval(archiveTrendsInterval);
+      
+      // Remove from connected users
+      const index = connectedUsers.indexOf(socket);
+      if (index > -1) {
+        connectedUsers.splice(index, 1);
+      }
+    });
 });
 
-  app.set('io', io);
+// Set io instance in app for use in controllers
+app.set('io', io);
 
- /*  server.listen(PORT, ()=>{
-    console.log('Socket server running');
-  }) */
+// ==================== ARCHIVE EVENT EMITTERS ====================
 
+// Function to emit archive creation events (to be called when new archives are created)
+const emitArchiveCreated = (archiveData) => {
+  console.log('Emitting archiveCreated event:', archiveData);
+  io.emit('archiveCreated', {
+    archive: archiveData,
+    timestamp: new Date(),
+    type: 'new'
+  });
+};
 
+// Function to emit archive updates (to be called when archives are modified)
+const emitArchiveUpdated = (archiveData) => {
+  console.log('Emitting archiveUpdated event:', archiveData);
+  io.emit('archiveUpdated', {
+    archive: archiveData,
+    timestamp: new Date(),
+    type: 'update'
+  });
+};
+
+// Function to emit archive analytics refresh
+const emitArchiveAnalyticsRefresh = async () => {
+  try {
+    const stats = await archivesModel.getArchiveStats();
+    const recentArchives = await archivesModel.getArchives({ limit: 20, offset: 0 });
+    
+    io.emit('archiveAnalyticsRefresh', {
+      stats,
+      recentArchives,
+      timestamp: new Date(),
+      type: 'refresh'
+    });
+    
+    console.log('Archive analytics refresh emitted to all clients');
+  } catch (error) {
+    console.error('Error emitting archive analytics refresh:', error);
+  }
+};
+
+// Export archive event emitters for use in other parts of the application
+app.set('emitArchiveCreated', emitArchiveCreated);
+app.set('emitArchiveUpdated', emitArchiveUpdated);
+app.set('emitArchiveAnalyticsRefresh', emitArchiveAnalyticsRefresh);
+
+// ==================== ENHANCED INCIDENT HANDLING ====================
+
+// Enhanced incident event handling that also considers archive implications
+const originalEmitNewAlert = (incidentData) => {
+  // Emit the original incident alert
+  io.emit('newAlert', incidentData);
+  console.log('Emitting newAlert:', incidentData);
+  
+  // Potentially trigger archive creation (simulating automatic archiving)
+  setTimeout(async () => {
+    try {
+      // This would typically be done by a background archiving process
+      // Here I am simulating the notification that archiving might occur
+      io.emit('potentialArchiveCreation', {
+        incidentId: incidentData.Incidents_ID || incidentData.id,
+        timestamp: new Date(),
+        reason: 'incident_reported'
+      });
+    } catch (error) {
+      console.error('Error in potential archive creation notification:', error);
+    }
+  }, 5000); // 5 second delay to simulate processing time
+};
+
+app.set('emitNewAlert', originalEmitNewAlert);
+
+// ==================== DATABASE AND SERVER STARTUP ====================
 
 // Test database connection before starting server
 db.query('SELECT NOW()')
@@ -88,7 +313,13 @@ db.query('SELECT NOW()')
       console.log(`Database connection established`);
       console.log(`Server running on port ${PORT}`);
       console.log(`API available at: http://${HOST}:${PORT}`);
+      console.log(`Socket.IO server running with archive analytics support`);
       console.log(`API documentation available at: https://documenter.getpostman.com/view/34423164/2sB2qak34y`);
+      
+      // Emit initial archive analytics to any early connections
+      setTimeout(() => {
+        emitArchiveAnalyticsRefresh();
+      }, 2000);
     });
   })  .catch(err => {
     console.error('Database connection failed:', err);
@@ -101,7 +332,9 @@ db.query('SELECT NOW()')
     process.exit(1);
    });
 
-
-  module.exports = {
-    io
-  };
+module.exports = {
+  io,
+  emitArchiveCreated,
+  emitArchiveUpdated,
+  emitArchiveAnalyticsRefresh
+};
