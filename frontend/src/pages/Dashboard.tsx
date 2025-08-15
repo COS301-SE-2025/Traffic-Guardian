@@ -736,5 +736,98 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
+          <div className="regional-stats-section" data-cy="regional-stats-section" id="regional-stats-section">
+            <div className="regional-header" data-cy="regional-header">
+              <h3 data-cy="regional-title">Regional Activity</h3>
+            </div>
+            <div className="regional-list" data-cy="regional-list">
+              {userStats.regionCounts
+                .filter(region => region.userCount > 0)
+                .sort((a, b) => b.userCount - a.userCount)
+                .map((region, index) => (
+                <div key={index} className="regional-item" data-cy={`regional-item-${region.region}`}>
+                  <div className="regional-info" data-cy="regional-info">
+                    <div className="regional-details" data-cy="regional-details">
+                      <h4 data-cy="regional-name">{region.region}</h4>
+                      <p data-cy="regional-users">{region.userCount} active users</p>
+                    </div>
+                  </div>
+                  <div className="regional-stats" data-cy="regional-stats">
+                    <div className="progress-bar small" data-cy="progress-bar-small">
+                      <div 
+                        className="progress-fill" 
+                        style={{ width: `${Math.min((region.userCount / Math.max(userStats.totalOnline, 1)) * 100, 100)}%` }}
+                        data-cy="progress-fill-regional"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {userStats.regionCounts.filter(r => r.userCount > 0).length === 0 && (
+                <div className="regional-item" data-cy="regional-empty">
+                  <div className="regional-info">
+                    <div className="regional-details">
+                      <h4>No Regional Data</h4>
+                      <p>Waiting for user location data...</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="last-updated" data-cy="last-updated-regional">
+              <div className="update-indicator" data-cy="update-indicator"></div>
+              Real-time updates
+            </div>
+          </div>
+        </div>
+
+        <div className="quick-actions" data-cy="quick-actions" id="quick-actions">
+          <h3 data-cy="quick-actions-title">Quick Actions</h3>
+          <div className="actions-grid" data-cy="actions-grid">
+            <button 
+              className="action-button" 
+              onClick={() => handleQuickAction('live-feed')}
+              data-cy="action-button-live-feed"
+              aria-label="Open live camera feeds"
+            >
+              <EyeIcon />
+              <span>Live Feed</span>
+            </button>
+            <button 
+              className="action-button" 
+              onClick={() => handleQuickAction('report-incident')}
+              data-cy="action-button-report-incident"
+              aria-label="Report a new incident"
+            >
+              <AlertTriangleIcon />
+              <span>Report Incident</span>
+            </button>
+            <button 
+              className="action-button" 
+              onClick={() => handleQuickAction('analytics')}
+              data-cy="action-button-analytics"
+              aria-label="View traffic analytics"
+            >
+              <ActivityIcon />
+              <span>Analytics</span>
+            </button>
+            <button 
+              className="action-button" 
+              onClick={() => handleQuickAction('archive')}
+              data-cy="action-button-archive"
+              aria-label="View incident archive"
+            >
+              <UsersIcon />
+              <span>Archive</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
+
 
   
