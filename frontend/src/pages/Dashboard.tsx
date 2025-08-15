@@ -541,4 +541,65 @@ const Dashboard: React.FC = () => {
             <div className="stat-card-subtitle" data-cy="stat-card-subtitle">High severity events</div>
           </div>
 
+          {/* Today's Incidents */}
+          <div className="stat-card" data-cy="stat-card-incidents-today">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <ClockIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">Today's Incidents</div>
+            <div className="stat-card-value" data-cy="stat-card-value">{todaysIncidents.count}</div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">{todaysIncidents.date}</div>
+          </div>
+        </div>
+
+        {/* User Statistics Section */}
+        <div className="user-section" data-cy="user-section" id="user-section">
+          <div className="user-header" data-cy="user-header">
+            <h3 data-cy="user-title">User Activity</h3>
+            <div className="user-last-update" data-cy="user-last-update">
+              Last updated: {formatTime(lastUpdate)}
+            </div>
+          </div>
+          
+          <div className="user-grid" data-cy="user-grid">
+            <div className="user-card" data-cy="user-card-top-region">
+              <div className="user-card-header" data-cy="user-card-header">
+                <div className="user-stat-title" data-cy="user-stat-title">Top Region</div>
+                <MapPinIcon />
+              </div>
+              <div className="user-main-stat" data-cy="user-main-stat">
+                {userStats.topRegion.region || 'No data'}
+              </div>
+              <div className="user-sub-stat" data-cy="user-sub-stat">
+                {userStats.topRegion.userCount} users
+              </div>
+            </div>
+            
+            <div className="user-card" data-cy="user-card-timeline">
+              <div className="user-card-header" data-cy="user-card-header">
+                <div className="user-stat-title" data-cy="user-stat-title">Recent Activity</div>
+                <ActivityIcon />
+              </div>
+              <div className="user-timeline" data-cy="user-timeline">
+                {userStats.timeline.slice(-5).map((event, index) => (
+                  <div key={index} className="timeline-item" data-cy={`timeline-item-${index}`}>
+                    <span className={`timeline-action ${event.action}`} data-cy="timeline-action">
+                      {event.action === 'connect' ? '➕' : '➖'}
+                    </span>
+                    <span className="timeline-text" data-cy="timeline-text">
+                      User {event.action}ed ({event.totalUsers} online)
+                    </span>
+                    <span className="timeline-time" data-cy="timeline-time">
+                      {new Date(event.timestamp).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
+                {userStats.timeline.length === 0 && (
+                  <div className="timeline-empty" data-cy="timeline-empty">No recent activity</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
   
