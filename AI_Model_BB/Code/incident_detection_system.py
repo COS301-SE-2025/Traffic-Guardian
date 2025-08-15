@@ -142,14 +142,14 @@ class AdvancedIncidentDetectionSystem:
             # Location configuration from environment
             'incident_location': os.getenv('INCIDENT_LOCATION', 'Traffic Camera Location'),
             
-            # MULTI-LAYER COLLISION DETECTION SETTINGS (Optimized for busy roads)
-            'collision_distance_threshold': 25,    # Tighter for true collisions
-            'prediction_horizon': 15,              # Longer prediction window
-            'min_tracking_confidence': 0.8,        # Much higher confidence required
-            'min_collision_speed': 8.0,            # Higher speed threshold (filters out normal traffic)
-            'collision_angle_threshold': 20,       # Very restrictive angle (head-on/perpendicular only)
-            'min_trajectory_length': 15,           # Much longer history for reliable prediction
-            'collision_persistence': 8,            # Must persist much longer
+            # MULTI-LAYER COLLISION DETECTION SETTINGS (Balanced for accidents vs noise)
+            'collision_distance_threshold': 35,    # Reasonable distance for collisions
+            'prediction_horizon': 15,              # Prediction window for trajectory analysis
+            'min_tracking_confidence': 0.7,        # Reasonable confidence for tracking
+            'min_collision_speed': 6.0,            # Lower speed threshold to catch T-bone accidents
+            'collision_angle_threshold': 30,       # Allow more collision angles (T-bone, side impacts)
+            'min_trajectory_length': 10,           # Shorter history - accidents happen quickly
+            'collision_persistence': 5,            # Shorter persistence requirement
             
             # DEPTH ESTIMATION SETTINGS
             'depth_analysis_enabled': True,
@@ -167,10 +167,10 @@ class AdvancedIncidentDetectionSystem:
             'momentum_change_threshold': 25.0,     # Significant momentum change
             'deceleration_threshold': 12.0,        # Sudden stop indicator
             
-            # FINAL VALIDATION REQUIREMENTS (Stricter for busy roads)
-            'require_all_layers': True,            # ALL layers must agree for busy roads
-            'minimum_layer_agreement': 4,          # All 4 layers must agree
-            'collision_confidence_threshold': 0.9, # Much higher confidence threshold
+            # FINAL VALIDATION REQUIREMENTS (Balanced approach)
+            'require_all_layers': False,           # Don't require ALL layers - real accidents are complex
+            'minimum_layer_agreement': 2,          # Require 2 out of 4 layers minimum
+            'collision_confidence_threshold': 0.6, # Reasonable confidence threshold
             
             # Other incident detection thresholds
             'stopped_vehicle_time': 10,
@@ -682,11 +682,11 @@ class AdvancedIncidentDetectionSystem:
             # Determine density level and adjust thresholds
             previous_level = self.current_density_level
             
-            if avg_density >= 15:
+            if avg_density >= 20:
                 self.current_density_level = 'very_high'
-            elif avg_density >= 10:
+            elif avg_density >= 12:
                 self.current_density_level = 'high'
-            elif avg_density >= 5:
+            elif avg_density >= 6:
                 self.current_density_level = 'normal'
             else:
                 self.current_density_level = 'low'
@@ -701,38 +701,40 @@ class AdvancedIncidentDetectionSystem:
         base_config = self._default_config()
         
         if self.current_density_level == 'very_high':
-            # Very conservative settings for heavy traffic
-            self.config['collision_distance_threshold'] = 20
-            self.config['min_collision_speed'] = 12.0
-            self.config['min_trajectory_length'] = 20
-            self.config['collision_confidence_threshold'] = 0.95
-            self.config['require_all_layers'] = True
+            # Balanced settings for heavy traffic - still detect real accidents
+            self.config['collision_distance_threshold'] = 30
+            self.config['min_collision_speed'] = 8.0
+            self.config['min_trajectory_length'] = 15
+            self.config['collision_confidence_threshold'] = 0.7
+            self.config['require_all_layers'] = False
+            self.config['minimum_layer_agreement'] = 3  # Require 3 out of 4 layers
             
         elif self.current_density_level == 'high':
-            # Conservative settings for busy traffic
-            self.config['collision_distance_threshold'] = 25
-            self.config['min_collision_speed'] = 10.0
-            self.config['min_trajectory_length'] = 15
-            self.config['collision_confidence_threshold'] = 0.9
-            self.config['require_all_layers'] = True
+            # Balanced settings for busy traffic
+            self.config['collision_distance_threshold'] = 30
+            self.config['min_collision_speed'] = 7.0
+            self.config['min_trajectory_length'] = 12
+            self.config['collision_confidence_threshold'] = 0.65
+            self.config['require_all_layers'] = False
+            self.config['minimum_layer_agreement'] = 3  # Require 3 out of 4 layers
             
         elif self.current_density_level == 'normal':
             # Balanced settings
-            self.config['collision_distance_threshold'] = 30
-            self.config['min_collision_speed'] = 8.0
-            self.config['min_trajectory_length'] = 12
-            self.config['collision_confidence_threshold'] = 0.8
-            self.config['require_all_layers'] = False
-            self.config['minimum_layer_agreement'] = 3
-            
-        else:  # low density
-            # More sensitive settings for sparse traffic
             self.config['collision_distance_threshold'] = 35
             self.config['min_collision_speed'] = 6.0
             self.config['min_trajectory_length'] = 10
-            self.config['collision_confidence_threshold'] = 0.75
+            self.config['collision_confidence_threshold'] = 0.6
             self.config['require_all_layers'] = False
-            self.config['minimum_layer_agreement'] = 2
+            self.config['minimum_layer_agreement'] = 2  # Require 2 out of 4 layers
+            
+        else:  # low density
+            # More sensitive settings for sparse traffic
+            self.config['collision_distance_threshold'] = 40
+            self.config['min_collision_speed'] = 5.0
+            self.config['min_trajectory_length'] = 8
+            self.config['collision_confidence_threshold'] = 0.5
+            self.config['require_all_layers'] = False
+            self.config['minimum_layer_agreement'] = 2  # Require 2 out of 4 layers
     
     def _get_adaptive_thresholds(self):
         """Get current adaptive thresholds based on traffic density."""
@@ -972,48 +974,96 @@ class AdvancedIncidentDetectionSystem:
         return validated_collisions
     
     def _detect_physics_anomaly(self, vehicle_id):
-        """Detect physics anomalies for a specific vehicle."""
-        if vehicle_id not in self.acceleration_history:
+        """Enhanced physics anomaly detection specifically for collisions."""
+        if vehicle_id not in self.acceleration_history or vehicle_id not in self.velocity_history:
             return False
         
         accelerations = self.acceleration_history[vehicle_id]
-        if len(accelerations) < 3:
+        velocities = self.velocity_history[vehicle_id]
+        
+        if len(accelerations) < 3 or len(velocities) < 3:
             return False
         
-        # Look for sudden deceleration (collision indicator)
+        # Check for sudden deceleration (collision indicator)
         recent_accelerations = accelerations[-3:]
         max_deceleration = max(recent_accelerations)
         
+        # Check for sudden direction change (T-bone collision indicator)
+        if len(velocities) >= 3:
+            vel_before = np.array(velocities[-3])
+            vel_after = np.array(velocities[-1])
+            
+            # Calculate direction change
+            if np.linalg.norm(vel_before) > 0 and np.linalg.norm(vel_after) > 0:
+                dot_product = np.dot(vel_before, vel_after)
+                magnitude_product = np.linalg.norm(vel_before) * np.linalg.norm(vel_after)
+                
+                if magnitude_product > 0:
+                    cos_angle = np.clip(dot_product / magnitude_product, -1, 1)
+                    direction_change = math.degrees(math.acos(abs(cos_angle)))
+                    
+                    # Sudden direction change indicates collision
+                    if direction_change > 45:  # Significant direction change
+                        return True
+        
+        # Check for acceleration spike followed by deceleration (impact pattern)
+        if len(accelerations) >= 4:
+            accel_pattern = accelerations[-4:]
+            # Look for spike then drop pattern
+            max_accel = max(accel_pattern)
+            min_accel = min(accel_pattern)
+            
+            if max_accel > 8.0 and (max_accel - min_accel) > 6.0:
+                return True
+        
+        # Standard deceleration check
         return max_deceleration > self.config['deceleration_threshold']
     
     def _final_collision_validation(self, potential_collisions):
-        """Final validation combining all layers."""
+        """Enhanced final validation with weighted layer importance."""
         final_collisions = []
         
         for collision in potential_collisions:
             layers = collision['validation_layers']
             
-            # Count how many layers confirmed the collision
-            confirmed_layers = sum([
-                layers.get('trajectory', False),
-                layers.get('depth', False),
-                layers.get('optical_flow', False),
-                layers.get('physics', False)
-            ])
+            # Weighted scoring system - some layers are more important than others
+            trajectory_confirmed = layers.get('trajectory', False)
+            physics_confirmed = layers.get('physics', False)
+            depth_confirmed = layers.get('depth', False)
+            optical_flow_confirmed = layers.get('optical_flow', False)
             
-            # Calculate overall confidence
-            total_layers = 4
-            confidence = confirmed_layers / total_layers
+            # Core collision indicators (most important)
+            core_score = 0
+            if trajectory_confirmed:
+                core_score += 3  # Trajectory is most reliable
+            if physics_confirmed:
+                core_score += 3  # Physics anomalies are strong indicators
             
-            # Apply validation rules
-            if self.config['require_all_layers']:
-                # Require ALL layers to agree (very strict)
-                if confirmed_layers == total_layers:
-                    final_collisions.append(self._create_final_collision_incident(collision, confidence))
-            else:
-                # Require minimum number of layers to agree
-                if (confirmed_layers >= self.config['minimum_layer_agreement'] and 
-                    confidence >= self.config['collision_confidence_threshold']):
+            # Supporting indicators (less reliable but helpful)
+            support_score = 0
+            if depth_confirmed:
+                support_score += 1
+            if optical_flow_confirmed:
+                support_score += 1
+            
+            total_score = core_score + support_score
+            max_possible_score = 8  # 3+3+1+1
+            
+            # Calculate confidence based on weighted score
+            confidence = total_score / max_possible_score
+            
+            # Collision detection rules:
+            # 1. Must have trajectory detection (fundamental requirement)
+            # 2. Either physics anomaly OR strong support from other layers
+            if trajectory_confirmed:
+                if physics_confirmed:
+                    # Strong collision: trajectory + physics = high confidence
+                    final_collisions.append(self._create_final_collision_incident(collision, max(confidence, 0.8)))
+                elif support_score >= 2:
+                    # Moderate collision: trajectory + both support layers
+                    final_collisions.append(self._create_final_collision_incident(collision, max(confidence, 0.6)))
+                elif confidence >= 0.5:
+                    # Weak collision: trajectory + some support
                     final_collisions.append(self._create_final_collision_incident(collision, confidence))
         
         return final_collisions
@@ -1147,7 +1197,7 @@ class AdvancedIncidentDetectionSystem:
         return speed1 >= min_speed and speed2 >= min_speed
     
     def _are_vehicles_approaching(self, track1, track2):
-        """Check if vehicles are approaching each other."""
+        """Enhanced approach detection that differentiates collision scenarios from highway traffic."""
         pos1 = np.array(track1['center'])
         pos2 = np.array(track2['center'])
         vel1 = np.array(track1['velocity'])
@@ -1156,20 +1206,52 @@ class AdvancedIncidentDetectionSystem:
         relative_pos = pos2 - pos1
         relative_vel = vel2 - vel1
         
+        # Check distance - vehicles must be reasonably close
+        distance = np.linalg.norm(relative_pos)
+        if distance > 150:  # Too far apart for meaningful collision
+            return False
+        
+        # Calculate approach rate
         approach_rate = np.dot(relative_pos, relative_vel)
         
-        if np.linalg.norm(relative_pos) > 0 and np.linalg.norm(relative_vel) > 0:
-            cos_angle = approach_rate / (np.linalg.norm(relative_pos) * np.linalg.norm(relative_vel))
-            cos_angle = np.clip(cos_angle, -1, 1)
-            angle = math.degrees(math.acos(abs(cos_angle)))
+        # Calculate velocity vectors and angles
+        speed1 = np.linalg.norm(vel1)
+        speed2 = np.linalg.norm(vel2)
+        
+        # Skip if either vehicle is stationary (common in highway queue)
+        if speed1 < 3 or speed2 < 3:
+            return False
+        
+        # Calculate relative velocity magnitude
+        rel_vel_magnitude = np.linalg.norm(relative_vel)
+        
+        # For highway false positives: vehicles moving in same direction have low relative velocity
+        if rel_vel_magnitude < 4.0:  # Vehicles moving similar direction/speed
+            return False
+        
+        # Check for perpendicular/crossing trajectories (T-bone scenarios)
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(vel2) > 0:
+            # Calculate angle between velocity vectors
+            vel_dot_product = np.dot(vel1, vel2)
+            vel_angle = math.degrees(math.acos(np.clip(vel_dot_product / (np.linalg.norm(vel1) * np.linalg.norm(vel2)), -1, 1)))
             
-            if angle > self.config['collision_angle_threshold']:
+            # T-bone collision: vehicles moving perpendicular (60-120 degrees)
+            if 60 <= vel_angle <= 120:
+                return approach_rate < 0  # Any approach for perpendicular motion
+            
+            # Head-on collision: vehicles moving opposite directions (120-180 degrees)
+            elif vel_angle > 120:
+                return approach_rate < -3.0  # Stronger approach for head-on
+            
+            # Same direction (0-60 degrees) - likely highway traffic
+            else:
                 return False
         
-        return approach_rate < -5.0  # Much stricter approach threshold for busy roads
+        # Default: moderate approach threshold
+        return approach_rate < -2.0
     
     def _predict_basic_collision(self, track1, track2, horizon):
-        """Basic collision prediction for Layer 1."""
+        """Enhanced collision prediction with trajectory intersection analysis."""
         pos1 = np.array(track1['center'], dtype=float)
         pos2 = np.array(track2['center'], dtype=float)
         vel1 = np.array(track1['velocity'], dtype=float)
@@ -1178,6 +1260,9 @@ class AdvancedIncidentDetectionSystem:
         min_distance = float('inf')
         collision_time = None
         collision_point = None
+        
+        # Check if trajectories will actually intersect (not just get close)
+        intersection_found = False
         
         for t in range(1, horizon + 1):
             future_pos1 = pos1 + vel1 * t
@@ -1188,17 +1273,34 @@ class AdvancedIncidentDetectionSystem:
             if distance < min_distance:
                 min_distance = distance
             
+            # More strict collision criteria
             if distance < self.config['collision_distance_threshold']:
-                collision_time = t
-                collision_point = (future_pos1 + future_pos2) / 2
-                break
+                # Additional check: ensure vehicles are still moving toward each other
+                remaining_relative_pos = future_pos2 - future_pos1
+                relative_vel = vel2 - vel1
+                
+                # Check if still approaching
+                still_approaching = np.dot(remaining_relative_pos, relative_vel) < 0
+                
+                if still_approaching:
+                    collision_time = t
+                    collision_point = (future_pos1 + future_pos2) / 2
+                    intersection_found = True
+                    break
         
-        if collision_time:
+        # Additional validation: check if minimum distance is reasonable for collision
+        if collision_time and min_distance < (self.config['collision_distance_threshold'] * 1.5):
             ttc = collision_time / 30  # Convert to seconds
+            
+            # Reject very long time-to-collision (likely false positive)
+            if ttc > 2.0:
+                return None
+                
             return {
                 'ttc': ttc,
                 'collision_point': collision_point.tolist(),
-                'min_distance': min_distance
+                'min_distance': min_distance,
+                'trajectory_intersection': intersection_found
             }
         
         return None
@@ -1285,9 +1387,9 @@ class AdvancedIncidentDetectionSystem:
         return incidents
     
     def _find_best_match(self, vehicle, current_frame):
-        """Find the best matching tracked vehicle with improved busy road filtering."""
+        """Find the best matching tracked vehicle with balanced filtering."""
         best_match = None
-        min_distance = 60  # Even stricter matching for busy roads
+        min_distance = 80  # Reasonable matching distance
         
         for track_id, tracked in self.tracked_vehicles.items():
             if current_frame - tracked['last_seen'] > 3:  # Shorter tolerance
@@ -1957,14 +2059,14 @@ def main():
         'log_detections': True,
         'frame_skip': 2,
         
-        # ADVANCED MULTI-LAYER COLLISION DETECTION (Optimized for busy roads)
-        'collision_distance_threshold': 25,
+        # ADVANCED MULTI-LAYER COLLISION DETECTION (Balanced for accidents vs noise)
+        'collision_distance_threshold': 35,
         'prediction_horizon': 15,
-        'min_tracking_confidence': 0.8,
-        'min_collision_speed': 8.0,
-        'collision_angle_threshold': 20,
-        'min_trajectory_length': 15,
-        'collision_persistence': 8,
+        'min_tracking_confidence': 0.7,
+        'min_collision_speed': 6.0,
+        'collision_angle_threshold': 30,
+        'min_trajectory_length': 10,
+        'collision_persistence': 5,
         
         # DEPTH ANALYSIS SETTINGS
         'depth_analysis_enabled': True,
@@ -1982,10 +2084,10 @@ def main():
         'momentum_change_threshold': 25.0,
         'deceleration_threshold': 12.0,
         
-        # FINAL VALIDATION REQUIREMENTS (Stricter for busy roads)
-        'require_all_layers': True,
-        'minimum_layer_agreement': 4,
-        'collision_confidence_threshold': 0.9,
+        # FINAL VALIDATION REQUIREMENTS (Balanced approach)
+        'require_all_layers': False,
+        'minimum_layer_agreement': 2,
+        'collision_confidence_threshold': 0.6,
         
         # Other settings
         'stopped_vehicle_time': 10,
