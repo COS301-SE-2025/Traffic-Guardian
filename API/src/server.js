@@ -51,8 +51,9 @@ io.on('connection',(socket)=>{
       //incident Locations
       const res_incidentLocations =  traffic.incidentLocations(data);
       socket.emit('incidentLocations', res_incidentLocations);
-      
+
       io.emit('amt-active-incidents',ILM.getNumActiveIncidents());
+      io.emit('amt-critical-incidents', ILM.getNumCriticalIncidents());
     })
     
     setInterval(async()=>{
@@ -60,6 +61,7 @@ io.on('connection',(socket)=>{
       socket.emit('trafficUpdate', data);
       ILM.updateTraffic(data);
       io.emit('amt-active-incidents',ILM.getNumActiveIncidents());
+      io.emit('amt-critical-incidents', ILM.getNumCriticalIncidents());
     }, 30*60*1000); //30 min interval
     
 

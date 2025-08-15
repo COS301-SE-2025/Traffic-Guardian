@@ -196,3 +196,7 @@ socket.on('amt-users-online',(data)=>{
 socket.on('amt-active-incidents', (data)=>{
     addEvent("Active incidents = " + data);
 })
+
+socket.on('amt-critical-incidents', (data)=>{
+    addEvent("Critical incidents = " + data);
+})

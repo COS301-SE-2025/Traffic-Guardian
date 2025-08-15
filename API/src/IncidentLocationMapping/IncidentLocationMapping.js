@@ -152,7 +152,10 @@ class ILM{
     getNumCriticalIncidents(){
         var sum = 0;
         this.regions.forEach((rValue, rKey)=>{
-            
+            const regionsIncidents = rValue.incidents;
+            regionsIncidents.forEach((inc)=>{
+                if(inc.properties.magnitudeOfDelay >= 4 ) sum += 1
+            })
         })
         return sum;
     }
