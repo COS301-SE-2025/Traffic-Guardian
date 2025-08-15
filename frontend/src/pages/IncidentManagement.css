@@ -4,7 +4,7 @@
   padding: 2rem;
   min-height: 100vh;
   color: #fff;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
 
   /* background-color: #121212; */
 }
@@ -21,10 +21,9 @@
 .header-container h2 {
   position: absolute;
   left: 50%;
-  transform: translateX(-50%); 
-  margin: 0; 
+  transform: translateX(-50%);
+  margin: 0;
 }
-
 
 .incident-management-page h2 {
   color: #000;
@@ -33,12 +32,11 @@
   text-align: center;
 }
 
-
 .back-button {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 10px;
-  background: #FFAE36;
+  background: #ffae36;
   color: black;
   font-weight: bold;
   font-size: 0.9rem;
@@ -102,7 +100,7 @@
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 10px;
-  background: #FFAE36;
+  background: #ffae36;
   color: black;
   font-weight: bold;
   font-size: 0.9rem;
@@ -164,7 +162,6 @@
     font-size: 0.85rem;
     padding: 0.4rem;
   }
-
 
   .back-button {
     width: 100%;
