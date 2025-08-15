@@ -169,6 +169,9 @@ interface Notification {
   timestamp: Date;
 }
 
+/** Minimal type for the 'newAlert' socket payload to avoid implicit any */
+type NewAlertPayload = { Incident_Location: string; [key: string]: unknown };
+
 const Dashboard: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -280,7 +283,8 @@ const Dashboard: React.FC = () => {
       });
     });
 
-    newSocket.on('connect_error', (error) => {
+    // Typed: error is an Error
+    newSocket.on('connect_error', (error: Error) => {
       console.error('Socket.IO connection error:', error);
       addNotification({
         title: 'Connection Error',
@@ -322,7 +326,8 @@ const Dashboard: React.FC = () => {
       setIncidentLocations(data);
     });
 
-    newSocket.on('newAlert', (incident) => {
+    // Typed: incident payload for newAlert
+    newSocket.on('newAlert', (incident: NewAlertPayload) => {
       console.log('Received new incident alert:', incident);
       addNotification({
         title: 'New Incident',
@@ -828,6 +833,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
-
-  
