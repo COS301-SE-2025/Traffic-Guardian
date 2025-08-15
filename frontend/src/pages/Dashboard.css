@@ -513,4 +513,53 @@ body {
   color: var(--user-sub-stat-color);
 }
 
+.user-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background-color: var(--timeline-item-bg);
+  border-radius: 4px;
+}
+
+.timeline-action {
+  font-size: 0.8rem;
+  width: 20px;
+  text-align: center;
+}
+
+.timeline-action.connect {
+  color: var(--timeline-action-connect);
+}
+
+.timeline-action.disconnect {
+  color: var(--timeline-action-disconnect);
+}
+
+.timeline-text {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--timeline-text-color);
+}
+
+.timeline-time {
+  font-size: 0.7rem;
+  color: var(--timeline-time-color);
+}
+
+.timeline-empty {
+  text-align: center;
+  color: var(--subtitle-color);
+  font-size: 0.9rem;
+  padding: 1rem;
+}
+
 
