@@ -1,10 +1,14 @@
 # API Usage Instructions
 
-run:
+## Run the API
+```bash
 cd API
 npm install
 npm run dev
-
-unit tests:
+```
+## Run the testing
+```bash
+cd API
 npm install
 npm test
+```
