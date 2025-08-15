@@ -4,8 +4,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios');
 const FormData = require('form-data');
-const weather = require('../src/Weather/weather');
 const traffic = require('../src/Traffic/traffic');
+const ILM = require('../src/IncidentLocationMapping/ilmInstance');
 
 const server = http.createServer(app);
 
@@ -23,28 +23,21 @@ const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
-var connectedUsers = [];
 
 io.on('connection',(socket)=>{
-  connectedUsers.push(socket);
+  ILM.addUser(socket.id, {});
   console.log(socket.id + ' connected');
-  console.log('Number of users connected' + connectedUsers.length);
+  ILM.showUsers();
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
     
-    //weather prt
-    weather.getWeather().then((data)=>{
-      socket.emit('weatherUpdate', data);
-    })
-    setInterval(async()=>{
-      const weatherD = await weather.getWeather();
-      socket.emit('weatherUpdate',weatherD);
-    }, 60*60*1000); //1hr interval
-
     //traffic prt
     traffic.getTraffic().then((data)=>{
       socket.emit('trafficUpdate', data);
+
+      //update regions Traffic
+      ILM.updateTraffic(data);
 
       //critical incidents
       const res = traffic.criticalIncidents(data);
@@ -58,15 +51,28 @@ io.on('connection',(socket)=>{
       const res_incidentLocations =  traffic.incidentLocations(data);
       socket.emit('incidentLocations', res_incidentLocations);
     })
+    
     setInterval(async()=>{
       const data = await traffic.getTraffic();
       socket.emit('trafficUpdate', data);
+      ILM.updateTraffic(data);
     }, 30*60*1000); //30 min interval
+    
 
 
+    //update users location
+    socket.on('new-location', async (newLocation)=>{
+     ILM.updateUserLocation(socket.id, newLocation);
+     const notifiedUsers = ILM.notifyUsers();
+     notifiedUsers.forEach((notificationData)=>{
+      io.to(notificationData.userID).emit('new-traffic', notificationData.notification);
+      //console.log(notificationData.notification.incidents.length);
+     })
+    });
 
-  io.on('disconnect',()=>{
-    console.log(socket.id + ' disconnected');
+
+  socket.on('disconnect',()=>{
+    ILM.removeUser(socket.id);
   })
 });
 
@@ -103,5 +109,5 @@ db.query('SELECT NOW()')
 
 
   module.exports = {
-    io
+    io,
   };
