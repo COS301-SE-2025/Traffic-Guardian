@@ -10,7 +10,9 @@ const incidentController = {
         Incidents_Latitude, 
         Incident_Severity, 
         Incident_Status, 
-        Incident_Reporter
+        Incident_Reporter,
+        Incident_CameraID,
+        Incident_Description
       } = req.body;
       
       // Validate required fields
@@ -45,7 +47,9 @@ const incidentController = {
         Incidents_Latitude: Incidents_Latitude ? parseFloat(Incidents_Latitude) : null,
         Incident_Severity: Incident_Severity || 'medium',
         Incident_Status,
-        Incident_Reporter: Incident_Reporter || (req.user ? req.user.User_Email : null)
+        Incident_Reporter: Incident_Reporter || (req.user ? req.user.User_Email : null),
+        Incident_CameraID: Incident_CameraID ? parseInt(Incident_CameraID) : null,
+        Incident_Description: Incident_Description || null
       });
       
       const io = req.app.get('io');
@@ -85,7 +89,9 @@ const incidentController = {
         Incidents_Latitude, 
         Incident_Severity, 
         Incident_Status, 
-        Incident_Reporter 
+        Incident_Reporter,
+        Incident_CameraID,
+        Incident_Description
       } = req.body;
       
       const existingIncident = await incidentModel.getIncidentById(Incidents_ID);
@@ -107,7 +113,9 @@ const incidentController = {
         Incidents_DateTime: Incidents_DateTime || undefined,
         Incident_Severity: Incident_Severity || undefined,
         Incident_Status: Incident_Status || undefined,
-        Incident_Reporter: Incident_Reporter || undefined
+        Incident_Reporter: Incident_Reporter || undefined,
+        Incident_CameraID: Incident_CameraID ? parseInt(Incident_CameraID) : undefined,
+        Incident_Description: Incident_Description || undefined
       };
 
       // Only add coordinates if they exist and can be parsed

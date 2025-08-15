@@ -23,7 +23,7 @@
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 3px solid rgba(59, 130, 246, 0.1);
+  border: 3px solid rgb(59 130 246 / 10%);
   border-top-color: #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -53,7 +53,7 @@
 
 .analytics-title p {
   font-size: 1rem;
-  opacity: 0.7;
+  opacity: 70%;
   margin: 0;
 }
 
@@ -61,21 +61,21 @@
   display: inline-flex;
   gap: 0.5rem;
   align-items: center;
-  background: #ffffff;
+  background: #fff;
   padding: 0.375rem 0.625rem;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
 }
 
 .light-mode .date-range-selector {
-  background: #ffffff;
+  background: #fff;
   border-color: #e5e7eb;
 }
 
 .dark-mode .date-range-selector {
-  background: rgba(31, 41, 55, 0.8);
-  border-color: rgba(55, 65, 81, 1);
+  background: rgb(31 41 55 / 80%);
+  border-color: rgb(55 65 81 / 100%);
 }
 
 .date-input-group {
@@ -101,7 +101,7 @@
 .date-input-group svg {
   width: 14px;
   height: 14px;
-  opacity: 0.6;
+  opacity: 60%;
   flex-shrink: 0;
 }
 
@@ -109,7 +109,7 @@
   padding: 0.375rem 0.5rem;
   border-radius: 6px;
   border: 1px solid #e5e7eb;
-  background: #ffffff;
+  background: #fff;
   font-size: 0.813rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -129,7 +129,7 @@
 }
 
 .date-input-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgb(0 0 0 / 5%);
 }
 
 input[type="date"]::-webkit-datetime-edit {
@@ -152,15 +152,15 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .light-mode .date-input-group input[type="date"] {
-  background: #ffffff;
+  background: #fff;
   border-color: #e5e7eb;
   color: #374151;
 }
 
 .dark-mode .date-input-group input[type="date"] {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
   color: #e5e7eb;
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgb(255 255 255 / 20%);
 }
 
 .date-input-group input[type="date"]:hover {
@@ -170,7 +170,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 .date-input-group input[type="date"]:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 10%);
 }
 
 .summary-cards {
@@ -181,25 +181,25 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .summary-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgb(255 255 255 / 90%);
   border-radius: 16px;
   padding: 1.5rem;
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
   transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid rgb(0 0 0 / 5%);
 }
 
 .dark-mode .summary-card {
-  background: rgba(31, 41, 55, 0.8);
-  border-color: rgba(255, 255, 255, 0.05);
+  background: rgb(31 41 55 / 80%);
+  border-color: rgb(255 255 255 / 5%);
 }
 
 .summary-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
 
 .card-icon {
@@ -242,7 +242,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0;
-  opacity: 0.7;
+  opacity: 70%;
   margin-bottom: 0.5rem;
 }
 
@@ -274,7 +274,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 .card-subtitle {
   font-size: 0.875rem;
-  opacity: 0.7;
+  opacity: 70%;
 }
 
 .charts-grid {
@@ -285,16 +285,16 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .chart-container {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgb(255 255 255 / 90%);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+  border: 1px solid rgb(0 0 0 / 5%);
 }
 
 .dark-mode .chart-container {
-  background: rgba(31, 41, 55, 0.8);
-  border-color: rgba(255, 255, 255, 0.05);
+  background: rgb(31 41 55 / 80%);
+  border-color: rgb(255 255 255 / 5%);
 }
 
 .chart-container.full-width {
@@ -308,7 +308,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 .chart-container h2 {
   font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 1rem 0;
+  margin: 0 0 1rem;
 }
 
 .radar-chart-wrapper {
@@ -329,17 +329,17 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.02);
+  background: rgb(0 0 0 / 2%);
   border-radius: 8px;
   transition: background 0.2s ease;
 }
 
 .dark-mode .location-item {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgb(255 255 255 / 2%);
 }
 
 .location-item:hover {
-  background: rgba(59, 130, 246, 0.05);
+  background: rgb(59 130 246 / 5%);
 }
 
 .location-info {
@@ -366,7 +366,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .incident-count {
-  opacity: 0.7;
+  opacity: 70%;
 }
 
 .severity-indicator {
@@ -377,37 +377,37 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .severity-indicator.severity-high {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgb(239 68 68 / 10%);
   color: #ef4444;
 }
 
 .severity-indicator.severity-medium {
-  background: rgba(245, 158, 11, 0.1);
+  background: rgb(245 158 11 / 10%);
   color: #f59e0b;
 }
 
 .severity-indicator.severity-low {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgb(16 185 129 / 10%);
   color: #10b981;
 }
 
 .trends-table-container {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgb(255 255 255 / 90%);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+  border: 1px solid rgb(0 0 0 / 5%);
 }
 
 .dark-mode .trends-table-container {
-  background: rgba(31, 41, 55, 0.8);
-  border-color: rgba(255, 255, 255, 0.05);
+  background: rgb(31 41 55 / 80%);
+  border-color: rgb(255 255 255 / 5%);
 }
 
 .trends-table-container h2 {
   font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 1rem 0;
+  margin: 0 0 1rem;
 }
 
 .trends-table {
@@ -418,40 +418,40 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   text-align: left;
   padding: 0.75rem;
   font-weight: 600;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 2px solid rgb(0 0 0 / 10%);
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .dark-mode .trends-table th {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgb(255 255 255 / 10%);
 }
 
 .trends-table td {
   padding: 0.75rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgb(0 0 0 / 5%);
 }
 
 .dark-mode .trends-table td {
-  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-bottom-color: rgb(255 255 255 / 5%);
 }
 
 .trends-table tr:hover {
-  background: rgba(59, 130, 246, 0.02);
+  background: rgb(59 130 246 / 2%);
 }
 
 .percentage-bar {
   position: relative;
   width: 100%;
   height: 24px;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgb(0 0 0 / 5%);
   border-radius: 12px;
   overflow: hidden;
 }
 
 .dark-mode .percentage-bar {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
 }
 
 .percentage-fill {
@@ -489,17 +489,17 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .trend-indicator.up {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgb(16 185 129 / 10%);
   color: #10b981;
 }
 
 .trend-indicator.down {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgb(239 68 68 / 10%);
   color: #ef4444;
 }
 
 .trend-indicator.stable {
-  background: rgba(107, 114, 128, 0.1);
+  background: rgb(107 114 128 / 10%);
   color: #6b7280;
 }
 
@@ -575,28 +575,28 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .analytics-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgb(0 0 0 / 5%);
 }
 
 .dark-mode .analytics-container::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
 }
 
 .analytics-container::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgb(0 0 0 / 20%);
   border-radius: 5px;
 }
 
 .dark-mode .analytics-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgb(255 255 255 / 20%);
 }
 
 .analytics-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgb(0 0 0 / 30%);
 }
 
 .dark-mode .analytics-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgb(255 255 255 / 30%);
 }
 
 .recharts-polar-angle-axis .recharts-text {
@@ -629,7 +629,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   margin: 0 auto;
 }
 
-@media screen and (-webkit-min-device-pixel-ratio: 0) {
+@media screen and (min-device-pixel-ratio: 0) {
   input[type="date"]::-webkit-calendar-picker-indicator {
     zoom: 1.5;
   }

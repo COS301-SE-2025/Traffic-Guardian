@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import HlsPlayer from 'react-hls-player';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './LiveFeed.css';
+import { useLiveFeed, CameraFeed } from '../contexts/LiveFeedContext';
+import CarLoadingAnimation from '../components/CarLoadingAnimation';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from 'react-router-dom';
 
-// Fix for default markers in react-leaflet
+
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -13,77 +18,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-interface CalTransCameraData {
-  data: Array<{
-    cctv: {
-      index: string;
-      recordTimestamp: {
-        recordDate: string;
-        recordTime: string;
-      };
-      location: {
-        district: string;
-        locationName: string;
-        nearbyPlace: string;
-        longitude: string;
-        latitude: string;
-        elevation: string;
-        direction: string;
-        county: string;
-        route: string;
-        routeSuffix: string;
-        postmilePrefix: string;
-        postmile: string;
-        alignment: string;
-        milepost: string;
-      };
-      inService: string;
-      imageData: {
-        imageDescription: string;
-        streamingVideoURL: string;
-        static: {
-          currentImageUpdateFrequency: string;
-          currentImageURL: string;
-          referenceImageUpdateFrequency: string;
-          referenceImage1UpdateAgoURL: string;
-          referenceImage2UpdatesAgoURL: string;
-          referenceImage3UpdatesAgoURL: string;
-          referenceImage4UpdatesAgoURL: string;
-          referenceImage5UpdatesAgoURL: string;
-          referenceImage6UpdatesAgoURL: string;
-          referenceImage7UpdatesAgoURL: string;
-          referenceImage8UpdatesAgoURL: string;
-          referenceImage9UpdatesAgoURL: string;
-          referenceImage10UpdatesAgoURL: string;
-          referenceImage11UpdatesAgoURL: string;
-          referenceImage12UpdatesAgoURL: string;
-        };
-      };
-    };
-  }>;
-}
-
-interface CameraFeed {
-  id: string;
-  location: string;
-  status: 'Online' | 'Offline' | 'Loading';
-  image: string;
-  videoUrl?: string;
-  district: string;
-  route: string;
-  lastUpdate: string;
-  direction?: string;
-  county?: string;
-  milepost?: string;
-  imageDescription?: string;
-  updateFrequency?: string;
-  historicalImages?: string[];
-  hasLiveStream: boolean;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
-}
+// CameraFeed interface now imported from context
 
 // Map component to handle center changes
 const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
@@ -97,213 +32,86 @@ const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
 };
 
 const LiveFeed: React.FC = () => {
-  const [cameraFeeds, setCameraFeeds] = useState<CameraFeed[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedDistricts] = useState([12]); 
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
+  // Use context for camera feeds data
+  const { 
+    cameraFeeds, 
+    loading, 
+    error, 
+    lastRefresh, 
+    refreshFeeds, 
+    setCameraStatus
+  } = useLiveFeed();
+
   const [selectedCamera, setSelectedCamera] = useState<CameraFeed | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [timelapseImages, setTimelapseImages] = useState<string[]>([]);
   const [currentTimelapseIndex, setCurrentTimelapseIndex] = useState(0);
   const [isPlayingTimelapse, setIsPlayingTimelapse] = useState(false);
   const [timelapseInterval, setTimelapseInterval] = useState<NodeJS.Timeout | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'video' | 'images' | 'map'>('video');
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [progressiveLoading, setProgressiveLoading] = useState(false);
+  const [showIncidentForm, setShowIncidentForm] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Add refs for HLS players
   const modalPlayerRef = useRef<any>(null);
   const gridPlayerRefs = useRef<{ [key: string]: any }>({});
 
-  const convertToHttps = useCallback((originalUrl: string): string => {
-    if (originalUrl && originalUrl.startsWith('http://cwwp2.dot.ca.gov')) {
-      return originalUrl.replace('http://cwwp2.dot.ca.gov', 'https://caltrans.blinktag.com/api');
-    }
-    return originalUrl;
-  }, []);
+  // Incident form state
+  const [incidentForm, setIncidentForm] = useState({
+    severity: 'medium' as 'high' | 'medium' | 'low',
+    description: ''
+  });
 
-  const parseCoordinates = useCallback((lat: string, lng: string): { lat: number; lng: number } | null => {
-    const latitude = parseFloat(lat);
-    const longitude = parseFloat(lng);
-    
-    if (isNaN(latitude) || isNaN(longitude)) {
-      return null;
-    }
-    
-    // Validate coordinates are within reasonable bounds for California
-    if (latitude < 32 || latitude > 42 || longitude < -125 || longitude > -114) {
-      return null;
-    }
-    
-    return { lat: latitude, lng: longitude };
-  }, []);
-
-  const processDistrictData = useCallback((data: CalTransCameraData, district: number): CameraFeed[] => {
-    if (!data?.data || !Array.isArray(data.data)) return [];
-
-    const validCameras = data.data.filter((item) => 
-      item.cctv.inService === 'true' && 
-      ((item.cctv.imageData.streamingVideoURL && item.cctv.imageData.streamingVideoURL !== 'Not Reported') ||
-       (item.cctv.imageData.static.currentImageURL && item.cctv.imageData.static.currentImageURL !== 'Not Reported'))
-    );
-
-    return validCameras
-      .slice(0, 10) // Get more cameras since we're only using one district
-      .map((item) => {
-        const camera = item.cctv;
-        const location = camera.location;
-        const imageData = camera.imageData;
-        
-        const historicalImages = [
-          imageData.static.referenceImage1UpdateAgoURL,
-          imageData.static.referenceImage2UpdatesAgoURL,
-          imageData.static.referenceImage3UpdatesAgoURL,
-          imageData.static.referenceImage4UpdatesAgoURL,
-          imageData.static.referenceImage5UpdatesAgoURL,
-          imageData.static.referenceImage6UpdatesAgoURL,
-        ].filter(url => url && url !== 'Not Reported')
-         .map(url => convertToHttps(url))
-         .slice(0, 6);
-        
-        const httpsImageUrl = convertToHttps(imageData.static.currentImageURL);
-        const videoUrl = imageData.streamingVideoURL && imageData.streamingVideoURL !== 'Not Reported' 
-          ? convertToHttps(imageData.streamingVideoURL) 
-          : undefined;
-        
-        const coordinates = parseCoordinates(location.latitude, location.longitude) || undefined;
-        
-        return {
-          id: `CALTRANS-D${district}-${camera.index}`,
-          location: location.locationName || location.nearbyPlace || `District ${district} Camera`,
-          status: 'Loading' as const,
-          image: httpsImageUrl,
-          videoUrl,
-          district: `District ${district}`,
-          route: location.route || 'Unknown Route',
-          lastUpdate: new Date().toLocaleTimeString(),
-          direction: location.direction,
-          county: location.county,
-          milepost: location.milepost,
-          imageDescription: imageData.imageDescription,
-          updateFrequency: imageData.static.currentImageUpdateFrequency || 'Unknown',
-          historicalImages,
-          hasLiveStream: !!videoUrl,
-          coordinates,
-        };
-      });
-  }, [convertToHttps, parseCoordinates]);
-
-  const fetchDistrictData = useCallback(async (district: number): Promise<CameraFeed[]> => {
-    try {
-      const url = `https://cwwp2.dot.ca.gov/data/d${district}/cctv/cctvStatusD${district.toString().padStart(2, '0')}.json`;
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch District ${district} cameras: ${response.status}`);
-        return [];
-      }
-
-      const data: CalTransCameraData = await response.json();
-      return processDistrictData(data, district);
-    } catch (error) {
-      console.error(`Error fetching District ${district}:`, error);
-      return [];
-    }
-  }, [processDistrictData]);
-
-  const fetchCameraData = useCallback(async () => {
-    try {
-      setError(null);
-      setLoadingProgress(0);
-      setProgressiveLoading(true);
-      
-      // Clear existing feeds for fresh start
-      if (!progressiveLoading) {
-        setCameraFeeds([]);
-      }
-      
-      // Load (District 12) cameras
-      try {
-        const orangeCountyCameras = await fetchDistrictData(12);
-        if (orangeCountyCameras.length > 0) {
-          setCameraFeeds(orangeCountyCameras);
-        }
-        setLoadingProgress(100);
-      } catch (error) {
-        console.error(`Error fetching District 12:`, error);
-        setError('Failed to load camera feeds. Please try again later.');
-      }
-      
-      // Final check
-      setCameraFeeds(prevFeeds => {
-        if (prevFeeds.length === 0) {
-          setError('No camera feeds available at this time.');
-        }
-        return prevFeeds;
-      });
-      setLastRefresh(new Date());
-    } catch (err) {
-      console.error('Error fetching camera data:', err);
-      setError('Failed to load camera feeds. Please try again later.');
-    } finally {
-      setLoading(false);
-      setProgressiveLoading(false);
-    }
-  }, [selectedDistricts, fetchDistrictData, progressiveLoading]);
-
+  // Check user role on component mount
   useEffect(() => {
-    fetchCameraData();
-    const interval = setInterval(fetchCameraData, 15 * 60 * 1000); // Refresh every 15 minutes
-    setRefreshInterval(interval);
-
-    return () => {
-      if (refreshInterval) clearInterval(refreshInterval);
-      if (interval) clearInterval(interval);
+    const fetchUserRole = async () => {
+      try {
+        const apiKey = sessionStorage.getItem('apiKey');
+        if (!apiKey) return;
+        
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/profile`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey,
+          }
+        });
+        
+        if (response.ok) {
+          const userResponse = await response.json();
+          setUserRole(userResponse.User_Role || 'user');
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+      }
     };
-  }, [fetchCameraData]);
+    
+    fetchUserRole();
+  }, []);
 
+  // Refresh handler using context
   const handleRefresh = useCallback(() => {
-    setLoading(true);
-    setLoadingProgress(0);
-    setCameraFeeds([]); // Clear existing feeds when manually refreshing
-    fetchCameraData();
-  }, [fetchCameraData]);
+    refreshFeeds();
+  }, [refreshFeeds]);
 
   const handleImageError = useCallback((feedId: string) => {
-    setCameraFeeds(prevFeeds =>
-      prevFeeds.map(feed =>
-        feed.id === feedId ? { ...feed, status: 'Offline' as const } : feed
-      )
-    );
-  }, []);
+    setCameraStatus(feedId, 'Offline');
+  }, [setCameraStatus]);
 
   const handleImageLoad = useCallback((feedId: string) => {
-    setCameraFeeds(prevFeeds =>
-      prevFeeds.map(feed =>
-        feed.id === feedId ? { ...feed, status: 'Online' as const } : feed
-      )
-    );
-  }, []);
+    setCameraStatus(feedId, 'Online');
+  }, [setCameraStatus]);
 
   const handleVideoError = useCallback((feedId: string) => {
-    setCameraFeeds(prevFeeds =>
-      prevFeeds.map(feed =>
-        feed.id === feedId ? { ...feed, status: 'Offline', hasLiveStream: false } : feed
-      )
-    );
-  }, []);
+    setCameraStatus(feedId, 'Offline');
+  }, [setCameraStatus]);
+
+  const handleVideoLoadStart = useCallback((feedId: string) => {
+    // Set a timeout to mark as Online if no error occurs within 3 seconds
+    setTimeout(() => {
+      setCameraStatus(feedId, 'Online');
+    }, 3000);
+  }, [setCameraStatus]);
 
   const handleCameraClick = useCallback((camera: CameraFeed) => {
     setSelectedCamera(camera);
@@ -335,6 +143,8 @@ const LiveFeed: React.FC = () => {
     setTimelapseImages([]);
     setCurrentTimelapseIndex(0);
     setViewMode('video');
+    setShowIncidentForm(false);
+    setIncidentForm({ severity: 'medium', description: '' });
     if (timelapseInterval) {
       clearInterval(timelapseInterval);
       setTimelapseInterval(null);
@@ -408,38 +218,117 @@ const LiveFeed: React.FC = () => {
     }), []
   );
 
+  // API request helper
+  const apiRequest = useCallback(async (endpoint: string, options: RequestInit = {}) => {
+    const apiKey = sessionStorage.getItem('apiKey');
+    if (!apiKey) {
+      throw new Error('No API key found. Please log in.');
+    }
+
+    const url = `${process.env.REACT_APP_API_URL}${endpoint}`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-API-Key': apiKey,
+      ...options.headers,
+    };
+
+    try {
+      const response = await fetch(url, { ...options, headers });
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthorized: Invalid or missing API key');
+        }
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error: any) {
+      if (error.message.includes('Unauthorized') || error.message.includes('API key')) {
+        navigate('/account');
+      }
+      throw error;
+    }
+  }, [navigate]);
+
+  // Handle incident reporting
+  const handleReportIncident = useCallback(async () => {
+    if (!selectedCamera || !userRole || userRole !== 'admin') {
+      toast.error('Only administrators can report incidents');
+      return;
+    }
+
+    if (!incidentForm.description.trim()) {
+      toast.error('Please provide a description of the incident');
+      return;
+    }
+
+    try {
+      const currentUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const reporterName = currentUser.User_FirstName ? 
+        `${currentUser.User_FirstName} ${currentUser.User_LastName || ''}`.trim() : 
+        currentUser.User_Email || 'Admin User';
+
+      // Look up the database Camera_ID using the external ID
+      let databaseCameraID = null;
+      try {
+        const cameraResponse = await apiRequest(`/api/cameras/external/${encodeURIComponent(selectedCamera.id)}`);
+        console.log('Full camera response:', cameraResponse);
+        databaseCameraID = cameraResponse.Camera_ID;
+        console.log(`Mapped external ID ${selectedCamera.id} to database Camera_ID ${databaseCameraID}`);
+      } catch (cameraError) {
+        console.warn('Could not find camera in database:', selectedCamera.id, cameraError);
+        toast.warning('Camera not found in database, but incident will still be reported');
+      }
+
+      const apiPayload = {
+        Incidents_DateTime: new Date().toISOString(),
+        Incidents_Latitude: selectedCamera.coordinates?.lat || null,
+        Incidents_Longitude: selectedCamera.coordinates?.lng || null,
+        Incident_Severity: incidentForm.severity,
+        Incident_Status: 'open',
+        Incident_Reporter: reporterName,
+        Incident_CameraID: databaseCameraID,
+        Incident_Description: `${incidentForm.description}\n\nCamera: ${selectedCamera.location} (${selectedCamera.id})\nImage: ${selectedCamera.image}`
+      };
+      
+      console.log('Incident API payload:', apiPayload);
+
+      await apiRequest('/api/incidents', {
+        method: 'POST',
+        body: JSON.stringify(apiPayload)
+      });
+
+      toast.success('Incident reported successfully! All users have been alerted.', {
+        autoClose: 5000,
+      });
+
+      // Reset form and close modal
+      setIncidentForm({ severity: 'medium', description: '' });
+      setShowIncidentForm(false);
+      closeVideoModal();
+      
+    } catch (error: any) {
+      toast.error(`Failed to report incident: ${error.message}`);
+    }
+  }, [selectedCamera, userRole, incidentForm, apiRequest, closeVideoModal]);
+
+  // Handle showing incident form
+  const handleShowIncidentForm = useCallback(() => {
+    if (!userRole || userRole !== 'admin') {
+      toast.error('Only administrators can report incidents');
+      return;
+    }
+    setShowIncidentForm(true);
+  }, [userRole]);
+
   if (loading && cameraFeeds.length === 0) {
-    return (
-      <div className="livefeed-page" data-cy="livefeed-page">
-        <div className="livefeed-header">
-          <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
-          <div className="livefeed-subtitle" data-cy="livefeed-subtitle">
-            Loading highway cameras...
-          </div>
-        </div>
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <div className="loading-progress">
-            <div className="progress-bar">
-              <div 
-                className="progress-fill" 
-                style={{ width: `${loadingProgress}%` }}
-              ></div>
-            </div>
-            <div className="progress-text">
-              {Math.round(loadingProgress)}% loaded • Loading District 12
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <CarLoadingAnimation />;
   }
 
   if (error && cameraFeeds.length === 0) {
     return (
       <div className="livefeed-page" data-cy="livefeed-page">
         <div className="livefeed-header">
-          <h2 data-cy="livefeed-title"> Live Camera Feeds</h2>
+          <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
           <div className="livefeed-subtitle" data-cy="livefeed-subtitle">
             Real-time traffic monitoring
           </div>
@@ -457,7 +346,7 @@ const LiveFeed: React.FC = () => {
   return (
     <div className="livefeed-page" data-cy="livefeed-page">
       <div className="livefeed-header">
-        <h2 data-cy="livefeed-title"> Live Camera Feeds</h2>
+        <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
         <div className="livefeed-controls">
           <button 
             onClick={handleRefresh} 
@@ -468,9 +357,6 @@ const LiveFeed: React.FC = () => {
           </button>
           <div className="feed-info">
             Showing {cameraFeeds.length} cameras from District 12
-            {progressiveLoading && (
-              <span className="loading-more"> • Loading more...</span>
-            )}
           </div>
           <div className="last-refresh">
             Last refreshed: {lastRefresh.toLocaleTimeString()}
@@ -481,7 +367,6 @@ const LiveFeed: React.FC = () => {
       {error && (
         <div className="error-banner">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="close-error">×</button>
         </div>
       )}
 
@@ -520,6 +405,7 @@ const LiveFeed: React.FC = () => {
                   playerRef={getGridPlayerRef(feed.id)}
                   onError={() => handleVideoError(feed.id)}
                   onLoad={() => handleImageLoad(feed.id)}
+                  onLoadStart={() => handleVideoLoadStart(feed.id)}
                   preload="metadata" 
                 />
               ) : (
@@ -632,16 +518,16 @@ const LiveFeed: React.FC = () => {
               {viewMode === 'video' && selectedCamera.hasLiveStream && selectedCamera.videoUrl ? (
                 <div className="video-container">
                   <HlsPlayer
-  src={selectedCamera.videoUrl}
-  autoPlay={true}
-  controls={true}
-  width="100%"
-  height="auto"
-  className="camera-video"
-  playerRef={modalPlayerRef}
-  onError={() => handleVideoError(selectedCamera.id)}
-  poster={selectedCamera.image}  // Show still image while video loads
-/>
+                    src={selectedCamera.videoUrl}
+                    autoPlay={true}
+                    controls={true}
+                    width="100%"
+                    height="auto"
+                    className="camera-video"
+                    playerRef={modalPlayerRef}
+                    onError={() => handleVideoError(selectedCamera.id)}
+                    poster={selectedCamera.image}  // Show still image while video loads
+                  />
                 </div>
               ) : viewMode === 'map' && selectedCamera.coordinates ? (
                 <div className="map-container">
@@ -749,10 +635,137 @@ const LiveFeed: React.FC = () => {
                   <p><strong>Coordinates:</strong> {selectedCamera.coordinates.lat.toFixed(6)}, {selectedCamera.coordinates.lng.toFixed(6)}</p>
                 )}
               </div>
+              
+              {userRole === 'admin' && (
+                <div className="incident-reporting-section">
+                  <div className="incident-actions">
+                    {!showIncidentForm ? (
+                      <button 
+                        className="report-incident-btn"
+                        onClick={handleShowIncidentForm}
+                        style={{
+                          backgroundColor: '#ff4444',
+                          color: 'white',
+                          border: 'none',
+                          padding: '10px 20px',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          marginTop: '10px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                         Report Incident
+                      </button>
+                    ) : (
+                      <div className="incident-form" style={{
+                        marginTop: '15px',
+                        padding: '15px',
+                        border: '2px solid #ff4444',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(255, 68, 68, 0.05)'
+                      }}>
+                        <h4 style={{ color: '#ff4444', marginBottom: '10px' }}>Report Incident</h4>
+                        
+                        <div style={{ marginBottom: '10px' }}>
+                          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Severity:</label>
+                          <select 
+                            value={incidentForm.severity}
+                            onChange={(e) => setIncidentForm(prev => ({ 
+                              ...prev, 
+                              severity: e.target.value as 'high' | 'medium' | 'low' 
+                            }))}
+                            style={{
+                              width: '100%',
+                              padding: '8px',
+                              borderRadius: '4px',
+                              border: '1px solid #ccc'
+                            }}
+                          >
+                            <option value="low">Low - Minor disruption</option>
+                            <option value="medium">Medium - Moderate impact</option>
+                            <option value="high">High - Critical incident</option>
+                          </select>
+                        </div>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Description:</label>
+                          <textarea
+                            value={incidentForm.description}
+                            onChange={(e) => setIncidentForm(prev => ({ 
+                              ...prev, 
+                              description: e.target.value 
+                            }))}
+                            placeholder="Describe what you see in the camera feed..."
+                            rows={3}
+                            style={{
+                              width: '100%',
+                              padding: '8px',
+                              borderRadius: '4px',
+                              border: '1px solid #ccc',
+                              resize: 'vertical',
+                              minHeight: '60px'
+                            }}
+                            required
+                          />
+                        </div>
+                        
+                        <div className="incident-form-actions" style={{ 
+                          display: 'flex', 
+                          gap: '10px' 
+                        }}>
+                          <button 
+                            onClick={handleReportIncident}
+                            disabled={!incidentForm.description.trim()}
+                            style={{
+                              backgroundColor: '#ff4444',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 16px',
+                              borderRadius: '4px',
+                              cursor: incidentForm.description.trim() ? 'pointer' : 'not-allowed',
+                              opacity: incidentForm.description.trim() ? 1 : 0.5
+                            }}
+                          >
+                            Submit Report
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setShowIncidentForm(false);
+                              setIncidentForm({ severity: 'medium', description: '' });
+                            }}
+                            style={{
+                              backgroundColor: '#666',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 16px',
+                              borderRadius: '4px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 };
