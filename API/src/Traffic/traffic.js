@@ -170,7 +170,8 @@ module.exports = {
     incidentCategory,
     incidentLocations,
     distToLat,
-    distToLong
+    distToLong,
+    regions
 }
 
 
@@ -232,5 +233,87 @@ events =
   { location: 'Alberton', incidents: [ [Object], [Object] ] },
   { location: 'Hatfield', incidents: [ [Object], [Object] ] }
 ]
+*/
+
+/*
+Rosebank : [object Object]
+{
+  location: 'Rosebank',
+  coordinates: { latitude: '-26.1438', longitude: '28.0406' },
+  incidents: [
+    {
+      properties: {
+        iconCategory: 'Road closed',
+        magnitudeOfDelay: 4,
+        events: [
+          {
+            code: 401,
+            description: 'Closed',
+            iconCategory: 'Road closed'
+          }
+        ]
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [ 28.0815629307, -26.1278244561 ],
+          [ 28.081733251, -26.1277869044 ],
+          [ 28.0831145887, -26.127493188 ],
+          [ 28.0840761606, -26.1272879699 ],
+          [ 28.0844288711, -26.1272169299 ]
+        ]
+      }
+    },
+    {
+      properties: {
+        iconCategory: 'Road works',
+        magnitudeOfDelay: 0,
+        events: [
+          {
+            code: 701,
+            description: 'Roadworks',
+            iconCategory: 'Road works'
+          },
+          {
+            code: 810,
+            description: 'New roadworks layout',
+            iconCategory: 9
+          }
+        ]
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [ 28.0848526601, -26.1311302372 ],
+          [ 28.0848419313, -26.1311315918 ],
+          [ 28.0844127778, -26.1311785488 ],
+          [ 28.0843189005, -26.1311999956 ]
+        ]
+      }
+    },
+    {
+      properties: {
+        iconCategory: 'Jam',
+        magnitudeOfDelay: 3,
+        events: [
+          {
+            code: 101,
+            description: 'Stationary traffic',
+            iconCategory: 'Jam'
+          }
+        ]
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [ 28.0848566834, -26.1605768997 ],
+          [ 28.0860878173, -26.1607713763 ],
+          [ 28.0867690984, -26.160878658 ]
+        ]
+      }
+    }
+  ]
+}
+}
 */
 
