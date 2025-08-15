@@ -469,4 +469,48 @@ body {
   gap: 1.5rem;
 }
 
+.user-card {
+  background-color: var(--user-card-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid var(--user-card-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--user-card-hover-shadow);
+}
+
+.user-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.user-stat-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--user-stat-title-color);
+}
+
+.user-card-header svg {
+  width: 20px;
+  height: 20px;
+  color: var(--title-color);
+}
+
+.user-main-stat {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--user-main-stat-color);
+  margin-bottom: 0.5rem;
+}
+
+.user-sub-stat {
+  font-size: 0.9rem;
+  color: var(--user-sub-stat-color);
+}
+
 
