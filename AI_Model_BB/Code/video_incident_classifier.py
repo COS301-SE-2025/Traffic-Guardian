@@ -621,7 +621,7 @@ class EnhancedCrashClassifier:
                 'camera_id': camera_id,
                 'latitude': 0.0,
                 'longitude': 0.0,
-                'name': f'Camera {camera_id}',
+                'name': {camera_id},
                 'location': 'Unknown Location',
                 'status': 'unknown'
             }
@@ -639,7 +639,7 @@ class EnhancedCrashClassifier:
                 'camera_id': camera_id,
                 'latitude': 0.0,
                 'longitude': 0.0,
-                'name': f'Camera {camera_id}',
+                'name': {camera_id},
                 'location': 'Unknown Location',
                 'status': 'error'
             }
