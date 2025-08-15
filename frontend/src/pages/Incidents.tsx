@@ -84,6 +84,8 @@ interface ApiIncident {
   Incident_Severity: 'high' | 'medium' | 'low';
   Incident_Status: 'open' | 'ongoing' | 'resolved' | 'closed';
   Incident_Reporter: string | null;
+  Incident_CameraID?: number | null;
+  Incident_Description?: string | null;
 }
 
 interface RealTimeAlert {
@@ -113,6 +115,8 @@ interface ManualIncidentForm {
   Incident_Severity: 'high' | 'medium' | 'low';
   Incident_Status: 'open' | 'ongoing' | 'resolved' | 'closed';
   Incident_Reporter: string;
+  Incident_CameraID?: string;
+  Incident_Description?: string;
 }
 
 interface FilterState {
@@ -162,7 +166,9 @@ const Incidents: React.FC = () => {
     Incidents_Latitude: '',
     Incident_Severity: 'medium',
     Incident_Status: 'open',
-    Incident_Reporter: ''
+    Incident_Reporter: '',
+    Incident_CameraID: '',
+    Incident_Description: ''
   });
 
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof ManualIncidentForm, string>>>({});
@@ -211,11 +217,11 @@ const Incidents: React.FC = () => {
         location: incident.Incidents_Latitude && incident.Incidents_Longitude
           ? `Lat: ${incident.Incidents_Latitude}, Lng: ${incident.Incidents_Longitude}`
           : 'Not Available',
-        cameraId: 'N/A',
+        cameraId: incident.Incident_CameraID ? String(incident.Incident_CameraID) : 'N/A',
         type: incident.Incident_Reporter ? 'Reported Incident' : 'Unknown',
         severity: incident.Incident_Severity,
         status: incident.Incident_Status,
-        description: undefined,
+        description: incident.Incident_Description || undefined,
         createdAt: incident.Incidents_DateTime,
         updatedAt: incident.Incidents_DateTime
       }));
@@ -419,7 +425,9 @@ const Incidents: React.FC = () => {
         Incidents_Longitude: manualIncident.Incidents_Longitude ? parseFloat(manualIncident.Incidents_Longitude) : null,
         Incident_Severity: manualIncident.Incident_Severity,
         Incident_Status: manualIncident.Incident_Status,
-        Incident_Reporter: manualIncident.Incident_Reporter
+        Incident_Reporter: manualIncident.Incident_Reporter,
+        Incident_CameraID: manualIncident.Incident_CameraID ? parseInt(manualIncident.Incident_CameraID) : null,
+        Incident_Description: manualIncident.Incident_Description || null
       };
 
       const response = await apiRequest('/api/incidents', {
@@ -437,7 +445,9 @@ const Incidents: React.FC = () => {
         Incidents_Latitude: '',
         Incident_Severity: 'medium',
         Incident_Status: 'open',
-        Incident_Reporter: ''
+        Incident_Reporter: '',
+        Incident_CameraID: '',
+        Incident_Description: ''
       });
 
       setShowManualForm(false);
@@ -928,6 +938,31 @@ const Incidents: React.FC = () => {
                         <option value="resolved">Resolved - Issue fixed</option>
                         <option value="closed">Closed - Completed</option>
                       </select>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label className="form-label">Camera ID</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g., CALTRANS-D12-123"
+                        value={manualIncident.Incident_CameraID || ''}
+                        onChange={(e) => handleManualIncidentChange('Incident_CameraID', e.target.value)}
+                      />
+                      <div className="form-help">Optional: Camera that detected or is related to the incident</div>
+                    </div>
+                    
+                    <div className="form-group full-width">
+                      <label className="form-label">Description</label>
+                      <textarea
+                        className="form-input"
+                        placeholder="Describe the incident details, or paste image URLs for evidence..."
+                        value={manualIncident.Incident_Description || ''}
+                        onChange={(e) => handleManualIncidentChange('Incident_Description', e.target.value)}
+                        rows={4}
+                        style={{ resize: 'vertical', minHeight: '80px' }}
+                      />
+                      <div className="form-help">Optional: Additional details about the incident. You can include image URLs as evidence.</div>
                     </div>
                   </div>
                 </div>
