@@ -28,6 +28,7 @@ io.on('connection',(socket)=>{
   ILM.addUser(socket.id, {});
   console.log(socket.id + ' connected');
   ILM.showUsers();
+  io.emit('amt-users-online', ILM.users.size);
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
@@ -50,12 +51,15 @@ io.on('connection',(socket)=>{
       //incident Locations
       const res_incidentLocations =  traffic.incidentLocations(data);
       socket.emit('incidentLocations', res_incidentLocations);
+      
+      io.emit('amt-active-incidents',ILM.getNumActiveIncidents());
     })
     
     setInterval(async()=>{
       const data = await traffic.getTraffic();
       socket.emit('trafficUpdate', data);
       ILM.updateTraffic(data);
+      io.emit('amt-active-incidents',ILM.getNumActiveIncidents());
     }, 30*60*1000); //30 min interval
     
 
