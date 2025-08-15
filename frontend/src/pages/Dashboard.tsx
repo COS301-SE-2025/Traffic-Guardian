@@ -213,33 +213,27 @@ const Dashboard: React.FC = () => {
     setNotifications(prev => prev.filter(notif => notif.id !== id));
   };
 
-  // Load initial data
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         setLoading(true);
         
-        // Load incident statistics
         const stats = await ApiService.fetchIncidentStats();
         if (stats) {
           setIncidentStats(stats);
         }
         
-        // Load today's incidents
         const todaysData = await ApiService.fetchTodaysIncidents();
         if (todaysData) {
           setTodaysIncidents({ count: todaysData.count, date: todaysData.date });
         }
         
-        // Load traffic data
         const traffic = await ApiService.fetchTrafficIncidents();
         setTrafficData(traffic);
         
-        // Load critical incidents
         const critical = await ApiService.fetchCriticalIncidents();
         setCriticalIncidents(critical);
         
-        // Load incident locations
         const locations = await ApiService.fetchIncidentLocations();
         setIncidentLocations(locations);
         
@@ -257,5 +251,84 @@ const Dashboard: React.FC = () => {
     
     loadInitialData();
   }, [addNotification]);
+
+  // Socket.io connection
+  useEffect(() => {
+    const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+    
+    console.log('Connecting to Socket.IO server at:', SERVER_URL);
+    const newSocket = io(SERVER_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Connected to Socket.IO server with ID:', newSocket.id);
+      addNotification({
+        title: 'Connected',
+        message: 'Real-time data connection established',
+        type: 'success'
+      });
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('Disconnected from Socket.IO server');
+      addNotification({
+        title: 'Disconnected',
+        message: 'Real-time data connection lost',
+        type: 'warning'
+      });
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('Socket.IO connection error:', error);
+      addNotification({
+        title: 'Connection Error',
+        message: 'Failed to connect to real-time data service',
+        type: 'critical'
+      });
+    });
+
+    // Real-time data handlers
+    newSocket.on('weatherUpdate', (data: WeatherData[]) => {
+      console.log('Received weather update:', data);
+      setWeatherData(data);
+      setWeatherLoading(false);
+      setWeatherLastUpdate(new Date());
+    });
+
+    newSocket.on('userStatsUpdate', (data: UserStats) => {
+      console.log('Received user stats update:', data);
+      setUserStats(data);
+    });
+
+    newSocket.on('todaysIncidentsUpdate', (data: TodaysIncidents) => {
+      console.log('Received today\'s incidents update:', data);
+      setTodaysIncidents(data);
+    });
+
+    newSocket.on('trafficUpdate', (data: TrafficIncident[]) => {
+      console.log('Received traffic update:', data);
+      setTrafficData(data);
+    });
+
+    newSocket.on('criticalIncidents', (data: CriticalIncidentsData) => {
+      console.log('Received critical incidents:', data);
+      setCriticalIncidents(data);
+    });
+
+    newSocket.on('incidentLocations', (data: LocationData[]) => {
+      console.log('Received incident locations:', data);
+      setIncidentLocations(data);
+    });
+
+    newSocket.on('newAlert', (incident) => {
+      console.log('Received new incident alert:', incident);
+      addNotification({
+        title: 'New Incident',
+        message: `Incident reported: ${incident.Incident_Location}`,
+        type: 'critical'
+      });
+    });
 
   
