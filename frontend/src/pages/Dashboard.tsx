@@ -602,4 +602,139 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Weather Section */}
+        <div className="weather-section" data-cy="weather-section" id="weather-section">
+          <div className="weather-header" data-cy="weather-header">
+            <h3 data-cy="weather-title">Weather Conditions</h3>
+            {weatherLastUpdate && (
+              <div className="weather-last-update" data-cy="weather-last-update">
+                Last updated: {formatTime(weatherLastUpdate)}
+              </div>
+            )}
+          </div>
+          
+          {weatherLoading ? (
+            <div className="weather-loading-section" data-cy="weather-loading-section">
+              <div className="loading-spinner" data-cy="weather-section-spinner"></div>
+              <div className="loading-text" data-cy="weather-section-loading-text">Loading weather data...</div>
+            </div>
+          ) : weatherData.length > 0 ? (
+            <div className="weather-grid" data-cy="weather-grid">
+              {weatherData.slice(0, 6).map((weather, index) => (
+                <div key={index} className="weather-card" data-cy={`weather-card-${index}`}>
+                  <div className="weather-card-header" data-cy="weather-card-header">
+                    <div className="weather-location-name" data-cy="weather-location-name">
+                      {weather.location.name}
+                    </div>
+                    <div className="weather-icon-large" data-cy="weather-icon-large">
+                      <WeatherIcon 
+                        condition={weather.current.condition.text} 
+                        isDay={weather.current.is_day === 1} 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="weather-main-temp" data-cy="weather-main-temp">
+                    {Math.round(weather.current.temp_c)}°C
+                  </div>
+                  
+                  <div className="weather-condition" data-cy="weather-condition">
+                    {weather.current.condition.text}
+                  </div>
+                  
+                  <div className="weather-details" data-cy="weather-details">
+                    <div className="weather-detail-item" data-cy="weather-detail-humidity">
+                      <span className="weather-detail-label">Humidity</span>
+                      <span className="weather-detail-value">{weather.current.humidity}%</span>
+                    </div>
+                    <div className="weather-detail-item" data-cy="weather-detail-wind">
+                      <span className="weather-detail-label">Wind</span>
+                      <span className="weather-detail-value">{weather.current.wind_kph} km/h {weather.current.wind_dir}</span>
+                    </div>
+                    <div className="weather-detail-item" data-cy="weather-detail-pressure">
+                      <span className="weather-detail-label">Pressure</span>
+                      <span className="weather-detail-value">{weather.current.pressure_mb} mb</span>
+                    </div>
+                    <div className="weather-detail-item" data-cy="weather-detail-visibility">
+                      <span className="weather-detail-label">Visibility</span>
+                      <span className="weather-detail-value">{weather.current.vis_km} km</span>
+                    </div>
+                  </div>
+                  
+                  <div className="weather-update-time" data-cy="weather-update-time">
+                    Updated: {weather.current.last_updated}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="weather-error-section" data-cy="weather-error-section">
+              <div className="weather-error-message" data-cy="weather-error-message">
+                Unable to load weather data. Please check your connection.
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Traffic Incidents Section */}
+        <div className="dashboard-main-grid" data-cy="dashboard-main-grid">
+          <div className="incidents-section" data-cy="incidents-section" id="incidents-section">
+            <div className="incidents-header" data-cy="incidents-header">
+              <h3 data-cy="incidents-title">Live Traffic Incidents</h3>
+              <div className="incidents-badge" data-cy="incidents-badge">{trafficData.length} Locations</div>
+            </div>
+            <div className="incidents-list" data-cy="incidents-list">
+              {trafficData.map((location, index) => (
+                <div key={index} className="incident-item" data-cy={`incident-item-${index}`}>
+                  <div className="incident-header" data-cy="incident-header">
+                    <div className="incident-type" data-cy="incident-type">
+                      <MapPinIcon />
+                      {location.location}
+                    </div>
+                    <div className="severity-badge medium" data-cy="severity-badge">
+                      {location.incidents.length} Incidents
+                    </div>
+                  </div>
+                  
+                  <div className="incident-details" data-cy="incident-details">
+                    {location.incidents.slice(0, 3).map((incident, incIndex) => (
+                      <div key={incIndex} className="incident-detail" data-cy="incident-detail-item">
+                        <AlertTriangleIcon />
+                        <span>{incident.properties.iconCategory}</span>
+                        <span className="magnitude-badge" data-cy="magnitude-badge">
+                          Severity: {incident.properties.magnitudeOfDelay}
+                        </span>
+                      </div>
+                    ))}
+                    {location.incidents.length > 3 && (
+                      <div className="incident-detail" data-cy="incident-detail-more">
+                        <span>+{location.incidents.length - 3} more incidents</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {trafficData.length === 0 && (
+                <div className="incident-item" data-cy="incident-empty">
+                  <div className="incident-header">
+                    <div className="incident-type">
+                      <AlertTriangleIcon />
+                      No Traffic Data
+                    </div>
+                  </div>
+                  <div className="incident-details">
+                    <div className="incident-detail">
+                      Waiting for traffic updates...
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="last-updated" data-cy="last-updated-incidents">
+              <div className="update-indicator" data-cy="update-indicator"></div>
+              Last updated: {formatTime(lastUpdate)}
+            </div>
+          </div>
+
+
   
