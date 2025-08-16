@@ -3,6 +3,8 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
 
 // Import optimization services
 const cacheService = require('./services/cacheService');
@@ -36,6 +38,9 @@ app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(cookieParser()); // Parse cookies
 app.use(morgan('dev')); // HTTP request logger
+app.use(bodyParser.json());
+
+const JWT_SECRET = "supersecretkey"; // will save to secrets shortly
 
 // Define routes
 app.use('/api/auth', rateLimiters.auth, authRoutes);

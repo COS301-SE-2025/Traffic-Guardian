@@ -1,5 +1,8 @@
 const bcrypt = require('bcrypt');
 const userModel = require('../models/user');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey"; //will sort out soon
 
 const authController = {  login: async (req, res) => {
     try {
@@ -34,11 +37,23 @@ const authController = {  login: async (req, res) => {
       if (!user.User_APIKey) {
         userWithKey = await userModel.generateAPIKey(user.User_ID);
       }
+
+      //jwt stuff here
+      /*
+      const payload = { 
+        id: userWithKey.User_ID, 
+        email: userWithKey.User_Email, 
+        role: userWithKey.User_Role 
+      };
+      
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+*/
         // Return user data with API key (excluding password)
       const { User_Password: _, ...userData } = userWithKey;      return res.status(200).json({
         message: 'Login successful',
         user: userData,
         apiKey: userData.User_APIKey
+        //token
       });
     } catch (error) {
       console.error('Login error:', error);
