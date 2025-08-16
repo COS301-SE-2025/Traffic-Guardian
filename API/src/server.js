@@ -87,6 +87,7 @@ io.on('connection',(socket)=>{
 
   socket.on('disconnect',()=>{
     ILM.removeUser(socket.id);
+    io.emit('amt-users-online', ILM.users.size);
   })
 });
 

@@ -12,6 +12,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
      crossorigin=""></script>
+     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
     <h1>Page just for testing socket connection and events</h1>
@@ -19,10 +20,10 @@
      <div id="map" style="height: 25vw; width: 100vh;"></div>
         <label>Report incident here</label>
         <button onclick="reportIncident()">Report</button>
-        
+
     <h2>Events</h2>
     <div id="eventLog">
-
+            <div class="g-recaptcha" data-sitekey="6Ld-OagrAAAAAJMs_Rm-aNHH0L-ar9ux2q2_wKpn" hidden="true" id="recaptcha" data-callback="onCaptchaSuccess"></div>
     </div>
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>    
