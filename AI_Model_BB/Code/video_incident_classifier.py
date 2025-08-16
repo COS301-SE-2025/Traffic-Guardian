@@ -2639,8 +2639,18 @@ class EnhancedCrashClassifier:
                 
                 if api_result['success']:
                     logger.info(f" Incident successfully submitted - API ID: {api_result['incident_id']}")
+
+                    # DELETION OF VIDEO FILE AFTER SUBMISSION
+                    # # 🗑️ DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
+                    # try:
+                    #     os.remove(video_path)
+                    #     logger.info(f"🗑️ Video file deleted: {os.path.basename(video_path)}")
+                    # except OSError as e:
+                    #     logger.warning(f"⚠️ Could not delete video file {os.path.basename(video_path)}: {e}")
+                        
                 else:
                     logger.error(f" API submission failed: {api_result['error']}")
+                    # logger.info(f"💾 Video file retained due to submission failure: {os.path.basename(video_path)}")
             
             elif submit_to_api and not self.api_config['enabled']:
                 logger.warning("📡 API submission requested but API integration is disabled")
@@ -2936,11 +2946,20 @@ def main():
                     print(f"  ✅ API Submission SUCCESS!")
                     print(f"     Incident ID: {api_result.get('incident_id', 'N/A')}")
                     print(f"     Database Response: {api_result.get('message', 'Created successfully')}")
+                    # DELETION!!!!1
+                    # 🗑️ DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
+                    try:
+                        os.remove(video_path)
+                        print(f"  🗑️  Video file deleted: {video_file}")
+                    except OSError as e:
+                        print(f"  ⚠️  Warning: Could not delete video file {video_file}: {e}")
+                        
                 else:
                     print(f"  ❌ API Submission FAILED!")
                     print(f"     Error: {api_result.get('error', 'Unknown error')}")
                     print(f"     Recommendation: {api_result.get('recommendation', 'Check API server')}")
-                
+                    print(f"  💾 Video file retained due to submission failure: {video_file}")
+                # Deletion messgae
             else:
                 print(f"  ℹ️  No incidents detected in {video_file}")
         
