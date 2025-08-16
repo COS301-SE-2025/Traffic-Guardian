@@ -2122,7 +2122,7 @@ class EnhancedCrashClassifier:
         
         # Generate detailed alert message
         alerts_message = self._generate_detailed_alert_message(
-            crash_type, final_severity, vehicles_involved, motion_analysis, video_path
+            crash_type, final_severity, vehicles_involved, motion_analysis, video_path, confidence
         )
         
         # Determine emergency priority
@@ -2154,7 +2154,7 @@ class EnhancedCrashClassifier:
     
     def _generate_detailed_alert_message(self, crash_type: str, severity: str, 
                                        vehicles_involved: int, motion_analysis: Dict, 
-                                       video_path: str) -> str:
+                                       video_path: str, confidence: float = None) -> str:
         """Generate detailed alert message for emergency services."""
         
         # Base message templates for each crash type
@@ -2209,7 +2209,7 @@ class EnhancedCrashClassifier:
         full_message = (
             f"{base_message}. {severity_context}.{motion_context} "
             f"Location: {video_name}. {emergency_recommendations}. "
-            f"Video analysis confidence: {motion_analysis.get('analysis_confidence', 0.5):.2f}"
+            f"Video analysis confidence: {confidence if confidence is not None else motion_analysis.get('analysis_confidence', 0.5):.2f}"
         )
         
         return full_message
