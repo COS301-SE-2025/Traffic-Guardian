@@ -16,14 +16,12 @@ import re
 import requests
 import glob
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Dict, List, Tuple
 import logging
 from dataclasses import dataclass
 from collections import deque, Counter
 import warnings
 from multiprocessing.pool import ThreadPool
-from functools import lru_cache
 warnings.filterwarnings('ignore')
 
 # Configure logging first
@@ -1614,48 +1612,49 @@ class EnhancedCrashClassifier:
             print(f"Error in direction analysis: {e}")
             return {'analysis': 'error', 'patterns': [], 'error': str(e)}
     
-    def _analyze_collision_pattern(self, direction_patterns):
-        """Analyze collision patterns based on vehicle directions"""
-        if len(direction_patterns) < 2:
-            return 'single_vehicle_or_insufficient_data'
-        
-        # Get primary directions
-        directions = [p['primary_direction'] for p in direction_patterns]
-        direction_changes = sum(p['direction_changes'] for p in direction_patterns)
-        
-        # Analyze pattern
-        if direction_changes > 2:
-            return 'complex_multi_vehicle'
-        
-        # Check for opposing directions (head-on)
-        opposing_pairs = [
-            ('northbound', 'southbound'),
-            ('eastbound', 'westbound')
-        ]
-        
-        for dir1, dir2 in opposing_pairs:
-            if dir1 in directions and dir2 in directions:
-                return 'head_on_collision'
-        
-        # Check for perpendicular directions (T-bone)
-        perpendicular_pairs = [
-            ('northbound', 'eastbound'), ('northbound', 'westbound'),
-            ('southbound', 'eastbound'), ('southbound', 'westbound')
-        ]
-        
-        for dir1, dir2 in perpendicular_pairs:
-            if dir1 in directions and dir2 in directions:
-                return 't_bone_collision'
-        
-        # Check for similar directions (sideswipe/rear-end)
-        if len(set(directions)) <= 2:
-            avg_consistency = np.mean([p['movement_consistency'] for p in direction_patterns])
-            if avg_consistency > 0.7:
-                return 'rear_end_collision'
-            else:
-                return 'sideswipe_collision'
-        
-        return 'unknown_pattern'
+    # DUPLICATE METHOD - COMMENTED OUT  
+    # def _analyze_collision_pattern(self, direction_patterns):
+    #     """Analyze collision patterns based on vehicle directions"""
+    #     if len(direction_patterns) < 2:
+    #         return 'single_vehicle_or_insufficient_data'
+    #     
+    #     # Get primary directions
+    #     directions = [p['primary_direction'] for p in direction_patterns]
+    #     direction_changes = sum(p['direction_changes'] for p in direction_patterns)
+    #     
+    #     # Analyze pattern
+    #     if direction_changes > 2:
+    #         return 'complex_multi_vehicle'
+    #     
+    #     # Check for opposing directions (head-on)
+    #     opposing_pairs = [
+    #         ('northbound', 'southbound'),
+    #         ('eastbound', 'westbound')
+    #     ]
+    #     
+    #     for dir1, dir2 in opposing_pairs:
+    #         if dir1 in directions and dir2 in directions:
+    #             return 'head_on_collision'
+    #     
+    #     # Check for perpendicular directions (T-bone)
+    #     perpendicular_pairs = [
+    #         ('northbound', 'eastbound'), ('northbound', 'westbound'),
+    #         ('southbound', 'eastbound'), ('southbound', 'westbound')
+    #     ]
+    #     
+    #     for dir1, dir2 in perpendicular_pairs:
+    #         if dir1 in directions and dir2 in directions:
+    #             return 't_bone_collision'
+    #     
+    #     # Check for similar directions (sideswipe/rear-end)
+    #     if len(set(directions)) <= 2:
+    #         avg_consistency = np.mean([p['movement_consistency'] for p in direction_patterns])
+    #         if avg_consistency > 0.7:
+    #             return 'rear_end_collision'
+    #         else:
+    #             return 'sideswipe_collision'
+    #     
+    #     return 'unknown_pattern'
 
     def _calculate_analysis_confidence(self, motion_data: List[Dict], 
                                      impact_events: List[Dict], vehicles_involved: int) -> float:
@@ -3107,200 +3106,6 @@ def demo_api_integration():
     print("\n" + "=" * 60)
 
 
-# def test_api_payload_generator():
-#     """
-#     Test function that simulates API calls by generating and printing headers and payloads
-#     EXACTLY as the submit_incident_to_api function will produce them.
-    
-#     TrafficGuardian API Integration Test:
-#     ====================================
-#     This function generates sample payloads and headers for testing the 
-#     TrafficGuardian API endpoint for incident creation.
-    
-#     API Endpoint: POST http://localhost:5000/api/incidents
-#     Authentication: X-API-Key header (not Bearer token)
-#     Content-Type: application/json
-#     """
-#     print("🧪 TRAFFICGUARDIAN API PAYLOAD TESTING MODE")
-#     print("=" * 70)
-#     print("Generating sample API payloads for Postman testing...")
-#     print("=" * 70)
-    
-#     classifier = EnhancedCrashClassifier()
-    
-#     # Check if we have API configuration
-#     print("📡 TrafficGuardian API Configuration:")
-#     print(f"   Endpoint: {classifier.api_config.get('endpoint', 'NOT SET')}")
-#     print(f"   API Key: {'SET' if classifier.api_config.get('api_key') else 'NOT SET'}")
-#     print(f"   Enabled: {classifier.api_config.get('enabled', False)}")
-#     print(f"   Timeout: {classifier.api_config.get('timeout', 'N/A')}s")
-#     print(f"   Retry Attempts: {classifier.api_config.get('retry_attempts', 'N/A')}")
-    
-#     # Create a sample crash report for testing
-#     print("\n🎬 Creating sample crash report...")
-    
-#     sample_crash_report = CrashReport(
-#         incident_datetime="2025-08-16T14:30:45.123Z",
-#         incident_latitude=-26.1076,
-#         incident_longitude=28.0567,
-#         incident_severity="high",
-#         incident_status="active",
-#         incident_reporter="AI Crash Detection System",
-#         alerts_message="Head on collision detected with high confidence, 2 vehicles involved",
-#         incident_type="head_on_collision",
-#         confidence=0.85,
-#         video_path="incident_cam002_20250816_143045_123_collision.mp4",
-#         processing_timestamp=datetime.now(timezone.utc).isoformat(),
-#         vehicles_involved=2,
-#         impact_severity="moderate",
-#         crash_phase="impact",
-#         estimated_speed="medium_speed",
-#         damage_assessment="moderate",
-#         emergency_priority="PRIORITY_2",
-#         camera_id="cam002"
-#     )
-    
-#     print("✅ Sample crash report created")
-    
-#     # Generate API payload using the EXACT same function as submit_incident_to_api
-#     print("\n📋 Generating API payload...")
-#     payload = classifier._map_crash_report_to_api_payload(sample_crash_report)
-    
-#     # Generate headers using the EXACT same format as submit_incident_to_api
-#     headers = {
-#         'Content-Type': 'application/json',
-#         'X-API-Key': classifier.api_config.get("api_key", "your_api_key_here"),
-#     }
-    
-#     # Print for Postman testing
-#     print("\n🔥 TRAFFICGUARDIAN API TESTING INFORMATION")
-#     print("=" * 70)
-    
-#     print("📍 HTTP METHOD: POST")
-#     print(f"📍 URL: {classifier.api_config.get('endpoint', 'http://localhost:5000/api/incidents')}")
-    
-#     print("\n📋 HEADERS (TrafficGuardian format - X-API-Key authentication):")
-#     print("-" * 50)
-#     for key, value in headers.items():
-#         print(f"{key}: {value}")
-    
-#     print("\n📋 PAYLOAD (JSON Body - Database field mapping):")
-#     print("-" * 50)
-#     print(json.dumps(payload, indent=2))
-    
-#     print("\n📋 CURL COMMAND:")
-#     print("-" * 50)
-#     curl_command = f"""curl -X POST "{classifier.api_config.get('endpoint', 'http://localhost:5000/api/incidents')}" \\
-#   -H "Content-Type: application/json" \\
-#   -H "X-API-Key: {classifier.api_config.get('api_key', 'your_api_key_here')}" \\
-#   -d '{json.dumps(payload)}'"""
-#     print(curl_command)
-    
-#     print("\n📋 POSTMAN SETUP INSTRUCTIONS:")
-#     print("-" * 50)
-#     print("1. Open Postman")
-#     print("2. Create a new POST request")
-#     print(f"3. Set URL to: {classifier.api_config.get('endpoint', 'http://localhost:5000/api/incidents')}")
-#     print("4. Go to Headers tab and add:")
-#     for key, value in headers.items():
-#         print(f"   - {key}: {value}")
-#     print("5. Go to Body tab, select 'raw' and 'JSON'")
-#     print("6. Paste the JSON payload above")
-#     print("7. Click Send!")
-#     print("8. Expected Response: 201 Created with incident details")
-    
-#     print("\n🎯 VERIFICATION - Your Postman Example vs Generated:")
-#     print("-" * 60)
-#     print("YOUR POSTMAN EXAMPLE:")
-#     print('Header: X-API-Key: value')
-#     print('Body: {')
-#     print('  "Incidents_DateTime": "2025-05-21",')
-#     print('  "Incidents_Longitude": "",')
-#     print('  "Incidents_Latitude": "",')
-#     print('  "Incident_Severity": "high",')
-#     print('  "Incident_Status": "open",')
-#     print('  "Incident_Reporter": "TrafficGuardianAI",')
-#     print('  "Incident_CameraID": 2,')
-#     print('  "Incident_Description": "Head on collision..."')
-#     print('}')
-    
-#     print("\nGENERATED OUTPUT:")
-#     print(f'Header: X-API-Key: {headers["X-API-Key"]}')
-#     print('Body:', json.dumps(payload, indent=2))
-    
-#     print("\n🔄 MULTIPLE TEST SCENARIOS (All using EXACT POSTMAN FORMAT):")
-#     print("-" * 60)
-    
-#     # Generate different scenarios
-#     scenarios = [
-#         {
-#             "name": "High Severity Head-On Collision", 
-#             "incident_type": "head_on_collision",
-#             "severity": "critical",
-#             "vehicles": 2,
-#             "camera_id": "cam001"
-#         },
-#         {
-#             "name": "Single Vehicle Rollover",
-#             "incident_type": "single_vehicle_rollover", 
-#             "severity": "high",
-#             "vehicles": 1,
-#             "camera_id": "cam003"
-#         },
-#         {
-#             "name": "Multi-Vehicle Intersection Collision",
-#             "incident_type": "intersection_collision",
-#             "severity": "medium", 
-#             "vehicles": 3,
-#             "camera_id": "cam004"
-#         },
-#         {
-#             "name": "Vehicle-Pedestrian Collision",
-#             "incident_type": "vehicle_pedestrian",
-#             "severity": "critical",
-#             "vehicles": 1,
-#             "camera_id": "cam005"
-#         }
-#     ]
-    
-#     for i, scenario in enumerate(scenarios, 1):
-#         print(f"\n{i}. {scenario['name']}:")
-        
-#         # Create scenario-specific crash report
-#         scenario_report = CrashReport(
-#             incident_datetime=datetime.now(timezone.utc).isoformat(),
-#             incident_latitude=-26.1076,
-#             incident_longitude=28.0567,
-#             incident_severity=scenario['severity'],
-#             incident_status="active",
-#             incident_reporter="AI Crash Detection System",
-#             alerts_message=f"{scenario['name']} detected with high confidence",
-#             incident_type=scenario['incident_type'],
-#             confidence=0.85,
-#             video_path=f"incident_{scenario['camera_id']}_test.mp4",
-#             processing_timestamp=datetime.now(timezone.utc).isoformat(),
-#             vehicles_involved=scenario['vehicles'],
-#             impact_severity="moderate",
-#             crash_phase="impact",
-#             estimated_speed="medium_speed", 
-#             damage_assessment="moderate",
-#             emergency_priority="PRIORITY_1" if scenario['severity'] == 'critical' else "PRIORITY_2",
-#             camera_id=scenario['camera_id']
-#         )
-        
-#         # Use EXACT same function as submit_incident_to_api
-#         scenario_payload = classifier._map_crash_report_to_api_payload(scenario_report)
-#         print(f"   Headers: {headers}")
-#         print(f"   Payload: {json.dumps(scenario_payload, indent=6)}")
-    
-#     print("\n✅ TrafficGuardian API Testing Information Generated!")
-#     print("📝 Copy the payload and headers above to test in Postman")
-#     print("🔧 Remember to update the API_KEY in your .env file for authentication")
-#     print("💡 Headers and payload format EXACTLY match submit_incident_to_api function")
-#     print("🚨 IMPORTANT: Use X-API-Key header (not Authorization: Bearer)")
-#     print("=" * 70)
-
-
 if __name__ == "__main__":
     # Production Mode: Process incident videos and submit to TrafficGuardian API
     print("🚀 TRAFFICGUARDIAN AI - PRODUCTION MODE")
@@ -3321,10 +3126,3 @@ if __name__ == "__main__":
     
     # Run main processing
     main()
-    
-    # Development/Testing modes (commented out for production):
-    # Uncomment to run API integration demo:
-    # demo_api_integration()
-    
-    # Uncomment to test API payloads for Postman:
-    # test_api_payload_generator()
