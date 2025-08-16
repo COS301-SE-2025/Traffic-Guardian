@@ -22,15 +22,13 @@ const io = new Server(server, {
 const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
-var welcomeMsg;
-
 io.on('connection',(socket)=>{
   ILM.addUser(socket.id, {});
   console.log(socket.id + ' connected');
   ILM.showUsers();
   io.emit('amt-users-online', ILM.users.size);
 
-  welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
+  var welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
     
     //traffic prt
@@ -60,6 +58,16 @@ io.on('connection',(socket)=>{
       const data = await traffic.getTraffic();
       socket.emit('trafficUpdate', data);
       ILM.updateTraffic(data);
+      //critical incidents
+      const res = traffic.criticalIncidents(data);
+      socket.emit('criticalIncidents', res);
+      //incident Category
+      const res_incidentCategory = traffic.incidentCategory(data);
+      socket.emit('incidentCategory', res_incidentCategory);
+      //incident Locations
+      const res_incidentLocations =  traffic.incidentLocations(data);
+      socket.emit('incidentLocations', res_incidentLocations);      
+
       io.emit('amt-active-incidents',ILM.getNumActiveIncidents());
       io.emit('amt-critical-incidents', ILM.getNumCriticalIncidents());
     }, 30*60*1000); //30 min interval
