@@ -48,18 +48,40 @@ function mapClick(e){
     map.setView([position.latitude, position.longitude], 13);
 }
 
+//recaptcha
 function reportIncident(){
-    var marker = L.marker([position.latitude, position.longitude]).addTo(map);
-    var circle = L.circle([position.latitude, position.longitude], {
-    color: 'red',
-    fillColor: '#f03',
-    fillOpacity: 0.5,
-    radius: 500
-    }).addTo(map);
-    markers.push(marker);
-    circles.push(circle);
-    socket.emit('new-incident-location', position);
+    var recaptcha = document.getElementById('recaptcha');
+    recaptcha.hidden = false;
+    grecaptcha.execute(widgetId);
 }
+
+let widgetId;
+
+function onloadCallback() {
+  widgetId = grecaptcha.render("recaptcha", {
+    "sitekey": "YOUR_SITE_KEY",
+    "callback": onCaptchaSuccess
+  });
+}
+
+function onCaptchaSuccess(token) {
+  const form = document.getElementById("myForm");
+  const formData = new FormData(form);
+  formData.append("g-recaptcha-response", token);
+
+  fetch("/submit", {
+    method: "POST",
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("Server response:", data);
+  })
+  .catch(err => {
+    console.error("Error:", err);
+  });
+}
+
 
 socket.on('incident-recived',(msg)=>{
     const now = new Date();
