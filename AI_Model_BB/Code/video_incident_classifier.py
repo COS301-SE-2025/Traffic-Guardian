@@ -2541,7 +2541,7 @@ class EnhancedCrashClassifier:
             'Incident_Status': status_mapping.get(crash_report.incident_status, 'ongoing'),  # Default as specified
             'Incident_Reporter': 'TrafficGuardianAI',  # Fixed as specified
             'Incident_CameraID': camera_id,
-            'Incident_Description': crash_report.alerts_message,  # Primary description
+            'Incident_Description': crash_report.alerts_message  # Primary description
             # Note: report.description available as backup: crash_report.description
         }
         # # Additional fields for enhanced data (not in main table but useful for API)
@@ -2582,7 +2582,12 @@ class EnhancedCrashClassifier:
             "Content-Type": "application/json",
             "X-API-Key": api_key
         }
-        
+        # print(f"TESTING!!!!!!!")
+        # # print(f"Submitting incident to API: {response.url}")  # Debugging line to check URL
+        # print(f"Headers: {headers}")  # Debugging line to check headers
+        # print(f"API payload: {payload}")  # Debugging line to check payload
+        # # print(f"API response: {response.text}")  # Debugging line to check response
+        # print(f"\n")  # Debugging line to check status code
         # Send request
         try:
             response = requests.post(
@@ -2760,13 +2765,13 @@ def main():
     
     classifier = EnhancedCrashClassifier()
     
-    print("\nSelect operation mode:")
-    print("1. Analyze single crash video (.mp4)")
-    print("2. Process entire folder of crash videos (.mp4)")
-    print("3. Process folder with specific camera location")
-    print("4. Batch process with detailed statistics")
-    print("5. Low-latency batch processing (optimized for speed)")
-    print("6. Process incident clips from 'incident_for_classification' folder")
+    # print("\nSelect operation mode:")
+    # print("1. Analyze single crash video (.mp4)")
+    # print("2. Process entire folder of crash videos (.mp4)")
+    # print("3. Process folder with specific camera location")
+    # print("4. Batch process with detailed statistics")
+    # print("5. Low-latency batch processing (optimized for speed)")
+    # print("6. Process incident clips from 'incident_for_classification' folder")
     
     # try:
     #     choice = input("\nEnter choice (1-4): ").strip()
