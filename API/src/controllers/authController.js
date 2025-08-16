@@ -39,7 +39,6 @@ const authController = {  login: async (req, res) => {
       }
 
       //jwt stuff here
-      /*
       const payload = { 
         id: userWithKey.User_ID, 
         email: userWithKey.User_Email, 
@@ -47,13 +46,14 @@ const authController = {  login: async (req, res) => {
       };
       
       const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
-*/
-        // Return user data with API key (excluding password)
+      //jwt stuff end
+
+        // Return user data with API key (excluding password) + token
       const { User_Password: _, ...userData } = userWithKey;      return res.status(200).json({
         message: 'Login successful',
         user: userData,
-        apiKey: userData.User_APIKey
-        //token
+        apiKey: userData.User_APIKey,
+        token
       });
     } catch (error) {
       console.error('Login error:', error);
