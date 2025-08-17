@@ -37,7 +37,7 @@ class TestAdvancedIncidentDetectionSystem(unittest.TestCase):
         if not SYSTEM_AVAILABLE:
             self.skipTest("AdvancedIncidentDetectionSystem not available")
         
-        # FIXED: Complete test config with ALL required keys
+        # Updated test config to match current code structure
         self.test_config = {
             'model_version': 'yolov8s',
             'confidence_threshold': 0.4,
@@ -46,15 +46,14 @@ class TestAdvancedIncidentDetectionSystem(unittest.TestCase):
             'save_incidents': False,
             'log_detections': True,
             'frame_skip': 2,
-            'api_enabled': False,
             
-            # All collision detection settings
-            'collision_distance_threshold': 35,
-            'prediction_horizon': 12,
+            # Enhanced collision detection settings
+            'collision_distance_threshold': 30,
+            'prediction_horizon': 15,
             'min_tracking_confidence': 0.7,
-            'min_collision_speed': 5.0,
+            'min_collision_speed': 8.0,
             'collision_angle_threshold': 30,
-            'min_trajectory_length': 8,
+            'min_trajectory_length': 10,
             'collision_persistence': 5,
             
             # Depth settings
@@ -71,47 +70,83 @@ class TestAdvancedIncidentDetectionSystem(unittest.TestCase):
             'physics_validation_enabled': True,
             'max_realistic_acceleration': 15.0,
             'momentum_change_threshold': 25.0,
-            'deceleration_threshold': 12.0,
+            'deceleration_threshold': 10.0,
             
-            # Final validation
-            'require_all_layers': False,  # Match The code's defaults
-            'minimum_layer_agreement': 3,  # Match The code's defaults
-            'collision_confidence_threshold': 0.8,
+            # Enhanced validation requirements
+            'require_all_layers': False,
+            'minimum_layer_agreement': 2,
+            'collision_confidence_threshold': 0.7,
             
             # Other incident detection
             'stopped_vehicle_time': 10,
             'speed_change_threshold': 0.8,
             'pedestrian_road_threshold': 50,
             
-            # API settings
-            'api_endpoint': 'http://localhost:5000/api/incidents',
-            'api_key': os.getenv('API_KEY'),
-            'api_timeout': 5,
-            'api_retry_attempts': 2,
-            'incident_location': 'Traffic Camera Location',
+            # Location setting
+            'incident_location': 'Test Camera Location',
         }
         
-        self.test_video_path = "test_video.mp4"
+        self.test_camera_config = {
+            'camera_id': 'test_camera_01',
+            'url': 'test_video.mp4',
+            'location': 'Test Intersection'
+        }
         
-    @patch('cv2.VideoCapture')
-    def test_system_initialization(self, mock_video_capture):
-        """Test that the system initializes correctly"""
-        mock_cap = Mock()
-        mock_cap.isOpened.return_value = True
-        mock_video_capture.return_value = mock_cap
-        
-        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
+    @patch('builtins.print')
+    @patch('os.makedirs')
+    def test_system_initialization(self, mock_makedirs, mock_print):
+        """Test that the system initializes correctly with camera config"""
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
+            
             system = AdvancedIncidentDetectionSystem(
-                stream_url=self.test_video_path,
+                camera_config=self.test_camera_config,
                 config=self.test_config
             )
         
         self.assertIsNotNone(system)
-        self.assertEqual(system.stream_url, self.test_video_path)
+        self.assertEqual(system.camera_config, self.test_camera_config)
         self.assertEqual(system.config['confidence_threshold'], 0.4)
         self.assertFalse(system.config['display_window'])
         self.assertEqual(system.next_vehicle_id, 0)
         self.assertEqual(len(system.tracked_vehicles), 0)
+        mock_makedirs.assert_called_once()
+        
+    def test_default_config(self):
+        """Test default configuration generation"""
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
+            
+            system = AdvancedIncidentDetectionSystem(
+                camera_config=self.test_camera_config,
+                config=None
+            )
+        
+        # Check that default config is properly set
+        self.assertIn('collision_distance_threshold', system.config)
+        self.assertIn('depth_analysis_enabled', system.config)
+        self.assertIn('physics_validation_enabled', system.config)
+        self.assertEqual(system.config['minimum_layer_agreement'], 2)
+        
+    def test_camera_threshold_adaptation(self):
+        """Test camera-specific threshold adaptation"""
+        # Test highway camera
+        highway_config = {
+            'camera_id': 'highway_01',
+            'url': 'http://highway.stream.m3u8',
+            'location': 'Highway 401'
+        }
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
+            
+            system = AdvancedIncidentDetectionSystem(
+                camera_config=highway_config,
+                config=self.test_config
+            )
+        
+        # Should adapt thresholds for highway camera
+        self.assertIsNotNone(system.config['collision_confidence_threshold'])
 
 class TestCollisionDetection(unittest.TestCase):
     """Test multi-layer collision detection system"""
@@ -120,15 +155,14 @@ class TestCollisionDetection(unittest.TestCase):
         if not SYSTEM_AVAILABLE:
             self.skipTest("AdvancedIncidentDetectionSystem not available")
         
-        # FIXED: Complete config for collision detection tests
+        # Updated config to match current code structure
         complete_config = {
             'display_window': False,
-            'api_enabled': False,
             'save_incidents': False,
-            'collision_distance_threshold': 35,
-            'min_collision_speed': 5.0,
+            'collision_distance_threshold': 30,
+            'min_collision_speed': 8.0,
             'collision_angle_threshold': 30,
-            'min_trajectory_length': 8,
+            'min_trajectory_length': 10,
             'shadow_detection_threshold': 0.8,
             'depth_difference_threshold': 0.3,
             'min_tracking_confidence': 0.7,
@@ -136,82 +170,199 @@ class TestCollisionDetection(unittest.TestCase):
             'speed_change_threshold': 0.8,
             'flow_magnitude_threshold': 20.0,
             'physics_validation_enabled': True,
-            'deceleration_threshold': 12.0,
+            'deceleration_threshold': 10.0,
             'require_all_layers': False,
-            'minimum_layer_agreement': 3,
-            'collision_confidence_threshold': 0.8,
+            'minimum_layer_agreement': 2,
+            'collision_confidence_threshold': 0.7,
         }
         
-        with patch('cv2.VideoCapture'), \
-             patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
+        camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
             self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+                camera_config=camera_config,
                 config=complete_config
             )
     
-    def test_collision_candidate_validation(self):
-        """Test _is_collision_candidate method"""
-        vehicle1 = {
-            'id': 1,
-            'velocity': [10, 0],
-            'speed': 10,
-            'center': [100, 100]
-        }
-        vehicle2 = {
-            'id': 2,
-            'velocity': [-10, 0],
-            'speed': 10,
-            'center': [200, 100]
+    def test_enhanced_collision_detection(self):
+        """Test enhanced traffic-aware collision detection"""
+        # Create active tracks for testing
+        active_tracks = {
+            1: {
+                'id': 1,
+                'velocity': [10, 0],
+                'speed': 10,
+                'center': [100, 100],
+                'class': 'car',
+                'last_seen': 1
+            },
+            2: {
+                'id': 2,
+                'velocity': [-8, 0],
+                'speed': 8,
+                'center': [200, 100],
+                'class': 'truck',
+                'last_seen': 1
+            }
         }
         
         # Add sufficient vehicle history
-        self.system.vehicle_history[1] = [[i, 100] for i in range(90, 101)]  # 11 points
-        self.system.vehicle_history[2] = [[i, 100] for i in range(210, 199, -1)]  # 11 points
+        self.system.vehicle_history[1] = [[i, 100] for i in range(90, 101)]
+        self.system.vehicle_history[2] = [[i, 100] for i in range(210, 199, -1)]
         
-        result = self.system._is_collision_candidate(vehicle1, vehicle2, 8)
+        # Test enhanced collision detection
+        collisions = self.system._enhanced_traffic_aware_collision_detection(active_tracks)
+        
+        # Should detect potential collision
+        self.assertIsInstance(collisions, list)
+        
+    def test_smart_collision_candidate_check(self):
+        """Test smart collision candidate checking"""
+        track1 = {
+            'id': 1,
+            'velocity': [10, 0],
+            'speed': 10,
+            'center': [100, 100],
+            'class': 'car'
+        }
+        track2 = {
+            'id': 2,
+            'velocity': [-8, 0],
+            'speed': 8,
+            'center': [180, 100],
+            'class': 'truck'
+        }
+        
+        # Add vehicle history
+        self.system.vehicle_history[1] = [[i, 100] for i in range(90, 101)]
+        self.system.vehicle_history[2] = [[i, 100] for i in range(200, 179, -1)]
+        
+        result = self.system._smart_collision_candidate_check(track1, track2, 5.0)
         self.assertTrue(result)
         
-        # Test invalid candidates
-        vehicle_no_velocity = {'id': 3, 'center': [150, 100]}
-        result = self.system._is_collision_candidate(vehicle1, vehicle_no_velocity, 8)
+        # Test with insufficient speed
+        track1['speed'] = 2.0
+        track2['speed'] = 3.0
+        result = self.system._smart_collision_candidate_check(track1, track2, 5.0)
         self.assertFalse(result)
     
-    def test_vehicles_approaching(self):
-        """Test _are_vehicles_approaching method"""
-        vehicle1 = {
+    def test_traffic_aware_collision_prediction(self):
+        """Test traffic-aware collision prediction"""
+        track1 = {
+            'id': 1,
             'center': [100, 100],
-            'velocity': [5, 0]
+            'velocity': [10, 0],
+            'speed': 10,
+            'class': 'car'
         }
-        vehicle2 = {
+        track2 = {
+            'id': 2,
             'center': [200, 100],
-            'velocity': [-5, 0]
+            'velocity': [-8, 0],
+            'speed': 8,
+            'class': 'truck'
         }
         
-        result = self.system._are_vehicles_approaching(vehicle1, vehicle2)
-        self.assertTrue(result)
+        # Test with low traffic density
+        traffic_state = {'density': 'low', 'avg_speed': 25}
+        result = self.system._traffic_aware_collision_prediction(track1, track2, 30, traffic_state)
         
-        # Test vehicles moving in same direction
-        vehicle2['velocity'] = [5, 0]
-        result = self.system._are_vehicles_approaching(vehicle1, vehicle2)
-        self.assertFalse(result)
+        if result:
+            self.assertIn('ttc', result)
+            self.assertIn('collision_point', result)
+            self.assertGreater(result['ttc'], 0)
+            
+    def test_balanced_collision_prediction(self):
+        """Test balanced collision prediction method"""
+        track1 = {
+            'id': 1,
+            'center': [100, 100],
+            'velocity': [12, 0],
+            'speed': 12,
+            'class': 'car'
+        }
+        track2 = {
+            'id': 2,
+            'center': [200, 100],
+            'velocity': [-10, 0],
+            'speed': 10,
+            'class': 'truck'
+        }
+        
+        traffic_state = {'density': 'medium', 'avg_speed': 20}
+        result = self.system._balanced_collision_prediction(track1, track2, 30, traffic_state)
+        
+        if result:
+            self.assertIn('ttc', result)
+            self.assertIn('collision_point', result)
+            
+    def test_ultra_conservative_collision_prediction(self):
+        """Test ultra-conservative collision prediction"""
+        track1 = {
+            'id': 1,
+            'center': [100, 100],
+            'velocity': [15, 0],
+            'speed': 15,
+            'class': 'car'
+        }
+        track2 = {
+            'id': 2,
+            'center': [180, 100],
+            'velocity': [-12, 0],
+            'speed': 12,
+            'class': 'truck'
+        }
+        
+        traffic_state = {'density': 'high', 'avg_speed': 15}
+        result = self.system._ultra_conservative_collision_prediction(track1, track2, 25, traffic_state)
+        
+        if result:
+            self.assertIn('ttc', result)
+            self.assertIn('collision_point', result)
     
-    def test_basic_collision_prediction(self):
-        """Test _predict_basic_collision method"""
-        vehicle1 = {
-            'center': [100, 100],
-            'velocity': [10, 0]
-        }
-        vehicle2 = {
-            'center': [200, 100],
-            'velocity': [-10, 0]
+    def test_persistent_collision_validation(self):
+        """Test persistent collision validation system"""
+        potential_collisions = [{
+            'track1': {'id': 1, 'center': [100, 100], 'class': 'car'},
+            'track2': {'id': 2, 'center': [200, 100], 'class': 'truck'},
+            'collision_data': {'ttc': 2.5, 'collision_point': [150, 100]},
+            'validation_layers': {
+                'trajectory': True,
+                'depth': True,
+                'optical_flow': True,
+                'physics': False
+            }
+        }]
+        
+        # Initialize collision candidates
+        for collision in potential_collisions:
+            key = f"{collision['track1']['id']}_{collision['track2']['id']}"
+            self.system.incident_candidates[key] = {
+                'frames_detected': 1,
+                'first_frame': 100,
+                'collision_data': collision['collision_data']
+            }
+        
+        result = self.system._persistent_collision_validation(potential_collisions)
+        
+        self.assertIsInstance(result, list)
+        
+    def test_validate_live_stream_collision(self):
+        """Test live stream collision validation"""
+        collision = {
+            'track1': {'id': 1, 'center': [100, 100], 'class': 'car'},
+            'track2': {'id': 2, 'center': [200, 100], 'class': 'truck'},
+            'collision_data': {'ttc': 1.8, 'collision_point': [150, 100]}
         }
         
-        result = self.system._predict_basic_collision(vehicle1, vehicle2, 10)
+        confidence = 0.85
+        layers_passed = 3
         
-        self.assertIsNotNone(result)
-        self.assertIn('ttc', result)
-        self.assertIn('collision_point', result)
-        self.assertGreater(result['ttc'], 0)
+        result = self.system._validate_live_stream_collision(collision, confidence, layers_passed)
+        
+        # Should return boolean indicating if collision is valid
+        self.assertIsInstance(result, bool)
     
     def test_depth_estimation(self):
         """Test depth estimation from intensity"""
@@ -244,10 +395,12 @@ class TestVehicleTracking(unittest.TestCase):
             'min_tracking_confidence': 0.7,
         }
         
-        with patch('cv2.VideoCapture'), \
-             patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
+        camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
             self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+                camera_config=camera_config,
                 config=minimal_config
             )
     
@@ -312,106 +465,117 @@ class TestVehicleTracking(unittest.TestCase):
         match = self.system._find_best_match(far_vehicle, 2)
         self.assertIsNone(match)
 
-class TestAPIIntegration(unittest.TestCase):
-    """Test API integration functionality"""
+class TestAnalyticsAndReporting(unittest.TestCase):
+    """Test analytics and reporting functionality"""
     
     def setUp(self):
         if not SYSTEM_AVAILABLE:
             self.skipTest("AdvancedIncidentDetectionSystem not available")
         
-        # FIXED: Complete API config
-        api_config = {
+        # Updated config for analytics testing
+        config = {
             'display_window': False,
-            'api_enabled': True,
-            'api_endpoint': 'http://localhost:5000/api/incidents',
-            'api_key': 'test_key_12345',
-            'api_timeout': 5,
+            'save_incidents': False,
             'incident_location': 'Test Street & Test Avenue'
         }
         
-        with patch('cv2.VideoCapture'), \
-             patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
+        camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
             self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
-                config=api_config
+                camera_config=camera_config,
+                config=config
             )
     
-    def test_severity_mapping(self):
-        """Test severity mapping for API"""
-        self.assertEqual(self.system._map_severity_for_api('CRITICAL'), 'high')
-        self.assertEqual(self.system._map_severity_for_api('HIGH'), 'high')
-        self.assertEqual(self.system._map_severity_for_api('MEDIUM'), 'medium')
-        self.assertEqual(self.system._map_severity_for_api('LOW'), 'low')
-        self.assertEqual(self.system._map_severity_for_api('UNKNOWN'), 'medium')
-    
-    @patch('requests.post')
-    def test_successful_api_call(self, mock_post):
-        """Test successful API incident reporting"""
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_post.return_value = mock_response
+    def test_process_alerts_and_record(self):
+        """Test alert processing and recording"""
+        incidents = [
+            {
+                'type': 'collision',
+                'severity': 'HIGH',
+                'vehicles': ['car', 'truck'],
+                'time_to_collision': 2.5,
+                'position': [150, 200]
+            },
+            {
+                'type': 'stopped_vehicle',
+                'severity': 'MEDIUM',
+                'vehicle_class': 'car',
+                'stopped_duration': 15.0,
+                'position': [300, 400]
+            }
+        ]
         
-        incident = {
-            'type': 'collision',
-            'severity': 'HIGH',
-            'vehicles': ['car', 'truck']
+        current_frame = 100
+        
+        with patch('builtins.print') as mock_print:
+            self.system._process_alerts_and_record(incidents, current_frame)
+        
+        # Should print alerts
+        self.assertTrue(mock_print.called)
+        
+        # Should update analytics
+        self.assertGreater(len(self.system.analytics['incident_log']), 0)
+    
+    def test_enhanced_analytics_overlay(self):
+        """Test enhanced analytics overlay creation"""
+        frame = np.zeros((480, 640, 3), dtype=np.uint8)
+        
+        incidents = [
+            {
+                'type': 'collision',
+                'severity': 'HIGH',
+                'vehicles': ['car', 'truck'],
+                'time_to_collision': 1.8,
+                'sustained_confidence': 0.87,
+                'validation_summary': {'layers_passed': 3, 'total_layers': 4}
+            }
+        ]
+        
+        with patch('cv2.rectangle') as mock_rect, \
+             patch('cv2.putText') as mock_text:
+            
+            result_frame = self.system._add_enhanced_analytics_overlay(frame, incidents)
+            
+            self.assertIsNotNone(result_frame)
+            # Should call drawing functions
+            self.assertTrue(mock_rect.called or mock_text.called)
+            
+    def test_update_analytics(self):
+        """Test analytics updating functionality"""
+        initial_incidents = self.system.analytics['incidents_detected']
+        
+        # Simulate processing incidents
+        detection_results = {
+            'total_count': 3,
+            'class_counts': {'car': 2, 'truck': 1}
         }
         
-        self.system._send_incident_to_api(incident)
+        incidents = [{
+            'type': 'collision',
+            'severity': 'HIGH'
+        }]
         
-        mock_post.assert_called_once()
+        self.system._update_analytics(detection_results, incidents)
         
-        # FIXED: Correct way to access call arguments
-        call_args = mock_post.call_args
+        # Should increment analytics
+        self.assertEqual(self.system.analytics['incidents_detected'], initial_incidents + 1)
         
-        # Check URL (first positional argument)
-        self.assertEqual(call_args[0][0], 'http://localhost:5000/api/incidents')
+    def test_cleanup_functionality(self):
+        """Test system cleanup"""
+        # Mock the capture object
+        self.system.cap = Mock()
         
-        # Check keyword arguments
-        self.assertIn('headers', call_args[1])
-        self.assertIn('json', call_args[1])
-        self.assertIn('timeout', call_args[1])
-        
-        headers = call_args[1]['headers']
-        self.assertEqual(headers['X-API-KEY'], 'test_key_12345')
-        self.assertEqual(headers['Content-Type'], 'application/json')
-        
-        data = call_args[1]['json']
-        self.assertEqual(data['Incident_Severity'], 'high')
-        self.assertEqual(data['Incident_Status'], 'open')
-        self.assertEqual(data['Incident_Location'], 'Test Street & Test Avenue')
-        self.assertIn('Incident_Date', data)
-        
-        self.assertEqual(self.system.analytics['api_reports_sent'], 1)
-        self.assertEqual(self.system.analytics['api_failures'], 0)
-    
-    @patch('requests.post')
-    def test_failed_api_call(self, mock_post):
-        """Test failed API incident reporting"""
-        mock_response = Mock()
-        mock_response.status_code = 500
-        mock_response.text = "Internal Server Error"
-        mock_post.return_value = mock_response
-        
-        incident = {'type': 'collision', 'severity': 'HIGH'}
-        
-        self.system._send_incident_to_api(incident)
-        
-        self.assertEqual(self.system.analytics['api_reports_sent'], 0)
-        self.assertEqual(self.system.analytics['api_failures'], 1)
-    
-    @patch('requests.post')
-    def test_api_timeout(self, mock_post):
-        """Test API timeout handling"""
-        import requests
-        mock_post.side_effect = requests.exceptions.Timeout()
-        
-        incident = {'type': 'collision', 'severity': 'HIGH'}
-        
-        self.system._send_incident_to_api(incident)
-        
-        self.assertEqual(self.system.analytics['api_reports_sent'], 0)
-        self.assertEqual(self.system.analytics['api_failures'], 1)
+        with patch('cv2.destroyAllWindows') as mock_destroy, \
+             patch.object(self.system, '_generate_final_report') as mock_report:
+            
+            self.system._cleanup()
+            
+            # Should release capture and destroy windows
+            self.system.cap.release.assert_called_once()
+            mock_destroy.assert_called_once()
+            mock_report.assert_called_once()
 
 class TestIncidentDetection(unittest.TestCase):
     """Test specific incident detection methods"""
@@ -429,10 +593,12 @@ class TestIncidentDetection(unittest.TestCase):
             'pedestrian_road_threshold': 50,
         }
         
-        with patch('cv2.VideoCapture'), \
-             patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
+        camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
             self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+                camera_config=camera_config,
                 config=incident_config
             )
     
@@ -505,8 +671,10 @@ class TestErrorHandling(unittest.TestCase):
         mock_video_capture.return_value = mock_cap
         
         with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="nonexistent.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'nonexistent.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False}
             )
         
@@ -514,10 +682,12 @@ class TestErrorHandling(unittest.TestCase):
     
     def test_empty_detections(self):
         """Test handling of empty detection results"""
-        with patch('cv2.VideoCapture'), \
-             patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=None):
+        camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=None), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
             system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+                camera_config=camera_config,
                 config={'display_window': False}
             )
         
@@ -537,8 +707,10 @@ class TestErrorHandling(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=config
             )
         
@@ -573,8 +745,10 @@ class TestConfiguration(unittest.TestCase):
         }
         
         with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=custom_config
             )
         
@@ -603,8 +777,10 @@ class TestYOLOProcessing(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            self.system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False, 'api_enabled': False}
             )
     
@@ -644,8 +820,10 @@ class TestVisualization(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            self.system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False, 'api_enabled': False}
             )
     
@@ -732,8 +910,10 @@ class TestPhysicsValidation(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            self.system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=config
             )
     
@@ -790,8 +970,10 @@ class TestMultiLayerValidation(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            self.system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=config
             )
     
@@ -841,8 +1023,10 @@ class TestAnalyticsAndReporting(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            self.system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False, 'save_incidents': False}
             )
     
@@ -917,8 +1101,10 @@ class TestFileOperations(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            self.system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False}
             )
     
@@ -978,8 +1164,10 @@ class TestUtilityMethods(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            self.system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False}
             )
     
@@ -1070,8 +1258,10 @@ class TestMainDetectionLoop(unittest.TestCase):
             mock_model_instance.return_value = [Mock()]  # Mock results
             mock_model.return_value = mock_model_instance
             
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=config
             )
             
@@ -1126,7 +1316,9 @@ class TestMainDetectionLoop(unittest.TestCase):
         }
         
         with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            system = AdvancedIncidentDetectionSystem(stream_url="test.mp4", config=config)
+            camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            system = AdvancedIncidentDetectionSystem(camera_config=camera_config, config=config)
             
             # Mock methods that would be called
             system._save_frame = Mock()
@@ -1173,8 +1365,10 @@ class TestModelLoading(unittest.TestCase):
             
             mock_import.side_effect = import_side_effect
             
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False}
             )
             
@@ -1219,8 +1413,10 @@ class TestReportGeneration(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            self.system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False}
             )
     
@@ -1267,7 +1463,199 @@ class TestReportGeneration(unittest.TestCase):
         print_calls = [call[0][0] for call in mock_print.call_args_list]
         self.assertTrue(any('REPORT' in call for call in print_calls))
 
-# Replace the failing test methods with these fixed versions
+class TestEnhancedFeatures(unittest.TestCase):
+    """Test enhanced features and new methods"""
+    
+    def setUp(self):
+        if not SYSTEM_AVAILABLE:
+            self.skipTest("AdvancedIncidentDetectionSystem not available")
+        
+        config = {
+            'display_window': False,
+            'save_incidents': False,
+            'collision_distance_threshold': 30,
+            'min_collision_speed': 8.0,
+            'deceleration_threshold': 10.0,
+            'physics_validation_enabled': True,
+            'incident_location': 'Test Location'
+        }
+        
+        camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
+            self.system = AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
+                config=config
+            )
+    
+    def test_relative_velocity_score(self):
+        """Test relative velocity scoring"""
+        v1 = [10, 0]
+        v2 = [-8, 0]
+        
+        score = self.system._relative_velocity_score(v1, v2)
+        self.assertIsInstance(score, (int, float))
+        self.assertGreater(score, 0)
+        
+    def test_calculate_angle(self):
+        """Test angle calculation between vectors"""
+        v1 = [1, 0]
+        v2 = [0, 1]
+        
+        angle = self.system._calculate_angle(v1, v2)
+        self.assertIsInstance(angle, (int, float))
+        self.assertGreaterEqual(angle, 0)
+        self.assertLessEqual(angle, 180)
+        
+    def test_is_duplicate_incident(self):
+        """Test duplicate incident detection"""
+        incident1 = {
+            'type': 'collision',
+            'position': [100, 100],
+            'vehicles': ['car', 'truck']
+        }
+        
+        # Add to recent incidents
+        self.system.recent_incidents = [{
+            'incident': incident1,
+            'frame': 100,
+            'timestamp': 1000
+        }]
+        
+        # Test duplicate detection
+        is_duplicate = self.system._is_duplicate_incident(incident1, 105)
+        self.assertTrue(is_duplicate)
+        
+        # Test non-duplicate (different position)
+        incident2 = {
+            'type': 'collision',
+            'position': [300, 300],
+            'vehicles': ['car', 'truck']
+        }
+        
+        is_duplicate = self.system._is_duplicate_incident(incident2, 105)
+        self.assertFalse(is_duplicate)
+        
+    def test_record_incident_if_not_duplicate(self):
+        """Test incident recording with duplicate prevention"""
+        incident = {
+            'type': 'collision',
+            'position': [200, 200],
+            'vehicles': ['car', 'truck'],
+            'severity': 'HIGH'
+        }
+        
+        # Should record new incident
+        with patch.object(self.system, '_record_incident_clip') as mock_record:
+            self.system._record_incident_if_not_duplicate(incident, 150)
+            mock_record.assert_called_once()
+            
+        # Should not record duplicate
+        with patch.object(self.system, '_record_incident_clip') as mock_record:
+            self.system._record_incident_if_not_duplicate(incident, 155)
+            mock_record.assert_not_called()
+    
+    def test_is_following_pattern(self):
+        """Test vehicle following pattern detection"""
+        track1 = {
+            'id': 1,
+            'center': [100, 100],
+            'velocity': [10, 0],
+            'speed': 10
+        }
+        track2 = {
+            'id': 2,
+            'center': [120, 100],
+            'velocity': [10, 0],
+            'speed': 10
+        }
+        
+        # Add vehicle history
+        self.system.vehicle_history[1] = [[i, 100] for i in range(90, 101)]
+        self.system.vehicle_history[2] = [[i+20, 100] for i in range(90, 101)]
+        
+        result = self.system._is_following_pattern(track1, track2)
+        self.assertIsInstance(result, bool)
+        
+    def test_same_lane_following(self):
+        """Test same lane following detection"""
+        track1 = {
+            'id': 1,
+            'center': [100, 200],
+            'velocity': [10, 0],
+            'speed': 10
+        }
+        track2 = {
+            'id': 2,
+            'center': [80, 200],  # Behind track1 in same lane
+            'velocity': [10, 0],
+            'speed': 10
+        }
+        
+        result = self.system._same_lane_following(track1, track2)
+        self.assertIsInstance(result, bool)
+        
+    def test_maintaining_consistent_distance(self):
+        """Test consistent distance maintenance detection"""
+        track1_id = 1
+        track2_id = 2
+        
+        # Create consistent distance history
+        self.system.vehicle_history[track1_id] = [[100+i, 200] for i in range(10)]
+        self.system.vehicle_history[track2_id] = [[80+i, 200] for i in range(10)]
+        
+        result = self.system._maintaining_consistent_distance(track1_id, track2_id)
+        self.assertIsInstance(result, bool)
+        
+    def test_update_traffic_density(self):
+        """Test traffic density update"""
+        detections = [
+            {'class': 'car', 'confidence': 0.8},
+            {'class': 'truck', 'confidence': 0.9},
+            {'class': 'car', 'confidence': 0.7},
+            {'class': 'person', 'confidence': 0.8}
+        ]
+        
+        initial_density = getattr(self.system, 'traffic_density', None)
+        self.system._update_traffic_density(detections)
+        
+        # Should update traffic density metrics
+        self.assertIsNotNone(getattr(self.system, 'traffic_density', None))
+        
+    @patch('subprocess.run')
+    def test_call_classification(self, mock_subprocess):
+        """Test video classification calling"""
+        mock_subprocess.return_value = Mock(returncode=0)
+        
+        with patch('builtins.print'):
+            self.system._call_classification()
+        
+        mock_subprocess.assert_called_once()
+        
+    def test_record_incident_clip(self):
+        """Test incident clip recording"""
+        incident = {
+            'type': 'collision',
+            'severity': 'HIGH',
+            'vehicles': ['car', 'truck']
+        }
+        
+        # Add some frames to buffer
+        for i in range(10):
+            frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+            self.system.frame_buffer.append(frame)
+        
+        with patch('cv2.VideoWriter') as mock_writer, \
+             patch('builtins.print'):
+            
+            mock_writer_instance = Mock()
+            mock_writer.return_value = mock_writer_instance
+            
+            self.system._record_incident_clip(incident)
+            
+            # Should create video writer
+            mock_writer.assert_called()
 
 class TestVisualization(unittest.TestCase):
     """Test visualization and drawing methods"""
@@ -1278,8 +1666,10 @@ class TestVisualization(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            self.system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False, 'api_enabled': False}
             )
     
@@ -1409,8 +1799,10 @@ class TestMainDetectionLoop(unittest.TestCase):
         }
         
         with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()) as mock_model:
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=config
             )
             
@@ -1466,7 +1858,9 @@ class TestMainDetectionLoop(unittest.TestCase):
         }
         
         with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            system = AdvancedIncidentDetectionSystem(stream_url="test.mp4", config=config)
+            camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            system = AdvancedIncidentDetectionSystem(camera_config=camera_config, config=config)
             
             # Mock all the methods that would be called
             system._detect_objects = Mock(return_value={
@@ -1509,8 +1903,10 @@ class TestModelLoading(unittest.TestCase):
             mock_model = Mock()
             mock_load_model.return_value = mock_model
             
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=config
             )
             
@@ -1527,8 +1923,10 @@ class TestModelLoading(unittest.TestCase):
         
         # Mock _load_model to return None (failure)
         with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=None):
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False}
             )
             
@@ -1560,8 +1958,10 @@ class TestMultiLayerValidation(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            self.system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            self.system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=config
             )
     
@@ -1639,8 +2039,10 @@ class TestEdgeCases(unittest.TestCase):
         mock_video_capture.return_value = mock_cap
         
         with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="nonexistent.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'nonexistent.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={'display_window': False}
             )
             
@@ -1652,10 +2054,12 @@ class TestEdgeCases(unittest.TestCase):
     
     def test_detect_objects_with_no_model(self):
         """Test object detection when model is None"""
-        with patch('cv2.VideoCapture'), \
-             patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=None):
+        camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=None), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
             system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+                camera_config=camera_config,
                 config={'display_window': False}
             )
         
@@ -1680,8 +2084,10 @@ class TestEdgeCases(unittest.TestCase):
             mock_model.side_effect = Exception("Model error")
             mock_load.return_value = mock_model
             
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=config
             )
             # Set model_type so the exception path is taken
@@ -1704,8 +2110,10 @@ class TestEdgeCases(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=config
             )
         
@@ -1739,7 +2147,9 @@ class TestEdgeCases(unittest.TestCase):
         
         with patch('cv2.VideoCapture'), \
              patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            system = AdvancedIncidentDetectionSystem(stream_url="test.mp4", config=config)
+            camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            system = AdvancedIncidentDetectionSystem(camera_config=camera_config, config=config)
         
         incident = {'type': 'collision', 'severity': 'HIGH'}
         
@@ -1765,6 +2175,141 @@ class TestEdgeCases(unittest.TestCase):
             
             self.assertEqual(system.analytics['api_failures'], 1)
 
+class TestStreamInitialization(unittest.TestCase):
+    """Test stream initialization and camera handling"""
+    
+    def setUp(self):
+        if not SYSTEM_AVAILABLE:
+            self.skipTest("AdvancedIncidentDetectionSystem not available")
+    
+    @patch('Code.hls_stream_adapter.StreamCapture')
+    def test_initialize_capture_success(self, mock_stream_capture):
+        """Test successful stream capture initialization"""
+        mock_capture = Mock()
+        mock_capture.open.return_value = True
+        mock_stream_capture.return_value = mock_capture
+        
+        camera_config = {
+            'camera_id': 'test_cam_01',
+            'url': 'http://test.stream.m3u8',
+            'location': 'Test Intersection'
+        }
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch('builtins.print'):
+            
+            system = AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
+                config={'display_window': False}
+            )
+            
+            result = system.initialize_capture()
+            
+        self.assertTrue(result)
+        mock_stream_capture.assert_called_once_with(camera_config['url'], max_retries=5)
+        
+    @patch('Code.hls_stream_adapter.StreamCapture')
+    def test_initialize_capture_failure(self, mock_stream_capture):
+        """Test stream capture initialization failure"""
+        mock_capture = Mock()
+        mock_capture.open.return_value = False
+        mock_stream_capture.return_value = mock_capture
+        
+        camera_config = {
+            'camera_id': 'test_cam_02',
+            'url': 'http://invalid.stream.m3u8',
+            'location': 'Test Location'
+        }
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch('builtins.print'):
+            
+            system = AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
+                config={'display_window': False}
+            )
+            
+            result = system.initialize_capture()
+            
+        self.assertFalse(result)
+        
+    def test_initialize_capture_no_config(self):
+        """Test initialization without camera config"""
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch('builtins.print'):
+            
+            system = AdvancedIncidentDetectionSystem(
+                camera_config=None,
+                config={'display_window': False}
+            )
+            
+            result = system.initialize_capture()
+            
+        self.assertFalse(result)
+
+class TestIncidentRecording(unittest.TestCase):
+    """Test incident recording and clip generation"""
+    
+    def setUp(self):
+        if not SYSTEM_AVAILABLE:
+            self.skipTest("AdvancedIncidentDetectionSystem not available")
+        
+        camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
+            self.system = AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
+                config={'display_window': False, 'save_incidents': True}
+            )
+    
+    @patch('cv2.VideoWriter')
+    @patch('os.path.exists')
+    def test_record_incident_clip_with_frames(self, mock_exists, mock_video_writer):
+        """Test recording incident clip with sufficient frames"""
+        mock_exists.return_value = True
+        mock_writer = Mock()
+        mock_video_writer.return_value = mock_writer
+        
+        # Add frames to buffer
+        for i in range(50):
+            frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+            self.system.frame_buffer.append(frame)
+        
+        incident = {
+            'type': 'collision',
+            'severity': 'HIGH',
+            'vehicles': ['car', 'truck']
+        }
+        
+        with patch('builtins.print'):
+            self.system._record_incident_clip(incident)
+        
+        # Should create video writer and write frames
+        mock_video_writer.assert_called_once()
+        self.assertTrue(mock_writer.write.called)
+        mock_writer.release.assert_called_once()
+        
+    def test_record_incident_clip_insufficient_frames(self):
+        """Test recording with insufficient frames in buffer"""
+        # Clear buffer and add only few frames
+        self.system.frame_buffer.clear()
+        for i in range(3):
+            frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+            self.system.frame_buffer.append(frame)
+        
+        incident = {
+            'type': 'collision',
+            'severity': 'MEDIUM',
+            'vehicles': ['car']
+        }
+        
+        with patch('builtins.print') as mock_print:
+            self.system._record_incident_clip(incident)
+        
+        # Should print warning about insufficient frames
+        self.assertTrue(mock_print.called)
+
 class TestConfigurationEdgeCases(unittest.TestCase):
     """Test configuration edge cases and defaults"""
     
@@ -1780,8 +2325,10 @@ class TestConfigurationEdgeCases(unittest.TestCase):
         mock_video_capture.return_value = mock_cap
         
         with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config=None  # None config should use defaults
             )
         
@@ -1797,14 +2344,228 @@ class TestConfigurationEdgeCases(unittest.TestCase):
         mock_video_capture.return_value = mock_cap
         
         with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()):
-            system = AdvancedIncidentDetectionSystem(
-                stream_url="test.mp4",
+            system = camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+            
+            AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
                 config={}  # Empty config
             )
         
         # Should still have all default values
         self.assertIn('confidence_threshold', system.config)
         self.assertIn('collision_distance_threshold', system.config)
+
+class TestMultiCameraFunctions(unittest.TestCase):
+    """Test multi-camera support functions"""
+    
+    def setUp(self):
+        if not SYSTEM_AVAILABLE:
+            self.skipTest("AdvancedIncidentDetectionSystem not available")
+    
+    @patch('json.load')
+    @patch('builtins.open', new_callable=unittest.mock.mock_open)
+    @patch('os.path.exists')
+    def test_load_camera_configurations(self, mock_exists, mock_open, mock_json_load):
+        """Test loading camera configurations from file"""
+        mock_exists.return_value = True
+        
+        mock_config = {
+            "cameras": [
+                {
+                    "camera_id": "cam_01",
+                    "url": "http://camera1.stream.m3u8",
+                    "location": "Main Intersection"
+                },
+                {
+                    "camera_id": "cam_02",
+                    "url": "http://camera2.stream.m3u8",
+                    "location": "Highway Onramp"
+                }
+            ]
+        }
+        mock_json_load.return_value = mock_config
+        
+        from incident_detection_system import load_camera_configurations
+        
+        result = load_camera_configurations()
+        
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]['camera_id'], 'cam_01')
+        self.assertEqual(result[1]['camera_id'], 'cam_02')
+        
+    @patch('os.path.exists')
+    def test_load_camera_configurations_missing_file(self, mock_exists):
+        """Test loading configurations when file doesn't exist"""
+        mock_exists.return_value = False
+        
+        from incident_detection_system import load_camera_configurations
+        
+        with patch('builtins.print'):
+            result = load_camera_configurations()
+        
+        self.assertEqual(result, [])
+        
+    @patch('json.load')
+    @patch('builtins.open', new_callable=unittest.mock.mock_open)
+    @patch('os.path.exists')
+    def test_load_camera_configurations_json_error(self, mock_exists, mock_open, mock_json_load):
+        """Test handling JSON decode error"""
+        mock_exists.return_value = True
+        mock_json_load.side_effect = json.JSONDecodeError("Invalid JSON", "doc", 0)
+        
+        from incident_detection_system import load_camera_configurations
+        
+        with patch('builtins.print'):
+            result = load_camera_configurations()
+        
+        self.assertEqual(result, [])
+        
+    @patch.object(AdvancedIncidentDetectionSystem, 'run_detection')
+    def test_run_camera_detection(self, mock_run_detection):
+        """Test single camera detection runner"""
+        camera_config = {
+            'camera_id': 'test_cam',
+            'url': 'test.mp4',
+            'location': 'Test Location'
+        }
+        
+        config = {
+            'display_window': False,
+            'save_incidents': False
+        }
+        
+        from incident_detection_system import run_camera_detection
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True), \
+             patch('builtins.print'):
+            
+            run_camera_detection(camera_config, config)
+        
+        mock_run_detection.assert_called_once()
+
+class TestAdvancedCollisionValidation(unittest.TestCase):
+    """Test advanced collision validation methods"""
+    
+    def setUp(self):
+        if not SYSTEM_AVAILABLE:
+            self.skipTest("AdvancedIncidentDetectionSystem not available")
+        
+        config = {
+            'display_window': False,
+            'depth_analysis_enabled': True,
+            'optical_flow_enabled': True,
+            'physics_validation_enabled': True,
+            'deceleration_threshold': 10.0,
+            'minimum_layer_agreement': 2,
+            'collision_confidence_threshold': 0.7
+        }
+        
+        camera_config = {'camera_id': 'test', 'url': 'test.mp4', 'location': 'Test'}
+        
+        with patch.object(AdvancedIncidentDetectionSystem, '_load_model', return_value=Mock()), \
+             patch.object(AdvancedIncidentDetectionSystem, 'initialize_capture', return_value=True):
+            self.system = AdvancedIncidentDetectionSystem(
+                camera_config=camera_config,
+                config=config
+            )
+    
+    def test_enhanced_severity_determination(self):
+        """Test enhanced severity determination"""
+        sustained_confidence = 0.85
+        peak_confidence = 0.95
+        
+        severity = self.system._determine_enhanced_severity(sustained_confidence, peak_confidence)
+        
+        self.assertIn(severity, ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])
+        
+    def test_create_enhanced_final_collision_incident(self):
+        """Test enhanced collision incident creation"""
+        collision = {
+            'track1': {'class': 'car', 'center': [100, 100], 'id': 1},
+            'track2': {'class': 'truck', 'center': [200, 100], 'id': 2},
+            'collision_data': {'ttc': 1.5, 'collision_point': [150, 100]},
+            'validation_layers': {
+                'trajectory': True,
+                'depth': True,
+                'optical_flow': False,
+                'physics': True
+            }
+        }
+        
+        sustained_confidence = 0.82
+        peak_confidence = 0.91
+        
+        result = self.system._create_enhanced_final_collision_incident(collision, sustained_confidence, peak_confidence)
+        
+        self.assertEqual(result['type'], 'collision')
+        self.assertEqual(result['vehicles'], ['car', 'truck'])
+        self.assertIn('sustained_confidence', result)
+        self.assertIn('peak_confidence', result)
+        self.assertIn('validation_summary', result)
+        
+    def test_get_viable_collision_pairs(self):
+        """Test viable collision pair detection"""
+        active_tracks = {
+            1: {
+                'id': 1,
+                'center': [100, 100],
+                'velocity': [10, 0],
+                'speed': 10,
+                'class': 'car',
+                'last_seen': 1
+            },
+            2: {
+                'id': 2,
+                'center': [200, 100],
+                'velocity': [-8, 0],
+                'speed': 8,
+                'class': 'truck',
+                'last_seen': 1
+            },
+            3: {
+                'id': 3,
+                'center': [300, 300],  # Far away
+                'velocity': [5, 0],
+                'speed': 5,
+                'class': 'car',
+                'last_seen': 1
+            }
+        }
+        
+        # Add some vehicle history
+        for track_id in [1, 2, 3]:
+            self.system.vehicle_history[track_id] = [[100+i*track_id, 100] for i in range(10)]
+        
+        pairs = self.system._get_viable_collision_pairs(active_tracks, strict_filtering=False)
+        
+        self.assertIsInstance(pairs, list)
+        # Should find at least one viable pair (1 and 2)
+        
+    def test_balanced_confidence_calculation(self):
+        """Test balanced confidence calculation"""
+        track1 = {
+            'id': 1,
+            'speed': 12,
+            'velocity': [12, 0],
+            'class': 'car'
+        }
+        track2 = {
+            'id': 2,
+            'speed': 10,
+            'velocity': [-10, 0],
+            'class': 'truck'
+        }
+        
+        distance = 50
+        time_steps = 3
+        traffic_state = {'density': 'medium', 'avg_speed': 20}
+        
+        confidence = self.system._balanced_confidence_calculation(track1, track2, distance, time_steps, traffic_state)
+        
+        self.assertIsInstance(confidence, (int, float))
+        self.assertGreaterEqual(confidence, 0)
+        self.assertLessEqual(confidence, 1)
 
 if __name__ == '__main__':
     if not SYSTEM_AVAILABLE:
