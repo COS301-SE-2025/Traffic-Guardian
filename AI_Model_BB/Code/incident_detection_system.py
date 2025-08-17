@@ -2580,7 +2580,7 @@ class AdvancedIncidentDetectionSystem:
                 font_size = font_scale - 0.05
                 thickness = 1
             elif text.startswith("  ") and ":" in text:  # Layer stats
-                color = (180, 180, 180)  # Light gray for stats
+                color = (255, 255, 255)  # White for stats like other info
                 font_size = font_scale - 0.05
                 thickness = 1
             elif text == "":  # Empty lines
