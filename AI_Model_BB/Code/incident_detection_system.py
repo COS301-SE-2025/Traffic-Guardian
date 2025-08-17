@@ -24,6 +24,9 @@ class AdvancedIncidentDetectionSystem:
         self.camera_config = camera_config  # Single camera config
         self.config = config or self._default_config()
         
+        # Apply camera-specific threshold adjustments
+        self._adapt_thresholds_for_camera()
+        
         # Initialize YOLO model
         self.model = self._load_model()
         self.target_classes = ['person', 'car', 'truck', 'bus', 'motorcycle', 'bicycle']
@@ -71,6 +74,53 @@ class AdvancedIncidentDetectionSystem:
             'pedestrian_on_road': [],
             'sudden_speed_change': []
         }
+        
+    def _adapt_thresholds_for_camera(self):
+        """
+        Adapt detection thresholds based on camera characteristics and stream type.
+        Provides better balance between false positive reduction and collision detection.
+        """
+        if not self.camera_config:
+            return
+            
+        camera_url = self.camera_config.get('url', '')
+        camera_id = self.camera_config.get('camera_id', '')
+        
+        # Detect stream type and camera characteristics
+        is_live_stream = '.m3u8' in camera_url.lower() or 'stream' in camera_url.lower()
+        is_highway_camera = 'highway' in camera_url.lower() or 'arterial' in camera_url.lower()
+        is_intersection_camera = 'intersection' in camera_url.lower() or 'traffic' in camera_url.lower()
+        
+        # Base adjustments for live streams (like camera 3)
+        if is_live_stream:
+            # Live streams have different motion patterns and latency
+            self.config['collision_confidence_threshold'] = 0.5  # Reduced from 0.7
+            self.config['minimum_layer_agreement'] = 2  # Keep at 2 for balance
+            self.config['collision_distance_threshold'] = 25  # Slightly closer
+            self.config['min_collision_speed'] = 6.0  # Lower minimum speed
+            
+        # Highway/arterial camera adjustments
+        if is_highway_camera or camera_id == '3':  # Camera 3 is highway type
+            self.config['collision_confidence_threshold'] = 0.45  # Even lower for highway
+            self.config['collision_angle_threshold'] = 45  # Allow more varied collision angles
+            self.config['min_collision_speed'] = 7.0  # Slightly higher speeds expected
+            self.config['prediction_horizon'] = 20  # Longer prediction for highway speeds
+            
+        # Intersection camera adjustments  
+        elif is_intersection_camera or camera_id in ['1', '2']:  # Cameras 1&2 are intersection type
+            self.config['collision_confidence_threshold'] = 0.6  # Higher for intersections
+            self.config['collision_angle_threshold'] = 25  # Stricter angles for T-bone detection
+            self.config['min_collision_speed'] = 5.0  # Lower speeds in intersections
+            
+        # Video file adjustments (usually higher quality, stable feed)
+        elif camera_url.endswith(('.mp4', '.avi', '.mov')):
+            self.config['collision_confidence_threshold'] = 0.65  # Can be higher for stable video
+            
+        print(f"🎯 Camera {camera_id} thresholds adapted:")
+        print(f"   Confidence threshold: {self.config['collision_confidence_threshold']}")
+        print(f"   Distance threshold: {self.config['collision_distance_threshold']}")
+        print(f"   Speed threshold: {self.config['min_collision_speed']}")
+        print(f"   Angle threshold: {self.config['collision_angle_threshold']}")
         
         # Traffic density monitoring for adaptive thresholds
         self.traffic_density_history = deque(maxlen=30)  # Last 30 frames
@@ -1436,7 +1486,8 @@ class AdvancedIncidentDetectionSystem:
 
     def _persistent_collision_validation(self, potential_collisions):
         """
-        BALANCED - Less strict evidence persistence requirements
+        EVENT-BASED collision validation - detects collision events immediately
+        rather than requiring persistence. Real collisions are momentary events.
         """
         final_collisions = []
         current_frame = self.analytics['total_frames']
@@ -1448,65 +1499,64 @@ class AdvancedIncidentDetectionSystem:
             
             confidence = collision['collision_data']['confidence']
             
-            # Initialize or update evidence buffer
-            if key not in self.collision_evidence_buffer:
-                self.collision_evidence_buffer[key] = {
-                    'evidence': [confidence],
-                    'first_frame': current_frame,
-                    'incident': collision,
-                    'peak_evidence': confidence,
-                    'sustained_high_count': 1 if confidence > 0.3 else 0  # Reduced from 0.7
-                }
-            else:
+            # Check if this collision pair was recently processed to prevent duplicates
+            if key in self.collision_evidence_buffer:
                 buffer = self.collision_evidence_buffer[key]
-                buffer['evidence'].append(confidence)
-                buffer['peak_evidence'] = max(buffer['peak_evidence'], confidence)
-                
-                # Count frames with high evidence
-                if confidence > 0.3:  # Reduced from 0.7
-                    buffer['sustained_high_count'] += 1
-                
-                # Keep only last 8 frames of evidence (reduced from 10)
-                if len(buffer['evidence']) > 8:
-                    buffer['evidence'].pop(0)
+                # Skip if recently processed (within last 5 frames)
+                if current_frame - buffer.get('last_detection_frame', 0) < 5:
+                    continue
             
-            buffer = self.collision_evidence_buffer[key]
+            # Count validation layers that passed
+            validation_layers = collision.get('validation_layers', {})
+            layers_passed = sum([
+                validation_layers.get('trajectory', True),  # Always true if we got here
+                validation_layers.get('depth', True),
+                validation_layers.get('optical_flow', True), 
+                validation_layers.get('physics', True)
+            ])
             
-            # MUCH MORE LENIENT validation requirements
-            if len(buffer['evidence']) >= 3:  # Reduced from 5
-                avg_confidence = np.mean(buffer['evidence'][-4:])  # Shorter average
-                peak_confidence = buffer['peak_evidence']
-                sustained_high = buffer['sustained_high_count']
+            # Adaptive confidence threshold based on camera type and layers passed
+            camera_id = self.camera_config.get('camera_id', '')
+            base_threshold = self.config['collision_confidence_threshold']
+            
+            # Layer agreement bonus - more layers passed = lower threshold needed
+            layer_bonus = (layers_passed - self.config['minimum_layer_agreement']) * 0.05
+            effective_threshold = max(0.25, base_threshold - layer_bonus)
+            
+            # Immediate event detection - no persistence required
+            validation_passed = (
+                confidence >= effective_threshold and
+                layers_passed >= self.config['minimum_layer_agreement']
+            )
+            
+            if validation_passed:
+                # Create collision incident immediately
+                final_incident = self._create_enhanced_final_collision_incident(
+                    collision, confidence, confidence)
                 
-                # Balanced requirements that actually catch incidents
-                validation_passed = (
-                    avg_confidence >= 0.35 and      # Reduced from 0.75
-                    peak_confidence >= 0.5 and     # Reduced from 0.9
-                    sustained_high >= 1 and        # Reduced from 4
-                    len(buffer['evidence']) >= 2   # Reduced from 5
-                )
+                # Add event-based validation metrics
+                final_incident['event_validation'] = {
+                    'detection_method': 'immediate_event',
+                    'layers_passed': layers_passed,
+                    'effective_threshold': effective_threshold,
+                    'confidence_margin': confidence - effective_threshold,
+                    'camera_adaptive': True
+                }
                 
-                if validation_passed:
-                    # Create validated incident
-                    final_incident = self._create_enhanced_final_collision_incident(
-                        collision, avg_confidence, peak_confidence)
-                    
-                    # Add validation metrics
-                    final_incident['balanced_validation'] = {
-                        'sustained_high_frames': sustained_high,
-                        'observation_frames': len(buffer['evidence']),
-                        'evidence_trend': 'increasing' if buffer['evidence'][-1] > buffer['evidence'][0] else 'stable'
-                    }
-                    
-                    final_collisions.append(final_incident)
-                    
-                    # Remove from buffer to prevent duplicates
-                    del self.collision_evidence_buffer[key]
+                final_collisions.append(final_incident)
+                
+                # Mark this pair as recently detected to prevent immediate duplicates
+                self.collision_evidence_buffer[key] = {
+                    'last_detection_frame': current_frame,
+                    'confidence': confidence
+                }
+                
+                print(f"🎯 Collision detected! Confidence: {confidence:.3f}, Threshold: {effective_threshold:.3f}, Layers: {layers_passed}/4")
         
-        # Clean up old evidence (same timeout)
+        # Clean up old tracking data (prevent memory buildup)
         to_remove = []
         for key, buffer in self.collision_evidence_buffer.items():
-            if current_frame - buffer['first_frame'] > 20:
+            if current_frame - buffer.get('last_detection_frame', 0) > 30:
                 to_remove.append(key)
         
         for key in to_remove:
