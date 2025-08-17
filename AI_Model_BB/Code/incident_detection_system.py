@@ -75,6 +75,10 @@ class AdvancedIncidentDetectionSystem:
             'sudden_speed_change': []
         }
         
+    # =============================================================================
+    # CONFIGURATION AND INITIALIZATION METHODS
+    # =============================================================================
+        
     def _adapt_thresholds_for_camera(self):
         """
         Adapt detection thresholds based on camera characteristics and stream type.
@@ -91,25 +95,21 @@ class AdvancedIncidentDetectionSystem:
         is_highway_camera = 'highway' in camera_url.lower() or 'arterial' in camera_url.lower()
         is_intersection_camera = 'intersection' in camera_url.lower() or 'traffic' in camera_url.lower()
         
-        # Base adjustments for live streams (like camera 3)
         if is_live_stream:
-            # Live streams have different motion patterns and latency
+
             self.config['collision_confidence_threshold'] = 0.5  # Reduced from 0.7
             self.config['minimum_layer_agreement'] = 2  # Keep at 2 for balance
             self.config['collision_distance_threshold'] = 25  # Slightly closer
             self.config['min_collision_speed'] = 6.0  # Lower minimum speed
             
-        # Stream-based adjustments (no hardcoded camera IDs)
         if is_live_stream:
-            # Live streams (any .m3u8 or stream URL) - balanced for real-time detection
             self.config['collision_confidence_threshold'] = 0.45  # Lower for live streams
             self.config['collision_angle_threshold'] = 45  # Allow more varied collision angles
             self.config['min_collision_speed'] = 6.0  # Reasonable speed for live detection
             self.config['prediction_horizon'] = 20  # Longer prediction for stream latency
             
-        # Video file adjustments (intersection or highway videos)
         elif camera_url.endswith(('.mp4', '.avi', '.mov')):
-            # Video files - can use higher thresholds due to stable quality
+
             if is_intersection_camera:
                 self.config['collision_confidence_threshold'] = 0.6  # Higher for intersections
                 self.config['collision_angle_threshold'] = 25  # Stricter angles for T-bone detection
@@ -123,7 +123,7 @@ class AdvancedIncidentDetectionSystem:
                 self.config['collision_confidence_threshold'] = 0.65
             
         stream_type = "Live Stream" if is_live_stream else "Video File"
-        print(f"🎯 Camera {camera_id} ({stream_type}) thresholds adapted:")
+        print(f"Camera {camera_id} ({stream_type}) thresholds adapted:")
         print(f"   Confidence threshold: {self.config['collision_confidence_threshold']}")
         print(f"   Distance threshold: {self.config['collision_distance_threshold']}")
         print(f"   Speed threshold: {self.config['min_collision_speed']}")
@@ -149,8 +149,6 @@ class AdvancedIncidentDetectionSystem:
                 'physics_confirmed': 0,
                 'final_confirmed': 0
             },
-            'api_reports_sent': 0,
-            'api_failures': 0,
             'clips_recorded': 0 
         }
         
@@ -162,7 +160,7 @@ class AdvancedIncidentDetectionSystem:
     def _default_config(self):
         """Enhanced configuration with advanced collision detection settings."""
         return {
-            # YOLO settings - can be overridden by environment variables
+            # YOLO settings 
             'model_version': os.getenv('MODEL_VERSION', 'yolov8s'),
             'confidence_threshold': float(os.getenv('CONFIDENCE_THRESHOLD', '0.4')),
             'iou_threshold': 0.45,
@@ -252,6 +250,10 @@ class AdvancedIncidentDetectionSystem:
             print(f"✗ Failed to connect camera {camera_id}")
             print(f"   URL: {stream_url}")
             return False
+    
+    # =============================================================================
+    # UTILITY AND HELPER METHODS
+    # =============================================================================
     
     def _relative_velocity_score(self, v1, v2):
         v1 = np.array(v1)
@@ -454,6 +456,10 @@ class AdvancedIncidentDetectionSystem:
         except Exception as e:
             print(f"✗ Error calling video_incident_classifier.py: {e}")
     
+    # =============================================================================
+    # MAIN DETECTION LOOP AND PROCESSING
+    # =============================================================================
+    
     def run_detection(self):
         """Main detection loop with enhanced multi-layer collision detection."""
         if not self.cap or not self.cap.isOpened():
@@ -461,8 +467,8 @@ class AdvancedIncidentDetectionSystem:
             return
         
         camera_id = self.camera_config['camera_id']
-        print(f"🚀 Starting detection for camera: {camera_id}")
-        print("🔍 Enhanced collision detection enabled:")
+        print(f"Starting detection for camera: {camera_id}")
+        print("Enhanced collision detection enabled:")
         print("  Layer 1: Traffic-Aware Trajectory Prediction")
         print("  Layer 2: Evidence Persistence Validation") 
         print("  Layer 3: Enhanced Physics Analysis")
@@ -489,26 +495,26 @@ class AdvancedIncidentDetectionSystem:
                     
                     if is_hls:
                         # For HLS streams, try to reconnect using the stream handler
-                        print(f"🔄 HLS stream disconnected for camera {camera_id}")
+                        print(f"HLS stream disconnected for camera {camera_id}")
                         if hasattr(self.cap, 'reconnect') and self.cap.reconnect():
-                            print(f"✓ HLS stream reconnected")
+                            print(f"HLS stream reconnected")
                             continue
                         else:
-                            print(f"✗ Failed to reconnect HLS stream")
+                            print(f"Failed to reconnect HLS stream")
                             break
                             
                     elif is_video_file:  
                         # Video file ended - restart from beginning
-                        print(f"🔄 Video ended for camera {camera_id}, restarting...")
+                        print(f"Video ended for camera {camera_id}, restarting...")
                         time.sleep(2)  # Allow video writing to complete
                         self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Restart video
                         continue
                         
                     else:
                         # Other stream types - try to reconnect
-                        print(f"🔄 Stream disconnected for camera {camera_id}, reconnecting...")
+                        print(f"Stream disconnected for camera {camera_id}, reconnecting...")
                         if not self.initialize_capture():
-                            print(f"✗ Failed to reconnect stream")
+                            print(f"Failed to reconnect stream")
                             break
                         continue
                 
@@ -540,7 +546,7 @@ class AdvancedIncidentDetectionSystem:
                     if frame_count - last_incident_frame > 90:  # 3 seconds gap at 30fps
                         self._process_alerts_and_record(incidents, frame_count)
                         last_incident_frame = frame_count
-                        print(f"🎯 Incident recorded at frame {frame_count}. Press 'q' to exit after recording completes.")
+                        print(f" Incident recorded at frame {frame_count}. Press 'q' to exit after recording completes.")
                 
                 # Create visualization
                 annotated_frame = self._create_visualization(frame, detection_results, incidents)
@@ -557,7 +563,7 @@ class AdvancedIncidentDetectionSystem:
                 # Handle keyboard input with improved timing
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q'):
-                    print(f"🛑 Quit requested for camera {camera_id}")
+                    print(f" Quit requested for camera {camera_id}")
                     # Give a moment for any ongoing video writing to complete
                     time.sleep(1)
                     break
@@ -572,24 +578,28 @@ class AdvancedIncidentDetectionSystem:
                     if is_fullscreen:
                         cv2.setWindowProperty(window_name, 
                                             cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                        print("🖥️ Switched to fullscreen mode (Press ESC or 'f' to exit)")
+                        print(" Switched to fullscreen mode (Press ESC or 'f' to exit)")
                     else:
                         cv2.setWindowProperty(window_name, 
                                             cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
-                        print("🪟 Switched to windowed mode")
+                        print(" Switched to windowed mode")
                 elif key == 27:  # ESC key
                     if is_fullscreen:
                         window_name = f"Camera {camera_id} - Enhanced Incident Detection"
                         is_fullscreen = False
                         cv2.setWindowProperty(window_name, 
                                             cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
-                        print("🪟 Exited fullscreen mode")
+                        print(" Exited fullscreen mode")
                 
         except KeyboardInterrupt:
-            print(f"\n⏹️ Detection stopped for camera {camera_id}")
+            print(f"\n Detection stopped for camera {camera_id}")
         finally:
-            print(f"🧹 Cleaning up camera {camera_id}...")
+            print(f" Cleaning up camera {camera_id}...")
             self._cleanup()
+    
+    # =============================================================================
+    # OBJECT DETECTION AND TRACKING
+    # =============================================================================
     
     def _detect_objects(self, frame):
         """Perform YOLO object detection."""
@@ -666,6 +676,10 @@ class AdvancedIncidentDetectionSystem:
         
         return {'active_tracks': matched_ids}
     
+    # =============================================================================
+    # MULTI-LAYER INCIDENT DETECTION PIPELINE
+    # =============================================================================
+    
     def _detect_incidents_multilayer(self, frame, detection_results, tracking_results):
         """ENHANCED Multi-Layer Incident Detection Pipeline with Traffic Awareness."""
         incidents = []
@@ -714,8 +728,9 @@ class AdvancedIncidentDetectionSystem:
         
         return incidents
     
-# ADDITIONAL FALSE POSITIVE ELIMINATORS
-# Add these methods to your enhanced system for even better precision
+    # =============================================================================
+    # COLLISION DETECTION ALGORITHMS
+    # =============================================================================
 
     def _enhanced_traffic_aware_collision_detection(self, active_tracks):
         """
@@ -750,7 +765,7 @@ class AdvancedIncidentDetectionSystem:
             confidence_threshold = 0.8   # Reduced from 0.95
             parallel_filter_strict = True
         
-        print(f"   🚦 Traffic State: {traffic_state}, Vehicles: {vehicle_count}")
+        print(f"    Traffic State: {traffic_state}, Vehicles: {vehicle_count}")
         
         # Pre-filter vehicle pairs using enhanced lane analysis
         viable_pairs = self._get_viable_collision_pairs(active_tracks, parallel_filter_strict)
@@ -1304,7 +1319,7 @@ class AdvancedIncidentDetectionSystem:
                     
                 except Exception as e:
                     # Log the error but continue processing other pairs
-                    print(f"   ⚠️ Error processing pair V{track1_id}-V{track2_id}: {e}")
+                    print(f"    Error processing pair V{track1_id}-V{track2_id}: {e}")
                     continue
         
         return viable_pairs
@@ -1344,7 +1359,7 @@ class AdvancedIncidentDetectionSystem:
         return False
 
 
-  # INTEGRATION INSTRUCTIONS:
+  
 
     def _smart_collision_candidate_check(self, track1, track2, speed_threshold):
         """
@@ -1547,7 +1562,7 @@ class AdvancedIncidentDetectionSystem:
                 
                 # Debug output for live stream validation
                 if not stream_validation_passed:
-                    print(f"🚫 Live stream collision rejected: conf={confidence:.3f}, layers={layers_passed}/4")
+                    print(f" Live stream collision rejected: conf={confidence:.3f}, layers={layers_passed}/4")
                 
             else:
                 # For demo videos, use standard validation (current working behavior)
@@ -1579,7 +1594,7 @@ class AdvancedIncidentDetectionSystem:
                 }
                 
                 stream_type = "Live Stream" if is_live_stream else "Demo Video"
-                print(f"🎯 Collision detected! [{stream_type}] Confidence: {confidence:.3f}, Threshold: {effective_threshold:.3f}, Layers: {layers_passed}/4")
+                print(f" Collision detected! [{stream_type}] Confidence: {confidence:.3f}, Threshold: {effective_threshold:.3f}, Layers: {layers_passed}/4")
         
         # Clean up old tracking data (prevent memory buildup)
         to_remove = []
@@ -1668,8 +1683,12 @@ class AdvancedIncidentDetectionSystem:
                 
         except Exception as e:
             # Any error = automatic rejection for live streams
-            print(f"🚫 Live stream validation error: {e}")
+            print(f" Live stream validation error: {e}")
             return False
+    
+    # =============================================================================
+    # INCIDENT CREATION AND REPORTING
+    # =============================================================================
     
     def _create_enhanced_final_collision_incident(self, collision, sustained_confidence, peak_confidence):
         """
@@ -1731,7 +1750,11 @@ class AdvancedIncidentDetectionSystem:
             
             # Log density changes
             if previous_level != self.current_density_level:
-                print(f"   🚦 Traffic density changed: {previous_level} → {self.current_density_level} (avg: {avg_density:.1f} vehicles)")
+                print(f"    Traffic density changed: {previous_level} → {self.current_density_level} (avg: {avg_density:.1f} vehicles)")
+    
+    # =============================================================================
+    # VALIDATION LAYER METHODS
+    # =============================================================================
     
     def _validate_collisions_with_depth(self, frame, potential_collisions, all_detections):
         """LAYER 2: Validate collisions using depth estimation from intensity/shadows."""
@@ -2217,50 +2240,50 @@ class AdvancedIncidentDetectionSystem:
                 traffic_context = incident.get('traffic_context', 'unknown')
                 peak_confidence = incident.get('peak_confidence', confidence)
 
-                print(f"🚨 {severity} COLLISION ALERT:")
-                print(f"   📹 Camera: {self.camera_config['camera_id']}")
-                print(f"   🚗 Vehicles: {vehicles}")
-                print(f"   ⏱️ Time to collision: {ttc:.1f}s")
-                print(f"   📊 Sustained confidence: {confidence:.2f}")
+                print(f" {severity} COLLISION ALERT:")
+                print(f"    Camera: {self.camera_config['camera_id']}")
+                print(f"    Vehicles: {vehicles}")
+                print(f"    Time to collision: {ttc:.1f}s")
+                print(f"    Sustained confidence: {confidence:.2f}")
                 print(f"   📈 Peak confidence: {peak_confidence:.2f}")
-                print(f"   🚦 Traffic context: {traffic_context}")
-                print(f"   🔍 Validation layers: {layers}")
+                print(f"    Traffic context: {traffic_context}")
+                print(f"    Validation layers: {layers}")
 
                 if self._record_incident_if_not_duplicate(incident, current_frame):
-                    print(f"   🎬 Recording collision incident clip")
+                    print(f"    Recording collision incident clip")
                 else:
                     print(f"   ⏭️ Skipping duplicate collision incident")
 
             elif incident_type == 'stopped_vehicle':
                 duration = incident['stopped_duration']
                 vehicle_class = incident['vehicle_class']
-                print(f"🚨 {severity} ALERT: {vehicle_class} stopped for {duration:.1f}s")
-                print(f"   📹 Camera: {self.camera_config['camera_id']}")
+                print(f" {severity} ALERT: {vehicle_class} stopped for {duration:.1f}s")
+                print(f"    Camera: {self.camera_config['camera_id']}")
 
                 if duration > 15:  # Only record for longer stops
                     if self._record_incident_if_not_duplicate(incident, current_frame):
-                        print(f"   🎬 Recording stopped vehicle incident clip")
+                        print(f"    Recording stopped vehicle incident clip")
                     else:
                         print(f"   ⏭️ Skipping duplicate stopped vehicle incident")
 
             elif incident_type == 'pedestrian_on_road':
-                print(f"🚨 {severity} ALERT: Pedestrian detected on roadway!")
-                print(f"   📹 Camera: {self.camera_config['camera_id']}")
+                print(f" {severity} ALERT: Pedestrian detected on roadway!")
+                print(f"    Camera: {self.camera_config['camera_id']}")
 
                 if self._record_incident_if_not_duplicate(incident, current_frame):
-                    print(f"   🎬 Recording pedestrian incident clip")
+                    print(f"    Recording pedestrian incident clip")
                 else:
                     print(f"   ⏭️ Skipping duplicate pedestrian incident")
 
             elif incident_type == 'sudden_speed_change':
                 vehicle_class = incident['vehicle_class']
                 speed_change = incident['speed_change']
-                print(f"🚨 {severity} ALERT: {vehicle_class} sudden speed change ({speed_change:.1f}x)")
-                print(f"   📹 Camera: {self.camera_config['camera_id']}")
+                print(f" {severity} ALERT: {vehicle_class} sudden speed change ({speed_change:.1f}x)")
+                print(f"    Camera: {self.camera_config['camera_id']}")
 
                 if speed_change > 1.5:
                     if self._record_incident_if_not_duplicate(incident, current_frame):
-                        print(f"   🎬 Recording speed change incident clip")
+                        print(f"    Recording speed change incident clip")
                     else:
                         print(f"   ⏭️ Skipping duplicate speed change incident")
 
@@ -2457,34 +2480,34 @@ class AdvancedIncidentDetectionSystem:
         
         # Create enhanced overlay text with traffic awareness info
         overlay_text = [
-            f"🎥 Camera {self.camera_config['camera_id']} - Enhanced Traffic Monitor",
+            f" Camera {self.camera_config['camera_id']} - Enhanced Traffic Monitor",
             "",
-            f"⏱️ Runtime: {runtime:.0f}s",
-            f"🚗 Current Vehicles: {current_vehicles}",
-            f"📊 Frames: {self.analytics['total_frames']:,}",
+            f" Runtime: {runtime:.0f}s",
+            f" Current Vehicles: {current_vehicles}",
+            f" Frames: {self.analytics['total_frames']:,}",
             "",
-            f"🚦 Traffic Density: {self.current_density_level.upper()}",
+            f" Traffic Density: {self.current_density_level.upper()}",
             "",
-            "🔍 Enhanced Detection Layers:",
-            f"  📡 Traffic-Aware Trajectory: {layers['trajectory_detected']}",
-            f"  📏 Depth Analysis: {layers['depth_confirmed']}",
-            f"  🌊 Motion Flow: {layers['flow_confirmed']}",
-            f"  ⚡ Physics Validation: {layers['physics_confirmed']}",
+            " Enhanced Detection Layers:",
+            f"   Traffic-Aware Trajectory: {layers['trajectory_detected']}",
+            f"   Depth Analysis: {layers['depth_confirmed']}",
+            f"   Motion Flow: {layers['flow_confirmed']}",
+            f"   Physics Validation: {layers['physics_confirmed']}",
             "",
-            f"✅ Final Confirmed: {layers['final_confirmed']}",
-            f"🎬 Clips Recorded: {self.analytics['clips_recorded']}",
+            f" Final Confirmed: {layers['final_confirmed']}",
+            f" Clips Recorded: {self.analytics['clips_recorded']}",
         ]
         
         # Add active incidents if any
         if collision_incidents:
             overlay_text.append("")
-            overlay_text.append("🚨 ACTIVE ALERTS:")
+            overlay_text.append(" ACTIVE ALERTS:")
             for incident in collision_incidents[:2]:  # Show max 2
                 ttc = incident.get('time_to_collision', 0)
                 vehicles = ' & '.join(incident.get('vehicles', ['Unknown', 'Unknown']))
                 confidence = incident.get('confidence', 0)
                 traffic_context = incident.get('traffic_context', 'unknown')
-                overlay_text.append(f"  🚗 {vehicles}: {ttc:.1f}s ({confidence:.2f})")
+                overlay_text.append(f"   {vehicles}: {ttc:.1f}s ({confidence:.2f})")
                 overlay_text.append(f"     Context: {traffic_context}")
         
         # Calculate responsive overlay dimensions based on frame size
@@ -2552,7 +2575,7 @@ class AdvancedIncidentDetectionSystem:
                 color = (0, 0, 255)  # Red for alerts
                 font_size = font_scale
                 thickness = 2
-            elif text.startswith("  🚗") or text.startswith("     "):  # Alert details
+            elif text.startswith("  ") or text.startswith("     "):  # Alert details
                 color = (0, 0, 255)  # Red for alert details
                 font_size = font_scale - 0.05
                 thickness = 1
@@ -2636,12 +2659,16 @@ class AdvancedIncidentDetectionSystem:
         self.recent_incidents.clear()
         self.incident_cooldown.clear()
         
-        print(f"🔄 Analytics and tracking data reset for camera {self.camera_config['camera_id']}")
+        print(f" Analytics and tracking data reset for camera {self.camera_config['camera_id']}")
+    
+    # =============================================================================
+    # CLEANUP AND REPORTING
+    # =============================================================================
     
     def _cleanup(self):
         """Cleanup resources and save final report."""
         camera_id = self.camera_config['camera_id']
-        print(f"🧹 Cleaning up resources for camera {camera_id}...")
+        print(f" Cleaning up resources for camera {camera_id}...")
         
         time.sleep(1)
         
@@ -2661,7 +2688,7 @@ class AdvancedIncidentDetectionSystem:
         # Generate final report
         self._generate_final_report()
         
-        print(f"✅ Cleanup completed for camera {camera_id}")
+        print(f" Cleanup completed for camera {camera_id}")
     
     def _generate_final_report(self):
         """Generate and save final detection report."""
@@ -2732,42 +2759,42 @@ class AdvancedIncidentDetectionSystem:
             
             # Print enhanced summary
             print(f"\n{'='*60}")
-            print(f"📊 CAMERA {camera_id} - ENHANCED INCIDENT DETECTION REPORT")
+            print(f" CAMERA {camera_id} - ENHANCED INCIDENT DETECTION REPORT")
             print(f"{'='*60}")
-            print(f"⏱️ Runtime: {runtime:.1f} seconds")
-            print(f"📊 Frames processed: {self.analytics['total_frames']}")
-            print(f"🎯 Average FPS: {report['session_summary']['average_fps']:.1f}")
-            print(f"🔍 Total detections: {self.analytics['total_detections']}")
-            print(f"🚨 Total incidents: {self.analytics['incidents_detected']}")
-            print(f"🎬 Clips recorded: {self.analytics['clips_recorded']}")
+            print(f" Runtime: {runtime:.1f} seconds")
+            print(f" Frames processed: {self.analytics['total_frames']}")
+            print(f" Average FPS: {report['session_summary']['average_fps']:.1f}")
+            print(f" Total detections: {self.analytics['total_detections']}")
+            print(f" Total incidents: {self.analytics['incidents_detected']}")
+            print(f" Clips recorded: {self.analytics['clips_recorded']}")
             
-            print(f"\n🚀 ENHANCED COLLISION DETECTION PERFORMANCE:")
-            print(f"  🚦 Traffic-Aware Trajectory: {layers['trajectory_detected']} detected")
-            print(f"  📏 Depth Validation: {layers['depth_confirmed']} confirmed")
-            print(f"  🌊 Optical Flow: {layers['flow_confirmed']} confirmed")
-            print(f"  ⚡ Physics Validation: {layers['physics_confirmed']} confirmed")
-            print(f"  ✅ FINAL Validated: {layers['final_confirmed']} confirmed")
+            print(f"\n ENHANCED COLLISION DETECTION PERFORMANCE:")
+            print(f"   Traffic-Aware Trajectory: {layers['trajectory_detected']} detected")
+            print(f"   Depth Validation: {layers['depth_confirmed']} confirmed")
+            print(f"   Optical Flow: {layers['flow_confirmed']} confirmed")
+            print(f"   Physics Validation: {layers['physics_confirmed']} confirmed")
+            print(f"   FINAL Validated: {layers['final_confirmed']} confirmed")
             
             if layers['trajectory_detected'] > 0:
                 reduction = (layers['trajectory_detected'] - layers['final_confirmed']) / layers['trajectory_detected'] * 100
-                print(f"  🎯 False Positive Reduction: {reduction:.1f}%")
+                print(f"   False Positive Reduction: {reduction:.1f}%")
             
             if report['incident_summary']:
-                print(f"\n📋 Incident breakdown:")
+                print(f"\n Incident breakdown:")
                 for incident_type, count in report['incident_summary'].items():
                     print(f"  {incident_type}: {count}")
             else:
-                print("\n✅ No incidents detected during session")
+                print("\n No incidents detected during session")
             
-            print(f"\n🎬 VIDEO CLIPS:")
+            print(f"\n VIDEO CLIPS:")
             print(f"  Clips recorded: {self.analytics['clips_recorded']}")
             print(f"  Clips folder: {self.incident_clips_folder}")
             
-            print(f"\n📄 Detailed report saved to: {filename}")
+            print(f"\n Detailed report saved to: {filename}")
             
         except Exception as e:
-            print(f"❌ Error saving report: {e}")
-            print("📊 Analytics data:")
+            print(f" Error saving report: {e}")
+            print(" Analytics data:")
             print(f"  Runtime: {runtime:.1f}s")
             print(f"  Frames: {self.analytics['total_frames']}")
             print(f"  Incidents: {self.analytics['incidents_detected']}")
@@ -2793,6 +2820,10 @@ def run_camera_detection(camera_config, config):
     detector = AdvancedIncidentDetectionSystem(camera_config=camera_config, config=config)
     detector.run_detection()
 
+
+# =============================================================================
+# MAIN EXECUTION AND SETUP FUNCTIONS
+# =============================================================================
 
 def main():
     """Main function to run multi-camera incident detection system."""
@@ -2845,7 +2876,7 @@ def main():
         'pedestrian_road_threshold': 50,
     }
     
-    print("🚀 Initializing ENHANCED Multi-Camera Incident Detection System...")
+    print(" Initializing ENHANCED Multi-Camera Incident Detection System...")
     print("="*70)
     
     # Load camera configurations
@@ -2855,7 +2886,7 @@ def main():
         print("✗ No camera configurations found")
         return
     
-    print(f"📹 Found {len(cameras)} camera(s):")
+    print(f" Found {len(cameras)} camera(s):")
     for cam in cameras:
         print(f"   Camera ID: {cam.get('camera_id', 'Unknown')}")
         print(f"   URL: {cam.get('url', 'Unknown')}")
@@ -2865,7 +2896,7 @@ def main():
     
     for camera_config in cameras:
         if not camera_config.get('camera_id') or not camera_config.get('url'):
-            print(f"⚠️ Skipping invalid camera config: {camera_config}")
+            print(f" Skipping invalid camera config: {camera_config}")
             continue
             
         thread = threading.Thread(
