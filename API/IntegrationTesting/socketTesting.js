@@ -18,9 +18,9 @@ socket.on('welcome', (msg)=>{
     eventLog.appendChild(ev);
 });
 
-var map = L.map('map').setView([51.5, -0.09], 13);
-let carLat = 51.5;
-let carLng = -0.09;
+var map = L.map('map').setView([-25.98, 28.13], 13);
+let carLat = -25.98;
+let carLng = 28.13;
 var car  = L.icon({
     iconUrl : 'car.png',
     iconSize : [38, 38],
@@ -28,7 +28,7 @@ var car  = L.icon({
     popupAnchor:  [-3, -76]
 });
 
-var carMarker = L.marker([51.5, -0.09], {icon : car}).addTo(map);
+var carMarker = L.marker([-25.98, 28.13], {icon : car}).addTo(map);
 
 function mapClick(e){
     const now = new Date();
@@ -58,7 +58,7 @@ function reportIncident(){
     }).addTo(map);
     markers.push(marker);
     circles.push(circle);
-    socket.emit('incident-location', position);
+    socket.emit('new-incident-location', position);
 }
 
 socket.on('incident-recived',(msg)=>{
@@ -111,8 +111,13 @@ document.addEventListener('keypress',(event)=>{
             break;
     }
 
+    const pos = {
+        latitude : carLat,
+        longitude : carLng
+    };
+    socket.emit('new-location', pos);
     carMarker.setLatLng([carLat, carLng]);
-    hitOrMiss();
+    //hitOrMiss();
 });
 
 function hitOrMiss(){
@@ -126,6 +131,7 @@ function hitOrMiss(){
     }
 }
 
+/*
 socket.on('trafficUpdate',(data)=>{
     console.log(data);
 });
@@ -144,4 +150,41 @@ socket.on('incidentLocations', (data)=>{
 
 socket.on('newAlert', (data)=>{
     addEvent(data);
+}) */
+
+const getLocation = ()=>{
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition((position)=>{
+            resolve({
+                latitude : position.coords.latitude,
+                longitude : position.coords.longitude
+            });
+        },
+            (error)=>{
+            reject(error);
+            })
+    })
+}
+
+const updateLocation = async ()=>{
+    try{
+        const data = await getLocation();
+        console.log(data);
+        socket.emit('new-location',data);
+    }catch(error){
+        console.error("Cant get Location: " + error);
+    }
+}
+
+//updateLocation();
+//setInterval(updateLocation, 5000);
+
+socket.on('new-traffic', (data)=>{
+    console.log(data);
+    addEvent(JSON.stringify(data, null, 2));
+})
+
+socket.on('new-incident', (data)=>{
+    console.log(data);
+    addEvent(JSON.stringify(data, null, 2));
 })

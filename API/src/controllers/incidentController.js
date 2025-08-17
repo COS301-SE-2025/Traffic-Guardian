@@ -1,5 +1,6 @@
 const incidentModel = require('../models/incident');
 const alertModel = require('../models/alert');
+const ILM = require("../IncidentLocationMapping/ilmInstance")
 
 const incidentController = {
   createIncident: async (req, res) => {
@@ -53,8 +54,8 @@ const incidentController = {
       });
       
       const io = req.app.get('io');
-      io.emit('newAlert', incident);
-      console.log('Emitting newAlert:', incident);
+      //io.emit('newAlert', incident);
+      ILM.notifyUsersIncident(incident, io);
 
       return res.status(201).json({
         message: 'Incident created successfully',
