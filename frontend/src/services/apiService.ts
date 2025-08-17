@@ -229,7 +229,7 @@ class ApiService {
       console.log('Fetching comprehensive archive analytics...');
       
       // Fetch archives and stats in parallel
-      const [archives, stats] = await Promise.all([
+      const [archives, _stats] = await Promise.all([
         this.fetchArchives({ limit: 1000 }), // Get more data for analytics
         this.fetchArchiveStats()
       ]);

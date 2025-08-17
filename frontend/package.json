@@ -31,17 +31,22 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --watchAll=false",
+    "test:watch": "react-scripts test",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "test:ci": "react-scripts test --coverage --watchAll=false --ci",
     "eject": "react-scripts eject",
-    "lint": "eslint 'src/**/*.{ts,tsx}' --fix",
-    "stylelint": "stylelint 'src/**/*.css' --fix",
-    "lint:all": "npm run lint && npm run stylelint"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings=150",
+    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
+    "stylelint": "stylelint 'src/**/*.css' --max-warnings=0",
+    "stylelint:fix": "stylelint 'src/**/*.css' --fix",
+    "lint:all": "npm run lint && npm run stylelint",
+    "lint:all:fix": "npm run lint:fix && npm run stylelint:fix",
+    "format": "prettier --write 'src/**/*.{ts,tsx,css,json,md}'",
+    "format:check": "prettier --check 'src/**/*.{ts,tsx,css,json,md}'",
+    "type-check": "tsc --noEmit",
+    "validate": "npm run lint:all && npm run type-check && npm run test:ci",
+    "pre-commit": "npm run format && npm run lint:all:fix && npm run type-check && npm run test:coverage"
   },
   "browserslist": {
     "production": [
@@ -71,9 +76,19 @@
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "^25.7.0",
+    "prettier": "^2.8.8",
     "stylelint": "^14.16.1",
     "stylelint-config-standard": "^25.0.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^4.9.5"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/**/*.d.ts",
+      "!src/index.tsx",
+      "!src/reportWebVitals.ts",
+      "!src/setupTests.ts"
+    ]
   }
 }
