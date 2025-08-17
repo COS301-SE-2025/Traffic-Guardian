@@ -1514,7 +1514,7 @@ body {
 .event-item {
   padding: 8px 16px;
   border-bottom: 1px solid var(--header-border);
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.85em;
   transition: background-color 0.2s ease;
 }
