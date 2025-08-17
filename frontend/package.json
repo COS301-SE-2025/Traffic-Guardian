@@ -15,7 +15,7 @@
     "framer-motion": "^12.15.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.522.0",
-    "postcss": "^8.5.3",
+    "postcss": "^8.4.31",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hls-player": "^3.0.7",
@@ -90,5 +90,12 @@
       "!src/reportWebVitals.ts",
       "!src/setupTests.ts"
     ]
+  },
+  "overrides": {
+    "nth-check": ">=2.0.1",
+    "webpack-dev-server": ">=4.0.0",
+    "@svgr/plugin-svgo": {
+      "nth-check": ">=2.0.1"
+    }
   }
 }
