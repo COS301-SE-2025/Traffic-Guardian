@@ -49,7 +49,8 @@ class AdvancedIncidentDetectionSystem:
             'optical_flow': [],
             'physics_validation': []
         }
-        
+        self.incident_candidates = {}  # store incident candidates with persistence tracking
+        self.persistence_required = 5  # number of consecutive frames to confirm incident
         # Physics tracking
         self.velocity_history = {}  # Track velocity over time for physics
         self.acceleration_history = {}  # Track acceleration patterns
@@ -91,40 +92,18 @@ class AdvancedIncidentDetectionSystem:
             'clips_recorded': 0 
         }
         
-        self.api_config = self._load_api_config()
+        
         
         # Video capture
         self.cap = None
         self.initialize_capture()
 
-    def _load_api_config(self):
-        """
-        Securely load API configuration from environment variables.
-        """
-        api_key = os.getenv('API_KEY')
-        
-        if not api_key:
-            print("⚠️ WARNING: API_KEY not found in environment variables!")
-            print("   Please create a .env file with your API key")
-            print("   API integration will be disabled")
-            return {
-                'endpoint': 'http://localhost:5000/api/incidents',
-                'api_key': None,
-                'timeout': 5,
-                'retry_attempts': 2,
-                'enabled': False
-            }
-        
-        return {
-            'endpoint': os.getenv('API_ENDPOINT', 'http://localhost:5000/api/incidents'),
-            'api_key': api_key,
-            'timeout': int(os.getenv('API_TIMEOUT', '5')),
-            'retry_attempts': int(os.getenv('API_RETRY_ATTEMPTS', '2')),
-            'enabled': True
-        }
-    
-
-    
+   
+   
+   
+   
+   
+   
     def _default_config(self):
         """Enhanced configuration with advanced collision detection settings."""
         return {
