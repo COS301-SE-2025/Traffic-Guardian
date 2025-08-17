@@ -99,11 +99,6 @@ class AdvancedIncidentDetectionSystem:
         self.initialize_capture()
 
    
-   
-   
-   
-   
-   
     def _default_config(self):
         """Enhanced configuration with advanced collision detection settings."""
         return {
@@ -197,6 +192,86 @@ class AdvancedIncidentDetectionSystem:
             print(f" Failed to connect camera {camera_id}")
             print(f"   URL: {stream_url}")
             return False
+    
+    
+    def _final_collision_validation(self, potential_collisions):
+        """Weighted multi-layer validation with temporal persistence and density-aware thresholds."""
+        final_collisions = []
+
+        # Assign layer weights
+        layer_weights = {
+            'trajectory': 0.4,
+            'physics': 0.3,
+            'depth': 0.15,
+            'optical_flow': 0.15
+        }
+
+        # Dynamic confidence threshold based on traffic density
+        density_levels = {'low': 0, 'normal': 1, 'high': 2, 'very_high': 3}
+        density_index = density_levels.get(self.current_density_level, 1)
+        base_threshold = 0.5
+        dynamic_threshold = base_threshold + (0.05 * density_index)
+
+        for collision in potential_collisions:
+            layers = collision['validation_layers']
+
+            # Compute weighted score
+            score = sum(layer_weights[layer] for layer, ok in layers.items() if ok)
+
+            # Adjust for type (rear-end needs higher persistence, T-bone/head-on can be lower)
+            track1 = collision['track1']
+            track2 = collision['track2']
+            vel1 = track1.get('velocity', [0, 0])
+            vel2 = track2.get('velocity', [0, 0])
+            angle = self._calculate_angle(vel1, vel2)
+
+            if 60 <= angle <= 120:  # T-bone
+                score += 0.1
+            elif angle > 120:  # Head-on
+                score += 0.15
+            else:  # Rear-end / same direction
+                score -= 0.05
+
+            # Normalize confidence
+            confidence = min(1.0, score)
+
+            # Only consider if above dynamic threshold
+            if confidence >= dynamic_threshold:
+                incident = self._create_final_collision_incident(collision, confidence)
+
+                # Temporal persistence check
+                key = tuple(sorted(incident['vehicle_ids']))
+                if key not in self.incident_candidates:
+                    self.incident_candidates[key] = {
+                        'incident': incident,
+                        'count': 1
+                    }
+                else:
+                    self.incident_candidates[key]['count'] += 1
+
+                # Confirm only if persistent
+                if self.incident_candidates[key]['count'] >= self.persistence_required:
+                    final_collisions.append(incident)
+            
+        # Cleanup old candidates
+        to_delete = [k for k, v in self.incident_candidates.items() if v['count'] > self.persistence_required * 2]
+        for k in to_delete:
+            del self.incident_candidates[k]
+
+        return final_collisions
+
+
+    def _calculate_angle(self, v1, v2):
+        """Utility to compute angle between two velocity vectors."""
+        v1 = np.array(v1)
+        v2 = np.array(v2)
+        if np.linalg.norm(v1) == 0 or np.linalg.norm(v2) == 0:
+            return 0
+        cos_angle = np.clip(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1)
+        return math.degrees(math.acos(cos_angle))
+
+    
+    
     
     def _is_duplicate_incident(self, incident, current_frame):
         """Check if this incident is a duplicate of a recent one."""
