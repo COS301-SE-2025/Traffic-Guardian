@@ -723,41 +723,17 @@ class AdvancedIncidentDetectionSystem:
         
         return potential_collisions
 
-    def _get_viable_collision_pairs(self, active_tracks, strict_filtering):
-        """
-        Pre-filter vehicle pairs to eliminate obvious non-collision scenarios
-        """
-        viable_pairs = []
-        
-        for i, track1_id in enumerate(active_tracks):
-            for track2_id in active_tracks[i+1:]:
-                track1 = self.tracked_vehicles.get(track1_id)
-                track2 = self.tracked_vehicles.get(track2_id)
-                
-                if not track1 or not track2:
-                    continue
-                
-                # Skip if vehicles are in obvious following pattern
-                if self._is_following_pattern(track1, track2):
-                    continue
-                
-                # Skip if vehicles are in same lane (highway following)
-                if strict_filtering and self._same_lane_following(track1, track2):
-                    continue
-                
-                # Skip if vehicles have been maintaining consistent distance
-                if self._maintaining_consistent_distance(track1_id, track2_id):
-                    continue
-                
-                viable_pairs.append((track1_id, track2_id))
-        
-        return viable_pairs
 
     def _is_following_pattern(self, track1, track2):
         """
         Detect if vehicles are in a following pattern (major cause of false positives)
+        FIXED: Added proper velocity null checks
         """
+        # Add null checks first
         if not track1.get('velocity') or not track2.get('velocity'):
+            return False
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
             return False
         
         pos1 = np.array(track1['center'])
@@ -770,9 +746,9 @@ class AdvancedIncidentDetectionSystem:
         
         # If one vehicle's velocity aligns with the relative position vector,
         # they might be following each other
-        if np.linalg.norm(vel1) > 0:
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(relative_pos) > 0:
             vel1_norm = vel1 / np.linalg.norm(vel1)
-            rel_pos_norm = relative_pos / np.linalg.norm(relative_pos) if np.linalg.norm(relative_pos) > 0 else np.array([0, 0])
+            rel_pos_norm = relative_pos / np.linalg.norm(relative_pos)
             
             # Check alignment
             alignment = np.dot(vel1_norm, rel_pos_norm)
@@ -785,11 +761,17 @@ class AdvancedIncidentDetectionSystem:
                     return True
         
         return False
-
     def _same_lane_following(self, track1, track2):
         """
         Detect vehicles following in the same lane
         """
+        # Add null checks first
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return False
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return False
+        
         pos1 = np.array(track1['center'])
         pos2 = np.array(track2['center'])
         vel1 = np.array(track1['velocity'])
@@ -808,48 +790,21 @@ class AdvancedIncidentDetectionSystem:
                     return True
         
         return False
-
-    def _maintaining_consistent_distance(self, track1_id, track2_id):
-        """
-        Check if two vehicles have been maintaining consistent distance (not colliding)
-        """
-        if track1_id not in self.vehicle_history or track2_id not in self.vehicle_history:
-            return False
-        
-        hist1 = self.vehicle_history[track1_id]
-        hist2 = self.vehicle_history[track2_id]
-        
-        if len(hist1) < 5 or len(hist2) < 5:
-            return False
-        
-        # Calculate distances over last 5 frames
-        recent_distances = []
-        for i in range(-5, 0):
-            if i < -len(hist1) or i < -len(hist2):
-                continue
-            pos1 = np.array(hist1[i])
-            pos2 = np.array(hist2[i])
-            distance = np.linalg.norm(pos2 - pos1)
-            recent_distances.append(distance)
-        
-        if len(recent_distances) < 3:
-            return False
-        
-        # Check if distance variance is low (consistent following distance)
-        distance_variance = np.var(recent_distances)
-        if distance_variance < 100:  # Low variance = consistent distance
-            return True
-        
-        return False
-
+    
+    
     def _ultra_strict_collision_candidate_check(self, track1, track2, speed_threshold, traffic_state):
         """
-        ULTRA STRICT candidate filtering - replaces _smart_collision_candidate_check
+        ULTRA STRICT candidate filtering
+        FIXED: Added proper velocity null checks
         """
         if not track1 or not track2:
             return False
         
+        # Enhanced null checks
         if not track1.get('velocity') or not track2.get('velocity'):
+            return False
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
             return False
         
         # Enhanced speed check with traffic-aware thresholds
@@ -920,7 +875,15 @@ class AdvancedIncidentDetectionSystem:
     def _ultra_conservative_collision_prediction(self, track1, track2, distance_threshold, traffic_state):
         """
         Ultra conservative collision prediction with enhanced filtering
+        FIXED: Added proper velocity null checks
         """
+        # Enhanced null checks
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return None
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return None
+        
         pos1 = np.array(track1['center'], dtype=float)
         pos2 = np.array(track2['center'], dtype=float)
         vel1 = np.array(track1['velocity'], dtype=float)  
@@ -976,12 +939,20 @@ class AdvancedIncidentDetectionSystem:
     def _ultra_strict_confidence_calculation(self, track1, track2, distance, time_steps, traffic_state):
         """
         Ultra strict confidence calculation with enhanced penalties
+        FIXED: Added proper velocity null checks
         """
         confidence = 0.0
         
         # Distance factor (much stricter)
         distance_score = max(0, 1.0 - (distance / 30.0))  # Stricter than before
         confidence += distance_score * 0.25
+        
+        # Enhanced null checks for velocity
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return 0.0
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return 0.0
         
         # Speed differential (require higher relative speed)
         vel1 = np.array(track1['velocity'])
@@ -1035,87 +1006,79 @@ class AdvancedIncidentDetectionSystem:
         
         return max(0.0, min(1.0, confidence))
 
-    def _persistent_collision_validation(self, potential_collisions):
+    def _get_viable_collision_pairs(self, active_tracks, strict_filtering):
         """
-        UPDATED - Even stricter evidence persistence requirements
+        Pre-filter vehicle pairs to eliminate obvious non-collision scenarios
+        FIXED: Added better error handling
         """
-        final_collisions = []
-        current_frame = self.analytics['total_frames']
+        viable_pairs = []
         
-        for collision in potential_collisions:
-            track1_id = collision['track1_id']
-            track2_id = collision['track2_id']
-            key = tuple(sorted([track1_id, track2_id]))
-            
-            confidence = collision['collision_data']['confidence']
-            
-            # Initialize or update evidence buffer
-            if key not in self.collision_evidence_buffer:
-                self.collision_evidence_buffer[key] = {
-                    'evidence': [confidence],
-                    'first_frame': current_frame,
-                    'incident': collision,
-                    'peak_evidence': confidence,
-                    'sustained_high_count': 1 if confidence > 0.7 else 0
-                }
-            else:
-                buffer = self.collision_evidence_buffer[key]
-                buffer['evidence'].append(confidence)
-                buffer['peak_evidence'] = max(buffer['peak_evidence'], confidence)
+        for i, track1_id in enumerate(active_tracks):
+            for track2_id in active_tracks[i+1:]:
+                track1 = self.tracked_vehicles.get(track1_id)
+                track2 = self.tracked_vehicles.get(track2_id)
                 
-                # Count frames with high evidence
-                if confidence > 0.7:
-                    buffer['sustained_high_count'] += 1
+                if not track1 or not track2:
+                    continue
                 
-                # Keep only last 10 frames of evidence
-                if len(buffer['evidence']) > 10:
-                    buffer['evidence'].pop(0)
-            
-            buffer = self.collision_evidence_buffer[key]
-            
-            # MUCH STRICTER validation requirements
-            if len(buffer['evidence']) >= 5:  # Require more frames
-                avg_confidence = np.mean(buffer['evidence'][-6:])  # Longer average
-                peak_confidence = buffer['peak_evidence']
-                sustained_high = buffer['sustained_high_count']
-                
-                # Ultra strict requirements
-                validation_passed = (
-                    avg_confidence >= 0.75 and    # Higher sustained confidence
-                    peak_confidence >= 0.9 and    # Higher peak confidence  
-                    sustained_high >= 4 and       # More high-confidence frames
-                    len(buffer['evidence']) >= 5   # Longer observation period
-                )
-                
-                if validation_passed:
-                    # Create validated incident
-                    final_incident = self._create_enhanced_final_collision_incident(
-                        collision, avg_confidence, peak_confidence)
+                try:
+                    # Skip if vehicles are in obvious following pattern
+                    if self._is_following_pattern(track1, track2):
+                        continue
                     
-                    # Add ultra-strict validation metrics
-                    final_incident['ultra_strict_validation'] = {
-                        'sustained_high_frames': sustained_high,
-                        'observation_frames': len(buffer['evidence']),
-                        'evidence_trend': 'increasing' if buffer['evidence'][-1] > buffer['evidence'][0] else 'stable'
-                    }
+                    # Skip if vehicles are in same lane (highway following)
+                    if strict_filtering and self._same_lane_following(track1, track2):
+                        continue
                     
-                    final_collisions.append(final_incident)
+                    # Skip if vehicles have been maintaining consistent distance
+                    if self._maintaining_consistent_distance(track1_id, track2_id):
+                        continue
                     
-                    # Remove from buffer to prevent duplicates
-                    del self.collision_evidence_buffer[key]
+                    viable_pairs.append((track1_id, track2_id))
+                    
+                except Exception as e:
+                    # Log the error but continue processing other pairs
+                    print(f"   ⚠️ Error processing pair V{track1_id}-V{track2_id}: {e}")
+                    continue
         
-        # Clean up old evidence (shorter timeout)
-        to_remove = []
-        for key, buffer in self.collision_evidence_buffer.items():
-            if current_frame - buffer['first_frame'] > 20:  # Shorter timeout
-                to_remove.append(key)
-        
-        for key in to_remove:
-            del self.collision_evidence_buffer[key]
-        
-        return final_collisions
+        return viable_pairs
 
-# INTEGRATION INSTRUCTIONS:
+        
+    def _maintaining_consistent_distance(self, track1_id, track2_id):
+        """
+        Check if two vehicles have been maintaining consistent distance (not colliding)
+        """
+        if track1_id not in self.vehicle_history or track2_id not in self.vehicle_history:
+            return False
+        
+        hist1 = self.vehicle_history[track1_id]
+        hist2 = self.vehicle_history[track2_id]
+        
+        if len(hist1) < 5 or len(hist2) < 5:
+            return False
+        
+        # Calculate distances over last 5 frames
+        recent_distances = []
+        for i in range(-5, 0):
+            if i < -len(hist1) or i < -len(hist2):
+                continue
+            pos1 = np.array(hist1[i])
+            pos2 = np.array(hist2[i])
+            distance = np.linalg.norm(pos2 - pos1)
+            recent_distances.append(distance)
+        
+        if len(recent_distances) < 3:
+            return False
+        
+        # Check if distance variance is low (consistent following distance)
+        distance_variance = np.var(recent_distances)
+        if distance_variance < 100:  # Low variance = consistent distance
+            return True
+        
+        return False
+
+
+  # INTEGRATION INSTRUCTIONS:
 
     def _smart_collision_candidate_check(self, track1, track2, speed_threshold):
         """
