@@ -11,8 +11,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   AreaChart,
   Area
 } from 'recharts';
@@ -57,7 +55,7 @@ const ClockIcon = () => (
   </svg>
 );
 
-const TrendingUpIcon = () => (
+const _TrendingUpIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
   </svg>
@@ -79,7 +77,7 @@ const Analytics: React.FC = () => {
   const { isDarkMode } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [socket, setSocket] = useState<any>(null);
+  const [_socket, _setSocket] = useState<any>(null);
   
   // Existing traffic data state
   const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([]);
@@ -131,7 +129,7 @@ const Analytics: React.FC = () => {
   useEffect(() => {
     // Initialise socket connection
     const socketConnection = io(process.env.REACT_APP_SERVER_URL || 'http://localhost:5000');
-    setSocket(socketConnection);
+    _setSocket(socketConnection);
 
     // Socket event listeners for real-time updates
     socketConnection.on('connect', () => {
@@ -163,7 +161,7 @@ const Analytics: React.FC = () => {
     return () => {
       socketConnection.disconnect();
     };
-  }, []);
+  }, [archiveAnalytics]);
 
   const loadAnalyticsData = async () => {
     setIsLoading(true);
@@ -310,7 +308,7 @@ const Analytics: React.FC = () => {
   };
 
   // Helper function to format archive time
-  const formatArchiveTime = (days: number): string => {
+  const _formatArchiveTime = (days: number): string => {
     if (days < 1) return 'Less than 1 day';
     if (days === 1) return '1 day';
     return `${Math.round(days)} days`;

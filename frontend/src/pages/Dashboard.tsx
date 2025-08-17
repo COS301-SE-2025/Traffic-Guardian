@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
-import ApiService, { IncidentStats, TodaysIncidentsData, LocationData, CriticalIncidentsData, CategoryData, TrafficIncident } from '../services/apiService';
+import ApiService, { IncidentStats, TrafficIncident } from '../services/apiService';
 import './Dashboard.css';
+
+interface CriticalIncidentsData {
+  Data: string;
+  Amount: number;
+}
+
+interface LocationData {
+  location: string;
+  amount: number;
+}
 
 const AlertTriangleIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-cy="alert-triangle-icon">
@@ -9,7 +19,7 @@ const AlertTriangleIcon = () => (
   </svg>
 );
 
-const CameraIcon = () => (
+const _CameraIcon = () => (
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-cy="camera-icon">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
   </svg>
@@ -192,9 +202,14 @@ const Dashboard: React.FC = () => {
   const [todaysIncidents, setTodaysIncidents] = useState<TodaysIncidents>({ count: 0, date: '' });
   const [trafficData, setTrafficData] = useState<TrafficIncident[]>([]);
   const [criticalIncidents, setCriticalIncidents] = useState<CriticalIncidentsData | null>(null);
-  const [incidentLocations, setIncidentLocations] = useState<LocationData[]>([]);
+  const [_incidentLocations, _setIncidentLocations] = useState<any[]>([]);
   
   const [systemHealth, setSystemHealth] = useState<'healthy' | 'warning' | 'error'>('healthy');
+  
+  const [realtimeEvents, setRealtimeEvents] = useState<string[]>([]);
+  const [usersOnline, setUsersOnline] = useState<number>(0);
+  const [activeIncidents, setActiveIncidents] = useState<number>(0);
+  const [criticalIncidentsCount, setCriticalIncidentsCount] = useState<number>(0);
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
@@ -208,6 +223,12 @@ const Dashboard: React.FC = () => {
     setTimeout(() => {
       removeNotification(newNotification.id);
     }, 5000);
+  }, []);
+
+  const addEvent = useCallback((eventText: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const eventWithTime = `[${timestamp}] ${eventText}`;
+    setRealtimeEvents(prev => [eventWithTime, ...prev.slice(0, 49)]); // Keep last 50 events
   }, []);
 
   const removeNotification = (id: number) => {
@@ -236,7 +257,7 @@ const Dashboard: React.FC = () => {
         setCriticalIncidents(critical);
         
         const locations = await ApiService.fetchIncidentLocations();
-        setIncidentLocations(locations);
+        _setIncidentLocations(locations);
         
       } catch (error) {
         console.error('Error loading initial data:', error);
@@ -270,6 +291,23 @@ const Dashboard: React.FC = () => {
         message: 'Real-time data connection established',
         type: 'success'
       });
+      
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const pos = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            };
+            newSocket.emit('new-location', pos);
+            addEvent(`Location shared: ${pos.latitude.toFixed(4)}, ${pos.longitude.toFixed(4)}`);
+          },
+          (error) => {
+            console.log('Location access denied or unavailable:', error);
+            addEvent('Location sharing: Permission denied or unavailable');
+          }
+        );
+      }
     });
 
     newSocket.on('disconnect', () => {
@@ -321,7 +359,7 @@ const Dashboard: React.FC = () => {
 
     newSocket.on('incidentLocations', (data: LocationData[]) => {
       console.log('Received incident locations:', data);
-      setIncidentLocations(data);
+      _setIncidentLocations(data);
     });
 
     // Typed: incident payload for newAlert
@@ -334,11 +372,39 @@ const Dashboard: React.FC = () => {
       });
     });
 
+    newSocket.on('new-traffic', (data: any) => {
+      console.log('New traffic data:', data);
+      addEvent(JSON.stringify(data, null, 2));
+    });
+
+    newSocket.on('new-incident', (data: any) => {
+      console.log('New incident data:', data);
+      addEvent(JSON.stringify(data, null, 2));
+    });
+
+    newSocket.on('amt-users-online', (data: number) => {
+      console.log('Users online update:', data);
+      setUsersOnline(data);
+      addEvent('Amount users online = ' + data);
+    });
+
+    newSocket.on('amt-active-incidents', (data: number) => {
+      console.log('Active incidents update:', data);
+      setActiveIncidents(data);
+      addEvent("Active incidents = " + data);
+    });
+
+    newSocket.on('amt-critical-incidents', (data: number) => {
+      console.log('Critical incidents update:', data);
+      setCriticalIncidentsCount(data);
+      addEvent("Critical incidents = " + data);
+    });
+
     return () => {
       console.log('Cleaning up Socket.IO connection');
       newSocket.close();
     };
-  }, [addNotification]);
+  }, [addNotification, addEvent]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -780,6 +846,51 @@ const Dashboard: React.FC = () => {
             <div className="last-updated" data-cy="last-updated-regional">
               <div className="update-indicator" data-cy="update-indicator"></div>
               Real-time updates
+            </div>
+          </div>
+        </div>
+
+        <div className="realtime-events-section" data-cy="realtime-events-section" id="realtime-events-section">
+          <div className="realtime-header" data-cy="realtime-header">
+            <h3 data-cy="realtime-title">Real-time System Events</h3>
+            <div className="realtime-stats" data-cy="realtime-stats">
+              <div className="stat-pill" data-cy="stat-pill-users">
+                👥 {usersOnline} online
+              </div>
+              <div className="stat-pill" data-cy="stat-pill-incidents">
+                 {activeIncidents} active
+              </div>
+              <div className="stat-pill critical" data-cy="stat-pill-critical">
+                 {criticalIncidentsCount} critical
+              </div>
+            </div>
+          </div>
+          
+          <div className="events-panel" data-cy="events-panel">
+            <div className="events-header" data-cy="events-header">
+              <span>Live Event Feed</span>
+              <button 
+                className="clear-events-btn" 
+                onClick={() => setRealtimeEvents([])}
+                data-cy="clear-events-btn"
+                aria-label="Clear event history"
+              >
+                Clear
+              </button>
+            </div>
+            
+            <div className="events-list" data-cy="events-list">
+              {realtimeEvents.length > 0 ? (
+                realtimeEvents.map((event, index) => (
+                  <div key={index} className="event-item" data-cy={`event-item-${index}`}>
+                    <pre className="event-content" data-cy="event-content">{event}</pre>
+                  </div>
+                ))
+              ) : (
+                <div className="events-empty" data-cy="events-empty">
+                  <span> Waiting for real-time events...</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
