@@ -662,36 +662,35 @@ class AdvancedIncidentDetectionSystem:
 
     def _enhanced_traffic_aware_collision_detection(self, active_tracks):
         """
-        UPDATED VERSION - Even more aggressive false positive filtering
-        Replace your existing method with this enhanced version
+        BALANCED VERSION - Catches real incidents while filtering false positives
         """
         potential_collisions = []
         
-        # Enhanced traffic state assessment with tighter thresholds
+        # BALANCED traffic state assessment - less aggressive thresholds
         vehicle_count = len(active_tracks)
         if vehicle_count <= 2:
             traffic_state = 'sparse'
             distance_threshold = 50
-            speed_threshold = 4.0
-            confidence_threshold = 0.4
+            speed_threshold = 3.0        # Reduced from 4.0
+            confidence_threshold = 0.3   # Reduced from 0.4
             parallel_filter_strict = False
         elif vehicle_count <= 6:
             traffic_state = 'moderate' 
             distance_threshold = 40
-            speed_threshold = 6.0
-            confidence_threshold = 0.65
+            speed_threshold = 5.0        # Reduced from 6.0
+            confidence_threshold = 0.5   # Reduced from 0.65
             parallel_filter_strict = True
         elif vehicle_count <= 12:
             traffic_state = 'heavy'
-            distance_threshold = 25
-            speed_threshold = 10.0  # Increased from 8.0
-            confidence_threshold = 0.85  # Increased from 0.8
+            distance_threshold = 30      # Increased from 25
+            speed_threshold = 7.0        # Reduced from 10.0
+            confidence_threshold = 0.7   # Reduced from 0.85
             parallel_filter_strict = True
         else:
             traffic_state = 'congested'
-            distance_threshold = 20
-            speed_threshold = 15.0  # Increased from 12.0
-            confidence_threshold = 0.95  # Increased from 0.9
+            distance_threshold = 25      # Increased from 20
+            speed_threshold = 10.0       # Reduced from 15.0
+            confidence_threshold = 0.8   # Reduced from 0.95
             parallel_filter_strict = True
         
         print(f"   🚦 Traffic State: {traffic_state}, Vehicles: {vehicle_count}")
@@ -703,11 +702,11 @@ class AdvancedIncidentDetectionSystem:
             track1 = self.tracked_vehicles.get(track1_id)
             track2 = self.tracked_vehicles.get(track2_id)
             
-            if not self._ultra_strict_collision_candidate_check(track1, track2, speed_threshold, traffic_state):
+            if not self._balanced_collision_candidate_check(track1, track2, speed_threshold, traffic_state):
                 continue
             
-            # Enhanced collision prediction with stricter validation
-            collision_data = self._ultra_conservative_collision_prediction(
+            # Enhanced collision prediction with balanced validation
+            collision_data = self._balanced_collision_prediction(
                 track1, track2, distance_threshold, traffic_state)
             
             if collision_data and collision_data['confidence'] >= confidence_threshold:
@@ -722,8 +721,7 @@ class AdvancedIncidentDetectionSystem:
                 })
         
         return potential_collisions
-
-
+    
     def _is_following_pattern(self, track1, track2):
         """
         Detect if vehicles are in a following pattern (major cause of false positives)
@@ -791,7 +789,218 @@ class AdvancedIncidentDetectionSystem:
         
         return False
     
+    #balanced version 
+    def _balanced_collision_candidate_check(self, track1, track2, speed_threshold, traffic_state):
+        """
+        BALANCED candidate filtering - less aggressive than ultra-strict version
+        """
+        if not track1 or not track2:
+            return False
+        
+        # Enhanced null checks
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return False
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return False
+        
+        # BALANCED speed check - allow one vehicle to be slower
+        speed1 = track1.get('speed', 0)
+        speed2 = track2.get('speed', 0)
+        
+        # At least ONE vehicle must meet speed threshold (not both)
+        if speed1 < speed_threshold and speed2 < speed_threshold:
+            return False
+        
+        pos1 = np.array(track1['center'])
+        pos2 = np.array(track2['center'])
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        
+        # BALANCED parallel traffic filtering - less strict
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(vel2) > 0:
+            # Calculate angle between velocity vectors
+            dot_product = np.dot(vel1, vel2)
+            magnitudes = np.linalg.norm(vel1) * np.linalg.norm(vel2)
+            
+            if magnitudes > 0:
+                cos_angle = np.clip(dot_product / magnitudes, -1, 1)
+                angle = math.degrees(math.acos(cos_angle))
+                
+                # Less strict filtering for parallel traffic
+                if angle < 30:  # Reduced from 45 degrees
+                    relative_speed = np.linalg.norm(vel2 - vel1)
+                    
+                    # BALANCED relative speed thresholds - less aggressive
+                    if traffic_state == 'congested':
+                        if relative_speed < 5.0:  # Reduced from 8.0
+                            return False
+                    elif traffic_state == 'heavy':
+                        if relative_speed < 4.0:  # Reduced from 6.0
+                            return False
+                    else:
+                        if relative_speed < 3.0:  # Reduced from 4.0
+                            return False
+        
+        # Enhanced distance check - more generous
+        distance = np.linalg.norm(pos2 - pos1)
+        max_distance = {
+            'sparse': 250,     # Increased from 200
+            'moderate': 200,   # Increased from 150
+            'heavy': 150,      # Increased from 100
+            'congested': 120   # Increased from 80
+        }
+        
+        if distance > max_distance.get(traffic_state, 200):
+            return False
+        
+        # BALANCED approach check - less strict
+        relative_pos = pos2 - pos1
+        relative_vel = vel2 - vel1
+        approach_rate = np.dot(relative_pos, relative_vel)
+        
+        # More lenient approach thresholds
+        approach_thresholds = {
+            'sparse': -0.5,    # More lenient
+            'moderate': -1.0,  # More lenient
+            'heavy': -2.0,     # More lenient
+            'congested': -3.0  # More lenient
+        }
+        
+        return approach_rate < approach_thresholds.get(traffic_state, -1.0)
+
+    def _balanced_collision_prediction(self, track1, track2, distance_threshold, traffic_state):
+        """
+        Balanced collision prediction - catches real incidents
+        """
+        # Enhanced null checks
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return None
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return None
+        
+        pos1 = np.array(track1['center'], dtype=float)
+        pos2 = np.array(track2['center'], dtype=float)
+        vel1 = np.array(track1['velocity'], dtype=float)  
+        vel2 = np.array(track2['velocity'], dtype=float)
+        
+        # BALANCED horizons - longer for better detection
+        horizon_map = {'sparse': 20, 'moderate': 18, 'heavy': 15, 'congested': 12}
+        horizon = horizon_map[traffic_state]
+        
+        min_distance = float('inf')
+        collision_time = None
+        collision_point = None
+        trajectory_convergence = False
+        
+        # Track if trajectories are converging - less strict requirement
+        convergence_count = 0
+        
+        for t in range(1, horizon + 1):
+            future_pos1 = pos1 + vel1 * t
+            future_pos2 = pos2 + vel2 * t
+            distance = np.linalg.norm(future_pos2 - future_pos1)
+            
+            # Check if distance is decreasing (convergence)
+            if t > 1 and distance < min_distance:
+                convergence_count += 1
+            
+            min_distance = min(min_distance, distance)
+            
+            if distance < distance_threshold:
+                collision_time = t
+                collision_point = (future_pos1 + future_pos2) / 2
+                trajectory_convergence = convergence_count >= 2  # Reduced from 3
+                break
+        
+        if collision_time and trajectory_convergence:
+            # BALANCED confidence calculation
+            confidence = self._balanced_confidence_calculation(
+                track1, track2, min_distance, collision_time, traffic_state)
+            
+            # Lower base confidence threshold
+            if confidence > 0.2:  # Reduced from 0.4
+                return {
+                    'ttc': collision_time / 30,
+                    'collision_point': collision_point.tolist(),
+                    'min_distance': min_distance,
+                    'confidence': confidence,
+                    'traffic_context': traffic_state,
+                    'trajectory_convergence': trajectory_convergence
+                }
+        
+        return None
+
+    def _balanced_confidence_calculation(self, track1, track2, distance, time_steps, traffic_state):
+        """
+        Balanced confidence calculation - not too strict
+        """
+        confidence = 0.0
+        
+        # Distance factor - more generous
+        distance_score = max(0, 1.0 - (distance / 40.0))  # Increased from 30.0
+        confidence += distance_score * 0.3
+        
+        # Enhanced null checks for velocity
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return 0.0
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return 0.0
+        
+        # Speed differential - more lenient
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        relative_speed = np.linalg.norm(vel2 - vel1)
+        speed_score = min(1.0, relative_speed / 10.0)  # Reduced from 15.0
+        confidence += speed_score * 0.25
+        
+        # Time urgency - more generous
+        time_score = max(0, 1.0 - (time_steps / 15.0))  # Increased from 10.0
+        confidence += time_score * 0.2
+        
+        # BALANCED physics anomaly check - don't require both vehicles
+        physics_score = 0.0
+        anomaly_count = 0
+        
+        for track in [track1, track2]:
+            if track['id'] in self.acceleration_history:
+                recent_accel = self.acceleration_history[track['id']][-3:]
+                if recent_accel and max(recent_accel) > 8.0:  # Reduced from 10.0
+                    anomaly_count += 1
+        
+        if anomaly_count >= 1:  # Only require ONE vehicle (not both)
+            physics_score = 0.3 if anomaly_count == 1 else 0.4
+        
+        confidence += physics_score
+        
+        # Trajectory angle - more generous scoring
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(vel2) > 0:
+            cos_angle = np.dot(vel1, vel2) / (np.linalg.norm(vel1) * np.linalg.norm(vel2))
+            angle = math.degrees(math.acos(np.clip(cos_angle, -1, 1)))
+            
+            # More generous angle requirements
+            if 60 <= angle <= 120:  # T-bone (wider range)
+                confidence += 0.15
+            elif angle > 120:  # Head-on
+                confidence += 0.2
+            # No penalty for other angles
+        
+        # REDUCED traffic state penalties
+        traffic_penalties = {
+            'sparse': 0.0,
+            'moderate': 0.05,  # Reduced from 0.1
+            'heavy': 0.15,     # Reduced from 0.25
+            'congested': 0.2   # Reduced from 0.35
+        }
+        confidence -= traffic_penalties.get(traffic_state, 0)
+        
+        return max(0.0, min(1.0, confidence))
+     
     
+    
+    #ultra strict version of the code 
     def _ultra_strict_collision_candidate_check(self, track1, track2, speed_threshold, traffic_state):
         """
         ULTRA STRICT candidate filtering
@@ -1227,8 +1436,7 @@ class AdvancedIncidentDetectionSystem:
 
     def _persistent_collision_validation(self, potential_collisions):
         """
-        ENHANCED Evidence Persistence Validation - Replaces _final_collision_validation
-        Requires evidence to persist over multiple frames to reduce false positives
+        BALANCED - Less strict evidence persistence requirements
         """
         final_collisions = []
         current_frame = self.analytics['total_frames']
@@ -1245,36 +1453,60 @@ class AdvancedIncidentDetectionSystem:
                 self.collision_evidence_buffer[key] = {
                     'evidence': [confidence],
                     'first_frame': current_frame,
-                    'incident': collision
+                    'incident': collision,
+                    'peak_evidence': confidence,
+                    'sustained_high_count': 1 if confidence > 0.3 else 0  # Reduced from 0.7
                 }
             else:
-                self.collision_evidence_buffer[key]['evidence'].append(confidence)
-                # Keep only last 8 frames of evidence
-                if len(self.collision_evidence_buffer[key]['evidence']) > 8:
-                    self.collision_evidence_buffer[key]['evidence'].pop(0)
+                buffer = self.collision_evidence_buffer[key]
+                buffer['evidence'].append(confidence)
+                buffer['peak_evidence'] = max(buffer['peak_evidence'], confidence)
+                
+                # Count frames with high evidence
+                if confidence > 0.3:  # Reduced from 0.7
+                    buffer['sustained_high_count'] += 1
+                
+                # Keep only last 8 frames of evidence (reduced from 10)
+                if len(buffer['evidence']) > 8:
+                    buffer['evidence'].pop(0)
             
             buffer = self.collision_evidence_buffer[key]
             
-            # Require sustained evidence (at least 3 frames with good confidence)
-            if len(buffer['evidence']) >= 3:
-                avg_confidence = np.mean(buffer['evidence'][-5:])  # Average of recent evidence
-                peak_confidence = max(buffer['evidence'])
+            # MUCH MORE LENIENT validation requirements
+            if len(buffer['evidence']) >= 3:  # Reduced from 5
+                avg_confidence = np.mean(buffer['evidence'][-4:])  # Shorter average
+                peak_confidence = buffer['peak_evidence']
+                sustained_high = buffer['sustained_high_count']
                 
-                # Require both sustained and peak evidence
-                if avg_confidence >= 0.6 and peak_confidence >= 0.8:
+                # Balanced requirements that actually catch incidents
+                validation_passed = (
+                    avg_confidence >= 0.35 and      # Reduced from 0.75
+                    peak_confidence >= 0.5 and     # Reduced from 0.9
+                    sustained_high >= 1 and        # Reduced from 4
+                    len(buffer['evidence']) >= 2   # Reduced from 5
+                )
+                
+                if validation_passed:
                     # Create validated incident
                     final_incident = self._create_enhanced_final_collision_incident(
                         collision, avg_confidence, peak_confidence)
+                    
+                    # Add validation metrics
+                    final_incident['balanced_validation'] = {
+                        'sustained_high_frames': sustained_high,
+                        'observation_frames': len(buffer['evidence']),
+                        'evidence_trend': 'increasing' if buffer['evidence'][-1] > buffer['evidence'][0] else 'stable'
+                    }
                     
                     final_collisions.append(final_incident)
                     
                     # Remove from buffer to prevent duplicates
                     del self.collision_evidence_buffer[key]
         
-        # Clean up old evidence (older than 1 second)
+        # Clean up old evidence (same timeout)
         to_remove = []
         for key, buffer in self.collision_evidence_buffer.items():
-            if current_frame - buffer['first_frame'] > 30:
+            if current_frame - buffer['first_frame'] > 20:
                 to_remove.append(key)
         
         for key in to_remove:
