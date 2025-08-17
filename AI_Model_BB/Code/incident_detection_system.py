@@ -99,24 +99,31 @@ class AdvancedIncidentDetectionSystem:
             self.config['collision_distance_threshold'] = 25  # Slightly closer
             self.config['min_collision_speed'] = 6.0  # Lower minimum speed
             
-        # Highway/arterial camera adjustments
-        if is_highway_camera or camera_id == '3':  # Camera 3 is highway type
-            self.config['collision_confidence_threshold'] = 0.45  # Even lower for highway
+        # Stream-based adjustments (no hardcoded camera IDs)
+        if is_live_stream:
+            # Live streams (any .m3u8 or stream URL) - balanced for real-time detection
+            self.config['collision_confidence_threshold'] = 0.45  # Lower for live streams
             self.config['collision_angle_threshold'] = 45  # Allow more varied collision angles
-            self.config['min_collision_speed'] = 7.0  # Slightly higher speeds expected
-            self.config['prediction_horizon'] = 20  # Longer prediction for highway speeds
+            self.config['min_collision_speed'] = 6.0  # Reasonable speed for live detection
+            self.config['prediction_horizon'] = 20  # Longer prediction for stream latency
             
-        # Intersection camera adjustments  
-        elif is_intersection_camera or camera_id in ['1', '2']:  # Cameras 1&2 are intersection type
-            self.config['collision_confidence_threshold'] = 0.6  # Higher for intersections
-            self.config['collision_angle_threshold'] = 25  # Stricter angles for T-bone detection
-            self.config['min_collision_speed'] = 5.0  # Lower speeds in intersections
-            
-        # Video file adjustments (usually higher quality, stable feed)
+        # Video file adjustments (intersection or highway videos)
         elif camera_url.endswith(('.mp4', '.avi', '.mov')):
-            self.config['collision_confidence_threshold'] = 0.65  # Can be higher for stable video
+            # Video files - can use higher thresholds due to stable quality
+            if is_intersection_camera:
+                self.config['collision_confidence_threshold'] = 0.6  # Higher for intersections
+                self.config['collision_angle_threshold'] = 25  # Stricter angles for T-bone detection
+                self.config['min_collision_speed'] = 5.0  # Lower speeds in intersections
+            elif is_highway_camera:
+                self.config['collision_confidence_threshold'] = 0.55  # Moderate for highway videos
+                self.config['collision_angle_threshold'] = 35  # Highway collision angles
+                self.config['min_collision_speed'] = 7.0  # Higher speeds expected
+            else:
+                # Default video file settings - stable feed allows higher confidence
+                self.config['collision_confidence_threshold'] = 0.65
             
-        print(f"🎯 Camera {camera_id} thresholds adapted:")
+        stream_type = "Live Stream" if is_live_stream else "Video File"
+        print(f"🎯 Camera {camera_id} ({stream_type}) thresholds adapted:")
         print(f"   Confidence threshold: {self.config['collision_confidence_threshold']}")
         print(f"   Distance threshold: {self.config['collision_distance_threshold']}")
         print(f"   Speed threshold: {self.config['min_collision_speed']}")
@@ -1517,17 +1524,37 @@ class AdvancedIncidentDetectionSystem:
             
             # Adaptive confidence threshold based on camera type and layers passed
             camera_id = self.camera_config.get('camera_id', '')
+            camera_url = self.camera_config.get('url', '')
             base_threshold = self.config['collision_confidence_threshold']
+            
+            # Detect stream type for additional validation
+            is_live_stream = '.m3u8' in camera_url.lower() or 'stream' in camera_url.lower()
+            is_demo_video = camera_url.endswith(('.mp4', '.avi', '.mov'))
             
             # Layer agreement bonus - more layers passed = lower threshold needed
             layer_bonus = (layers_passed - self.config['minimum_layer_agreement']) * 0.05
             effective_threshold = max(0.25, base_threshold - layer_bonus)
             
-            # Immediate event detection - no persistence required
-            validation_passed = (
-                confidence >= effective_threshold and
-                layers_passed >= self.config['minimum_layer_agreement']
-            )
+            # Stream-specific false positive reduction
+            if is_live_stream:
+                # For live streams, require additional validation to reduce false positives
+                stream_validation_passed = self._validate_live_stream_collision(collision, confidence, layers_passed)
+                validation_passed = (
+                    confidence >= effective_threshold and
+                    layers_passed >= self.config['minimum_layer_agreement'] and
+                    stream_validation_passed  # Additional check for live streams
+                )
+                
+                # Debug output for live stream validation
+                if not stream_validation_passed:
+                    print(f"🚫 Live stream collision rejected: conf={confidence:.3f}, layers={layers_passed}/4")
+                
+            else:
+                # For demo videos, use standard validation (current working behavior)
+                validation_passed = (
+                    confidence >= effective_threshold and
+                    layers_passed >= self.config['minimum_layer_agreement']
+                )
             
             if validation_passed:
                 # Create collision incident immediately
@@ -1551,7 +1578,8 @@ class AdvancedIncidentDetectionSystem:
                     'confidence': confidence
                 }
                 
-                print(f"🎯 Collision detected! Confidence: {confidence:.3f}, Threshold: {effective_threshold:.3f}, Layers: {layers_passed}/4")
+                stream_type = "Live Stream" if is_live_stream else "Demo Video"
+                print(f"🎯 Collision detected! [{stream_type}] Confidence: {confidence:.3f}, Threshold: {effective_threshold:.3f}, Layers: {layers_passed}/4")
         
         # Clean up old tracking data (prevent memory buildup)
         to_remove = []
@@ -1564,6 +1592,85 @@ class AdvancedIncidentDetectionSystem:
         
         return final_collisions
 
+    def _validate_live_stream_collision(self, collision, confidence, layers_passed):
+        """
+        STRICT validation for live streams to eliminate false positives.
+        Uses multiple mandatory checks - ALL must pass for detection.
+        """
+        track1 = collision['track1']
+        track2 = collision['track2']
+        
+        validation_score = 0
+        max_score = 6  # Total possible validation points
+        
+        try:
+            # 1. MANDATORY: High confidence requirement for live streams
+            if confidence < 0.55:  # Raised from 0.45
+                return False
+            validation_score += 1
+            
+            # 2. MANDATORY: Layer agreement - require 3+ layers for live streams
+            if layers_passed < 3:  # Stricter than the 2 minimum for videos
+                return False
+            validation_score += 1
+            
+            # 3. MANDATORY: Speed validation
+            vel1 = np.array(track1.get('velocity', [0, 0]))
+            vel2 = np.array(track2.get('velocity', [0, 0]))
+            
+            speed1 = np.linalg.norm(vel1)
+            speed2 = np.linalg.norm(vel2)
+            
+            # At least one vehicle must have significant speed
+            if speed1 < 4.0 and speed2 < 4.0:  # Raised from 3.0
+                return False
+            validation_score += 1
+            
+            # 4. MANDATORY: Trajectory convergence validation
+            pos1 = np.array(track1['position'])
+            pos2 = np.array(track2['position'])
+            
+            if len(vel1) >= 2 and len(vel2) >= 2:
+                # Project future positions
+                future_pos1 = pos1 + vel1 * 2
+                future_pos2 = pos2 + vel2 * 2
+                
+                current_distance = np.linalg.norm(pos1 - pos2)
+                future_distance = np.linalg.norm(future_pos1 - future_pos2)
+                
+                # STRICT: Vehicles MUST be converging significantly
+                if future_distance >= current_distance * 0.9:  # Must be getting closer
+                    return False
+            validation_score += 1
+            
+            # 5. MANDATORY: Validation layer consistency
+            validation_layers = collision.get('validation_layers', {})
+            consistent_detections = sum([
+                validation_layers.get('depth', False),
+                validation_layers.get('optical_flow', False),
+                validation_layers.get('physics', False)
+            ])
+            
+            # Require ALL 3 validation layers to agree for live streams
+            if consistent_detections < 3:
+                return False
+            validation_score += 1
+            
+            # 6. STRICT: Traffic density and time-of-day awareness
+            if self.current_density_level in ['heavy', 'congested']:
+                # In heavy traffic, require very high confidence
+                if confidence < 0.7:
+                    return False
+            validation_score += 1
+            
+            # FINAL CHECK: Must pass ALL validation criteria
+            return validation_score >= max_score
+                
+        except Exception as e:
+            # Any error = automatic rejection for live streams
+            print(f"🚫 Live stream validation error: {e}")
+            return False
+    
     def _create_enhanced_final_collision_incident(self, collision, sustained_confidence, peak_confidence):
         """
         Create final incident with enhanced confidence metrics
