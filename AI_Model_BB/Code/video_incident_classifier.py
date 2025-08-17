@@ -16,19 +16,25 @@ import re
 import requests
 import glob
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Dict, List, Tuple
 import logging
 from dataclasses import dataclass
 from collections import deque, Counter
 import warnings
 from multiprocessing.pool import ThreadPool
-from functools import lru_cache
 warnings.filterwarnings('ignore')
 
-# Configure logging
+# Configure logging first
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load environment variables from .env file
+    logger.info("Environment variables loaded from .env file")
+except ImportError:
+    logger.warning("python-dotenv not installed. Using system environment variables only.")
 
 # May need to move these other classes into a different file?
 # Simple LRU Cache implementation
@@ -380,7 +386,7 @@ class EnhancedCrashClassifier:
         }
         
         # # API configuration for camera information NEED TO UPDATE API STUFF NEXT
-        self.api_base_url = "http://localhost:3000/api"  # Need to adjustr
+        self.api_base_url = "http://localhost:5000/api"  # Need to adjustr
         self.camera_info_cache = {}  # Cache camera information
         
     def _get_optimized_config(self):
@@ -580,69 +586,6 @@ class EnhancedCrashClassifier:
             logger.info(f"Incident type confirmed: {filename_incident_type} matches classification")
             
         return result
-    
-    def get_camera_info(self, camera_id: str) -> Dict:
-        """
-        Get camera information from API using camera_id.
-        
-        Args:
-            camera_id: The camera identifier from the filename
-            
-        Returns:
-            Dictionary with camera information
-        """
-        # Check cache first
-        if camera_id in self.camera_info_cache:
-            logger.info(f"Using cached camera info for camera_id: {camera_id}")
-            return self.camera_info_cache[camera_id]
-        
-        try:
-            # Make API call to get camera information
-            api_url = f"{self.api_base_url}/cameras/{camera_id}"
-            
-            logger.info(f"Fetching camera info for camera_id: {camera_id} from {api_url}")
-            
-            response = requests.get(api_url, timeout=10)
-            response.raise_for_status()
-            
-            camera_info = response.json()
-            
-            # Cache the result
-            self.camera_info_cache[camera_id] = camera_info
-            
-            logger.info(f"Successfully retrieved camera info for {camera_id}")
-            return camera_info
-            
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to get camera info for {camera_id}: {e}")
-            
-            # Return fallback camera info
-            fallback_info = {
-                'camera_id': camera_id,
-                'latitude': 0.0,
-                'longitude': 0.0,
-                'name': {camera_id},
-                'location': 'Unknown Location',
-                'status': 'unknown'
-            }
-            
-            # Cache the fallback to avoid repeated API calls
-            self.camera_info_cache[camera_id] = fallback_info
-            
-            return fallback_info
-        
-        except Exception as e:
-            logger.error(f"Unexpected error getting camera info for {camera_id}: {e}")
-            
-            # Return minimal fallback
-            return {
-                'camera_id': camera_id,
-                'latitude': 0.0,
-                'longitude': 0.0,
-                'name': {camera_id},
-                'location': 'Unknown Location',
-                'status': 'error'
-            }
     
     def _parse_incident_timestamp(self, timestamp_str: str) -> str:
         """
@@ -1669,48 +1612,49 @@ class EnhancedCrashClassifier:
             print(f"Error in direction analysis: {e}")
             return {'analysis': 'error', 'patterns': [], 'error': str(e)}
     
-    def _analyze_collision_pattern(self, direction_patterns):
-        """Analyze collision patterns based on vehicle directions"""
-        if len(direction_patterns) < 2:
-            return 'single_vehicle_or_insufficient_data'
-        
-        # Get primary directions
-        directions = [p['primary_direction'] for p in direction_patterns]
-        direction_changes = sum(p['direction_changes'] for p in direction_patterns)
-        
-        # Analyze pattern
-        if direction_changes > 2:
-            return 'complex_multi_vehicle'
-        
-        # Check for opposing directions (head-on)
-        opposing_pairs = [
-            ('northbound', 'southbound'),
-            ('eastbound', 'westbound')
-        ]
-        
-        for dir1, dir2 in opposing_pairs:
-            if dir1 in directions and dir2 in directions:
-                return 'head_on_collision'
-        
-        # Check for perpendicular directions (T-bone)
-        perpendicular_pairs = [
-            ('northbound', 'eastbound'), ('northbound', 'westbound'),
-            ('southbound', 'eastbound'), ('southbound', 'westbound')
-        ]
-        
-        for dir1, dir2 in perpendicular_pairs:
-            if dir1 in directions and dir2 in directions:
-                return 't_bone_collision'
-        
-        # Check for similar directions (sideswipe/rear-end)
-        if len(set(directions)) <= 2:
-            avg_consistency = np.mean([p['movement_consistency'] for p in direction_patterns])
-            if avg_consistency > 0.7:
-                return 'rear_end_collision'
-            else:
-                return 'sideswipe_collision'
-        
-        return 'unknown_pattern'
+    # DUPLICATE METHOD - COMMENTED OUT  
+    # def _analyze_collision_pattern(self, direction_patterns):
+    #     """Analyze collision patterns based on vehicle directions"""
+    #     if len(direction_patterns) < 2:
+    #         return 'single_vehicle_or_insufficient_data'
+    #     
+    #     # Get primary directions
+    #     directions = [p['primary_direction'] for p in direction_patterns]
+    #     direction_changes = sum(p['direction_changes'] for p in direction_patterns)
+    #     
+    #     # Analyze pattern
+    #     if direction_changes > 2:
+    #         return 'complex_multi_vehicle'
+    #     
+    #     # Check for opposing directions (head-on)
+    #     opposing_pairs = [
+    #         ('northbound', 'southbound'),
+    #         ('eastbound', 'westbound')
+    #     ]
+    #     
+    #     for dir1, dir2 in opposing_pairs:
+    #         if dir1 in directions and dir2 in directions:
+    #             return 'head_on_collision'
+    #     
+    #     # Check for perpendicular directions (T-bone)
+    #     perpendicular_pairs = [
+    #         ('northbound', 'eastbound'), ('northbound', 'westbound'),
+    #         ('southbound', 'eastbound'), ('southbound', 'westbound')
+    #     ]
+    #     
+    #     for dir1, dir2 in perpendicular_pairs:
+    #         if dir1 in directions and dir2 in directions:
+    #             return 't_bone_collision'
+    #     
+    #     # Check for similar directions (sideswipe/rear-end)
+    #     if len(set(directions)) <= 2:
+    #         avg_consistency = np.mean([p['movement_consistency'] for p in direction_patterns])
+    #         if avg_consistency > 0.7:
+    #             return 'rear_end_collision'
+    #         else:
+    #             return 'sideswipe_collision'
+    #     
+    #     return 'unknown_pattern'
 
     def _calculate_analysis_confidence(self, motion_data: List[Dict], 
                                      impact_events: List[Dict], vehicles_involved: int) -> float:
@@ -2177,7 +2121,7 @@ class EnhancedCrashClassifier:
         
         # Generate detailed alert message
         alerts_message = self._generate_detailed_alert_message(
-            crash_type, final_severity, vehicles_involved, motion_analysis, video_path
+            crash_type, final_severity, vehicles_involved, motion_analysis, video_path, confidence
         )
         
         # Determine emergency priority
@@ -2209,7 +2153,7 @@ class EnhancedCrashClassifier:
     
     def _generate_detailed_alert_message(self, crash_type: str, severity: str, 
                                        vehicles_involved: int, motion_analysis: Dict, 
-                                       video_path: str) -> str:
+                                       video_path: str, confidence: float = None) -> str:
         """Generate detailed alert message for emergency services."""
         
         # Base message templates for each crash type
@@ -2264,7 +2208,7 @@ class EnhancedCrashClassifier:
         full_message = (
             f"{base_message}. {severity_context}.{motion_context} "
             f"Location: {video_name}. {emergency_recommendations}. "
-            f"Video analysis confidence: {motion_analysis.get('analysis_confidence', 0.5):.2f}"
+            f"Video analysis confidence: {confidence if confidence is not None else motion_analysis.get('analysis_confidence', 0.5):.2f}"
         )
         
         return full_message
@@ -2526,35 +2470,35 @@ class EnhancedCrashClassifier:
 
 
 
+
+# API CONFIG
     def _load_api_config(self):
         """
-        Securely load API configuration from environment variables.
+        Simple API configuration.
         """
-        api_key = os.getenv('API_KEY')
-        
-        if not api_key:
-            logger.warning(" WARNING: API_KEY not found in environment variables!")
-            logger.warning("   Please create a .env file with your API key")
-            logger.warning("   API integration will be disabled")
-            return {
-                'endpoint': 'http://localhost:5000/api/incidents',
-                'api_key': None,
-                'timeout': 5,
-                'retry_attempts': 2,
-                'enabled': False
-            }
-        
+        api_key = os.getenv('AIAPIKEY')
         return {
-            'endpoint': os.getenv('API_ENDPOINT', 'http://localhost:5000/api/incidents'),
+            'endpoint': 'http://localhost:5000/api/incidents',
             'api_key': api_key,
-            'timeout': int(os.getenv('API_TIMEOUT', '5')),
-            'retry_attempts': int(os.getenv('API_RETRY_ATTEMPTS', '2')),
-            'enabled': True
+            'enabled': bool(api_key)
         }
 
     def _map_crash_report_to_api_payload(self, crash_report: CrashReport) -> Dict:
         """
-        Map CrashReport object to API incident payload format.
+        Map CrashReport object to TrafficGuardian API incident payload format.
+        
+        EXACT POSTMAN API FORMAT MAPPING:
+        ================================
+        CrashReport Field               → API Field (EXACT POSTMAN)
+        -------------------------------------------------------------------------
+        crash_report.incident_datetime  → Incidents_DateTime (date "YYYY-MM-DD")
+        crash_report.incident_longitude → Incidents_Longitude (string, can be "")  
+        crash_report.incident_latitude  → Incidents_Latitude (string, can be "")
+        crash_report.incident_severity  → Incident_Severity ("high", "low", etc.)
+        crash_report.incident_status    → Incident_Status ("open", "closed", etc.)
+        "TrafficGuardianAI"            → Incident_Reporter (fixed value)
+        crash_report.camera_id         → Incident_CameraID (integer)
+        crash_report.alerts_message    → Incident_Description (string)
         
         Args:
             crash_report: CrashReport object from video analysis
@@ -2562,43 +2506,32 @@ class EnhancedCrashClassifier:
         Returns:
             Dictionary formatted for API incident creation
         """
-        # Map severity levels to API format
+        # Map severity levels to API format (must match API validation)
         severity_mapping = {
             'low': 'low',
             'medium': 'medium', 
             'high': 'high',
-            'critical': 'critical'
+            'critical': 'high'  # Map critical to high since API example shows "high"
         }
         
         # Map status - use classification-based status or default to ongoing
         status_mapping = {
-            'active': 'ongoing',
-            'resolved': 'resolved', 
-            'closed': 'closed'
+            'active': 'open',
+            'ongoing': 'open',
+            'resolved': 'closed', 
+            'closed': 'closed',
+            'open': 'open'
         }
         
-        # Extract camera ID - should already be set in crash_report from main processing
-        camera_id = crash_report.camera_id or 'unknown'
+        # Extract camera ID - ensure it's an INTEGER for API (Postman shows: "Incident_CameraID": 2)
+        try:
+            camera_id = int(crash_report.camera_id.replace('cam', '').replace('camera', '')) if crash_report.camera_id else 1
+        except (ValueError, AttributeError):
+            camera_id = 1  # Default camera ID
         
-
-
-
-        # THIS WILL ALL BE CHANGED FOR LONGITUDE AND LATTITUDE ESTIMATION BASED OF OFF CLASSIFICATION!!!!!
-
-
-        # Mock coordinates for now (you can enhance this later with real camera locations)
-        # Using a simple hash-based approach to get consistent mock coordinates per camera
-        if camera_id and camera_id != 'unknown':
-            # Generate mock coordinates based on camera_id
-            camera_hash = hash(camera_id) % 10000
-            mock_lat = -26.1000 + (camera_hash % 100) * 0.001  # Johannesburg area
-            mock_lng = 28.0500 + (camera_hash % 200) * 0.001
-        else:
-            # Default mock coordinates
-            mock_lat = -26.1076  # Johannesburg CBD
-            mock_lng = 28.0567
-        
-        return {
+       
+        # Create API payload with EXACT field names and types from Postman example
+        api_payload = {
             # Required database fields
             'Incidents_DateTime': crash_report.incident_datetime,
             'Incidents_Longitude': float(crash_report.incident_longitude),  # Mock data for now
@@ -2607,133 +2540,69 @@ class EnhancedCrashClassifier:
             'Incident_Status': status_mapping.get(crash_report.incident_status, 'ongoing'),  # Default as specified
             'Incident_Reporter': 'TrafficGuardianAI',  # Fixed as specified
             'Incident_CameraID': camera_id,
-            'Incident_Description': crash_report.alerts_message,  # Primary description
+            'Incident_Description': crash_report.alerts_message  # Primary description
             # Note: report.description available as backup: crash_report.description
-            
-            # Additional fields for enhanced data (not in main table but useful for API)
-            'incident_type': crash_report.incident_type,
-            'vehicles_involved': crash_report.vehicles_involved,
-            'confidence': crash_report.confidence,
-            'impact_severity': crash_report.impact_severity,
-            'crash_phase': crash_report.crash_phase,
-            'estimated_speed': crash_report.estimated_speed,
-            'damage_assessment': crash_report.damage_assessment,
-            'emergency_priority': crash_report.emergency_priority,
-            'video_path': crash_report.video_path,
-            'processing_timestamp': crash_report.processing_timestamp
         }
+        # # Additional fields for enhanced data (not in main table but useful for API)
+        #     'incident_type': crash_report.incident_type,
+        #     'vehicles_involved': crash_report.vehicles_involved,
+        #     'confidence': crash_report.confidence,
+        #     'impact_severity': crash_report.impact_severity,
+        #     'crash_phase': crash_report.crash_phase,
+        #     'estimated_speed': crash_report.estimated_speed,
+        #     'damage_assessment': crash_report.damage_assessment,
+        #     'emergency_priority': crash_report.emergency_priority,
+        #     'video_path': crash_report.video_path,
+        #     'processing_timestamp': crash_report.processing_timestamp
+        logger.debug(f"🔄 Mapped crash report to API payload (EXACT POSTMAN FORMAT):")
+        logger.debug(f"   Incidents_DateTime: {api_payload['Incidents_DateTime']}")
+        logger.debug(f"   Incident_CameraID: {api_payload['Incident_CameraID']} (type: {type(api_payload['Incident_CameraID'])})")
+        logger.debug(f"   Incident_Severity: {api_payload['Incident_Severity']}")
+        logger.debug(f"   Incident_Status: {api_payload['Incident_Status']}")
+        
+        return api_payload
 
 
     # API PART
     def submit_incident_to_api(self, crash_report: CrashReport) -> Dict:
         """
-        Submit incident report to API endpoint.
-        
-        Args:
-            crash_report: CrashReport object to submit
-            
-        Returns:
-            API response dictionary with success/error status
+        Submit incident report to TrafficGuardian API - simplified version.
         """
-        if not self.api_config['enabled']:
-            logger.warning("API integration is disabled - skipping incident submission")
-            return {
-                'success': False,
-                'error': 'API integration disabled',
-                'incident_id': None
-            }
+        # Get API key
+        api_key = os.getenv('AIAPIKEY')
+        if not api_key:
+            return {'success': False, 'error': 'No API key found'}
         
+        # Use the correct payload mapping function
+        payload = self._map_crash_report_to_api_payload(crash_report)
+        
+        # Create headers
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": api_key
+        }
+        # print(f"TESTING!!!!!!!")
+        # # print(f"Submitting incident to API: {response.url}")  # Debugging line to check URL
+        # print(f"Headers: {headers}")  # Debugging line to check headers
+        # print(f"API payload: {payload}")  # Debugging line to check payload
+        # # print(f"API response: {response.text}")  # Debugging line to check response
+        # print(f"\n")  # Debugging line to check status code
+        # Send request
         try:
-            # Map crash report to API payload
-            payload = self._map_crash_report_to_api_payload(crash_report)
+            response = requests.post(
+                "http://localhost:5000/api/incidents",
+                json=payload,
+                headers=headers,
+                timeout=10
+            )
             
-            # Prepare headers
-            headers = {
-                'Content-Type': 'application/json',
-                'Authorization': {self.api_config["api_key"]},#ADD AI APIKEY TO GITHUB REPO SECRETS
-            }
-            
-            # Submit to API with retry logic
-            for attempt in range(self.api_config['retry_attempts']):
-                try:
-                    logger.info(f"Submitting incident to API (attempt {attempt + 1}/{self.api_config['retry_attempts']})")
-                    
-                    response = requests.post(
-                        self.api_config['endpoint'],
-                        json=payload,
-                        headers=headers,
-                        timeout=self.api_config['timeout']
-                    )
-                    
-                    if response.status_code == 201:
-                        # Success
-                        api_response = response.json()
-                        incident_id = api_response.get('incident', {}).get('Incidents_ID')
-                        
-                        logger.info(f"Successfully submitted incident to API - ID: {incident_id}")
-                        
-                        return {
-                            'success': True,
-                            'incident_id': incident_id,
-                            'api_response': api_response,
-                            'attempt': attempt + 1
-                        }
-                    
-                    elif response.status_code == 400:
-                        # Bad request - don't retry
-                        error_msg = response.json().get('error', 'Bad request')
-                        logger.error(f"API validation error: {error_msg}")
-                        return {
-                            'success': False,
-                            'error': f'Validation error: {error_msg}',
-                            'incident_id': None,
-                            'status_code': 400
-                        }
-                    
-                    elif response.status_code == 401:
-                        # Unauthorized - don't retry
-                        logger.error("API authentication failed - check API_KEY")
-                        return {
-                            'success': False,
-                            'error': 'Authentication failed',
-                            'incident_id': None,
-                            'status_code': 401
-                        }
-                    
-                    else:
-                        # Server error - retry
-                        logger.warning(f"API server error (status {response.status_code}) - attempt {attempt + 1}")
-                        if attempt < self.api_config['retry_attempts'] - 1:
-                            time.sleep(1)  # Wait before retry
-                        continue
+            if response.status_code == 201:
+                return {'success': True, 'response': response.json()}
+            else:
+                return {'success': False, 'error': f'HTTP {response.status_code}: {response.text}'}
                 
-                except requests.exceptions.Timeout:
-                    logger.warning(f" API request timeout - attempt {attempt + 1}")
-                    if attempt < self.api_config['retry_attempts'] - 1:
-                        time.sleep(1)
-                    continue
-                
-                except requests.exceptions.ConnectionError:
-                    logger.warning(f" API connection error - attempt {attempt + 1}")
-                    if attempt < self.api_config['retry_attempts'] - 1:
-                        time.sleep(2)
-                    continue
-            
-            # All attempts failed
-            logger.error(" Failed to submit incident to API after all retry attempts")
-            return {
-                'success': False,
-                'error': 'All retry attempts failed',
-                'incident_id': None
-            }
-            
         except Exception as e:
-            logger.error(f" Unexpected error submitting to API: {e}")
-            return {
-                'success': False,
-                'error': f'Unexpected error: {str(e)}',
-                'incident_id': None
-            }
+            return {'success': False, 'error': str(e)}
 
     def process_and_submit_crash_video(self, video_path: str, camera_id: str = None, 
                                      submit_to_api: bool = True, low_latency_mode: bool = False) -> Dict:
@@ -2769,8 +2638,18 @@ class EnhancedCrashClassifier:
                 
                 if api_result['success']:
                     logger.info(f" Incident successfully submitted - API ID: {api_result['incident_id']}")
+
+                    # DELETION OF VIDEO FILE AFTER SUBMISSION
+                    # # 🗑️ DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
+                    # try:
+                    #     os.remove(video_path)
+                    #     logger.info(f"🗑️ Video file deleted: {os.path.basename(video_path)}")
+                    # except OSError as e:
+                    #     logger.warning(f"⚠️ Could not delete video file {os.path.basename(video_path)}: {e}")
+                        
                 else:
                     logger.error(f" API submission failed: {api_result['error']}")
+                    # logger.info(f"💾 Video file retained due to submission failure: {os.path.basename(video_path)}")
             
             elif submit_to_api and not self.api_config['enabled']:
                 logger.warning("📡 API submission requested but API integration is disabled")
@@ -2895,13 +2774,13 @@ def main():
     
     classifier = EnhancedCrashClassifier()
     
-    print("\nSelect operation mode:")
-    print("1. Analyze single crash video (.mp4)")
-    print("2. Process entire folder of crash videos (.mp4)")
-    print("3. Process folder with specific camera location")
-    print("4. Batch process with detailed statistics")
-    print("5. Low-latency batch processing (optimized for speed)")
-    print("6. Process incident clips from 'incident_for_classification' folder")
+    # print("\nSelect operation mode:")
+    # print("1. Analyze single crash video (.mp4)")
+    # print("2. Process entire folder of crash videos (.mp4)")
+    # print("3. Process folder with specific camera location")
+    # print("4. Batch process with detailed statistics")
+    # print("5. Low-latency batch processing (optimized for speed)")
+    # print("6. Process incident clips from 'incident_for_classification' folder")
     
     # try:
     #     choice = input("\nEnter choice (1-4): ").strip()
@@ -3008,10 +2887,13 @@ def main():
             print(f"  Full timestamp: {parsed_info['full_timestamp']}")
             print(f"  Original incident type: {original_incident_type} ({'Valid' if is_valid_type else 'Unknown type'})")
             
-            # Get camera information
-            camera_info = classifier.get_camera_info(camera_id)
-            if camera_info:
-                print(f"  Camera Info: {camera_info['name']} at {camera_info['location']}")
+            # Create camera information from filename (no API call needed)
+            camera_info = {
+                'camera_id': camera_id,
+                'name': f'Camera {camera_id}',
+                'location': f'Camera {camera_id} Location'
+            }
+            print(f"  Camera Info: {camera_info['name']} at {camera_info['location']}")
             
             # Process the individual video file
             video_path = os.path.join(folder_path, video_file)
@@ -3055,23 +2937,90 @@ def main():
                 all_reports.append(crash_report)
                 print(f"  Classification: {crash_report.incident_type} (confidence: {crash_report.confidence:.3f})")
                 
+                # 🚨 SUBMIT TO TRAFFICGUARDIAN API DATABASE
+                print(f"  📡 Submitting incident to TrafficGuardian API...")
+                api_result = classifier.submit_incident_to_api(crash_report)
+                
+                if api_result['success']:
+                    print(f"  ✅ API Submission SUCCESS!")
+                    print(f"     Incident ID: {api_result.get('incident_id', 'N/A')}")
+                    print(f"     Database Response: {api_result.get('message', 'Created successfully')}")
+                    # DELETION!!!!1
+                    # 🗑️ DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
+                    try:
+                        os.remove(video_path)
+                        print(f"  🗑️  Video file deleted: {video_file}")
+                    except OSError as e:
+                        print(f"  ⚠️  Warning: Could not delete video file {video_file}: {e}")
+                        
+                else:
+                    print(f"  ❌ API Submission FAILED!")
+                    print(f"     Error: {api_result.get('error', 'Unknown error')}")
+                    print(f"     Recommendation: {api_result.get('recommendation', 'Check API server')}")
+                    print(f"  💾 Video file retained due to submission failure: {video_file}")
+                # Deletion messgae
             else:
-                print(f"  No incidents detected in {video_file}")
+                print(f"  ℹ️  No incidents detected in {video_file}")
         
-        print(f"\nTotal reports generated: {len(all_reports)}")
+        print(f"\n📊 PROCESSING COMPLETE")
+        print(f"Total reports generated: {len(all_reports)}")
         
-        # Display summary of processed reports
+        # Display final summary with API submission results
         if all_reports:
-            print("\n=== Processing Summary ===")
+            print("\n" + "=" * 70)
+            print("🏆 FINAL PROCESSING & API SUBMISSION SUMMARY")
+            print("=" * 70)
+            
+            successful_submissions = 0
+            failed_submissions = 0
+            
             for i, report in enumerate(all_reports, 1):
-                print(f"Report {i}:")
-                print(f"  Camera ID: {report.camera_id}")
-                print(f"  Location: {report.camera_location}")
-                print(f"  Timestamp: {report.timestamp}")
-                print(f"  Severity: {report.severity or report.incident_severity}")
-                print(f"  Vehicles Involved: {report.vehicles_involved}")
-                print(f"  Description: {(report.description or report.alerts_message)[:100]}...")
-                print()  # Add blank line between reports
+                print(f"\n Report {i}:")
+                print(f"   Video: {report.video_path}")
+                print(f"   Camera ID: {report.camera_id}")
+                print(f"   Location: {report.camera_location}")
+                print(f"   Timestamp: {report.timestamp}")
+                print(f"   Severity: {report.severity or report.incident_severity}")
+                print(f"   Vehicles: {report.vehicles_involved}")
+                print(f"   Type: {report.incident_type.replace('_', ' ').title()}")
+                print(f"   Confidence: {report.confidence:.1%}")
+                
+                # Show description (truncated)
+                description = (report.description or report.alerts_message)[:100]
+                print(f"   Description: {description}...")
+                
+                # Re-check API submission status if needed
+                print(f"  API Status: Checking submission result...")
+                api_recheck = classifier.submit_incident_to_api(report)
+                if api_recheck['success']:
+                    successful_submissions += 1
+                    print(f"      SUBMITTED TO DATABASE")
+                else:
+                    failed_submissions += 1
+                    print(f"      FAILED TO SUBMIT")
+            
+            print(f"\n" + "=" * 70)
+            print(f" FINAL STATISTICS")
+            print("=" * 70)
+            print(f" Videos Processed: {len(video_files)}")
+            print(f" Incidents Detected: {len(all_reports)}")
+            print(f" API Submissions Successful: {successful_submissions}")
+            print(f" API Submissions Failed: {failed_submissions}")
+            
+            if successful_submissions > 0:
+                success_rate = (successful_submissions / len(all_reports)) * 100
+                print(f" API Success Rate: {success_rate:.1f}%")
+                print(f" TrafficGuardian Database Updated: {successful_submissions} new incidents")
+            
+            if failed_submissions > 0:
+                print(f"\n  API Submission Issues:")
+                print(f"   - Failed submissions: {failed_submissions}")
+                print(f"   - Check AIAPIKEY environment variable")
+                print(f"   - Verify TrafficGuardian API server is running on localhost:5000")
+                print(f"   - Review API logs for authentication issues")
+            
+            print(f"\n TrafficGuardian AI Processing Complete!")
+            print("=" * 70)
                 
     else:
         print(f"Incident folder '{folder_path}' not found. Creating it...")
@@ -3158,11 +3107,22 @@ def demo_api_integration():
 
 
 if __name__ == "__main__":
-    # Uncomment to run API integration demo:
-    # demo_api_integration()
+    # Production Mode: Process incident videos and submit to TrafficGuardian API
+    print("🚀 TRAFFICGUARDIAN AI - PRODUCTION MODE")
+    print("=" * 70)
     
+    # Check API configuration
+    classifier = EnhancedCrashClassifier()
+    if classifier.api_config['enabled']:
+        print("✅ API Integration: ENABLED")
+        print(f"   Endpoint: {classifier.api_config['endpoint']}")
+        print(f"   Authentication: X-API-Key (GitHub Secret: AIAPIKEY)")
+    else:
+        print("⚠️  API Integration: DISABLED")
+        print("   Missing AIAPIKEY environment variable")
+        print("   Processing will continue but no API submissions will be made")
+    
+    print("=" * 70)
+    
+    # Run main processing
     main()
-
-# latest
-# if __name__ == "__main__":
-#     main()
