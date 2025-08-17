@@ -2576,7 +2576,7 @@ class AdvancedIncidentDetectionSystem:
                 font_size = font_scale
                 thickness = 2
             elif text.startswith("  ") or text.startswith("     "):  # Alert details
-                color = (0, 0, 255)  # Red for alert details
+                color = (255, 255, 255)  # Red for alert details
                 font_size = font_scale - 0.05
                 thickness = 1
             elif text.startswith("  ") and ":" in text:  # Layer stats
