@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 
 interface ThemeContextType {
   isDarkMode: boolean;
@@ -7,7 +13,10 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode; initialDarkMode?: boolean }> = ({ children, initialDarkMode = true }) => {
+export const ThemeProvider: React.FC<{
+  children: React.ReactNode;
+  initialDarkMode?: boolean;
+}> = ({ children, initialDarkMode = true }) => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(initialDarkMode);
 
   useEffect(() => {
@@ -16,7 +25,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode; initialDarkMod
   }, [isDarkMode]);
 
   const toggleDarkMode = useCallback((value: boolean) => {
-    console.log('toggleDarkMode called with value:', value, 'at', new Date().toISOString());
+    console.log(
+      'toggleDarkMode called with value:',
+      value,
+      'at',
+      new Date().toISOString()
+    );
     setIsDarkMode(value);
   }, []); // Stable reference with no dependencies
 

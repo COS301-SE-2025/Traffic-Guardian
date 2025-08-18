@@ -16,5 +16,6 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*", "cypress/**/*", "*.ts", "**/*.ts", "**/*.tsx"]
+  "include": ["src/**/*"],
+  "exclude": ["cypress", "node_modules", "build"]
 }
