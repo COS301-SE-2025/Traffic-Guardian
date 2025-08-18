@@ -7,7 +7,7 @@ if (!process.env.DATABASE_HOST) {
     path: require('path').join(__dirname, '../../.env')
   });
 }
-
+// 
 // Validate required database credentials
 const requiredSecrets = [
   'DATABASE_USERNAME',
