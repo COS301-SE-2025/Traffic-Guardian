@@ -28,30 +28,43 @@ var welcomeMsg;
 
 io.on('connection',(socket)=>{
   ILM.addUser(socket.id, {});
-  console.log(socket.id + ' connected');
-  ILM.showUsers();
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
     
     //traffic prt
     traffic.getTraffic().then((data)=>{
-      socket.emit('trafficUpdate', data);
+      if (data && Array.isArray(data)) {
+        socket.emit('trafficUpdate', data);
 
-      //update regions Traffic
-      ILM.updateTraffic(data);
+        //update regions Traffic
+        ILM.updateTraffic(data);
 
-      //critical incidents
-      const res = traffic.criticalIncidents(data);
-      socket.emit('criticalIncidents', res);
+        //critical incidents
+        const res = traffic.criticalIncidents(data);
+        socket.emit('criticalIncidents', res);
 
-      //incident Category
-      const res_incidentCategory = traffic.incidentCategory(data);
-      socket.emit('incidentCategory', res_incidentCategory);
+        //incident Category
+        const res_incidentCategory = traffic.incidentCategory(data);
+        socket.emit('incidentCategory', res_incidentCategory);
 
-      //incident Locations
-      const res_incidentLocations =  traffic.incidentLocations(data);
-      socket.emit('incidentLocations', res_incidentLocations);
+        //incident Locations
+        const res_incidentLocations =  traffic.incidentLocations(data);
+        socket.emit('incidentLocations', res_incidentLocations);
+      } else {
+        console.log('⚠️  Traffic API unavailable on connection - using empty data');
+        socket.emit('trafficUpdate', []);
+        socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0 });
+        socket.emit('incidentCategory', { categories: [], percentages: [] });
+        socket.emit('incidentLocations', []);
+      }
+    }).catch((error) => {
+      console.error('Traffic API error on connection:', error.message);
+      // Send empty data instead of crashing
+      socket.emit('trafficUpdate', []);
+      socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0 });
+      socket.emit('incidentCategory', { categories: [], percentages: [] });
+      socket.emit('incidentLocations', []);
     })
     
     // Weather data on connection
@@ -62,23 +75,33 @@ io.on('connection',(socket)=>{
     });
     
     setInterval(async()=>{
-      const data = await traffic.getTraffic();
-      socket.emit('trafficUpdate', data);
-      
-      // Update regions traffic (from Dev branch)
-      ILM.updateTraffic(data);
+      try {
+        const data = await traffic.getTraffic();
+        
+        if (data && Array.isArray(data)) {
+          socket.emit('trafficUpdate', data);
+          
+          // Update regions traffic (from Dev branch)
+          ILM.updateTraffic(data);
 
-      //critical incidents
-      const res = traffic.criticalIncidents(data);
-      socket.emit('criticalIncidents', res);
+          //critical incidents
+          const res = traffic.criticalIncidents(data);
+          socket.emit('criticalIncidents', res);
 
-      //incident Category
-      const res_incidentCategory = traffic.incidentCategory(data);
-      socket.emit('incidentCategory', res_incidentCategory);
+          //incident Category
+          const res_incidentCategory = traffic.incidentCategory(data);
+          socket.emit('incidentCategory', res_incidentCategory);
 
-      //incident Locations
-      const res_incidentLocations =  traffic.incidentLocations(data);
-      socket.emit('incidentLocations', res_incidentLocations);
+          //incident Locations
+          const res_incidentLocations =  traffic.incidentLocations(data);
+          socket.emit('incidentLocations', res_incidentLocations);
+        } else {
+          console.log('⚠️  Traffic API unavailable in interval update - skipping');
+        }
+      } catch (error) {
+        console.error('Traffic API error in interval update:', error.message);
+        // Continue running - don't let API failures break the interval
+      }
       
       // Update weather data periodically
       try {
@@ -237,7 +260,6 @@ io.on('connection',(socket)=>{
 
     // Clean up intervals and remove user on disconnect
     socket.on('disconnect', () => {
-      console.log(socket.id + ' disconnected');
       
       // Clean up archive intervals
       clearInterval(archiveStatsInterval);

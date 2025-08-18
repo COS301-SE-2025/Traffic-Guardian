@@ -127,13 +127,11 @@ class ApiService {
   // Get database incidents
   static async fetchIncidents(): Promise<DatabaseIncident[]> {
     try {
-      console.log('Fetching database incidents...');
       const response = await fetch(`${API_BASE_URL}/incidents`, {
         headers: this.getAuthHeaders(),
       });
 
       const incidents = await this.handleResponse<DatabaseIncident[]>(response);
-      console.log(`Fetched ${incidents.length} database incidents`);
       return incidents;
     } catch (error) {
       console.error('Error fetching incidents:', error);
@@ -144,7 +142,6 @@ class ApiService {
   // Get today's incidents
   static async fetchTodaysIncidents(): Promise<TodaysIncidentsData | null> {
     try {
-      console.log("Fetching today's incidents...");
       const response = await fetch(`${API_BASE_URL}/incidents/today`, {
         headers: this.getAuthHeaders(),
       });
@@ -152,7 +149,6 @@ class ApiService {
       const todaysData = await this.handleResponse<TodaysIncidentsData>(
         response
       );
-      console.log(`Fetched ${todaysData.count} incidents for today`);
       return todaysData;
     } catch (error) {
       console.error("Error fetching today's incidents:", error);
@@ -163,13 +159,11 @@ class ApiService {
   // Get incident statistics
   static async fetchIncidentStats(): Promise<IncidentStats | null> {
     try {
-      console.log('Fetching incident statistics...');
       const response = await fetch(`${API_BASE_URL}/incidents/stats`, {
         headers: this.getAuthHeaders(),
       });
 
       const stats = await this.handleResponse<IncidentStats>(response);
-      console.log('Fetched incident statistics:', stats);
       return stats;
     } catch (error) {
       console.error('Error fetching incident stats:', error);
@@ -192,7 +186,6 @@ class ApiService {
     } = {}
   ): Promise<ArchiveData[]> {
     try {
-      console.log('Fetching archives...');
       const queryParams = new URLSearchParams();
 
       Object.entries(filters).forEach(([key, value]) => {
@@ -209,7 +202,6 @@ class ApiService {
       });
 
       const archives = await this.handleResponse<ArchiveData[]>(response);
-      console.log(`Fetched ${archives.length} archives`);
       return archives;
     } catch (error) {
       console.error('Error fetching archives:', error);
@@ -220,13 +212,11 @@ class ApiService {
   // Get archive statistics
   static async fetchArchiveStats(): Promise<ArchiveStats[]> {
     try {
-      console.log('Fetching archive statistics...');
       const response = await fetch(`${API_BASE_URL}/archives/stats`, {
         headers: this.getAuthHeaders(),
       });
 
       const stats = await this.handleResponse<ArchiveStats[]>(response);
-      console.log(`Fetched archive stats for ${stats.length} categories`);
       return stats;
     } catch (error) {
       console.error('Error fetching archive stats:', error);
@@ -237,8 +227,6 @@ class ApiService {
   // Get comprehensive archive analytics
   static async fetchArchiveAnalytics(): Promise<ArchiveAnalytics | null> {
     try {
-      console.log('Fetching comprehensive archive analytics...');
-
       // Fetch archives and stats in parallel
       const [archives, _stats] = await Promise.all([
         this.fetchArchives({ limit: 1000 }), // Get more data for analytics
@@ -335,7 +323,6 @@ class ApiService {
         analytics.storageMetrics.avgSizePerArchive = estimatedSizePerArchive;
       }
 
-      console.log('Processed archive analytics:', analytics);
       return analytics;
     } catch (error) {
       console.error('Error fetching archive analytics:', error);
@@ -391,13 +378,11 @@ class ApiService {
   // Get archive by ID
   static async fetchArchiveById(id: number): Promise<ArchiveData | null> {
     try {
-      console.log(`Fetching archive ${id}...`);
       const response = await fetch(`${API_BASE_URL}/archives/${id}`, {
         headers: this.getAuthHeaders(),
       });
 
       const archive = await this.handleResponse<ArchiveData>(response);
-      console.log(`Fetched archive ${id}`);
       return archive;
     } catch (error) {
       console.error(`Error fetching archive ${id}:`, error);
@@ -410,7 +395,6 @@ class ApiService {
   // Get incident locations endpoint
   static async fetchIncidentLocations(): Promise<LocationData[]> {
     try {
-      console.log('Fetching incident locations...');
       const response = await fetch(
         `${API_BASE_URL}/traffic/incidentLocations`,
         {
@@ -419,7 +403,6 @@ class ApiService {
       );
 
       const locations = await this.handleResponse<LocationData[]>(response);
-      console.log(`Fetched locations data for ${locations.length} locations`);
       return locations;
     } catch (error) {
       console.error('Error fetching incident locations:', error);
@@ -430,7 +413,6 @@ class ApiService {
   // Get critical incidents count from endpoint
   static async fetchCriticalIncidents(): Promise<CriticalIncidentsData | null> {
     try {
-      console.log('Fetching critical incidents...');
       const response = await fetch(
         `${API_BASE_URL}/traffic/criticalIncidents`,
         {
@@ -441,7 +423,6 @@ class ApiService {
       const criticalData = await this.handleResponse<CriticalIncidentsData>(
         response
       );
-      console.log(`Fetched critical incidents: ${criticalData.Amount}`);
       return criticalData;
     } catch (error) {
       console.error('Error fetching critical incidents:', error);
@@ -452,13 +433,11 @@ class ApiService {
   // Get incident categories from endpoint
   static async fetchIncidentCategories(): Promise<CategoryData | null> {
     try {
-      console.log('Fetching incident categories...');
       const response = await fetch(`${API_BASE_URL}/traffic/incidentCategory`, {
         headers: this.getAuthHeaders(),
       });
 
       const categoryData = await this.handleResponse<CategoryData>(response);
-      console.log(`Fetched ${categoryData.categories.length} categories`);
       return categoryData;
     } catch (error) {
       console.error('Error fetching incident categories:', error);
@@ -469,7 +448,6 @@ class ApiService {
   // Get full traffic incidents (if needed)
   static async fetchTrafficIncidents(): Promise<TrafficIncident[]> {
     try {
-      console.log('Fetching traffic incidents...');
       const response = await fetch(`${API_BASE_URL}/traffic/incidents`, {
         headers: this.getAuthHeaders(),
       });
@@ -477,7 +455,6 @@ class ApiService {
       const trafficData = await this.handleResponse<TrafficIncident[]>(
         response
       );
-      console.log(`Fetched traffic data for ${trafficData.length} locations`);
       return trafficData;
     } catch (error) {
       console.error('Error fetching traffic incidents:', error);

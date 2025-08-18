@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../consts/ThemeContext';
 import {
   PieChart,
@@ -123,6 +123,7 @@ interface LocationHotspot {
   avgSeverity: number;
 }
 
+
 const Analytics: React.FC = () => {
   const { isDarkMode } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
@@ -141,6 +142,7 @@ const Analytics: React.FC = () => {
   const [archiveAnalytics, setArchiveAnalytics] =
     useState<ArchiveAnalytics | null>(null);
   const [recentArchives, setRecentArchives] = useState<ArchiveData[]>([]);
+
 
   const [summaryStats, setSummaryStats] = useState({
     totalIncidents: 0,
@@ -181,61 +183,16 @@ const Analytics: React.FC = () => {
     '#10b981',
   ];
 
-  useEffect(() => {
-    // Initialise socket connection
-    const socketConnection = io(
-      process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'
-    );
-    _setSocket(socketConnection);
-
-    // Socket event listeners for real-time updates
-    socketConnection.on('connect', () => {
-      console.log('Connected to socket for analytics updates');
-    });
-
-    socketConnection.on('archiveCreated', (archiveData: ArchiveData) => {
-      console.log('New archive created:', archiveData);
-      // Refresh archive analytics
-      loadArchiveAnalytics();
-    });
-
-    socketConnection.on('archiveStatsUpdate', (stats: any) => {
-      console.log('Archive stats updated:', stats);
-      // Update archive analytics if needed
-      if (archiveAnalytics) {
-        setArchiveAnalytics(prev => (prev ? { ...prev, ...stats } : prev));
-      }
-    });
-
-    socketConnection.on('newAlert', (incident: any) => {
-      console.log('New incident alert received:', incident);
-      // This might lead to new archives being created
-      setTimeout(() => loadArchiveAnalytics(), 2000); // Delay to allow archiving process
-    });
-
-    loadAnalyticsData();
-
-    return () => {
-      socketConnection.disconnect();
-    };
-  }, [archiveAnalytics]);
-
-  const loadAnalyticsData = async () => {
+  const loadAnalyticsData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log('Starting analytics data load...');
-
       // Check authentication
       if (!ApiService.isAuthenticated()) {
         setError('Please log in to view analytics data');
-        console.error('User not authenticated');
         return;
       }
-
-      // Fetch data from all sources (traffic and archives)
-      console.log('Fetching data from database, traffic APIs, and archives...');
       const [
         dbData,
         locationsData,
@@ -250,13 +207,6 @@ const Analytics: React.FC = () => {
         ApiService.fetchArchiveAnalytics(),
       ]);
 
-      console.log('Data fetched successfully:', {
-        dbIncidents: dbData.length,
-        locations: locationsData.length,
-        critical: criticalIncidents?.Amount,
-        categories: categoriesData?.categories.length,
-        archiveAnalytics: archiveAnalyticsData ? 'loaded' : 'no data',
-      });
 
       // Process database incidents for stats
       const dbTotal = dbData.length;
@@ -343,7 +293,6 @@ const Analytics: React.FC = () => {
       };
 
       setSummaryStats(finalStats);
-      console.log('Final analytics stats including archives:', finalStats);
     } catch (error) {
       console.error('Error loading analytics data:', error);
       setError(
@@ -352,9 +301,9 @@ const Analytics: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const loadArchiveAnalytics = async () => {
+  const loadArchiveAnalytics = useCallback(async () => {
     try {
       const archiveAnalyticsData = await ApiService.fetchArchiveAnalytics();
       if (archiveAnalyticsData) {
@@ -381,7 +330,37 @@ const Analytics: React.FC = () => {
     } catch (error) {
       console.error('Error loading archive analytics:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Initialise socket connection
+    const socketConnection = io(
+      process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'
+    );
+    _setSocket(socketConnection);
+
+    // Socket event listeners for real-time updates
+    socketConnection.on('archiveCreated', (archiveData: ArchiveData) => {
+      // Refresh archive analytics with debounce
+      setTimeout(() => loadArchiveAnalytics(), 1000);
+    });
+
+    socketConnection.on('archiveStatsUpdate', (stats: any) => {
+      // Update archive analytics if needed
+      setArchiveAnalytics(prev => (prev ? { ...prev, ...stats } : prev));
+    });
+
+    socketConnection.on('newAlert', (incident: any) => {
+      // This might lead to new archives being created
+      setTimeout(() => loadArchiveAnalytics(), 2000); // Delay to allow archiving process
+    });
+
+    loadAnalyticsData();
+
+    return () => {
+      socketConnection.disconnect();
+    };
+  }, [loadAnalyticsData, loadArchiveAnalytics]); // Add function dependencies
 
   // Helper function to format bytes
   const formatBytes = (bytes: number): string => {
@@ -391,6 +370,7 @@ const Analytics: React.FC = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
 
   // Helper function to format archive time
   const _formatArchiveTime = (days: number): string => {

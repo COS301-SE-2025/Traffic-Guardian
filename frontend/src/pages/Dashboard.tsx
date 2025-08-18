@@ -428,14 +428,26 @@ const Dashboard: React.FC = () => {
     const SERVER_URL =
       process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
 
-    console.log('Connecting to Socket.IO server at:', SERVER_URL);
     const newSocket = io(SERVER_URL, {
       transports: ['websocket', 'polling'],
       timeout: 20000,
     });
 
     newSocket.on('connect', () => {
-      console.log('Connected to Socket.IO server with ID:', newSocket.id);
+      // Send authentication info if available
+      const userToken = localStorage.getItem('token');
+      const userInfo = localStorage.getItem('userInfo');
+      
+      if (userToken && userInfo) {
+        newSocket.emit('authenticate', { 
+          token: userToken, 
+          userInfo: JSON.parse(userInfo) 
+        });
+      }
+      
+      // Request current stats immediately after connection
+      newSocket.emit('request-stats');
+      
       addNotification({
         title: 'Connected',
         message: 'Real-time data connection established',
@@ -457,7 +469,6 @@ const Dashboard: React.FC = () => {
             );
           },
           error => {
-            console.log('Location access denied or unavailable:', error);
             addEvent('Location sharing: Permission denied or unavailable');
           }
         );
@@ -465,7 +476,6 @@ const Dashboard: React.FC = () => {
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Disconnected from Socket.IO server');
       addNotification({
         title: 'Disconnected',
         message: 'Real-time data connection lost',
@@ -485,40 +495,33 @@ const Dashboard: React.FC = () => {
 
     // Real-time data handlers
     newSocket.on('weatherUpdate', (data: WeatherData[]) => {
-      console.log('Received weather update:', data);
       setWeatherData(data);
       setWeatherLoading(false);
       setWeatherLastUpdate(new Date());
     });
 
     newSocket.on('userStatsUpdate', (data: UserStats) => {
-      console.log('Received user stats update:', data);
       setUserStats(data);
     });
 
     newSocket.on('todaysIncidentsUpdate', (data: TodaysIncidents) => {
-      console.log("Received today's incidents update:", data);
       setTodaysIncidents(data);
     });
 
     newSocket.on('trafficUpdate', (data: TrafficIncident[]) => {
-      console.log('Received traffic update:', data);
       setTrafficData(data);
     });
 
     newSocket.on('criticalIncidents', (data: CriticalIncidentsData) => {
-      console.log('Received critical incidents:', data);
       setCriticalIncidents(data);
     });
 
     newSocket.on('incidentLocations', (data: LocationData[]) => {
-      console.log('Received incident locations:', data);
       _setIncidentLocations(data);
     });
 
     // Typed: incident payload for newAlert
     newSocket.on('newAlert', (incident: NewAlertPayload) => {
-      console.log('Received new incident alert:', incident);
       addNotification({
         title: 'New Incident',
         message: `Incident reported: ${incident.Incident_Location}`,
@@ -527,35 +530,46 @@ const Dashboard: React.FC = () => {
     });
 
     newSocket.on('new-traffic', (data: any) => {
-      console.log('New traffic data:', data);
       addEvent(JSON.stringify(data, null, 2));
     });
 
     newSocket.on('new-incident', (data: any) => {
-      console.log('New incident data:', data);
       addEvent(JSON.stringify(data, null, 2));
     });
 
     newSocket.on('amt-users-online', (data: number) => {
-      console.log('Users online update:', data);
       setUsersOnline(data);
-      addEvent('Amount users online = ' + data);
+      addEvent('Users online: ' + data);
+    });
+
+    // Add listeners for connection events
+    newSocket.on('user-connected', (data: any) => {
+      addEvent(`User connected: ${data.userId || 'Unknown'}`);
+    });
+
+    newSocket.on('user-disconnected', (data: any) => {
+      addEvent(`User disconnected: ${data.userId || 'Unknown'}`);
     });
 
     newSocket.on('amt-active-incidents', (data: number) => {
-      console.log('Active incidents update:', data);
       setActiveIncidents(data);
-      addEvent('Active incidents = ' + data);
+      addEvent('Active incidents: ' + data);
     });
 
     newSocket.on('amt-critical-incidents', (data: number) => {
-      console.log('Critical incidents update:', data);
       setCriticalIncidentsCount(data);
-      addEvent('Critical incidents = ' + data);
+      addEvent('Critical incidents: ' + data);
     });
 
+    // Set up periodic stats request as fallback
+    const statsInterval = setInterval(() => {
+      if (newSocket.connected) {
+        newSocket.emit('request-stats');
+      }
+    }, 30000); // Request stats every 30 seconds
+
     return () => {
-      console.log('Cleaning up Socket.IO connection');
+      clearInterval(statsInterval);
       newSocket.close();
     };
   }, [addNotification, addEvent]);
@@ -598,6 +612,20 @@ const Dashboard: React.FC = () => {
       hour12: false,
     });
   };
+
+  // Debug function - can be called from browser console as window.debugDashboard()
+  React.useEffect(() => {
+    (window as any).debugDashboard = () => {
+      console.log('🐛 Dashboard Debug Info:');
+      console.log('- Users Online:', usersOnline);
+      console.log('- Active Incidents:', activeIncidents);
+      console.log('- Critical Incidents:', criticalIncidentsCount);
+      console.log('- Realtime Events Count:', realtimeEvents?.length || 0);
+      console.log('- Auth Token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+      console.log('- User Info:', localStorage.getItem('userInfo') ? 'Present' : 'Missing');
+      console.log('- SERVER_URL:', process.env.REACT_APP_SERVER_URL || 'http://localhost:5000');
+    };
+  }, [usersOnline, activeIncidents, criticalIncidentsCount, realtimeEvents]);
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -1222,6 +1250,11 @@ const Dashboard: React.FC = () => {
             <div className="realtime-stats" data-cy="realtime-stats">
               <div className="stat-pill" data-cy="stat-pill-users">
                 👥 {usersOnline} online
+                {usersOnline === 0 && (
+                  <span style={{ fontSize: '10px', color: '#999', marginLeft: '5px' }}>
+                    (no data)
+                  </span>
+                )}
               </div>
               <div className="stat-pill" data-cy="stat-pill-incidents">
                 {activeIncidents} active
