@@ -21,8 +21,10 @@ class AdvancedIncidentDetectionSystem:
         Advanced incident detection system with multi-layer collision detection.
         Modified for multi-camera support and video clip recording.
         """
-        self.camera_config = camera_config  # Single camera config
-        self.config = config or self._default_config()
+        self.camera_config = camera_config  # Fix: Set camera_config before using it
+        self.config = self._default_config()
+        if config:
+            self.config.update(config)
         
         # Apply camera-specific threshold adjustments
         self._adapt_thresholds_for_camera()
