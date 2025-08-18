@@ -1,5 +1,11 @@
 // src/contexts/SocketContext.tsx
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from 'react';
 import { toast } from 'react-toastify';
 import io from 'socket.io-client';
 
@@ -123,13 +129,14 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   // Function to play notification sound
   const playNotificationSound = (severity: string) => {
     try {
-      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const context = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
       const oscillator = context.createOscillator();
       const gainNode = context.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(context.destination);
-      
+
       // Different frequencies for different severities
       switch (severity) {
         case 'high':
@@ -144,10 +151,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           oscillator.frequency.setValueAtTime(400, context.currentTime);
           break;
       }
-      
+
       gainNode.gain.setValueAtTime(0.2, context.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.3);
-      
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.01,
+        context.currentTime + 0.3
+      );
+
       oscillator.start();
       oscillator.stop(context.currentTime + 0.3);
     } catch (error) {
@@ -158,14 +168,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   // Function to show browser notification
   const showBrowserNotification = (incident: ApiIncident) => {
     if ('Notification' in window && Notification.permission === 'granted') {
-      const location = incident.Incidents_Latitude && incident.Incidents_Longitude
-        ? `Lat: ${incident.Incidents_Latitude}, Lng: ${incident.Incidents_Longitude}`
-        : 'Location not specified';
+      const location =
+        incident.Incidents_Latitude && incident.Incidents_Longitude
+          ? `Lat: ${incident.Incidents_Latitude}, Lng: ${incident.Incidents_Longitude}`
+          : 'Location not specified';
 
       const severity = incident.Incident_Severity.toUpperCase();
-      
+
       const notification = new Notification(`${severity} Traffic Incident`, {
-        body: `ID: ${incident.Incidents_ID}\n${location}\nReporter: ${incident.Incident_Reporter || 'Unknown'}`,
+        body: `ID: ${incident.Incidents_ID}\n${location}\nReporter: ${
+          incident.Incident_Reporter || 'Unknown'
+        }`,
         icon: '/favicon.ico',
         badge: '/favicon.ico',
         tag: `incident-${incident.Incidents_ID}`,
@@ -205,10 +218,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     requestNotificationPermission();
 
     // Create socket connection
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const API_BASE_URL =
+      process.env.REACT_APP_API_URL || 'http://localhost:5000';
     const newSocket = io(API_BASE_URL, {
       auth: {
-        token: apiKey
+        token: apiKey,
       },
       transports: ['websocket', 'polling'],
       autoConnect: true,
@@ -236,7 +250,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     newSocket.on('connect_error', (error: any) => {
       console.error('Socket connection error:', error);
       setIsConnected(false);
-      console.log("failed to connect real-time alerts, trying to reconnect...");
+      console.log('failed to connect real-time alerts, trying to reconnect...');
     });
 
     // Welcome message handler
@@ -247,34 +261,37 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     // MAIN REAL-TIME INCIDENT ALERT HANDLER
     newSocket.on('newAlert', (incidentData: ApiIncident) => {
       console.log('NEW INCIDENT ALERT RECEIVED:', incidentData);
-      
+
       // Create alert object
       const newAlert: RealTimeAlert = {
         id: `alert-${incidentData.Incidents_ID}-${Date.now()}`,
         incident: incidentData,
         timestamp: new Date(),
-        acknowledged: false
+        acknowledged: false,
       };
 
       // Add to alerts list (keep last 20)
       setRealtimeAlerts(prev => [newAlert, ...prev.slice(0, 19)]);
       setUnreadAlertCount(prev => prev + 1);
 
-      const location = incidentData.Incidents_Latitude && incidentData.Incidents_Longitude
-        ? `Lat: ${incidentData.Incidents_Latitude}, Lng: ${incidentData.Incidents_Longitude}`
-        : 'Location not specified';
+      const location =
+        incidentData.Incidents_Latitude && incidentData.Incidents_Longitude
+          ? `Lat: ${incidentData.Incidents_Latitude}, Lng: ${incidentData.Incidents_Longitude}`
+          : 'Location not specified';
 
       const currentPage = window.location.pathname;
       const severity = incidentData.Incident_Severity.toUpperCase();
-      
+
       // Professional toast notification
       toast.error(
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <div style={{ 
-            fontWeight: 'bold', 
-            fontSize: '16px',
-            color: 'white'
-          }}>
+          <div
+            style={{
+              fontWeight: 'bold',
+              fontSize: '16px',
+              color: 'white',
+            }}
+          >
             NEW {severity} INCIDENT
           </div>
           <div style={{ fontSize: '14px', opacity: 0.9 }}>
@@ -287,15 +304,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             Time: {new Date().toLocaleTimeString()}
           </div>
           {currentPage !== '/incidents' && (
-            <div style={{ 
-              fontSize: '11px', 
-              opacity: 0.6, 
-              fontStyle: 'italic',
-              marginTop: '4px',
-              padding: '4px 8px',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              borderRadius: '4px'
-            }}>
+            <div
+              style={{
+                fontSize: '11px',
+                opacity: 0.6,
+                fontStyle: 'italic',
+                marginTop: '4px',
+                padding: '4px 8px',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderRadius: '4px',
+              }}
+            >
               Click to view incidents page
             </div>
           )}
@@ -312,14 +331,18 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             }
           },
           style: {
-            backgroundColor: incidentData.Incident_Severity === 'high' ? '#dc2626' : 
-                           incidentData.Incident_Severity === 'medium' ? '#ea580c' : '#059669',
+            backgroundColor:
+              incidentData.Incident_Severity === 'high'
+                ? '#dc2626'
+                : incidentData.Incident_Severity === 'medium'
+                ? '#ea580c'
+                : '#059669',
             color: 'white',
             cursor: currentPage !== '/incidents' ? 'pointer' : 'default',
             border: '2px solid rgba(255,255,255,0.3)',
             borderRadius: '8px',
             fontFamily: 'inherit',
-          }
+          },
         }
       );
 
@@ -334,7 +357,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         const originalTitle = document.title;
         let flashCount = 0;
         const flashInterval = setInterval(() => {
-          document.title = flashCount % 2 === 0 ? 'CRITICAL INCIDENT - Traffic Guardian' : originalTitle;
+          document.title =
+            flashCount % 2 === 0
+              ? 'CRITICAL INCIDENT - Traffic Guardian'
+              : originalTitle;
           flashCount++;
           if (flashCount >= 10) {
             clearInterval(flashInterval);
@@ -354,16 +380,21 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
     newSocket.on('weatherAlert', (weatherAlertData: any) => {
       console.log('Weather alert received:', weatherAlertData);
-      
+
       // Show weather alert as toast notification
-      toast.info(`Weather Alert: ${weatherAlertData.message || 'Weather conditions have changed'}`, {
-        position: 'top-right',
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.info(
+        `Weather Alert: ${
+          weatherAlertData.message || 'Weather conditions have changed'
+        }`,
+        {
+          position: 'top-right',
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
     });
 
     // Other socket event handlers (unchanged)
@@ -393,8 +424,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   // Acknowledge alert
   const acknowledgeAlert = (alertId: string) => {
-    setRealtimeAlerts(prev => 
-      prev.map((alert: RealTimeAlert) => 
+    setRealtimeAlerts(prev =>
+      prev.map((alert: RealTimeAlert) =>
         alert.id === alertId ? { ...alert, acknowledged: true } : alert
       )
     );
@@ -409,13 +440,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   // Mark all as read
   const markAllAsRead = () => {
-    setRealtimeAlerts(prev => 
+    setRealtimeAlerts(prev =>
       prev.map((alert: RealTimeAlert) => ({ ...alert, acknowledged: true }))
     );
     setUnreadAlertCount(0);
   };
 
-  
   const addNewIncident = (incident: any) => {
     console.log('New incident added locally:', incident);
   };
@@ -437,8 +467,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   };
 
   return (
-    <SocketContext.Provider value={value}>
-      {children}
-    </SocketContext.Provider>
+    <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
   );
 };

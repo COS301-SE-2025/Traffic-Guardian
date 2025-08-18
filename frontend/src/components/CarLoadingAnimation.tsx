@@ -61,31 +61,36 @@ const CarLoadingAnimation = () => {
   return (
     <>
       <style>{styles}</style>
-      <div style={{
-        position: 'fixed',
-        top: '147px', // Account for navbar height
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: 'calc(100vh - 147px)', // Full height minus navbar
-        background: 'var(--background-color)', // Use theme variable
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000, // Ensure it overlays other content
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif'
-      }}>
+      <div
+        style={{
+          position: 'fixed',
+          top: '147px', // Account for navbar height
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 'calc(100vh - 147px)', // Full height minus navbar
+          background: 'var(--background-color)', // Use theme variable
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000, // Ensure it overlays other content
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
+        }}
+      >
         <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: '250px',
-            height: '40px',
-            background: '#2c2c2c',
-            borderRadius: '30px',
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)'
-          }}>
-            <div 
+          <div
+            style={{
+              width: '250px',
+              height: '40px',
+              background: '#2c2c2c',
+              borderRadius: '30px',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            <div
               className="dash-animation"
               style={{
                 width: '100%',
@@ -100,11 +105,11 @@ const CarLoadingAnimation = () => {
                 position: 'absolute',
                 top: '50%',
                 left: '0',
-                transform: 'translateY(-50%)'
-              }} 
+                transform: 'translateY(-50%)',
+              }}
             />
-            
-            <div 
+
+            <div
               className="car-animation"
               style={{
                 width: '20px',
@@ -114,49 +119,57 @@ const CarLoadingAnimation = () => {
                 position: 'absolute',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.4)'
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.4)',
               }}
             >
               {/* Left wheel */}
-              <div style={{
-                width: '4px',
-                height: '4px',
-                background: '#333',
-                borderRadius: '50%',
-                position: 'absolute',
-                bottom: '-2px',
-                left: '3px'
-              }} />
+              <div
+                style={{
+                  width: '4px',
+                  height: '4px',
+                  background: '#333',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  bottom: '-2px',
+                  left: '3px',
+                }}
+              />
               {/* Right wheel */}
-              <div style={{
-                width: '4px',
-                height: '4px',
-                background: '#333',
-                borderRadius: '50%',
-                position: 'absolute',
-                bottom: '-2px',
-                right: '3px'
-              }} />
+              <div
+                style={{
+                  width: '4px',
+                  height: '4px',
+                  background: '#333',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  bottom: '-2px',
+                  right: '3px',
+                }}
+              />
               {/* Windshield */}
-              <div style={{
-                width: '8px',
-                height: '4px',
-                background: '#74b9ff',
-                borderRadius: '1px 1px 0 0',
-                position: 'absolute',
-                top: '-4px',
-                left: '4px'
-              }} />
+              <div
+                style={{
+                  width: '8px',
+                  height: '4px',
+                  background: '#74b9ff',
+                  borderRadius: '1px 1px 0 0',
+                  position: 'absolute',
+                  top: '-4px',
+                  left: '4px',
+                }}
+              />
             </div>
           </div>
-          
-          <div style={{
-            marginTop: '20px',
-            color: 'var(--text-color)', // Use theme variable
-            fontSize: '14px',
-            fontWeight: '300',
-            letterSpacing: '1px'
-          }}>
+
+          <div
+            style={{
+              marginTop: '20px',
+              color: 'var(--text-color)', // Use theme variable
+              fontSize: '14px',
+              fontWeight: '300',
+              letterSpacing: '1px',
+            }}
+          >
             LOADING
             <span className="dot1">.</span>
             <span className="dot2">.</span>

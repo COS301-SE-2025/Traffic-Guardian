@@ -15,7 +15,9 @@ interface Incident {
 const IncidentManagement: React.FC = () => {
   const navigate = useNavigate();
   const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [statusUpdates, setStatusUpdates] = useState<{ [key: number]: string }>({});
+  const [statusUpdates, setStatusUpdates] = useState<{ [key: number]: string }>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -29,12 +31,15 @@ const IncidentManagement: React.FC = () => {
         }
 
         // Fetch user profile to get role
-        const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/profile`, {
-          headers: { 
-            'X-API-Key': apiKey,
-            'Content-Type': 'application/json'
-          },
-        });
+        const userResponse = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/auth/profile`,
+          {
+            headers: {
+              'X-API-Key': apiKey,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
         if (!userResponse.ok) {
           throw new Error('Failed to fetch user data');
         }
@@ -47,12 +52,15 @@ const IncidentManagement: React.FC = () => {
         }
 
         // Fetch incidents
-        const incidentsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents`, {
-          headers: { 
-            'X-API-Key': apiKey,
-            'Content-Type': 'application/json'
-          },
-        });
+        const incidentsResponse = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/incidents`,
+          {
+            headers: {
+              'X-API-Key': apiKey,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
         if (!incidentsResponse.ok) {
           throw new Error('Failed to fetch incidents');
         }
@@ -60,7 +68,10 @@ const IncidentManagement: React.FC = () => {
         setIncidents(incidentsData);
       } catch (err: any) {
         setError(err.message);
-        if (err.message.includes('unauthorized') || err.message.includes('API key')) {
+        if (
+          err.message.includes('unauthorized') ||
+          err.message.includes('API key')
+        ) {
           navigate('/account');
         }
       } finally {
@@ -81,20 +92,27 @@ const IncidentManagement: React.FC = () => {
       if (!apiKey) {
         throw new Error('No API key found');
       }
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/incidents/${incidentId}`, {
-        method: 'PUT',
-        headers: {
-          'X-API-Key': apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ Incident_Status: newStatus }),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/incidents/${incidentId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'X-API-Key': apiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ Incident_Status: newStatus }),
+        }
+      );
       if (!response.ok) {
         throw new Error('Failed to update incident status');
       }
-      setIncidents(incidents.map(incident => 
-        incident.Incident_ID === incidentId ? { ...incident, Incident_Status: newStatus } : incident
-      ));
+      setIncidents(
+        incidents.map(incident =>
+          incident.Incident_ID === incidentId
+            ? { ...incident, Incident_Status: newStatus }
+            : incident
+        )
+      );
       setStatusUpdates(prev => {
         const { [incidentId]: _, ...rest } = prev;
         return rest;
@@ -113,12 +131,13 @@ const IncidentManagement: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-  return new Date(dateString).toISOString().split('T')[0];
-};
+    return new Date(dateString).toISOString().split('T')[0];
+  };
 
   if (loading) return <div className="loading-message">Loading...</div>;
   if (error) return <div className="error-message">Error: {error}</div>;
-  if (userRole !== 'admin') return <div className="access-denied-message">Access Denied</div>;
+  if (userRole !== 'admin')
+    return <div className="access-denied-message">Access Denied</div>;
 
   return (
     <div className="incident-management-page">
@@ -148,8 +167,13 @@ const IncidentManagement: React.FC = () => {
               <td>{incident.Incident_Severity}</td>
               <td>
                 <select
-                  value={statusUpdates[incident.Incident_ID] || incident.Incident_Status}
-                  onChange={(e) => handleSelectChange(incident.Incident_ID, e.target.value)}
+                  value={
+                    statusUpdates[incident.Incident_ID] ||
+                    incident.Incident_Status
+                  }
+                  onChange={e =>
+                    handleSelectChange(incident.Incident_ID, e.target.value)
+                  }
                 >
                   <option value="open">Open</option>
                   <option value="ongoing">Ongoing</option>
@@ -157,11 +181,15 @@ const IncidentManagement: React.FC = () => {
                 </select>
               </td>
               <td>
-                <button id='update-button'
-                  onClick={() => handleStatusChange(
-                    incident.Incident_ID, 
-                    statusUpdates[incident.Incident_ID] || incident.Incident_Status
-                  )}
+                <button
+                  id="update-button"
+                  onClick={() =>
+                    handleStatusChange(
+                      incident.Incident_ID,
+                      statusUpdates[incident.Incident_ID] ||
+                        incident.Incident_Status
+                    )
+                  }
                 >
                   Update
                 </button>
@@ -170,7 +198,7 @@ const IncidentManagement: React.FC = () => {
           ))}
         </tbody>
       </table>
-      <ToastContainer 
+      <ToastContainer
         theme="dark"
         position="top-right"
         autoClose={3000}

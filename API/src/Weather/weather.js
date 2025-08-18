@@ -5,11 +5,23 @@
 const axios = require('axios');
 const FormData = require('form-data');
 
-var regions = ['-26.1438,28.0406', 'Sandton', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658', '-26.0936,27.9931', '-26.2259,28.1598', '-26.6667,27.9167', '-26.3333,28.1667', '-25.7487,28.2380'];
-    var weatherCurrent = [];
-    var johannesburgCount = 0;
+// Unique South African locations for weather data
+var regions = [
+  'Johannesburg', 
+  'Sandton', 
+  'Pretoria',
+  'Midrand', 
+  'Centurion', 
+  'Roodepoort',
+  'Kempton Park',
+  'Germiston',
+  'Boksburg',
+  'Benoni'
+];
+    
     async function getWeather(){
-      johannesburgCount = 0;
+      // Clear previous data on each call
+      var weatherCurrent = [];
       //console.log(`Regions = ${regions.length}`);
       for(var i=0; i< regions.length; i++){
         const form = new FormData();
@@ -24,25 +36,22 @@ var regions = ['-26.1438,28.0406', 'Sandton', '-25.9819,28.1329', '-25.8347,28.1
       }
 
       
-     for(var i=0; i< weatherCurrent.length; i++){
-      if(weatherCurrent[i].location.name == 'Johannesburg'){
-        johannesburgCount++;
-      }
+     // No need for manual renaming since we're using unique city names
 
-      if(johannesburgCount == 2 && weatherCurrent[i].location.name == 'Johannesburg'){
-        weatherCurrent[i].location.name = 'Rosebank';
-      }
+      // Remove duplicates based on location name
+      const uniqueWeatherData = [];
+      const seenLocations = new Set();
+      
+      weatherCurrent.forEach((w) => {
+        const locationKey = `${w.location.name}_${w.location.region}`;
+        if (!seenLocations.has(locationKey)) {
+          seenLocations.add(locationKey);
+          uniqueWeatherData.push(w);
+        }
+      });
 
-      if(johannesburgCount == 3 && weatherCurrent[i].location.name == 'Johannesburg'){
-        weatherCurrent[i].location.name = 'Marlboro';
-      }
-     }
-
-      weatherCurrent.forEach((w)=>{
-        //console.log(w);
-      })
-
-      return weatherCurrent;
+      console.log(`Weather data: ${uniqueWeatherData.length} unique locations`);
+      return uniqueWeatherData;
     }
 
 module.exports = {

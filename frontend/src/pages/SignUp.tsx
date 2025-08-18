@@ -8,7 +8,7 @@ const SignUp: React.FC = () => {
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ const SignUp: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -51,24 +51,28 @@ const SignUp: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          User_Username: formData.username,
-          User_Email: formData.email,
-          User_Password: formData.password,
-          User_Role: 'user',
-          User_Preferences: '{}'
-        }),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/auth/register`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            User_Username: formData.username,
+            User_Email: formData.email,
+            User_Password: formData.password,
+            User_Role: 'user',
+            User_Preferences: '{}',
+          }),
+        }
+      );
 
       const contentType = response.headers.get('content-type');
       if (contentType?.includes('application/json')) {
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'Registration failed');
+        if (!response.ok)
+          throw new Error(data.message || 'Registration failed');
       } else {
         const text = await response.text();
         if (!response.ok) throw new Error(text || 'Registration failed');
@@ -76,7 +80,6 @@ const SignUp: React.FC = () => {
 
       setSuccess(true);
       setTimeout(() => navigate('/account'), 2000);
-
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration');
     } finally {
@@ -101,11 +104,21 @@ const SignUp: React.FC = () => {
         <h2>Create Account</h2>
         <p>Welcome to Traffic Guardian - Let's create your account</p>
         <div className="divider" />
-        
+
         {error && (
           <div className="alert alert-error" data-testid="error-message">
-            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="stroke-current shrink-0 h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <span>{error}</span>
           </div>
@@ -187,10 +200,7 @@ const SignUp: React.FC = () => {
 
         <div className="signup-text">
           Already have an account?{' '}
-          <span
-            className="signup-link"
-            onClick={() => navigate('/account')}
-          >
+          <span className="signup-link" onClick={() => navigate('/account')}>
             Sign In
           </span>
         </div>
