@@ -65,9 +65,16 @@ async function getTraffic(){
         return trafficRes;
 
         }catch(error){
-            console.error('Code related error:', error);
+            console.error('TomTom API error:', error.message);
             console.error('Error code:', error.response?.status);
             console.error('Error message:', error.response?.data);
+            
+            // Return empty traffic data instead of undefined to prevent crashes
+            console.log('🔥 TomTom API failed - returning empty traffic data to prevent system crash');
+            return regionNames.map(name => ({
+                location: name,
+                incidents: []
+            }));
         }
     }
 
