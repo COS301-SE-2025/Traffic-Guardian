@@ -7,6 +7,7 @@ const FormData = require('form-data');
 const traffic = require('../src/Traffic/traffic');
 const archivesModel = require('./models/archives');
 const ILM = require('../src/IncidentLocationMapping/ilmInstance');
+const weather = require('./Weather/weather');
 
 const server = http.createServer(app);
 
@@ -53,6 +54,13 @@ io.on('connection',(socket)=>{
       socket.emit('incidentLocations', res_incidentLocations);
     })
     
+    // Weather data on connection
+    weather.getWeather().then((weatherData) => {
+      socket.emit('weatherUpdate', weatherData);
+    }).catch(err => {
+      console.error('Error fetching initial weather data:', err);
+    });
+    
     setInterval(async()=>{
       const data = await traffic.getTraffic();
       socket.emit('trafficUpdate', data);
@@ -71,6 +79,14 @@ io.on('connection',(socket)=>{
       //incident Locations
       const res_incidentLocations =  traffic.incidentLocations(data);
       socket.emit('incidentLocations', res_incidentLocations);
+      
+      // Update weather data periodically
+      try {
+        const weatherData = await weather.getWeather();
+        socket.emit('weatherUpdate', weatherData);
+      } catch (weatherError) {
+        console.error('Error fetching periodic weather data:', weatherError);
+      }
     }, 30*60*1000); //30 min interval
     
     //update users location (from Dev branch)

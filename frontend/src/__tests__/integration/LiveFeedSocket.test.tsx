@@ -19,7 +19,9 @@ interface Weather {
 // Simple socket context component
 const SocketContext = React.createContext<any>(null);
 
-const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [connected, setConnected] = React.useState(false);
   const [alerts, setAlerts] = React.useState<Alert[]>([]);
   const [weatherData, setWeatherData] = React.useState<Weather[]>([]);
@@ -29,7 +31,7 @@ const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =
     disconnect: () => setConnected(false),
     emit: jest.fn(),
     on: jest.fn(),
-    connected
+    connected,
   };
 
   const addAlert = (alert: Alert) => {
@@ -46,7 +48,7 @@ const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =
     alerts,
     weatherData,
     addAlert,
-    updateWeather
+    updateWeather,
   };
 
   return (
@@ -66,7 +68,8 @@ const useSocket = () => {
 
 // Simple LiveFeed component that uses socket context
 const LiveFeedSocketComponent: React.FC = () => {
-  const { connected, alerts, weatherData, addAlert, updateWeather } = useSocket();
+  const { connected, alerts, weatherData, addAlert, updateWeather } =
+    useSocket();
   const [showNotification, setShowNotification] = React.useState(false);
 
   const handleNewIncident = () => {
@@ -74,7 +77,7 @@ const LiveFeedSocketComponent: React.FC = () => {
       id: Date.now(),
       severity: 'high',
       message: 'Traffic incident detected',
-      location: 'I-405 North'
+      location: 'I-405 North',
     };
     addAlert(mockIncident);
     setShowNotification(true);
@@ -82,11 +85,13 @@ const LiveFeedSocketComponent: React.FC = () => {
   };
 
   const handleWeatherUpdate = () => {
-    updateWeather([{
-      location: 'Orange County',
-      condition: 'Sunny',
-      temperature: '72°F'
-    }]);
+    updateWeather([
+      {
+        location: 'Orange County',
+        condition: 'Sunny',
+        temperature: '72°F',
+      },
+    ]);
   };
 
   return (
@@ -108,15 +113,17 @@ const LiveFeedSocketComponent: React.FC = () => {
       </div>
 
       {showNotification && (
-        <div data-testid="notification-toast">
-          New incident alert received!
-        </div>
+        <div data-testid="notification-toast">New incident alert received!</div>
       )}
 
       <div data-testid="alerts-section">
         <h3>Recent Alerts ({alerts.length})</h3>
         {alerts.map((alert: Alert) => (
-          <div key={alert.id} data-testid={`alert-${alert.id}`} className="alert-item">
+          <div
+            key={alert.id}
+            data-testid={`alert-${alert.id}`}
+            className="alert-item"
+          >
             <div data-testid={`alert-severity-${alert.severity}`}>
               Severity: {alert.severity}
             </div>
@@ -130,7 +137,11 @@ const LiveFeedSocketComponent: React.FC = () => {
         <h3>Weather Information</h3>
         {weatherData.length > 0 ? (
           weatherData.map((weather: Weather, index: number) => (
-            <div key={index} data-testid={`weather-${index}`} className="weather-item">
+            <div
+              key={index}
+              data-testid={`weather-${index}`}
+              className="weather-item"
+            >
               <div>{weather.location}</div>
               <div>{weather.condition}</div>
               <div>{weather.temperature}</div>
@@ -153,32 +164,32 @@ const LiveFeedSocketComponent: React.FC = () => {
 
 describe('LiveFeed Socket Integration Tests', () => {
   const renderWithSocketProvider = (component: React.ReactElement) => {
-    return render(
-      <SocketProvider>
-        {component}
-      </SocketProvider>
-    );
+    return render(<SocketProvider>{component}</SocketProvider>);
   };
 
   test('renders component with socket provider', () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     expect(screen.getByTestId('livefeed-socket-component')).toBeInTheDocument();
     expect(screen.getByText('Live Camera Feeds')).toBeInTheDocument();
-    expect(screen.getByTestId('connection-status')).toHaveTextContent('Status: Disconnected');
+    expect(screen.getByTestId('connection-status')).toHaveTextContent(
+      'Status: Disconnected'
+    );
   });
 
   test('displays socket connection status', () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
-    expect(screen.getByTestId('connection-status')).toHaveTextContent('Status: Disconnected');
+
+    expect(screen.getByTestId('connection-status')).toHaveTextContent(
+      'Status: Disconnected'
+    );
   });
 
   test('handles incident alert simulation', async () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     const simulateButton = screen.getByTestId('simulate-incident');
-    
+
     fireEvent.click(simulateButton);
 
     // Check that alert was added
@@ -188,29 +199,33 @@ describe('LiveFeed Socket Integration Tests', () => {
 
     expect(screen.getByText('Traffic incident detected')).toBeInTheDocument();
     expect(screen.getByText('I-405 North')).toBeInTheDocument();
-    expect(screen.getByTestId('alert-severity-high')).toHaveTextContent('Severity: high');
+    expect(screen.getByTestId('alert-severity-high')).toHaveTextContent(
+      'Severity: high'
+    );
   });
 
   test('displays notification toast for incidents', async () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     const simulateButton = screen.getByTestId('simulate-incident');
-    
+
     fireEvent.click(simulateButton);
 
     // Check for notification toast
     expect(screen.getByTestId('notification-toast')).toBeInTheDocument();
-    expect(screen.getByText('New incident alert received!')).toBeInTheDocument();
+    expect(
+      screen.getByText('New incident alert received!')
+    ).toBeInTheDocument();
   });
 
   test('handles weather update simulation', async () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     // Initially no weather data
     expect(screen.getByTestId('no-weather')).toBeInTheDocument();
-    
+
     const weatherButton = screen.getByTestId('simulate-weather');
-    
+
     fireEvent.click(weatherButton);
 
     // Check that weather data was updated
@@ -225,12 +240,12 @@ describe('LiveFeed Socket Integration Tests', () => {
 
   test('manages multiple alerts correctly', async () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     const simulateButton = screen.getByTestId('simulate-incident');
-    
+
     // Add first alert
     fireEvent.click(simulateButton);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Recent Alerts (1)')).toBeInTheDocument();
     });
@@ -249,7 +264,7 @@ describe('LiveFeed Socket Integration Tests', () => {
 
   test('renders camera components', () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     expect(screen.getByTestId('camera-grid')).toBeInTheDocument();
     expect(screen.getByText('TEST-CAMERA-1')).toBeInTheDocument();
     expect(screen.getByTestId('camera-status')).toHaveTextContent('Online');
@@ -257,7 +272,7 @@ describe('LiveFeed Socket Integration Tests', () => {
 
   test('socket controls are present and functional', () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     expect(screen.getByTestId('socket-controls')).toBeInTheDocument();
     expect(screen.getByTestId('simulate-incident')).toBeInTheDocument();
     expect(screen.getByTestId('simulate-weather')).toBeInTheDocument();
@@ -265,7 +280,7 @@ describe('LiveFeed Socket Integration Tests', () => {
 
   test('displays sections for alerts and weather', () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     expect(screen.getByTestId('alerts-section')).toBeInTheDocument();
     expect(screen.getByTestId('weather-section')).toBeInTheDocument();
     expect(screen.getByText('Recent Alerts (0)')).toBeInTheDocument();
@@ -274,10 +289,10 @@ describe('LiveFeed Socket Integration Tests', () => {
 
   test('context provider supplies socket functionality', () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     // The component should render without errors, which means the context is working
     expect(screen.getByTestId('livefeed-socket-component')).toBeInTheDocument();
-    
+
     // Test that socket controls are available (meaning context is providing socket)
     expect(screen.getByTestId('simulate-incident')).toBeInTheDocument();
     expect(screen.getByTestId('simulate-weather')).toBeInTheDocument();
@@ -285,19 +300,19 @@ describe('LiveFeed Socket Integration Tests', () => {
 
   test('handles real-time updates correctly', async () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     const incidentButton = screen.getByTestId('simulate-incident');
     const weatherButton = screen.getByTestId('simulate-weather');
-    
+
     // Simulate multiple updates
     fireEvent.click(incidentButton);
     fireEvent.click(weatherButton);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Recent Alerts (1)')).toBeInTheDocument();
       expect(screen.getByTestId('weather-0')).toBeInTheDocument();
     });
-    
+
     // Both incident and weather should be updated
     expect(screen.getByText('Traffic incident detected')).toBeInTheDocument();
     expect(screen.getByText('Orange County')).toBeInTheDocument();
@@ -305,17 +320,22 @@ describe('LiveFeed Socket Integration Tests', () => {
 
   test('notification toast disappears after timeout', async () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
-    
+
     const simulateButton = screen.getByTestId('simulate-incident');
-    
+
     fireEvent.click(simulateButton);
 
     // Toast should be visible
     expect(screen.getByTestId('notification-toast')).toBeInTheDocument();
 
     // Wait for toast to disappear (3 seconds timeout in component)
-    await waitFor(() => {
-      expect(screen.queryByTestId('notification-toast')).not.toBeInTheDocument();
-    }, { timeout: 4000 });
+    await waitFor(
+      () => {
+        expect(
+          screen.queryByTestId('notification-toast')
+        ).not.toBeInTheDocument();
+      },
+      { timeout: 4000 }
+    );
   });
 });

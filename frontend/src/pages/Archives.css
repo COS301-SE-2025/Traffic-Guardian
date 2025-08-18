@@ -149,9 +149,15 @@
 }
 
 @keyframes archives-spin {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.1); }
-  100% { transform: rotate(360deg) scale(1); }
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 /* Error & Empty States */
@@ -217,7 +223,12 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent 0%, var(--title-color) 50%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--title-color) 50%,
+    transparent 100%
+  );
   opacity: 80%;
 }
 
@@ -497,7 +508,11 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--title-color) 0%, var(--button-primary-hover) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--title-color) 0%,
+    var(--button-primary-hover) 100%
+  );
 }
 
 .archive-card:hover {

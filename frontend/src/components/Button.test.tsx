@@ -20,9 +20,9 @@ describe('Button Component', () => {
   test('calls onClick handler when clicked', () => {
     render(<Button label="Click Me" onClick={mockOnClick} />);
     const button = screen.getByRole('button', { name: /click me/i });
-    
+
     fireEvent.click(button);
-    
+
     expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
 
@@ -45,7 +45,13 @@ describe('Button Component', () => {
   });
 
   test('applies custom className along with default', () => {
-    render(<Button label="Custom Class" onClick={mockOnClick} className="extra-class" />);
+    render(
+      <Button
+        label="Custom Class"
+        onClick={mockOnClick}
+        className="extra-class"
+      />
+    );
     const button = screen.getByRole('button', { name: /custom class/i });
     expect(button).toHaveClass('custom-button');
     expect(button).toHaveClass('extra-class');
@@ -61,16 +67,16 @@ describe('Button Component', () => {
   test('calls onClick multiple times when clicked multiple times', () => {
     render(<Button label="Multi Click" onClick={mockOnClick} />);
     const button = screen.getByRole('button', { name: /multi click/i });
-    
+
     fireEvent.click(button);
     fireEvent.click(button);
     fireEvent.click(button);
-    
+
     expect(mockOnClick).toHaveBeenCalledTimes(3);
   });
 
   test('renders with special characters in label', () => {
-    const specialLabel = "Special !@#$%^&*() Characters";
+    const specialLabel = 'Special !@#$%^&*() Characters';
     render(<Button label={specialLabel} onClick={mockOnClick} />);
     const button = screen.getByRole('button', { name: specialLabel });
     expect(button).toBeInTheDocument();
