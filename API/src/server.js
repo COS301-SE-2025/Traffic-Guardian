@@ -20,7 +20,7 @@ const io = new Server(server, {
 
 // Configuration - will use GitHub secrets in production, .env for local development
 
-const PORT = 5001;
+const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
@@ -302,7 +302,7 @@ const originalEmitNewAlert = (incidentData) => {
     } catch (error) {
       console.error('Error in potential archive creation notification:', error);
     }
-  }, 5001); // 5 second delay to simulate processing time
+  }, 5000); // 5 second delay to simulate processing time
 };
 
 app.set('emitNewAlert', originalEmitNewAlert);
