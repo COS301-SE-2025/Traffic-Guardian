@@ -4,9 +4,9 @@ const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios');
 const FormData = require('form-data');
-const weather = require('../src/Weather/weather');
 const traffic = require('../src/Traffic/traffic');
 const archivesModel = require('./models/archives');
+const ILM = require('../src/IncidentLocationMapping/ilmInstance');
 
 const server = http.createServer(app);
 
@@ -20,32 +20,25 @@ const io = new Server(server, {
 
 // Configuration - will use GitHub secrets in production, .env for local development
 
-const PORT = 5000;
+const PORT = 5001;
 const HOST = process.env.HOST || 'localhost';
 
 var welcomeMsg;
-var connectedUsers = [];
 
 io.on('connection',(socket)=>{
-  connectedUsers.push(socket);
+  ILM.addUser(socket.id, {});
   console.log(socket.id + ' connected');
-  console.log('Number of users connected' + connectedUsers.length);
+  ILM.showUsers();
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
     
-    //weather prt
-    weather.getWeather().then((data)=>{
-      socket.emit('weatherUpdate', data);
-    })
-    setInterval(async()=>{
-      const weatherD = await weather.getWeather();
-      socket.emit('weatherUpdate',weatherD);
-    }, 60*60*1000); //1hr interval
-
     //traffic prt
     traffic.getTraffic().then((data)=>{
       socket.emit('trafficUpdate', data);
+
+      //update regions Traffic
+      ILM.updateTraffic(data);
 
       //critical incidents
       const res = traffic.criticalIncidents(data);
@@ -59,9 +52,13 @@ io.on('connection',(socket)=>{
       const res_incidentLocations =  traffic.incidentLocations(data);
       socket.emit('incidentLocations', res_incidentLocations);
     })
+    
     setInterval(async()=>{
       const data = await traffic.getTraffic();
       socket.emit('trafficUpdate', data);
+      
+      // Update regions traffic (from Dev branch)
+      ILM.updateTraffic(data);
 
       //critical incidents
       const res = traffic.criticalIncidents(data);
@@ -75,6 +72,16 @@ io.on('connection',(socket)=>{
       const res_incidentLocations =  traffic.incidentLocations(data);
       socket.emit('incidentLocations', res_incidentLocations);
     }, 30*60*1000); //30 min interval
+    
+    //update users location (from Dev branch)
+    socket.on('new-location', async (newLocation)=>{
+     ILM.updateUserLocation(socket.id, newLocation);
+     const notifiedUsers = ILM.notifyUsers();
+     notifiedUsers.forEach((notificationData)=>{
+      io.to(notificationData.userID).emit('new-traffic', notificationData.notification);
+      //console.log(notificationData.notification.incidents.length);
+     })
+    });
 
     // ==================== ARCHIVE ANALYTICS SOCKET EVENTS ====================
     
@@ -212,17 +219,16 @@ io.on('connection',(socket)=>{
       }
     }, 30 * 60 * 1000); // 30 minutes
 
-    // Clean up intervals on disconnect
+    // Clean up intervals and remove user on disconnect
     socket.on('disconnect', () => {
       console.log(socket.id + ' disconnected');
+      
+      // Clean up archive intervals
       clearInterval(archiveStatsInterval);
       clearInterval(archiveTrendsInterval);
       
-      // Remove from connected users
-      const index = connectedUsers.indexOf(socket);
-      if (index > -1) {
-        connectedUsers.splice(index, 1);
-      }
+      // Remove user from ILM system
+      ILM.removeUser(socket.id);
     });
 });
 
@@ -296,7 +302,7 @@ const originalEmitNewAlert = (incidentData) => {
     } catch (error) {
       console.error('Error in potential archive creation notification:', error);
     }
-  }, 5000); // 5 second delay to simulate processing time
+  }, 5001); // 5 second delay to simulate processing time
 };
 
 app.set('emitNewAlert', originalEmitNewAlert);
