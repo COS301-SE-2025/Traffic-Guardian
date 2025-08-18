@@ -343,15 +343,19 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .chart-container.archive-analytics {
-  background: linear-gradient(145deg, 
-    rgb(255 255 255 / 95%) 0%, 
-    rgb(249 250 251 / 90%) 100%);
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 95%) 0%,
+    rgb(249 250 251 / 90%) 100%
+  );
 }
 
 .dark-mode .chart-container.archive-analytics {
-  background: linear-gradient(145deg, 
-    rgb(31 41 55 / 85%) 0%, 
-    rgb(17 24 39 / 90%) 100%);
+  background: linear-gradient(
+    145deg,
+    rgb(31 41 55 / 85%) 0%,
+    rgb(17 24 39 / 90%) 100%
+  );
 }
 
 .radar-chart-wrapper {

@@ -162,6 +162,34 @@ const incidentController = {
       console.error('Get incidents error:', error.message, error.stack);
       return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
+  },
+  getIncidentStats: async (req, res) => {
+    try {
+      const stats = await incidentModel.getIncidentStats();
+      return res.status(200).json(stats);
+    } catch (error) {
+      console.error('Get incident stats error:', error.message, error.stack);
+      return res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+  },
+  getTodayIncidents: async (req, res) => {
+    try {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      
+      const incidents = await incidentModel.getIncidentsByDateRange({
+        startDate: todayStart.toISOString(),
+        endDate: todayEnd.toISOString()
+      });
+      
+      return res.status(200).json(incidents);
+    } catch (error) {
+      console.error('Get today incidents error:', error.message, error.stack);
+      return res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
   }
 };
 

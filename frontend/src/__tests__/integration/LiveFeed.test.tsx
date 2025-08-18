@@ -1,11 +1,21 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  act,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Simple mock for HLS Player
 jest.mock('react-hls-player', () => {
   return function MockHlsPlayer({ src, ...props }: any) {
-    return <div data-testid="hls-player" data-src={src}>HLS Player</div>;
+    return (
+      <div data-testid="hls-player" data-src={src}>
+        HLS Player
+      </div>
+    );
   };
 });
 
@@ -17,15 +27,15 @@ jest.mock('react-leaflet', () => ({
   Popup: ({ children }: any) => <div data-testid="popup">{children}</div>,
   useMap: () => ({
     setView: jest.fn(),
-    getZoom: () => 13
-  })
+    getZoom: () => 13,
+  }),
 }));
 
 // Mock Leaflet Icon
 jest.mock('leaflet', () => ({
   Icon: function MockIcon(options: any) {
     return { ...options };
-  }
+  },
 }));
 
 // Mock CSS imports
@@ -36,7 +46,7 @@ const LiveFeedTestComponent = () => {
   const [loading, setLoading] = React.useState(true);
   const [cameras, setCameras] = React.useState<any[]>([]);
   const [error, setError] = React.useState<string | null>(null);
-  
+
   React.useEffect(() => {
     // Simulate API call
     const timer = setTimeout(() => {
@@ -46,20 +56,20 @@ const LiveFeedTestComponent = () => {
           id: 'TEST-1',
           location: 'Test Camera 1',
           status: 'Online',
-          hasLiveStream: true
+          hasLiveStream: true,
         },
         {
-          id: 'TEST-2', 
+          id: 'TEST-2',
           location: 'Test Camera 2',
           status: 'Online',
-          hasLiveStream: false
-        }
+          hasLiveStream: false,
+        },
       ]);
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, []);
-  
+
   const handleRefresh = () => {
     setLoading(true);
     setError(null);
@@ -70,18 +80,18 @@ const LiveFeedTestComponent = () => {
           id: 'TEST-1',
           location: 'Test Camera 1 (Refreshed)',
           status: 'Online',
-          hasLiveStream: true
-        }
+          hasLiveStream: true,
+        },
       ]);
     }, 50);
   };
-  
+
   const handleError = () => {
     setLoading(false);
     setError('Failed to load camera feeds');
     setCameras([]);
   };
-  
+
   if (loading) {
     return (
       <div data-testid="loading-state">
@@ -90,7 +100,7 @@ const LiveFeedTestComponent = () => {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div data-testid="error-state">
@@ -100,7 +110,7 @@ const LiveFeedTestComponent = () => {
       </div>
     );
   }
-  
+
   return (
     <div data-testid="livefeed-page">
       <div data-testid="livefeed-header">
@@ -108,14 +118,16 @@ const LiveFeedTestComponent = () => {
         <button data-testid="refresh-btn" onClick={handleRefresh}>
           Refresh Feeds
         </button>
-        <div data-testid="feed-count">
-          Showing {cameras.length} cameras
-        </div>
+        <div data-testid="feed-count">Showing {cameras.length} cameras</div>
       </div>
-      
+
       <div data-testid="livefeed-grid">
         {cameras.map(camera => (
-          <div key={camera.id} data-testid={`camera-${camera.id}`} className="feed-tile">
+          <div
+            key={camera.id}
+            data-testid={`camera-${camera.id}`}
+            className="feed-tile"
+          >
             <h4>{camera.id}</h4>
             <p>{camera.location}</p>
             <div data-testid={`status-${camera.id}`}>{camera.status}</div>
@@ -125,17 +137,21 @@ const LiveFeedTestComponent = () => {
               </div>
             )}
             {!camera.hasLiveStream && (
-              <img 
+              <img
                 data-testid={`static-image-${camera.id}`}
-                src="test-image.jpg" 
+                src="test-image.jpg"
                 alt={camera.location}
               />
             )}
           </div>
         ))}
       </div>
-      
-      <button data-testid="error-trigger" onClick={handleError} style={{display: 'none'}}>
+
+      <button
+        data-testid="error-trigger"
+        onClick={handleError}
+        style={{ display: 'none' }}
+      >
         Trigger Error
       </button>
     </div>
@@ -149,7 +165,7 @@ describe('LiveFeed Integration Tests', () => {
 
   test('renders loading state initially', () => {
     render(<LiveFeedTestComponent />);
-    
+
     expect(screen.getByTestId('loading-state')).toBeInTheDocument();
     expect(screen.getByText('Live Camera Feeds')).toBeInTheDocument();
     expect(screen.getByText('Loading highway cameras...')).toBeInTheDocument();
@@ -157,7 +173,7 @@ describe('LiveFeed Integration Tests', () => {
 
   test('displays camera feeds after loading', async () => {
     render(<LiveFeedTestComponent />);
-    
+
     // Wait for loading to complete
     await waitFor(() => {
       expect(screen.getByTestId('livefeed-page')).toBeInTheDocument();
@@ -172,7 +188,7 @@ describe('LiveFeed Integration Tests', () => {
 
   test('displays video player for streaming cameras', async () => {
     render(<LiveFeedTestComponent />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('livefeed-page')).toBeInTheDocument();
     });
@@ -185,7 +201,7 @@ describe('LiveFeed Integration Tests', () => {
 
   test('displays static images for non-streaming cameras', async () => {
     render(<LiveFeedTestComponent />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('livefeed-page')).toBeInTheDocument();
     });
@@ -196,13 +212,13 @@ describe('LiveFeed Integration Tests', () => {
 
   test('refresh button updates camera list', async () => {
     render(<LiveFeedTestComponent />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('livefeed-page')).toBeInTheDocument();
     });
 
     const refreshButton = screen.getByTestId('refresh-btn');
-    
+
     act(() => {
       fireEvent.click(refreshButton);
     });
@@ -220,13 +236,13 @@ describe('LiveFeed Integration Tests', () => {
 
   test('handles error state gracefully', async () => {
     render(<LiveFeedTestComponent />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('livefeed-page')).toBeInTheDocument();
     });
 
     const errorButton = screen.getByTestId('error-trigger');
-    
+
     act(() => {
       fireEvent.click(errorButton);
     });
@@ -238,7 +254,7 @@ describe('LiveFeed Integration Tests', () => {
 
   test('retry button works after error', async () => {
     render(<LiveFeedTestComponent />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('livefeed-page')).toBeInTheDocument();
     });
@@ -267,7 +283,7 @@ describe('LiveFeed Integration Tests', () => {
 
   test('displays camera status information', async () => {
     render(<LiveFeedTestComponent />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('livefeed-page')).toBeInTheDocument();
     });
@@ -278,7 +294,7 @@ describe('LiveFeed Integration Tests', () => {
 
   test('renders correct number of camera tiles', async () => {
     render(<LiveFeedTestComponent />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('livefeed-page')).toBeInTheDocument();
     });
@@ -289,7 +305,7 @@ describe('LiveFeed Integration Tests', () => {
 
   test('component structure includes required elements', async () => {
     render(<LiveFeedTestComponent />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('livefeed-page')).toBeInTheDocument();
     });

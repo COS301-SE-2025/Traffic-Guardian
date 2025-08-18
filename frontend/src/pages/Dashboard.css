@@ -1205,7 +1205,7 @@ body {
   padding: 1rem;
   width: 300px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
-  pointer-events: auto; 
+  pointer-events: auto;
 }
 
 .notification.critical {
@@ -1253,7 +1253,7 @@ body {
 }
 
 .notification-close:hover {
-  background: rgba(0,0,0,0.08);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .notification-content {
@@ -1424,7 +1424,6 @@ body {
   color: #000;
 }
 
-
 .realtime-events-section {
   background: var(--stat-card-bg);
   border-radius: 12px;
@@ -1556,16 +1555,16 @@ body {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .realtime-stats {
     width: 100%;
     justify-content: flex-start;
   }
-  
+
   .events-list {
     max-height: 300px;
   }
-  
+
   .event-item {
     font-size: 0.8em;
     padding: 6px 12px;

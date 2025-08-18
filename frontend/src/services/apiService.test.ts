@@ -3,7 +3,7 @@ import ApiService, {
   ArchiveData,
   ArchiveStats,
   TodaysIncidentsData,
-  IncidentStats
+  IncidentStats,
 } from './apiService';
 
 // Mock fetch globally
@@ -40,7 +40,7 @@ describe('ApiService', () => {
       mockLocalStorage.getItem.mockReturnValue('my-test-key');
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ([]),
+        json: async () => [],
       });
 
       await ApiService.fetchIncidents();
@@ -60,7 +60,7 @@ describe('ApiService', () => {
       mockLocalStorage.getItem.mockReturnValue(null);
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ([]),
+        json: async () => [],
       });
 
       await ApiService.fetchIncidents();
@@ -85,7 +85,10 @@ describe('ApiService', () => {
       const result = await ApiService.fetchIncidents();
 
       expect(result).toEqual([]);
-      expect(console.error).toHaveBeenCalledWith('Error fetching incidents:', expect.any(Error));
+      expect(console.error).toHaveBeenCalledWith(
+        'Error fetching incidents:',
+        expect.any(Error)
+      );
     });
 
     test('handles HTTP error responses', async () => {
@@ -106,7 +109,9 @@ describe('ApiService', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
-        json: async () => { throw new Error('Invalid JSON'); },
+        json: async () => {
+          throw new Error('Invalid JSON');
+        },
       });
       console.error = jest.fn();
 
@@ -157,7 +162,7 @@ describe('ApiService', () => {
   });
 
   describe('fetchTodaysIncidents', () => {
-    test('fetches today\'s incidents successfully', async () => {
+    test("fetches today's incidents successfully", async () => {
       const mockTodaysData: TodaysIncidentsData = {
         count: 5,
         date: '2024-01-01',
@@ -260,7 +265,9 @@ describe('ApiService', () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/archives?type=incident&severity=High&limit=10&offset=0'),
+        expect.stringContaining(
+          '/archives?type=incident&severity=High&limit=10&offset=0'
+        ),
         expect.any(Object)
       );
     });
@@ -353,8 +360,14 @@ describe('ApiService', () => {
       const result = await ApiService.login('test@example.com', 'password');
 
       expect(result).toEqual(mockResponse);
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('apiKey', 'new-api-key');
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('user', JSON.stringify(mockResponse.user));
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'apiKey',
+        'new-api-key'
+      );
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'user',
+        JSON.stringify(mockResponse.user)
+      );
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/auth/login'),
         {
@@ -375,8 +388,9 @@ describe('ApiService', () => {
         json: async () => ({ error: 'Invalid credentials' }),
       });
 
-      await expect(ApiService.login('test@example.com', 'wrong-password'))
-        .rejects.toThrow('Invalid credentials');
+      await expect(
+        ApiService.login('test@example.com', 'wrong-password')
+      ).rejects.toThrow('Invalid credentials');
     });
   });
 
@@ -387,7 +401,9 @@ describe('ApiService', () => {
       const result = await ApiService.healthCheck();
 
       expect(result).toBe(true);
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/health'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/health')
+      );
     });
 
     test('healthCheck returns false on error', async () => {
