@@ -3,6 +3,11 @@ const userModel = require('../models/user');
 const authMiddleware = {
   authenticate: async (req, res, next) => {
     try {
+      // Allow OPTIONS preflight requests to pass through for CORS
+      if (req.method === 'OPTIONS') {
+        return next();
+      }
+      
       // Get API key from header
       const apiKey = req.header('X-API-Key');
       

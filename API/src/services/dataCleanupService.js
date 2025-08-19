@@ -161,7 +161,18 @@ class DataCleanupService {
   // Get database size statistics
   async getDatabaseStats() {
     try {
-      const stats = await db.query(`
+      // Get available tables first - only check for tables we actually use
+      const availableTables = await db.query(`
+        SELECT tablename 
+        FROM pg_tables 
+        WHERE schemaname = 'public' 
+        AND tablename IN ('Camera', 'CameraStatusHistory', 'CameraAnalytics', 'ArchivesV2')
+      `);
+      
+      const tableNames = availableTables.rows.map(row => row.tablename);
+      const tableNamesStr = tableNames.map(name => `'${name}'`).join(',');
+
+      const stats = tableNamesStr ? await db.query(`
         SELECT 
           schemaname,
           tablename,
@@ -170,42 +181,45 @@ class DataCleanupService {
           correlation
         FROM pg_stats 
         WHERE schemaname = 'public' 
-        AND tablename IN ('Camera', 'CameraStatusHistory', 'CameraAnalytics', 'ArchivesV2')
+        AND tablename IN (${tableNamesStr})
         ORDER BY tablename, attname
-      `);
-
-      const tableSizes = await db.query(`
+      `) : { rows: [] };
+      
+      const tableSizes = tableNamesStr ? await db.query(`
         SELECT 
           tablename,
-          pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
-          pg_total_relation_size(schemaname||'.'||tablename) as size_bytes
+          pg_size_pretty(pg_total_relation_size('"' || schemaname || '"."' || tablename || '"')) as size,
+          pg_total_relation_size('"' || schemaname || '"."' || tablename || '"') as size_bytes
         FROM pg_tables 
         WHERE schemaname = 'public' 
-        AND tablename IN ('Camera', 'CameraStatusHistory', 'CameraAnalytics', 'ArchivesV2')
-        ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
-      `);
+        AND tablename IN (${tableNamesStr})
+        ORDER BY pg_total_relation_size('"' || schemaname || '"."' || tablename || '"') DESC
+      `) : { rows: [] };
 
-      const rowCounts = await db.query(`
-        SELECT 
-          'Camera' as table_name,
-          COUNT(*) as row_count
-        FROM public."Camera"
-        UNION ALL
-        SELECT 
-          'CameraStatusHistory' as table_name,
-          COUNT(*) as row_count
-        FROM public."CameraStatusHistory"
-        UNION ALL
-        SELECT 
-          'CameraAnalytics' as table_name,
-          COUNT(*) as row_count
-        FROM public."CameraAnalytics"
-        UNION ALL
-        SELECT 
-          'ArchivesV2' as table_name,
-          COUNT(*) as row_count
-        FROM public."ArchivesV2"
-      `);
+      // Build dynamic row count query with error handling for each table
+      let rowCountResults = [];
+      for (const tableName of tableNames) {
+        try {
+          const result = await db.query(`
+            SELECT 
+              '${tableName}' as table_name,
+              COUNT(*) as row_count
+            FROM public."${tableName}"
+          `);
+          if (result.rows.length > 0) {
+            rowCountResults.push(result.rows[0]);
+          }
+        } catch (error) {
+          console.warn(`Table "${tableName}" not accessible for row count:`, error.message);
+          // Add placeholder with 0 count for missing tables
+          rowCountResults.push({
+            table_name: tableName,
+            row_count: 0
+          });
+        }
+      }
+      
+      const rowCounts = { rows: rowCountResults };
 
       return {
         tableSizes: tableSizes.rows,

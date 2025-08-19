@@ -15,6 +15,10 @@ from hls_stream_adapter import StreamCapture
 
 load_dotenv()
 
+# Global quit signal for multithreaded GUI handling on macOS
+global_quit_signal = False
+global_display_frames = {}  # Global frame storage for main thread display
+
 class AdvancedIncidentDetectionSystem:
     def __init__(self, camera_config=None, config=None):
         """
@@ -553,45 +557,26 @@ class AdvancedIncidentDetectionSystem:
                 # Create visualization
                 annotated_frame = self._create_visualization(frame, detection_results, incidents)
                 
-                # Display
+                # Display - Store frame for main thread GUI handling
                 if self.config['display_window']:
-                    window_name = f"Camera {camera_id} - Enhanced Incident Detection"
-                    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-                    cv2.imshow(window_name, annotated_frame)
+                    global global_display_frames
+                    try:
+                        # Store frame globally for main thread access
+                        global_display_frames[camera_id] = {
+                            'frame': annotated_frame.copy(),
+                            'timestamp': time.time()
+                        }
+                    except:
+                        pass  # Continue processing if storage fails
                 
                 # Store previous frame for optical flow
                 self.previous_frame = frame.copy()
                 
-                # Handle keyboard input with improved timing
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('q'):
+                # Check for quit signal from main thread
+                global global_quit_signal
+                if global_quit_signal:
                     print(f" Quit requested for camera {camera_id}")
-                    # Give a moment for any ongoing video writing to complete
-                    time.sleep(1)
                     break
-                elif key == ord('s'):
-                    self._save_frame(annotated_frame, frame_count, manual=True)
-                elif key == ord('r'):
-                    self._reset_analytics()
-                elif key == ord('f'):
-                    # Toggle fullscreen
-                    window_name = f"Camera {camera_id} - Enhanced Incident Detection"
-                    is_fullscreen = not is_fullscreen
-                    if is_fullscreen:
-                        cv2.setWindowProperty(window_name, 
-                                            cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                        print(" Switched to fullscreen mode (Press ESC or 'f' to exit)")
-                    else:
-                        cv2.setWindowProperty(window_name, 
-                                            cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
-                        print(" Switched to windowed mode")
-                elif key == 27:  # ESC key
-                    if is_fullscreen:
-                        window_name = f"Camera {camera_id} - Enhanced Incident Detection"
-                        is_fullscreen = False
-                        cv2.setWindowProperty(window_name, 
-                                            cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
-                        print(" Exited fullscreen mode")
                 
         except KeyboardInterrupt:
             print(f"\n Detection stopped for camera {camera_id}")
@@ -2829,6 +2814,8 @@ def run_camera_detection(camera_config, config):
 
 def main():
     """Main function to run multi-camera incident detection system."""
+    global global_quit_signal
+    
     # Enhanced configuration
     config = {
         # YOLO model settings
@@ -2924,14 +2911,52 @@ def main():
     print("  • Enhanced physics analysis")
     print("  • Adaptive threshold adjustment")
     
+    # Main thread GUI handling for macOS compatibility
+    print("🖥️  GUI thread running on main thread (macOS compatible)...")
+    
     try:
-        # Wait for all threads to complete
-        for thread in threads:
-            thread.join()
+        # Give threads time to start
+        time.sleep(0.5)
+        
+        while any(thread.is_alive() for thread in threads):
+            frames_displayed = False
+            
+            # Display frames from all cameras in main thread
+            global global_display_frames
+            for camera_id, frame_data in global_display_frames.items():
+                try:
+                    window_name = f"Camera {camera_id} - Enhanced Incident Detection"
+                    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+                    cv2.imshow(window_name, frame_data['frame'])
+                    frames_displayed = True
+                except cv2.error as e:
+                    print(f"Warning: GUI error for camera {camera_id}: {e}")
+                    continue
+            
+            # Handle keyboard input in main thread
+            try:
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('q'):
+                    print("\n Quit requested from GUI...")
+                    # Set global quit signal
+                    global_quit_signal = True
+                    break
+            except cv2.error:
+                # If waitKey fails, continue without keyboard input
+                pass
+            
+            # Small sleep to prevent excessive CPU usage
+            if not frames_displayed:
+                time.sleep(0.01)
+                
     except KeyboardInterrupt:
         print("\n Stopping all camera detection threads...")
-        print("   Waiting for cleanup to complete...")
-        time.sleep(3)  # Give time for cleanup
+        global_quit_signal = True
+        
+    # Wait for threads to complete
+    print("   Waiting for cleanup to complete...")
+    for thread in threads:
+        thread.join(timeout=3.0)
         
     print(" All camera threads stopped.")
     
