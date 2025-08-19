@@ -96,8 +96,8 @@ const Archives: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const itemsPerPage: number = 12;
 
-  // Load archives from ArchivesV2 API
-  const loadArchives = useCallback(async () => {
+  // Load archives from ArchivesV2 API with abort signal for cleanup
+  const loadArchives = useCallback(async (signal?: AbortSignal) => {
     try {
       setLoading(true);
       setError('');
@@ -117,6 +117,7 @@ const Archives: React.FC = () => {
             'Content-Type': 'application/json',
             'X-API-Key': apiKey,
           },
+          signal, // Add abort signal for cleanup
         }
       );
 
@@ -141,6 +142,10 @@ const Archives: React.FC = () => {
         setError('Invalid data format received from server');
       }
     } catch (error: any) {
+      // Ignore aborted requests when navigating away
+      if (error.name === 'AbortError') {
+        return;
+      }
       setError(`Failed to load archives: ${error.message}`);
       console.error('Archives loading error:', error);
     } finally {
@@ -149,7 +154,13 @@ const Archives: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
-    loadArchives();
+    const controller = new AbortController();
+    loadArchives(controller.signal);
+    
+    // Cleanup function to abort request when component unmounts or navigates away
+    return () => {
+      controller.abort();
+    };
   }, [loadArchives]);
 
   // Client-side filtering logic for ArchivesV2 structure

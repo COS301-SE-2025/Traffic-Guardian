@@ -2581,12 +2581,10 @@ class EnhancedCrashClassifier:
             "Content-Type": "application/json",
             "X-API-Key": api_key
         }
-        # print(f"TESTING!!!!!!!")
-        # # print(f"Submitting incident to API: {response.url}")  # Debugging line to check URL
-        # print(f"Headers: {headers}")  # Debugging line to check headers
-        # print(f"API payload: {payload}")  # Debugging line to check payload
-        # # print(f"API response: {response.text}")  # Debugging line to check response
-        # print(f"\n")  # Debugging line to check status code
+        print(f"🔍 DEBUG: Submitting incident to API")
+        print(f"   Camera ID: {payload.get('Incident_CameraID')}")
+        print(f"   Payload: {payload}")
+        print(f"   Headers: {headers}")
         # Send request
         try:
             response = requests.post(
