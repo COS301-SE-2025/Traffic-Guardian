@@ -12,13 +12,13 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^27.5.2",
-    "@types/socket.io-client": "^3.0.0",
     "framer-motion": "^12.15.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.522.0",
-    "postcss": "^8.5.3",
+    "postcss": "^8.4.31",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-hls-player": "^3.0.7",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.6.0",
     "react-scripts": "^5.0.1",
@@ -29,19 +29,24 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-  "start": "react-scripts start",
-  "build": "react-scripts build",
-  "test": "react-scripts test",
-  "eject": "react-scripts eject",
-  "lint": "eslint 'src/**/*.{ts,tsx}' --fix",
-  "stylelint": "stylelint 'src/**/*.css' --fix",
-  "lint:all": "npm run lint && npm run stylelint"
-},
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --watchAll=false",
+    "test:watch": "react-scripts test",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "test:ci": "react-scripts test --coverage --watchAll=false --ci",
+    "eject": "react-scripts eject",
+    "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings=150",
+    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
+    "stylelint": "stylelint 'src/**/*.css' --max-warnings=0",
+    "stylelint:fix": "stylelint 'src/**/*.css' --fix",
+    "lint:all": "npm run lint && npm run stylelint",
+    "lint:all:fix": "npm run lint:fix && npm run stylelint:fix",
+    "format": "prettier --write 'src/**/*.{ts,tsx,css,json,md}'",
+    "format:check": "prettier --check 'src/**/*.{ts,tsx,css,json,md}'",
+    "type-check": "tsc --noEmit",
+    "validate": "npm run lint:all && npm run type-check && npm run test:ci",
+    "pre-commit": "npm run format && npm run lint:all:fix && npm run type-check && npm run test:coverage"
   },
   "browserslist": {
     "production": [
@@ -61,6 +66,7 @@
     "@types/node": "^16.18.126",
     "@types/react": "^18.3.22",
     "@types/react-dom": "^18.3.7",
+    "@types/socket.io-client": "^1.4.36",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "core-js-pure": "^3.42.0",
@@ -70,9 +76,26 @@
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "^25.7.0",
+    "prettier": "^2.8.8",
     "stylelint": "^14.16.1",
     "stylelint-config-standard": "^25.0.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^4.9.5"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/**/*.d.ts",
+      "!src/index.tsx",
+      "!src/reportWebVitals.ts",
+      "!src/setupTests.ts"
+    ]
+  },
+  "overrides": {
+    "nth-check": ">=2.0.1",
+    "webpack-dev-server": ">=4.0.0",
+    "@svgr/plugin-svgo": {
+      "nth-check": ">=2.0.1"
+    }
   }
 }

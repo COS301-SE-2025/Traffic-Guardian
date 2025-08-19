@@ -14,7 +14,7 @@ describe('User endpoints', ()=>{
     test('Login User', async ()=>{
         const payload = artifacts[1];
         const response = await axios.post(`http://localhost:5000/api/auth/login`, payload, {
-            header: {
+            headers: {
             "Content-Type": "application/json",
             "X-API-KEY": yeah
             }
@@ -68,7 +68,7 @@ describe('Incident endpoints', ()=>{
 */
     test('Get specific incident', async ()=>{
         const payload = artifacts[3];
-        const response = await axios.get('http://localhost:5000/api/incidents/75',{
+        const response = await axios.get('http://localhost:5000/api/incidents/141',{
         headers: {
             'Content-Type': 'application/json',
             'X-API-KEY': yeah
@@ -82,7 +82,7 @@ describe('Incident endpoints', ()=>{
 
     test('Update incident', async ()=>{
         const payload = artifacts[4];
-        const response = await axios.put('http://localhost:5000/api/incidents/75', payload ,{
+        const response = await axios.put('http://localhost:5000/api/incidents/141', payload ,{
         headers: {
             'Content-Type': 'application/json',
             'X-API-KEY': yeah
@@ -94,58 +94,3 @@ describe('Incident endpoints', ()=>{
     }, 30000); // Increased timeout to 30 seconds
 });
 
-/*
-describe('Alerts endpoints', ()=>{
-    test('Create alert', async ()=>{
-        const payload = artifacts[5];
-        const response = await axios.post('http://localhost:5000/api/alerts',payload, {
-        headers: {
-            'Content-Type': 'application/json',
-            'X-API-KEY': yeah
-            }
-        });
-
-        //expect(response.data).toMatchObject(seeding[0]);
-        expect(response.status).toBe(201);
-    });
-
-    test('Get specific alert', async ()=>{
-        const payload = artifacts[4];
-        const response = await axios.get('http://localhost:5000/api/incidents/1/alerts', {
-        headers: {
-            'Content-Type': 'application/json',
-            'X-API-KEY': yeah
-            }
-        });
-
-        //expect(response.data).toMatchObject(seeding[0]);
-        expect(response.status).toBe(200);
-    });
-
-    test('Update alert', async ()=>{
-        const payload = artifacts[6];
-        const response = await axios.put('http://localhost:5000/api/alerts/1/status',payload, {
-        headers: {
-            'Content-Type': 'application/json',
-            'X-API-KEY': yeah
-            }
-        });
-
-        //expect(response.data).toMatchObject(seeding[0]);
-        expect(response.status).toBe(200);
-    });
-    /*
-    test('Get all alerts', async ()=>{
-        const payload = artifacts[6];
-        const response = await axios.get('http://localhost:5000/api/user/alerts',{
-        headers: {
-            'Content-Type': 'application/json',
-            'X-API-KEY': yeah
-            }
-        });
-
-        //expect(response.data).toMatchObject(seeding[0]);
-        expect(response.status).toBe(200);
-    });
-});
-*/
