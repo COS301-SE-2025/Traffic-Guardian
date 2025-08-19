@@ -1,7 +1,16 @@
 // src/contexts/SocketContext.tsx
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from 'react';
 import { toast } from 'react-toastify';
-import io, { Socket } from 'socket.io-client';
+import io from 'socket.io-client';
+
+// Fix Socket type to avoid TypeScript errors
+type SocketType = ReturnType<typeof io>;
 
 interface ApiIncident {
   Incidents_ID: number;
@@ -20,8 +29,64 @@ interface RealTimeAlert {
   acknowledged: boolean;
 }
 
+// Weather interfaces - ADDED FOR WEATHER INTEGRATION
+interface WeatherCondition {
+  text: string;
+  icon: string;
+  code: number;
+}
+
+interface CurrentWeather {
+  last_updated_epoch: number;
+  last_updated: string;
+  temp_c: number;
+  temp_f: number;
+  is_day: number;
+  condition: WeatherCondition;
+  wind_mph: number;
+  wind_kph: number;
+  wind_degree: number;
+  wind_dir: string;
+  pressure_mb: number;
+  pressure_in: number;
+  precip_mm: number;
+  precip_in: number;
+  humidity: number;
+  cloud: number;
+  feelslike_c: number;
+  feelslike_f: number;
+  windchill_c: number;
+  windchill_f: number;
+  heatindex_c: number;
+  heatindex_f: number;
+  dewpoint_c: number;
+  dewpoint_f: number;
+  vis_km: number;
+  vis_miles: number;
+  uv: number;
+  gust_mph: number;
+  gust_kph: number;
+}
+
+interface WeatherLocation {
+  name: string;
+  region: string;
+  country: string;
+  lat: number;
+  lon: number;
+  tz_id: string;
+  localtime_epoch: number;
+  localtime: string;
+}
+
+interface WeatherData {
+  location: WeatherLocation;
+  current: CurrentWeather;
+}
+
+// Enhanced context type with weather data
 interface SocketContextType {
-  socket: Socket | null;
+  socket: SocketType | null;
   isConnected: boolean;
   realtimeAlerts: RealTimeAlert[];
   unreadAlertCount: number;
@@ -29,6 +94,10 @@ interface SocketContextType {
   clearAllAlerts: () => void;
   markAllAsRead: () => void;
   addNewIncident?: (incident: any) => void;
+  // ADDED FOR WEATHER INTEGRATION
+  weatherData: WeatherData[];
+  weatherLoading: boolean;
+  weatherLastUpdate: Date | null;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -46,22 +115,28 @@ interface SocketProviderProps {
 }
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socket, setSocket] = useState<SocketType | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [realtimeAlerts, setRealtimeAlerts] = useState<RealTimeAlert[]>([]);
   const [unreadAlertCount, setUnreadAlertCount] = useState(0);
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<SocketType | null>(null);
+
+  // ADDED FOR WEATHER INTEGRATION
+  const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [weatherLastUpdate, setWeatherLastUpdate] = useState<Date | null>(null);
 
   // Function to play notification sound
   const playNotificationSound = (severity: string) => {
     try {
-      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const context = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
       const oscillator = context.createOscillator();
       const gainNode = context.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(context.destination);
-      
+
       // Different frequencies for different severities
       switch (severity) {
         case 'high':
@@ -76,10 +151,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           oscillator.frequency.setValueAtTime(400, context.currentTime);
           break;
       }
-      
+
       gainNode.gain.setValueAtTime(0.2, context.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.3);
-      
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.01,
+        context.currentTime + 0.3
+      );
+
       oscillator.start();
       oscillator.stop(context.currentTime + 0.3);
     } catch (error) {
@@ -90,14 +168,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   // Function to show browser notification
   const showBrowserNotification = (incident: ApiIncident) => {
     if ('Notification' in window && Notification.permission === 'granted') {
-      const location = incident.Incidents_Latitude && incident.Incidents_Longitude
-        ? `Lat: ${incident.Incidents_Latitude}, Lng: ${incident.Incidents_Longitude}`
-        : 'Location not specified';
+      const location =
+        incident.Incidents_Latitude && incident.Incidents_Longitude
+          ? `Lat: ${incident.Incidents_Latitude}, Lng: ${incident.Incidents_Longitude}`
+          : 'Location not specified';
 
       const severity = incident.Incident_Severity.toUpperCase();
-      
+
       const notification = new Notification(`${severity} Traffic Incident`, {
-        body: `ID: ${incident.Incidents_ID}\n${location}\nReporter: ${incident.Incident_Reporter || 'Unknown'}`,
+        body: `ID: ${incident.Incidents_ID}\n${location}\nReporter: ${
+          incident.Incident_Reporter || 'Unknown'
+        }`,
         icon: '/favicon.ico',
         badge: '/favicon.ico',
         tag: `incident-${incident.Incidents_ID}`,
@@ -137,10 +218,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     requestNotificationPermission();
 
     // Create socket connection
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const API_BASE_URL =
+      process.env.REACT_APP_API_URL || 'http://localhost:5000';
     const newSocket = io(API_BASE_URL, {
       auth: {
-        token: apiKey
+        token: apiKey,
       },
       transports: ['websocket', 'polling'],
       autoConnect: true,
@@ -156,7 +238,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       console.log('Connected to real-time alerts');
     });
 
-    newSocket.on('disconnect', (reason) => {
+    newSocket.on('disconnect', (reason: string) => {
       console.log('Socket disconnected:', reason);
       setIsConnected(false);
       toast.warn('Disconnected from real-time alerts', {
@@ -165,10 +247,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       });
     });
 
-    newSocket.on('connect_error', (error) => {
+    newSocket.on('connect_error', (error: any) => {
       console.error('Socket connection error:', error);
       setIsConnected(false);
-      console.log("failed to connect real-time alerts, trying to reconnect...");
+      console.log('failed to connect real-time alerts, trying to reconnect...');
     });
 
     // Welcome message handler
@@ -179,34 +261,37 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     // MAIN REAL-TIME INCIDENT ALERT HANDLER
     newSocket.on('newAlert', (incidentData: ApiIncident) => {
       console.log('NEW INCIDENT ALERT RECEIVED:', incidentData);
-      
+
       // Create alert object
       const newAlert: RealTimeAlert = {
         id: `alert-${incidentData.Incidents_ID}-${Date.now()}`,
         incident: incidentData,
         timestamp: new Date(),
-        acknowledged: false
+        acknowledged: false,
       };
 
       // Add to alerts list (keep last 20)
       setRealtimeAlerts(prev => [newAlert, ...prev.slice(0, 19)]);
       setUnreadAlertCount(prev => prev + 1);
 
-      const location = incidentData.Incidents_Latitude && incidentData.Incidents_Longitude
-        ? `Lat: ${incidentData.Incidents_Latitude}, Lng: ${incidentData.Incidents_Longitude}`
-        : 'Location not specified';
+      const location =
+        incidentData.Incidents_Latitude && incidentData.Incidents_Longitude
+          ? `Lat: ${incidentData.Incidents_Latitude}, Lng: ${incidentData.Incidents_Longitude}`
+          : 'Location not specified';
 
       const currentPage = window.location.pathname;
       const severity = incidentData.Incident_Severity.toUpperCase();
-      
+
       // Professional toast notification
       toast.error(
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <div style={{ 
-            fontWeight: 'bold', 
-            fontSize: '16px',
-            color: 'white'
-          }}>
+          <div
+            style={{
+              fontWeight: 'bold',
+              fontSize: '16px',
+              color: 'white',
+            }}
+          >
             NEW {severity} INCIDENT
           </div>
           <div style={{ fontSize: '14px', opacity: 0.9 }}>
@@ -219,15 +304,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             Time: {new Date().toLocaleTimeString()}
           </div>
           {currentPage !== '/incidents' && (
-            <div style={{ 
-              fontSize: '11px', 
-              opacity: 0.6, 
-              fontStyle: 'italic',
-              marginTop: '4px',
-              padding: '4px 8px',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              borderRadius: '4px'
-            }}>
+            <div
+              style={{
+                fontSize: '11px',
+                opacity: 0.6,
+                fontStyle: 'italic',
+                marginTop: '4px',
+                padding: '4px 8px',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderRadius: '4px',
+              }}
+            >
               Click to view incidents page
             </div>
           )}
@@ -244,14 +331,18 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             }
           },
           style: {
-            backgroundColor: incidentData.Incident_Severity === 'high' ? '#dc2626' : 
-                           incidentData.Incident_Severity === 'medium' ? '#ea580c' : '#059669',
+            backgroundColor:
+              incidentData.Incident_Severity === 'high'
+                ? '#dc2626'
+                : incidentData.Incident_Severity === 'medium'
+                ? '#ea580c'
+                : '#059669',
             color: 'white',
             cursor: currentPage !== '/incidents' ? 'pointer' : 'default',
             border: '2px solid rgba(255,255,255,0.3)',
             borderRadius: '8px',
             fontFamily: 'inherit',
-          }
+          },
         }
       );
 
@@ -266,7 +357,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         const originalTitle = document.title;
         let flashCount = 0;
         const flashInterval = setInterval(() => {
-          document.title = flashCount % 2 === 0 ? 'CRITICAL INCIDENT - Traffic Guardian' : originalTitle;
+          document.title =
+            flashCount % 2 === 0
+              ? 'CRITICAL INCIDENT - Traffic Guardian'
+              : originalTitle;
           flashCount++;
           if (flashCount >= 10) {
             clearInterval(flashInterval);
@@ -276,24 +370,47 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       }
     });
 
-    // Other socket event handlers
-    newSocket.on('weatherUpdate', (data) => {
+    // WEATHER EVENT HANDLERS - ADDED FOR WEATHER INTEGRATION
+    newSocket.on('weatherUpdate', (data: WeatherData[]) => {
       console.log('Weather update received:', data);
+      setWeatherData(data);
+      setWeatherLoading(false);
+      setWeatherLastUpdate(new Date());
     });
 
-    newSocket.on('trafficUpdate', (data) => {
+    newSocket.on('weatherAlert', (weatherAlertData: any) => {
+      console.log('Weather alert received:', weatherAlertData);
+
+      // Show weather alert as toast notification
+      toast.info(
+        `Weather Alert: ${
+          weatherAlertData.message || 'Weather conditions have changed'
+        }`,
+        {
+          position: 'top-right',
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
+    });
+
+    // Other socket event handlers (unchanged)
+    newSocket.on('trafficUpdate', (data: any) => {
       console.log('Traffic update received:', data);
     });
 
-    newSocket.on('criticalIncidents', (data) => {
+    newSocket.on('criticalIncidents', (data: any) => {
       console.log('Critical incidents update:', data);
     });
 
-    newSocket.on('incidentCategory', (data) => {
+    newSocket.on('incidentCategory', (data: any) => {
       console.log('Incident category update:', data);
     });
 
-    newSocket.on('incidentLocations', (data) => {
+    newSocket.on('incidentLocations', (data: any) => {
       console.log('Incident locations update:', data);
     });
 
@@ -307,8 +424,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   // Acknowledge alert
   const acknowledgeAlert = (alertId: string) => {
-    setRealtimeAlerts(prev => 
-      prev.map((alert: RealTimeAlert) => 
+    setRealtimeAlerts(prev =>
+      prev.map((alert: RealTimeAlert) =>
         alert.id === alertId ? { ...alert, acknowledged: true } : alert
       )
     );
@@ -323,17 +440,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   // Mark all as read
   const markAllAsRead = () => {
-    setRealtimeAlerts(prev => 
+    setRealtimeAlerts(prev =>
       prev.map((alert: RealTimeAlert) => ({ ...alert, acknowledged: true }))
     );
     setUnreadAlertCount(0);
   };
 
-  
   const addNewIncident = (incident: any) => {
     console.log('New incident added locally:', incident);
   };
 
+  // Enhanced context value with weather data
   const value: SocketContextType = {
     socket,
     isConnected,
@@ -343,11 +460,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     clearAllAlerts,
     markAllAsRead,
     addNewIncident,
+    // ADDED FOR WEATHER INTEGRATION
+    weatherData,
+    weatherLoading,
+    weatherLastUpdate,
   };
 
   return (
-    <SocketContext.Provider value={value}>
-      {children}
-    </SocketContext.Provider>
+    <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
   );
 };

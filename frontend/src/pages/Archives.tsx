@@ -1,29 +1,60 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { ChevronDown, ChevronUp, Search, Filter, Download, Eye, RotateCcw, Clock, AlertTriangle } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Search,
+  Filter,
+  Download,
+  Eye,
+  RotateCcw,
+  Clock,
+  AlertTriangle,
+  FileText,
+  Camera,
+  Tag,
+} from 'lucide-react';
 import { useTheme } from '../consts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import './Archives.css';
 
-// Updated TypeScript interfaces to match your backend response
-interface IncidentData {
-  Incidents_ID: number;
-  Incident_Status: string;
-  Incident_Reporter: string | null;
-  Incident_Severity: 'low' | 'medium' | 'high';
-  Incidents_DateTime: string;
-  Incidents_Latitude: number | null;
-  Incidents_Longitude: number | null;
-  Incident_Type?: string;
-  Incident_Location?: string;
-  Resolution_Notes?: string;
-  Duration_Minutes?: number;
+// TypeScript interfaces to match ArchivesV2 table structure
+interface ArchiveIncidentData {
+  status: string;
+  datetime: string;
+  reporter: string;
+  severity: 'low' | 'medium' | 'high';
+  camera_id: number | null;
+  camera_info: {
+    note: string;
+    camera_id: number | null;
+  };
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  incident_id: number;
+  archived_timestamp: string;
 }
 
-// Updated to match your backend response
 interface ArchiveRecord {
+  Archive_ID: number;
   Archive_Date: string;
-  Archive_Incidents: IncidentData;
-  Archive_Alerts: any; // null in your data
+  Archive_Type: string;
+  Archive_IncidentID: number | null;
+  Archive_CameraID: number | null;
+  Archive_IncidentData: ArchiveIncidentData;
+  Archive_AlertsData: any[];
+  Archive_Severity: 'low' | 'medium' | 'high';
+  Archive_Status: string;
+  Archive_DateTime: string;
+  Archive_SearchText: string;
+  Archive_Tags: string[];
+  Archive_Metadata: {
+    archived_at: string;
+    camera_found: boolean;
+    camera_district: string | null;
+    original_incident_id: number;
+  };
 }
 
 interface Filters {
@@ -34,14 +65,16 @@ interface Filters {
   dateFrom: string;
   dateTo: string;
   reporter: string;
+  camera_id: string;
+  tags: string;
 }
 
-type ViewMode = 'cards' | 'table';
+type ViewMode = 'cards' | 'table' | 'detailed';
 
 const Archives: React.FC = () => {
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
-  
+
   const [archives, setArchives] = useState<ArchiveRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
@@ -54,31 +87,38 @@ const Archives: React.FC = () => {
     type: '',
     dateFrom: '',
     dateTo: '',
-    reporter: ''
+    reporter: '',
+    camera_id: '',
+    tags: '',
   });
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] =
+    useState<boolean>(false);
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
-  const itemsPerPage: number = 10;
+  const itemsPerPage: number = 12;
 
-  // Load archives from your API
+  // Load archives from ArchivesV2 API
   const loadArchives = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      
-      const apiKey = localStorage.getItem('apiKey');
+
+      const apiKey =
+        sessionStorage.getItem('apiKey') || localStorage.getItem('apiKey');
       if (!apiKey) {
         setError('No API key found. Please log in.');
         navigate('/account');
         return;
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/archives`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
-        },
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/archives`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey,
+          },
+        }
+      );
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -86,12 +126,13 @@ const Archives: React.FC = () => {
           navigate('/account');
           return;
         }
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `API request failed: ${response.status} ${response.statusText}`
+        );
       }
 
       const data = await response.json();
-      
-      // Ensure data is an array
+
       if (Array.isArray(data)) {
         setArchives(data);
       } else {
@@ -108,68 +149,98 @@ const Archives: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
-  loadArchives();
-}, [loadArchives]);
+    loadArchives();
+  }, [loadArchives]);
 
-
-  // Client-side filtering logic - updated to work with Archive_Incidents
+  // Client-side filtering logic for ArchivesV2 structure
   const filteredArchives = useMemo((): ArchiveRecord[] => {
     return archives.filter(archive => {
-      // Check if Archive_Incidents exists
-      if (!archive?.Archive_Incidents) {
-        return false;
-      }
-      
-      const data = archive.Archive_Incidents;
       const searchLower = filters.search.toLowerCase();
-      
-      // Search across multiple fields
-      const matchesSearch = !filters.search || 
-        data.Incident_Type?.toLowerCase().includes(searchLower) ||
-        data.Incident_Reporter?.toLowerCase().includes(searchLower) ||
-        data.Resolution_Notes?.toLowerCase().includes(searchLower) ||
-        data.Incidents_ID?.toString().includes(searchLower) ||
-        data.Incident_Status?.toLowerCase().includes(searchLower);
 
-      const matchesSeverity = !filters.severity || data.Incident_Severity === filters.severity;
-      const matchesStatus = !filters.status || data.Incident_Status === filters.status;
-      const matchesType = !filters.type || data.Incident_Type?.toLowerCase().includes(filters.type.toLowerCase());
-      const matchesReporter = !filters.reporter || data.Incident_Reporter?.toLowerCase().includes(filters.reporter.toLowerCase());
+      // Search across multiple fields including the searchable text field
+      const matchesSearch =
+        !filters.search ||
+        archive.Archive_SearchText?.toLowerCase().includes(searchLower) ||
+        archive.Archive_IncidentData?.reporter
+          ?.toLowerCase()
+          .includes(searchLower) ||
+        archive.Archive_ID?.toString().includes(searchLower) ||
+        archive.Archive_Type?.toLowerCase().includes(searchLower);
 
-      // Date filtering with null check
+      const matchesSeverity =
+        !filters.severity || archive.Archive_Severity === filters.severity;
+      const matchesStatus =
+        !filters.status || archive.Archive_Status === filters.status;
+      const matchesType =
+        !filters.type ||
+        archive.Archive_Type?.toLowerCase().includes(
+          filters.type.toLowerCase()
+        );
+      const matchesReporter =
+        !filters.reporter ||
+        archive.Archive_IncidentData?.reporter
+          ?.toLowerCase()
+          .includes(filters.reporter.toLowerCase());
+      const matchesCameraId =
+        !filters.camera_id ||
+        archive.Archive_CameraID?.toString() === filters.camera_id;
+
+      // Tag filtering
+      const matchesTags =
+        !filters.tags ||
+        archive.Archive_Tags?.some(tag =>
+          tag.toLowerCase().includes(filters.tags.toLowerCase())
+        );
+
+      // Date filtering
       let matchesDateFrom = true;
       let matchesDateTo = true;
-      
-      if (data.Incidents_DateTime) {
-        const incidentDate = new Date(data.Incidents_DateTime);
-        matchesDateFrom = !filters.dateFrom || incidentDate >= new Date(filters.dateFrom);
-        matchesDateTo = !filters.dateTo || incidentDate <= new Date(filters.dateTo + 'T23:59:59');
+
+      if (archive.Archive_DateTime) {
+        const archiveDate = new Date(archive.Archive_DateTime);
+        matchesDateFrom =
+          !filters.dateFrom || archiveDate >= new Date(filters.dateFrom);
+        matchesDateTo =
+          !filters.dateTo ||
+          archiveDate <= new Date(filters.dateTo + 'T23:59:59');
       } else if (filters.dateFrom || filters.dateTo) {
-        // If date filters are set but incident has no date, exclude it
         matchesDateFrom = false;
         matchesDateTo = false;
       }
 
-      return matchesSearch && matchesSeverity && matchesStatus && matchesType && matchesReporter && matchesDateFrom && matchesDateTo;
+      return (
+        matchesSearch &&
+        matchesSeverity &&
+        matchesStatus &&
+        matchesType &&
+        matchesReporter &&
+        matchesCameraId &&
+        matchesTags &&
+        matchesDateFrom &&
+        matchesDateTo
+      );
     });
   }, [archives, filters]);
 
   // Pagination
   const totalPages = Math.ceil(filteredArchives.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentArchives = filteredArchives.slice(startIndex, startIndex + itemsPerPage);
+  const currentArchives = filteredArchives.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
 
-  const toggleExpanded = (incidentId: number): void => {
+  const toggleExpanded = (archiveId: number): void => {
     const newExpanded = new Set(expandedItems);
-    if (newExpanded.has(incidentId)) {
-      newExpanded.delete(incidentId);
+    if (newExpanded.has(archiveId)) {
+      newExpanded.delete(archiveId);
     } else {
-      newExpanded.add(incidentId);
+      newExpanded.add(archiveId);
     }
     setExpandedItems(newExpanded);
   };
@@ -182,7 +253,9 @@ const Archives: React.FC = () => {
       type: '',
       dateFrom: '',
       dateTo: '',
-      reporter: ''
+      reporter: '',
+      camera_id: '',
+      tags: '',
     });
     setCurrentPage(1);
   };
@@ -193,7 +266,9 @@ const Archives: React.FC = () => {
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `archives_export_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `archives_export_${
+      new Date().toISOString().split('T')[0]
+    }.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -205,10 +280,10 @@ const Archives: React.FC = () => {
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
       });
     } catch {
-      return dateString; // Return original if parsing fails
+      return dateString;
     }
   };
 
@@ -216,20 +291,25 @@ const Archives: React.FC = () => {
     return `severity-${severity}`;
   };
 
-  const formatDuration = (minutes: number): string => {
-    if (!minutes) return '0m';
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  const getTypeIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'incident':
+        return <AlertTriangle size={16} />;
+      case 'alert':
+        return <Clock size={16} />;
+      default:
+        return <FileText size={16} />;
+    }
   };
 
   if (loading) {
     return (
-      <div className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+      <div
+        className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}
+      >
         <div className="loading-message">
           <div className="loading-spinner"></div>
-          Loading archived incidents...
+          Loading archived data...
         </div>
       </div>
     );
@@ -237,7 +317,9 @@ const Archives: React.FC = () => {
 
   if (error) {
     return (
-      <div className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+      <div
+        className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}
+      >
         <div className="error-message">
           <AlertTriangle size={24} />
           {error}
@@ -259,13 +341,11 @@ const Archives: React.FC = () => {
             <Clock size={28} />
             Incident Archives
           </h2>
-          <p>
-            Historical incident data - Resolved incidents archived after 24 hours
-          </p>
+          <p>Historical incident data with searchable metadata and analytics</p>
         </div>
         <div className="header-actions">
           <span className="records-count">
-            {filteredArchives.length} Records
+            {filteredArchives.length} / {archives.length} Records
           </span>
           <button onClick={exportData} className="export-button">
             <Download size={16} />
@@ -274,7 +354,7 @@ const Archives: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Enhanced for ArchivesV2 */}
       <div className="filters-container">
         {/* Basic Filters Row */}
         <div className="basic-filters">
@@ -282,16 +362,32 @@ const Archives: React.FC = () => {
             <Search size={16} className="search-icon" />
             <input
               type="text"
-              placeholder="Search incidents..."
+              placeholder="Search archives (ID, type, reporter, description)..."
               value={filters.search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFilters(prev => ({ ...prev, search: e.target.value }))
+              }
               className="search-input"
             />
           </div>
 
           <select
+            value={filters.type}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setFilters(prev => ({ ...prev, type: e.target.value }))
+            }
+            className="filter-select"
+          >
+            <option value="">All Types</option>
+            <option value="incident">Incidents</option>
+            <option value="alert">Alerts</option>
+          </select>
+
+          <select
             value={filters.severity}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilters(prev => ({ ...prev, severity: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setFilters(prev => ({ ...prev, severity: e.target.value }))
+            }
             className="filter-select"
           >
             <option value="">All Severities</option>
@@ -302,13 +398,16 @@ const Archives: React.FC = () => {
 
           <select
             value={filters.status}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setFilters(prev => ({ ...prev, status: e.target.value }))
+            }
             className="filter-select"
           >
             <option value="">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="ongoing">Ongoing</option>
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
-            <option value="ongoing">Ongoing</option>
           </select>
 
           <button
@@ -317,45 +416,79 @@ const Archives: React.FC = () => {
           >
             <Filter size={16} />
             Advanced
-            {showAdvancedFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            {showAdvancedFilters ? (
+              <ChevronUp size={16} />
+            ) : (
+              <ChevronDown size={16} />
+            )}
           </button>
         </div>
 
-        {/* Advanced Filters */}
+        {/* Advanced Filters - Enhanced for searchable metadata */}
         {showAdvancedFilters && (
           <div className="advanced-filters">
-            <input
-              type="text"
-              placeholder="Incident Type"
-              value={filters.type}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-              className="text-input"
-            />
-            <input
-              type="date"
-              placeholder="From Date"
-              value={filters.dateFrom}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-              className="date-input"
-            />
-            <input
-              type="date"
-              placeholder="To Date"
-              value={filters.dateTo}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-              className="date-input"
-            />
-            <input
-              type="text"
-              placeholder="Reporter"
-              value={filters.reporter}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, reporter: e.target.value }))}
-              className="text-input"
-            />
-            <button onClick={clearFilters} className="clear-button">
-              <RotateCcw size={16} />
-              Clear All
-            </button>
+            <div className="filter-section">
+              <label>Date Range:</label>
+              <input
+                type="date"
+                placeholder="From Date"
+                value={filters.dateFrom}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFilters(prev => ({ ...prev, dateFrom: e.target.value }))
+                }
+                className="date-input"
+              />
+              <input
+                type="date"
+                placeholder="To Date"
+                value={filters.dateTo}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFilters(prev => ({ ...prev, dateTo: e.target.value }))
+                }
+                className="date-input"
+              />
+            </div>
+
+            <div className="filter-section">
+              <label>Metadata Filters:</label>
+              <input
+                type="text"
+                placeholder="Reporter (AI System, Controller, etc.)"
+                value={filters.reporter}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFilters(prev => ({ ...prev, reporter: e.target.value }))
+                }
+                className="text-input"
+              />
+              <input
+                type="text"
+                placeholder="Camera ID (1, 2, 4, etc.)"
+                value={filters.camera_id}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFilters(prev => ({ ...prev, camera_id: e.target.value }))
+                }
+                className="text-input"
+              />
+              <input
+                type="text"
+                placeholder="Tags (incident, high, archived_from_incidents)"
+                value={filters.tags}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFilters(prev => ({ ...prev, tags: e.target.value }))
+                }
+                className="text-input"
+              />
+            </div>
+
+            <div className="filter-actions">
+              <button onClick={clearFilters} className="clear-button">
+                <RotateCcw size={16} />
+                Clear All
+              </button>
+              <div className="search-help-text">
+                Advanced filtering and analytics features coming soon
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -365,19 +498,33 @@ const Archives: React.FC = () => {
         <div className="view-mode-toggle">
           <button
             onClick={() => setViewMode('cards')}
-            className={`view-mode-button ${viewMode === 'cards' ? 'active' : ''}`}
+            className={`view-mode-button ${
+              viewMode === 'cards' ? 'active' : ''
+            }`}
           >
             Cards
           </button>
           <button
             onClick={() => setViewMode('table')}
-            className={`view-mode-button ${viewMode === 'table' ? 'active' : ''}`}
+            className={`view-mode-button ${
+              viewMode === 'table' ? 'active' : ''
+            }`}
           >
             Table
           </button>
+          <button
+            onClick={() => setViewMode('detailed')}
+            className={`view-mode-button ${
+              viewMode === 'detailed' ? 'active' : ''
+            }`}
+          >
+            Detailed
+          </button>
         </div>
         <span className="pagination-info">
-          Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredArchives.length)} of {filteredArchives.length}
+          Showing {startIndex + 1}-
+          {Math.min(startIndex + itemsPerPage, filteredArchives.length)} of{' '}
+          {filteredArchives.length}
         </span>
       </div>
 
@@ -385,160 +532,264 @@ const Archives: React.FC = () => {
       {currentArchives.length === 0 ? (
         <div className="no-data-message">
           <Clock size={48} />
-          <h3>No archived incidents found</h3>
+          <h3>No archived data found</h3>
           <p>Try adjusting your filters or check back later.</p>
         </div>
       ) : viewMode === 'cards' ? (
         <div className="cards-container">
-          {currentArchives.map((archive, index) => {
-            // Safety check
-            if (!archive?.Archive_Incidents) {
-              return (
-                <div key={index} className="incident-card">
-                  <div className="card-content">
-                    <p className="incident-detail">Invalid archive data</p>
-                  </div>
-                </div>
-              );
-            }
-            
-            const incident = archive.Archive_Incidents;
-            
-            return (
-            <div key={`${incident.Incidents_ID}-${index}`} className="incident-card">
+          {currentArchives.map(archive => (
+            <div key={archive.Archive_ID} className="archive-card">
               {/* Card Header */}
               <div className="card-header">
                 <div className="card-header-left">
-                  <div className="incident-id">
-                    ID: {incident.Incidents_ID || 'N/A'}
+                  <div className="archive-id">
+                    {getTypeIcon(archive.Archive_Type)}#{archive.Archive_ID}
                   </div>
-                  <div className={`severity-badge ${getSeverityClass(incident.Incident_Severity || 'low')}`}>
-                    {incident.Incident_Severity || 'Unknown'}
+                  <div
+                    className={`severity-badge ${getSeverityClass(
+                      archive.Archive_Severity
+                    )}`}
+                  >
+                    {archive.Archive_Severity}
                   </div>
                 </div>
                 <div className="card-header-right">
-                  <div>Archived: {formatDateTime(archive.Archive_Date)}</div>
-                  {incident.Duration_Minutes && (
-                    <div>Duration: {formatDuration(incident.Duration_Minutes)}</div>
+                  <div className="archive-type">{archive.Archive_Type}</div>
+                  {archive.Archive_CameraID && (
+                    <div className="camera-info">
+                      <Camera size={14} />
+                      Cam {archive.Archive_CameraID}
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* Card Content */}
               <div className="card-content">
-                <div>
-                  <h4 className="incident-title">
-                    {incident.Incident_Type || `Incident #${incident.Incidents_ID}`}
-                  </h4>
-                  <p className="incident-detail">
-                    Status: {incident.Incident_Status || 'Unknown Status'}
-                  </p>
-                  <p className="incident-detail small">
-                    {incident.Incidents_DateTime ? formatDateTime(incident.Incidents_DateTime) : 'No date available'}
-                  </p>
-                  {(incident.Incidents_Latitude || incident.Incidents_Longitude) && (
-                    <p className="incident-detail small">
-                      Location: {incident.Incidents_Latitude}, {incident.Incidents_Longitude}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <p className="incident-detail">
-                    Reporter: {incident.Incident_Reporter || 'Unknown'}
-                  </p>
-                  {incident.Resolution_Notes && (
-                    <p className="incident-detail">
-                      {incident.Resolution_Notes}
-                    </p>
-                  )}
-                </div>
+                <h4 className="archive-title">
+                  {archive.Archive_IncidentData?.reporter || 'Unknown'} Report
+                </h4>
+                <p className="archive-detail">
+                  Status: {archive.Archive_Status} •{' '}
+                  {formatDateTime(archive.Archive_DateTime)}
+                </p>
+                <p className="archive-coordinates">
+                  {archive.Archive_IncidentData?.coordinates?.latitude},{' '}
+                  {archive.Archive_IncidentData?.coordinates?.longitude}
+                </p>
+
+                {/* Tags */}
+                {archive.Archive_Tags && archive.Archive_Tags.length > 0 && (
+                  <div className="tags-container">
+                    <Tag size={14} />
+                    {archive.Archive_Tags.map((tag, index) => (
+                      <span key={index} className="tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <p className="archive-search-text">
+                  {archive.Archive_SearchText}
+                </p>
               </div>
 
-              {/* Expandable JSON View */}
+              {/* Card Footer */}
               <div className="card-footer">
+                <div className="archive-meta">
+                  Archived: {formatDateTime(archive.Archive_Date)}
+                </div>
                 <button
-                  onClick={() => toggleExpanded(incident.Incidents_ID)}
+                  onClick={() => toggleExpanded(archive.Archive_ID)}
                   className="expand-button"
                 >
                   <Eye size={16} />
-                  {expandedItems.has(incident.Incidents_ID) ? 'Hide' : 'View'} Technical Details
-                  {expandedItems.has(incident.Incidents_ID) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  {expandedItems.has(archive.Archive_ID) ? 'Hide' : 'View'} Data
+                  {expandedItems.has(archive.Archive_ID) ? (
+                    <ChevronUp size={16} />
+                  ) : (
+                    <ChevronDown size={16} />
+                  )}
                 </button>
-                
-                {expandedItems.has(incident.Incidents_ID) && (
-                  <pre className="json-view">
-                    {JSON.stringify(archive, null, 2)}
-                  </pre>
+
+                {expandedItems.has(archive.Archive_ID) && (
+                  <div className="expanded-content">
+                    <div className="json-section">
+                      <h5>Incident Data:</h5>
+                      <pre className="json-view">
+                        {JSON.stringify(archive.Archive_IncidentData, null, 2)}
+                      </pre>
+                    </div>
+                    <div className="json-section">
+                      <h5>Metadata:</h5>
+                      <pre className="json-view">
+                        {JSON.stringify(archive.Archive_Metadata, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
-            );
-          })}
+          ))}
         </div>
-      ) : (
-        // Table View
+      ) : viewMode === 'table' ? (
         <div className="table-container">
-          <table className="incidents-table">
+          <table className="archives-table">
             <thead>
               <tr className="table-header">
                 <th>ID</th>
-                <th>Status</th>
+                <th>Type</th>
                 <th>Severity</th>
-                <th>Date</th>
+                <th>Status</th>
                 <th>Reporter</th>
-                <th>Archived</th>
+                <th>Camera</th>
+                <th>Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {currentArchives.map((archive, index) => {
-                // Safety check
-                if (!archive?.Archive_Incidents) {
-                  return (
-                    <tr key={index} className="table-row">
-                      <td className="table-cell" colSpan={7}>Invalid archive data</td>
-                    </tr>
-                  );
-                }
-                
-                const incident = archive.Archive_Incidents;
-                
-                return (
-                <tr key={`${incident.Incidents_ID}-${index}`} className="table-row">
-                  <td className="table-cell id">
-                    {incident.Incidents_ID || 'N/A'}
-                  </td>
-                  <td className="table-cell primary">
-                    {incident.Incident_Status || 'Unknown'}
+              {currentArchives.map(archive => (
+                <tr key={archive.Archive_ID} className="table-row">
+                  <td className="table-cell id">#{archive.Archive_ID}</td>
+                  <td className="table-cell">
+                    {getTypeIcon(archive.Archive_Type)}
+                    {archive.Archive_Type}
                   </td>
                   <td className="table-cell">
-                    <span className={`severity-badge ${getSeverityClass(incident.Incident_Severity || 'low')}`}>
-                      {incident.Incident_Severity || 'Unknown'}
+                    <span
+                      className={`severity-badge ${getSeverityClass(
+                        archive.Archive_Severity
+                      )}`}
+                    >
+                      {archive.Archive_Severity}
                     </span>
                   </td>
-                  <td className="table-cell secondary">
-                    {incident.Incidents_DateTime ? formatDateTime(incident.Incidents_DateTime) : 'N/A'}
+                  <td className="table-cell">{archive.Archive_Status}</td>
+                  <td className="table-cell">
+                    {archive.Archive_IncidentData?.reporter || 'Unknown'}
                   </td>
-                  <td className="table-cell secondary">
-                    {incident.Incident_Reporter || 'Unknown'}
+                  <td className="table-cell">
+                    {archive.Archive_CameraID
+                      ? `#${archive.Archive_CameraID}`
+                      : 'N/A'}
                   </td>
                   <td className="table-cell small">
-                    {formatDateTime(archive.Archive_Date)}
+                    {formatDateTime(archive.Archive_DateTime)}
                   </td>
                   <td className="table-cell">
                     <button
-                      onClick={() => toggleExpanded(incident.Incidents_ID)}
-                      className={`table-action-button ${expandedItems.has(incident.Incidents_ID) ? 'active' : ''}`}
+                      onClick={() => toggleExpanded(archive.Archive_ID)}
+                      className={`table-action-button ${
+                        expandedItems.has(archive.Archive_ID) ? 'active' : ''
+                      }`}
                     >
                       <Eye size={14} />
-                      {expandedItems.has(incident.Incidents_ID) ? 'Hide' : 'View'}
                     </button>
                   </td>
                 </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
+        </div>
+      ) : (
+        // Detailed View - Perfect for your partner to work with metadata
+        <div className="detailed-container">
+          {currentArchives.map(archive => (
+            <div key={archive.Archive_ID} className="detailed-card">
+              <div className="detailed-header">
+                <h3>
+                  {getTypeIcon(archive.Archive_Type)}
+                  Archive #{archive.Archive_ID} - {archive.Archive_Type}
+                  <span
+                    className={`severity-badge ${getSeverityClass(
+                      archive.Archive_Severity
+                    )}`}
+                  >
+                    {archive.Archive_Severity}
+                  </span>
+                </h3>
+                <div className="detailed-meta">
+                  Archived: {formatDateTime(archive.Archive_Date)} • Status:{' '}
+                  {archive.Archive_Status}
+                </div>
+              </div>
+
+              <div className="detailed-content">
+                <div className="metadata-grid">
+                  <div className="metadata-section">
+                    <h4>Core Data</h4>
+                    <p>
+                      <strong>Original Incident ID:</strong>{' '}
+                      {archive.Archive_IncidentID || 'N/A'}
+                    </p>
+                    <p>
+                      <strong>Camera ID:</strong>{' '}
+                      {archive.Archive_CameraID || 'N/A'}
+                    </p>
+                    <p>
+                      <strong>Reporter:</strong>{' '}
+                      {archive.Archive_IncidentData?.reporter || 'Unknown'}
+                    </p>
+                    <p>
+                      <strong>Incident Date:</strong>{' '}
+                      {formatDateTime(archive.Archive_DateTime)}
+                    </p>
+                  </div>
+
+                  <div className="metadata-section">
+                    <h4>Location</h4>
+                    <p>
+                      <strong>Coordinates:</strong>
+                    </p>
+                    <p>
+                      Lat:{' '}
+                      {archive.Archive_IncidentData?.coordinates?.latitude ||
+                        'N/A'}
+                    </p>
+                    <p>
+                      Lng:{' '}
+                      {archive.Archive_IncidentData?.coordinates?.longitude ||
+                        'N/A'}
+                    </p>
+                    <p>
+                      <strong>Camera Found:</strong>{' '}
+                      {archive.Archive_Metadata?.camera_found ? 'Yes' : 'No'}
+                    </p>
+                  </div>
+
+                  <div className="metadata-section">
+                    <h4>Tags & Search</h4>
+                    <p>
+                      <strong>Search Text:</strong> {archive.Archive_SearchText}
+                    </p>
+                    <div className="tags-display">
+                      {archive.Archive_Tags?.map((tag, index) => (
+                        <span key={index} className="metadata-tag">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="search-analytics-section">
+                  <h4>Advanced Analytics</h4>
+                  <div className="analytics-features">
+                    <p>Comprehensive analytics capabilities:</p>
+                    <div className="feature-grid">
+                      <div className="feature-item">Time-series analysis</div>
+                      <div className="feature-item">Geographic clustering</div>
+                      <div className="feature-item">Trend analysis</div>
+                      <div className="feature-item">Camera correlation</div>
+                      <div className="feature-item">Custom queries</div>
+                      <div className="feature-item">Performance metrics</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -552,13 +803,15 @@ const Archives: React.FC = () => {
           >
             Previous
           </button>
-          
+
           <span className="pagination-info-text">
             Page {currentPage} of {totalPages}
           </span>
-          
+
           <button
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            onClick={() =>
+              setCurrentPage(Math.min(totalPages, currentPage + 1))
+            }
             disabled={currentPage === totalPages}
             className="pagination-button"
           >

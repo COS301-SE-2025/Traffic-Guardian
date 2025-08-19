@@ -1,5 +1,6 @@
 const incidentModel = require('../models/incident');
 const alertModel = require('../models/alert');
+const ILM = require("../IncidentLocationMapping/ilmInstance")
 
 const incidentController = {
   createIncident: async (req, res) => {
@@ -10,7 +11,9 @@ const incidentController = {
         Incidents_Latitude, 
         Incident_Severity, 
         Incident_Status, 
-        Incident_Reporter
+        Incident_Reporter,
+        Incident_CameraID,
+        Incident_Description
       } = req.body;
       
       // Validate required fields
@@ -45,12 +48,14 @@ const incidentController = {
         Incidents_Latitude: Incidents_Latitude ? parseFloat(Incidents_Latitude) : null,
         Incident_Severity: Incident_Severity || 'medium',
         Incident_Status,
-        Incident_Reporter: Incident_Reporter || (req.user ? req.user.User_Email : null)
+        Incident_Reporter: Incident_Reporter || (req.user ? req.user.User_Email : null),
+        Incident_CameraID: Incident_CameraID ? parseInt(Incident_CameraID) : null,
+        Incident_Description: Incident_Description || null
       });
       
       const io = req.app.get('io');
-      io.emit('newAlert', incident);
-      console.log('Emitting newAlert:', incident);
+      //io.emit('newAlert', incident);
+      ILM.notifyUsersIncident(incident, io);
 
       return res.status(201).json({
         message: 'Incident created successfully',
@@ -85,7 +90,9 @@ const incidentController = {
         Incidents_Latitude, 
         Incident_Severity, 
         Incident_Status, 
-        Incident_Reporter 
+        Incident_Reporter,
+        Incident_CameraID,
+        Incident_Description
       } = req.body;
       
       const existingIncident = await incidentModel.getIncidentById(Incidents_ID);
@@ -107,7 +114,9 @@ const incidentController = {
         Incidents_DateTime: Incidents_DateTime || undefined,
         Incident_Severity: Incident_Severity || undefined,
         Incident_Status: Incident_Status || undefined,
-        Incident_Reporter: Incident_Reporter || undefined
+        Incident_Reporter: Incident_Reporter || undefined,
+        Incident_CameraID: Incident_CameraID ? parseInt(Incident_CameraID) : undefined,
+        Incident_Description: Incident_Description || undefined
       };
 
       // Only add coordinates if they exist and can be parsed
@@ -151,6 +160,34 @@ const incidentController = {
       return res.status(200).json(incidents);
     } catch (error) {
       console.error('Get incidents error:', error.message, error.stack);
+      return res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+  },
+  getIncidentStats: async (req, res) => {
+    try {
+      const stats = await incidentModel.getIncidentStats();
+      return res.status(200).json(stats);
+    } catch (error) {
+      console.error('Get incident stats error:', error.message, error.stack);
+      return res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+  },
+  getTodayIncidents: async (req, res) => {
+    try {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      
+      const incidents = await incidentModel.getIncidentsByDateRange({
+        startDate: todayStart.toISOString(),
+        endDate: todayEnd.toISOString()
+      });
+      
+      return res.status(200).json(incidents);
+    } catch (error) {
+      console.error('Get today incidents error:', error.message, error.stack);
       return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
   }

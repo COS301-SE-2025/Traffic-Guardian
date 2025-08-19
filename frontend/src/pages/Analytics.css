@@ -23,7 +23,7 @@
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 3px solid rgba(59, 130, 246, 0.1);
+  border: 3px solid rgb(59 130 246 / 10%);
   border-top-color: #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -53,7 +53,7 @@
 
 .analytics-title p {
   font-size: 1rem;
-  opacity: 0.7;
+  opacity: 70%;
   margin: 0;
 }
 
@@ -61,21 +61,21 @@
   display: inline-flex;
   gap: 0.5rem;
   align-items: center;
-  background: #ffffff;
+  background: #fff;
   padding: 0.375rem 0.625rem;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
 }
 
 .light-mode .date-range-selector {
-  background: #ffffff;
+  background: #fff;
   border-color: #e5e7eb;
 }
 
 .dark-mode .date-range-selector {
-  background: rgba(31, 41, 55, 0.8);
-  border-color: rgba(55, 65, 81, 1);
+  background: rgb(31 41 55 / 80%);
+  border-color: rgb(55 65 81 / 100%);
 }
 
 .date-input-group {
@@ -101,7 +101,7 @@
 .date-input-group svg {
   width: 14px;
   height: 14px;
-  opacity: 0.6;
+  opacity: 60%;
   flex-shrink: 0;
 }
 
@@ -109,7 +109,7 @@
   padding: 0.375rem 0.5rem;
   border-radius: 6px;
   border: 1px solid #e5e7eb;
-  background: #ffffff;
+  background: #fff;
   font-size: 0.813rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -129,7 +129,7 @@
 }
 
 .date-input-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgb(0 0 0 / 5%);
 }
 
 input[type="date"]::-webkit-datetime-edit {
@@ -152,15 +152,15 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .light-mode .date-input-group input[type="date"] {
-  background: #ffffff;
+  background: #fff;
   border-color: #e5e7eb;
   color: #374151;
 }
 
 .dark-mode .date-input-group input[type="date"] {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
   color: #e5e7eb;
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgb(255 255 255 / 20%);
 }
 
 .date-input-group input[type="date"]:hover {
@@ -170,7 +170,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 .date-input-group input[type="date"]:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 10%);
 }
 
 .summary-cards {
@@ -181,25 +181,34 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .summary-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgb(255 255 255 / 90%);
   border-radius: 16px;
   padding: 1.5rem;
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
   transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid rgb(0 0 0 / 5%);
 }
 
 .dark-mode .summary-card {
-  background: rgba(31, 41, 55, 0.8);
-  border-color: rgba(255, 255, 255, 0.05);
+  background: rgb(31 41 55 / 80%);
+  border-color: rgb(255 255 255 / 5%);
 }
 
 .summary-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+/* Archive-specific summary cards */
+.summary-card.archive-card {
+  border-left: 4px solid #f59e0b;
+}
+
+.dark-mode .summary-card.archive-card {
+  border-left-color: #fbbf24;
 }
 
 .card-icon {
@@ -234,6 +243,19 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
+/* Archive-specific card icons */
+.card-icon.archive {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.card-icon.archive-time {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+.card-icon.archive-storage {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
 .card-content {
   flex: 1;
 }
@@ -242,7 +264,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0;
-  opacity: 0.7;
+  opacity: 70%;
   margin-bottom: 0.5rem;
 }
 
@@ -274,7 +296,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 .card-subtitle {
   font-size: 0.875rem;
-  opacity: 0.7;
+  opacity: 70%;
 }
 
 .charts-grid {
@@ -285,16 +307,16 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .chart-container {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgb(255 255 255 / 90%);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+  border: 1px solid rgb(0 0 0 / 5%);
 }
 
 .dark-mode .chart-container {
-  background: rgba(31, 41, 55, 0.8);
-  border-color: rgba(255, 255, 255, 0.05);
+  background: rgb(31 41 55 / 80%);
+  border-color: rgb(255 255 255 / 5%);
 }
 
 .chart-container.full-width {
@@ -308,7 +330,32 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 .chart-container h2 {
   font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 1rem 0;
+  margin: 0 0 1rem;
+}
+
+/* Archive-specific chart containers */
+.chart-container.archive-trends {
+  border-left: 4px solid #f59e0b;
+}
+
+.dark-mode .chart-container.archive-trends {
+  border-left-color: #fbbf24;
+}
+
+.chart-container.archive-analytics {
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 95%) 0%,
+    rgb(249 250 251 / 90%) 100%
+  );
+}
+
+.dark-mode .chart-container.archive-analytics {
+  background: linear-gradient(
+    145deg,
+    rgb(31 41 55 / 85%) 0%,
+    rgb(17 24 39 / 90%) 100%
+  );
 }
 
 .radar-chart-wrapper {
@@ -329,17 +376,17 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.02);
+  background: rgb(0 0 0 / 2%);
   border-radius: 8px;
   transition: background 0.2s ease;
 }
 
 .dark-mode .location-item {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgb(255 255 255 / 2%);
 }
 
 .location-item:hover {
-  background: rgba(59, 130, 246, 0.05);
+  background: rgb(59 130 246 / 5%);
 }
 
 .location-info {
@@ -366,7 +413,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .incident-count {
-  opacity: 0.7;
+  opacity: 70%;
 }
 
 .severity-indicator {
@@ -377,37 +424,219 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .severity-indicator.severity-high {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgb(239 68 68 / 10%);
   color: #ef4444;
 }
 
 .severity-indicator.severity-medium {
-  background: rgba(245, 158, 11, 0.1);
+  background: rgb(245 158 11 / 10%);
   color: #f59e0b;
 }
 
 .severity-indicator.severity-low {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgb(16 185 129 / 10%);
   color: #10b981;
 }
 
+/* Archive-specific elements */
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.archive-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 2%);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border-left: 3px solid #f59e0b;
+}
+
+.dark-mode .archive-item {
+  background: rgb(255 255 255 / 2%);
+  border-left-color: #fbbf24;
+}
+
+.archive-item:hover {
+  background: rgb(245 158 11 / 5%);
+  transform: translateX(4px);
+}
+
+.archive-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.archive-id {
+  font-weight: 700;
+  color: #f59e0b;
+  font-size: 0.875rem;
+}
+
+.archive-type {
+  font-weight: 500;
+  text-transform: capitalize;
+  background: rgb(245 158 11 / 10%);
+  color: #f59e0b;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.archive-date {
+  font-size: 0.875rem;
+  opacity: 70%;
+}
+
+.archive-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-indicator {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-indicator.status-open {
+  background: rgb(59 130 246 / 10%);
+  color: #3b82f6;
+}
+
+.status-indicator.status-ongoing {
+  background: rgb(245 158 11 / 10%);
+  color: #f59e0b;
+}
+
+.status-indicator.status-resolved {
+  background: rgb(16 185 129 / 10%);
+  color: #10b981;
+}
+
+.status-indicator.status-closed {
+  background: rgb(107 114 128 / 10%);
+  color: #6b7280;
+}
+
+.archive-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #f59e0b;
+}
+
+.archive-indicator svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Archive metrics cards */
+.archive-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.archive-metric-card {
+  background: rgb(245 158 11 / 5%);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border-left: 4px solid #f59e0b;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .archive-metric-card {
+  background: rgb(245 158 11 / 10%);
+  border-left-color: #fbbf24;
+}
+
+.archive-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgb(245 158 11 / 20%);
+}
+
+.archive-metric-card h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: #f59e0b;
+}
+
+.archive-metric-card .metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.archive-metric-card .metric-description {
+  font-size: 0.75rem;
+  opacity: 70%;
+}
+
+/* Archive filters */
+.archive-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.archive-filter-button {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #f59e0b;
+  background: transparent;
+  color: #f59e0b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.archive-filter-button:hover,
+.archive-filter-button.active {
+  background: #f59e0b;
+  color: white;
+}
+
+.dark-mode .archive-filter-button {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.dark-mode .archive-filter-button:hover,
+.dark-mode .archive-filter-button.active {
+  background: #fbbf24;
+  color: #111827;
+}
+
 .trends-table-container {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgb(255 255 255 / 90%);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+  border: 1px solid rgb(0 0 0 / 5%);
 }
 
 .dark-mode .trends-table-container {
-  background: rgba(31, 41, 55, 0.8);
-  border-color: rgba(255, 255, 255, 0.05);
+  background: rgb(31 41 55 / 80%);
+  border-color: rgb(255 255 255 / 5%);
 }
 
 .trends-table-container h2 {
   font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 1rem 0;
+  margin: 0 0 1rem;
 }
 
 .trends-table {
@@ -418,40 +647,40 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   text-align: left;
   padding: 0.75rem;
   font-weight: 600;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 2px solid rgb(0 0 0 / 10%);
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .dark-mode .trends-table th {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgb(255 255 255 / 10%);
 }
 
 .trends-table td {
   padding: 0.75rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgb(0 0 0 / 5%);
 }
 
 .dark-mode .trends-table td {
-  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-bottom-color: rgb(255 255 255 / 5%);
 }
 
 .trends-table tr:hover {
-  background: rgba(59, 130, 246, 0.02);
+  background: rgb(59 130 246 / 2%);
 }
 
 .percentage-bar {
   position: relative;
   width: 100%;
   height: 24px;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgb(0 0 0 / 5%);
   border-radius: 12px;
   overflow: hidden;
 }
 
 .dark-mode .percentage-bar {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
 }
 
 .percentage-fill {
@@ -489,17 +718,17 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .trend-indicator.up {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgb(16 185 129 / 10%);
   color: #10b981;
 }
 
 .trend-indicator.down {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgb(239 68 68 / 10%);
   color: #ef4444;
 }
 
 .trend-indicator.stable {
-  background: rgba(107, 114, 128, 0.1);
+  background: rgb(107 114 128 / 10%);
   color: #6b7280;
 }
 
@@ -513,6 +742,73 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   color: #e2e8f0;
 }
 
+/* Archive-specific animations */
+@keyframes archive-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.archive-new-indicator {
+  animation: archive-pulse 2s ease-in-out infinite;
+}
+
+/* Archive loading states */
+.archive-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #f59e0b;
+  font-size: 0.875rem;
+}
+
+.archive-loading svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.5rem;
+  animation: spin 1s linear infinite;
+}
+
+/* Archive empty states */
+.archive-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.archive-empty svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.archive-empty h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.archive-empty p {
+  font-size: 0.875rem;
+  opacity: 70%;
+  margin: 0;
+}
+
 @media (max-width: 1024px) {
   .charts-grid {
     grid-template-columns: 1fr;
@@ -521,6 +817,10 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   .chart-container.full-width,
   .chart-container.half-width {
     grid-column: span 1;
+  }
+
+  .summary-cards {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
@@ -568,6 +868,26 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   .trends-table td {
     padding: 0.5rem;
   }
+
+  .archive-filters {
+    justify-content: center;
+  }
+
+  .archive-filter-button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .archive-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .location-stats,
+  .archive-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
 }
 
 .analytics-container::-webkit-scrollbar {
@@ -575,28 +895,28 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .analytics-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgb(0 0 0 / 5%);
 }
 
 .dark-mode .analytics-container::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(255 255 255 / 5%);
 }
 
 .analytics-container::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgb(0 0 0 / 20%);
   border-radius: 5px;
 }
 
 .dark-mode .analytics-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgb(255 255 255 / 20%);
 }
 
 .analytics-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgb(0 0 0 / 30%);
 }
 
 .dark-mode .analytics-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgb(255 255 255 / 30%);
 }
 
 .recharts-polar-angle-axis .recharts-text {
@@ -629,7 +949,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   margin: 0 auto;
 }
 
-@media screen and (-webkit-min-device-pixel-ratio: 0) {
+@media screen and (min-device-pixel-ratio: 0) {
   input[type="date"]::-webkit-calendar-picker-indicator {
     zoom: 1.5;
   }

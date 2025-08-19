@@ -1,5 +1,4 @@
 const db = require('../config/db');
-//const io = require('../server');
 
 const incidentModel = {  async createIncident(incidentData) {
     const { 
@@ -8,7 +7,9 @@ const incidentModel = {  async createIncident(incidentData) {
       Incidents_Latitude, 
       Incident_Severity, 
       Incident_Status, 
-      Incident_Reporter
+      Incident_Reporter,
+      Incident_CameraID,
+      Incident_Description
     } = incidentData;
       const query = `
       INSERT INTO "Incidents" (
@@ -17,9 +18,11 @@ const incidentModel = {  async createIncident(incidentData) {
         "Incidents_Latitude", 
         "Incident_Severity", 
         "Incident_Status", 
-        "Incident_Reporter"
+        "Incident_Reporter",
+        "Incident_CameraID",
+        "Incident_Description"
       ) 
-      VALUES ($1, $2, $3, $4, $5, $6) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
       RETURNING *
     `;
     
@@ -29,11 +32,12 @@ const incidentModel = {  async createIncident(incidentData) {
       Incidents_Latitude, 
       Incident_Severity || 'medium', 
       Incident_Status || 'ongoing', 
-      Incident_Reporter
+      Incident_Reporter,
+      Incident_CameraID,
+      Incident_Description
     ];
     
     const { rows } = await db.query(query, values);
-    //io.emit('newIncident', values);
     return rows[0];
   },  async getIncidentById(Incidents_ID) {
     const query = 'SELECT * FROM "Incidents" WHERE "Incidents_ID" = $1';
@@ -46,7 +50,9 @@ const incidentModel = {  async createIncident(incidentData) {
       'Incidents_Latitude', 
       'Incident_Severity', 
       'Incident_Status', 
-      'Incident_Reporter'
+      'Incident_Reporter',
+      'Incident_CameraID',
+      'Incident_Description'
     ];
     
     // Safely truncate string values to max 10 characters
@@ -128,10 +134,38 @@ const incidentModel = {  async createIncident(incidentData) {
     const { rows } = await db.query(query, values);
     return rows;
   }, async getIncidentCount() {
-  const query = 'SELECT COUNT(*) as count FROM "Incidents"';
-  const { rows } = await db.query(query);
-  return parseInt(rows[0].count);
-}
+    const query = 'SELECT COUNT(*) as count FROM "Incidents"';
+    const { rows } = await db.query(query);
+    return parseInt(rows[0].count);
+  },
+
+  async getIncidentStats() {
+    const query = `
+      SELECT 
+        COUNT(*) as total,
+        COUNT(CASE WHEN "Incident_Severity" = 'high' THEN 1 END) as high_severity,
+        COUNT(CASE WHEN "Incident_Severity" = 'medium' THEN 1 END) as medium_severity,
+        COUNT(CASE WHEN "Incident_Severity" = 'low' THEN 1 END) as low_severity,
+        COUNT(CASE WHEN "Incident_Status" = 'open' THEN 1 END) as open_status,
+        COUNT(CASE WHEN "Incident_Status" = 'ongoing' THEN 1 END) as ongoing_status,
+        COUNT(CASE WHEN "Incident_Status" = 'resolved' THEN 1 END) as resolved_status,
+        COUNT(CASE WHEN "Incident_Status" = 'closed' THEN 1 END) as closed_status
+      FROM "Incidents"
+    `;
+    const { rows } = await db.query(query);
+    return rows[0];
+  },
+
+  async getIncidentsByDateRange(filters) {
+    const { startDate, endDate } = filters;
+    const query = `
+      SELECT * FROM "Incidents" 
+      WHERE "Incidents_DateTime" BETWEEN $1 AND $2 
+      ORDER BY "Incidents_DateTime" DESC
+    `;
+    const { rows } = await db.query(query, [startDate, endDate]);
+    return rows;
+  }
 };
 
 module.exports = incidentModel;
