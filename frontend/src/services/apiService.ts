@@ -105,7 +105,7 @@ export interface IncidentStats {
 
 class ApiService {
   private static getAuthHeaders(): HeadersInit {
-    const apiKey = localStorage.getItem('apiKey');
+    const apiKey = sessionStorage.getItem('apiKey');
     return {
       'Content-Type': 'application/json',
       'X-API-Key': apiKey || '',
@@ -464,7 +464,7 @@ class ApiService {
 
   // Authentication check
   static isAuthenticated(): boolean {
-    const apiKey = localStorage.getItem('apiKey');
+    const apiKey = sessionStorage.getItem('apiKey');
     return !!apiKey && apiKey.length > 0;
   }
 
