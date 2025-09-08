@@ -86,6 +86,8 @@ class CrashReport:
     # Camera-specific fields
     camera_id: str = None
     camera_location: str = None
+    camera_longitude: str = None
+    camera_latitude: str = None
     # Incident filename fields
     timestamp: str = None
     milliseconds: str = None
@@ -342,13 +344,8 @@ class EnhancedCrashClassifier:
         "intersection_collision": "medium",
         "parking_lot_incident": "low"
     }
-    
-    CAMERA_LOCATIONS = {#Will get from API or parsed through file name
-        'default': {'latitude': 37.7749, 'longitude': -122.4194},
-        'intersection_1': {'latitude': 37.7849, 'longitude': -122.4094},
-        'highway_1': {'latitude': 37.7649, 'longitude': -122.4294},
-        'bridge_cam': {'latitude': 37.7549, 'longitude': -122.4394}
-    }
+  #NEEEEEEEEEEEEED TO FIXXXXXXXXXXX camera location and incident locations and then also make the deployment api link updated  
+    # CAMERA_LOCATIONS =
     
     def __init__(self, config: Dict = None):
         """Initialize enhanced crash classifier."""
@@ -2066,9 +2063,7 @@ class EnhancedCrashClassifier:
         confidence = classification['confidence']
         
         # Get location
-        camera_location = self.CAMERA_LOCATIONS.get(camera_id or 'default', 
-                                                   self.CAMERA_LOCATIONS['default'])
-        
+        camera_location = self.camera_location      
         # Enhanced severity determination with multiple factors
         base_severity = self.CRASH_SEVERITY_MAP.get(crash_type, 'medium')
         damage_assessment = motion_analysis.get('damage_assessment', 'moderate')
