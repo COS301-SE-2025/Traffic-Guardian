@@ -2357,7 +2357,7 @@ class EnhancedCrashClassifier:
                 }
             }
         
-        logger.info(f"🎬 Processing {len(video_files)} incident videos...")
+        logger.info(f" Processing {len(video_files)} incident videos...")
         
         crash_reports = []
         for video_file in video_files:
@@ -2367,9 +2367,9 @@ class EnhancedCrashClassifier:
                 extracted_camera_id = incident_info['camera_id']
                 incident_timestamp = incident_info['timestamp']
                 
-                logger.info(f"📹 Analyzing: {os.path.basename(video_file)}")
-                logger.info(f"📷 Camera ID: {extracted_camera_id}, Timestamp: {incident_timestamp}")
-                logger.info(f"📍 Camera Location: Lat {incident_info['camera_latitude']}, Lon {incident_info['camera_longitude']}")
+                logger.info(f" Analyzing: {os.path.basename(video_file)}")
+                logger.info(f" Camera ID: {extracted_camera_id}, Timestamp: {incident_timestamp}")
+                logger.info(f" Camera Location: Lat {incident_info['camera_latitude']}, Lon {incident_info['camera_longitude']}")
                 
                 # Use the camera_id from filename, not the parameter
                 crash_report = self.classify_crash_video(video_file, extracted_camera_id, low_latency_mode)
@@ -2582,7 +2582,7 @@ class EnhancedCrashClassifier:
         #     'emergency_priority': crash_report.emergency_priority,
         #     'video_path': crash_report.video_path,
         #     'processing_timestamp': crash_report.processing_timestamp
-        logger.debug(f"🔄 Mapped crash report to API payload (EXACT POSTMAN FORMAT):")
+        logger.debug(f" Mapped crash report to API payload (EXACT POSTMAN FORMAT):")
         logger.debug(f"   Incidents_DateTime: {api_payload['Incidents_DateTime']}")
         logger.debug(f"   Incident_CameraID: {api_payload['Incident_CameraID']} (type: {type(api_payload['Incident_CameraID'])})")
         logger.debug(f"   Incident_Severity: {api_payload['Incident_Severity']}")
@@ -2658,7 +2658,7 @@ class EnhancedCrashClassifier:
             
             # Submit to API if enabled and requested
             if submit_to_api and self.api_config['enabled']:
-                logger.info("📡 Submitting incident to API...")
+                logger.info(" Submitting incident to API...")
                 api_result = self.submit_incident_to_api(crash_report)
                 result['api_submission'] = api_result
                 
@@ -2666,19 +2666,19 @@ class EnhancedCrashClassifier:
                     logger.info(f" Incident successfully submitted - API ID: {api_result['incident_id']}")
 
                     # DELETION OF VIDEO FILE AFTER SUBMISSION
-                    # # 🗑️ DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
+                    # #  DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
                     # try:
                     #     os.remove(video_path)
-                    #     logger.info(f"🗑️ Video file deleted: {os.path.basename(video_path)}")
+                    #     logger.info(f" Video file deleted: {os.path.basename(video_path)}")
                     # except OSError as e:
-                    #     logger.warning(f"⚠️ Could not delete video file {os.path.basename(video_path)}: {e}")
+                    #     logger.warning(f" Could not delete video file {os.path.basename(video_path)}: {e}")
                         
                 else:
                     logger.error(f" API submission failed: {api_result['error']}")
-                    # logger.info(f"💾 Video file retained due to submission failure: {os.path.basename(video_path)}")
+                    # logger.info(f" Video file retained due to submission failure: {os.path.basename(video_path)}")
             
             elif submit_to_api and not self.api_config['enabled']:
-                logger.warning("📡 API submission requested but API integration is disabled")
+                logger.warning(" API submission requested but API integration is disabled")
                 result['api_submission'] = {
                     'success': False,
                     'error': 'API integration disabled',
@@ -2964,38 +2964,38 @@ def main():
                 all_reports.append(crash_report)
                 print(f"  Classification: {crash_report.incident_type} (confidence: {crash_report.confidence:.3f})")
                 
-                # 🚨 SUBMIT TO TRAFFICGUARDIAN API DATABASE
-                print(f"  📡 Submitting incident to TrafficGuardian API...")
+                #  SUBMIT TO TRAFFICGUARDIAN API DATABASE
+                print(f"Submitting incident to TrafficGuardian API...")
                 api_result = classifier.submit_incident_to_api(crash_report)
                 
                 if api_result['success']:
-                    print(f"  ✅ API Submission SUCCESS!")
+                    print(f"API Submission SUCCESS!")
                     print(f"     Incident ID: {api_result.get('incident_id', 'N/A')}")
                     print(f"     Database Response: {api_result.get('message', 'Created successfully')}")
                     # DELETION!!!!1
-                    # 🗑️ DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
+                    #  DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
                     try:
                         os.remove(video_path)
-                        print(f"  🗑️  Video file deleted: {video_file}")
+                        print(f"  Video file deleted: {video_file}")
                     except OSError as e:
-                        print(f"  ⚠️  Warning: Could not delete video file {video_file}: {e}")
+                        print(f"  Warning: Could not delete video file {video_file}: {e}")
                         
                 else:
-                    print(f"  ❌ API Submission FAILED!")
+                    print(f"     API Submission FAILED!")
                     print(f"     Error: {api_result.get('error', 'Unknown error')}")
                     print(f"     Recommendation: {api_result.get('recommendation', 'Check API server')}")
-                    print(f"  💾 Video file retained due to submission failure: {video_file}")
+                    print(f"     Video file retained due to submission failure: {video_file}")
                 # Deletion messgae
             else:
-                print(f"  ℹ️  No incidents detected in {video_file}")
+                print(f"No incidents detected in {video_file}")
         
-        print(f"\n📊 PROCESSING COMPLETE")
+        print(f"\nPROCESSING COMPLETE")
         print(f"Total reports generated: {len(all_reports)}")
         
         # Display final summary with API submission results
         if all_reports:
             print("\n" + "=" * 70)
-            print("🏆 FINAL PROCESSING & API SUBMISSION SUMMARY")
+            print("FINAL PROCESSING & API SUBMISSION SUMMARY")
             print("=" * 70)
             
             successful_submissions = 0
@@ -3068,7 +3068,7 @@ def demo_api_integration():
     classifier = EnhancedCrashClassifier()
     
     # Display API configuration status
-    print("📡 API Configuration Status:")
+    print("API Configuration Status:")
     if classifier.api_config['enabled']:
         print(f"   API Integration: ENABLED")
         print(f"   Endpoint: {classifier.api_config['endpoint']}")
@@ -3135,17 +3135,17 @@ def demo_api_integration():
 
 if __name__ == "__main__":
     # Production Mode: Process incident videos and submit to TrafficGuardian API
-    print("🚀 TRAFFICGUARDIAN AI - PRODUCTION MODE")
+    print("TRAFFICGUARDIAN AI - PRODUCTION MODE")
     print("=" * 70)
     
     # Check API configuration
     classifier = EnhancedCrashClassifier()
     if classifier.api_config['enabled']:
-        print("✅ API Integration: ENABLED")
+        print("API Integration: ENABLED")
         print(f"   Endpoint: {classifier.api_config['endpoint']}")
         print(f"   Authentication: X-API-Key (GitHub Secret: AIAPIKEY)")
     else:
-        print("⚠️  API Integration: DISABLED")
+        print("API Integration: DISABLED")
         print("   Missing AIAPIKEY environment variable")
         print("   Processing will continue but no API submissions will be made")
     
