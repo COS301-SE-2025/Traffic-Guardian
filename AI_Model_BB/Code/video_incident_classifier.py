@@ -382,7 +382,26 @@ class EnhancedCrashClassifier:
         # # API configuration for camera information NEED TO UPDATE API STUFF NEXT
         self.api_base_url = "http://localhost:5000/api"  # Need to adjustr
         self.camera_info_cache = {}  # Cache camera information
-        
+    # #MIGHT HAVE TO REMOVE double check
+    # def __del__(self):
+    #     """Cleanup method to properly close ThreadPool."""
+    #     try:
+    #         if hasattr(self, 'thread_pool') and self.thread_pool:
+    #             self.thread_pool.close()
+    #             self.thread_pool.join()
+    #     except:
+    #         pass  # Ignore cleanup errors
+    
+    # def cleanup(self):
+    #     """Explicitly cleanup resources."""
+    #     try:
+    #         if hasattr(self, 'thread_pool') and self.thread_pool:
+    #             self.thread_pool.close()
+    #             self.thread_pool.join()
+    #             self.thread_pool = None
+    #     except:
+    #         pass  # Ignore cleanup errors
+    #     # MIGHT HAVE TO REMOVE
     def _get_optimized_config(self):
         """Optimized configuration for crash detection accuracy."""
         return {
@@ -3133,4 +3152,8 @@ if __name__ == "__main__":
     print("=" * 70)
     
     # Run main processing
-    main()
+    try:
+        main()
+    finally:
+        # Cleanup resources
+        classifier.cleanup()
