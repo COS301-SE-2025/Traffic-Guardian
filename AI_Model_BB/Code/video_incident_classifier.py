@@ -479,9 +479,9 @@ class EnhancedCrashClassifier:
         # Remove file extension
         name_without_ext = os.path.splitext(filename)[0]
         
-        # Pattern: incident_{camera_id}_{date}_{time}_{milliseconds}_{incident_type}
-        #added camera long and lat
-        pattern = r'incident_([^_]+)_([^_]+)_([^_]+)_([^_]+)_(.+)_([^_]+)_([^_]+)$'
+        # Pattern: incident_{camera_id}_{date}_{time}_{milliseconds}_{incident_type}_{camera_longitude}_{camera_latitude}
+        # Example: incident_2_20250811_181338_966_collision_28.0567_-26.1076
+        pattern = r'incident_([^_]+)_([^_]+)_([^_]+)_([^_]+)_([^_]+)_([^_]+)_([^_]+)$'
         match = re.match(pattern, name_without_ext)
         
         if match:
@@ -1981,10 +1981,21 @@ class EnhancedCrashClassifier:
             # If we're in low latency mode, provide a basic result even on error
             if low_latency_mode:
                 logger.info("Providing fallback crash report due to low latency mode")
+                
+                # Get camera location from parsed filename for fallback
+                try:
+                    parsed_filename = self.parse_incident_filename(video_path)
+                    fallback_longitude = float(parsed_filename.get('camera_longitude', '0.0'))
+                    fallback_latitude = float(parsed_filename.get('camera_latitude', '0.0'))
+                except:
+                    # Ultimate fallback coordinates if parsing fails
+                    fallback_longitude = 0.0
+                    fallback_latitude = 0.0
+                
                 return CrashReport(
                     incident_datetime=datetime.now(timezone.utc).isoformat(),
-                    incident_latitude=self.CAMERA_LOCATIONS.get(camera_id or 'default', self.CAMERA_LOCATIONS['default'])['latitude'],
-                    incident_longitude=self.CAMERA_LOCATIONS.get(camera_id or 'default', self.CAMERA_LOCATIONS['default'])['longitude'],
+                    incident_latitude=fallback_latitude,  # Use parsed camera coordinates
+                    incident_longitude=fallback_longitude,  # Use parsed camera coordinates
                     incident_severity="medium",  # Default to medium severity
                     incident_status="active",
                     incident_reporter="AI Crash Detection System (Fallback)",
@@ -2062,8 +2073,11 @@ class EnhancedCrashClassifier:
         crash_type = classification['crash_type']
         confidence = classification['confidence']
         
-        # Get location
-        camera_location = self.camera_location      
+        # Get camera location from parsed filename
+        parsed_filename = self.parse_incident_filename(video_path)
+        camera_longitude = float(parsed_filename.get('camera_longitude', '0.0'))
+        camera_latitude = float(parsed_filename.get('camera_latitude', '0.0'))
+        
         # Enhanced severity determination with multiple factors
         base_severity = self.CRASH_SEVERITY_MAP.get(crash_type, 'medium')
         damage_assessment = motion_analysis.get('damage_assessment', 'moderate')
@@ -2133,8 +2147,8 @@ class EnhancedCrashClassifier:
         
         return CrashReport(
             incident_datetime=incident_datetime,
-            incident_latitude=camera_location['latitude'],
-            incident_longitude=camera_location['longitude'],
+            incident_latitude=camera_latitude,  # Use camera coordinates as incident location
+            incident_longitude=camera_longitude,  # Use camera coordinates as incident location
             incident_severity=final_severity,
             incident_status="active",
             incident_reporter="AI Crash Detection System",
@@ -2338,11 +2352,8 @@ class EnhancedCrashClassifier:
                 incident_timestamp = incident_info['timestamp']
                 
                 logger.info(f"📹 Analyzing: {os.path.basename(video_file)}")
-                # crash_report = self.classify_crash_video(video_file, extracted_camera_id, low_latency_mode)
                 logger.info(f"📷 Camera ID: {extracted_camera_id}, Timestamp: {incident_timestamp}")
-                
-                # Get camera information from API
-                camera_info = self.get_camera_info(extracted_camera_id)
+                logger.info(f"📍 Camera Location: Lat {incident_info['camera_latitude']}, Lon {incident_info['camera_longitude']}")
                 
                 # Use the camera_id from filename, not the parameter
                 crash_report = self.classify_crash_video(video_file, extracted_camera_id, low_latency_mode)
@@ -2881,7 +2892,8 @@ def main():
             timestamp = parsed_info['timestamp']
             original_incident_type = parsed_info['original_incident_type']
             is_valid_type = parsed_info['is_valid_incident_type']
-            
+            camera_longitude = parsed_info['camera_longitude']
+            camera_latitude = parsed_info['camera_latitude']
             print(f"  Extracted - Camera ID: {camera_id}, Timestamp: {timestamp}")
             print(f"  Full timestamp: {parsed_info['full_timestamp']}")
             print(f"  Original incident type: {original_incident_type} ({'Valid' if is_valid_type else 'Unknown type'})")
@@ -2890,7 +2902,7 @@ def main():
             camera_info = {
                 'camera_id': camera_id,
                 'name': f'Camera {camera_id}',
-                'location': f'Camera {camera_id} Location'
+                'location': f'Longitude {camera_longitude}, Latitude {camera_latitude}'#may need to switch to longitude and lat seperately
             }
             print(f"  Camera Info: {camera_info['name']} at {camera_info['location']}")
             
