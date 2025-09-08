@@ -344,8 +344,7 @@ class EnhancedCrashClassifier:
         "intersection_collision": "medium",
         "parking_lot_incident": "low"
     }
-  #NEEEEEEEEEEEEED TO FIXXXXXXXXXXX camera location and incident locations and then also make the deployment api link updated  
-    # CAMERA_LOCATIONS =
+    # Check camera location and incident locations and then also make the deployment api link updated
     
     def __init__(self, config: Dict = None):
         """Initialize enhanced crash classifier."""
