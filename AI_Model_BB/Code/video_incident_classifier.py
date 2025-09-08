@@ -96,8 +96,6 @@ class CrashReport:
     # Display fields (for compatibility)
     severity: str = None
     description: str = None
-    # Additional display fields
-    severity: str = None
     description: str = None
 
 class EnhancedVideoPreprocessor:
