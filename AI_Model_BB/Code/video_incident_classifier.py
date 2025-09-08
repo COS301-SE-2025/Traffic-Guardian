@@ -468,9 +468,9 @@ class EnhancedCrashClassifier:
     
     def parse_incident_filename(self, video_path: str) -> Dict[str, str]:
         """
-        Parse incident filename format: incident_{camera_id}_{date}_{time}_{milliseconds}_{incident_type}.mp4
-        Example: incident_2_20250811_181338_966_collision.mp4
-        
+        Parse incident filename format: incident_{camera_id}_{date}_{time}_{milliseconds}_{incident_type}_{camera_longitude}_{camera_latitude}.mp4
+        Example: incident_2_20250811_181338_966_collision_2342_-123.mp4
+
         Args:
             video_path: Path to the incident video file
             
@@ -483,12 +483,14 @@ class EnhancedCrashClassifier:
         name_without_ext = os.path.splitext(filename)[0]
         
         # Pattern: incident_{camera_id}_{date}_{time}_{milliseconds}_{incident_type}
-        pattern = r'incident_([^_]+)_([^_]+)_([^_]+)_([^_]+)_(.+)'
+        #added camera long and lat
+        pattern = r'incident_([^_]+)_([^_]+)_([^_]+)_([^_]+)_(.+)_([^_]+)_([^_]+)$'
         match = re.match(pattern, name_without_ext)
         
         if match:
-            camera_id, date, time, milliseconds, original_incident_type = match.groups()
-            
+            camera_id, date, time, milliseconds, original_incident_type, camera_longitude, camera_latitude = match.groups()
+#added camera long and lat
+
             # Combine date and time for full timestamp
             timestamp = f"{date}_{time}"
             full_timestamp = f"{date}_{time}_{milliseconds}"
@@ -508,7 +510,9 @@ class EnhancedCrashClassifier:
                 'full_timestamp': full_timestamp,
                 'original_incident_type': original_incident_type,
                 'is_valid_incident_type': is_valid_type,
-                'filename': filename
+                'filename': filename,
+                'camera_longitude': camera_longitude,#added camera long and lat
+                'camera_latitude': camera_latitude
             }
         else:
             logger.warning(f"Could not parse incident filename: {filename}")
@@ -523,7 +527,9 @@ class EnhancedCrashClassifier:
                 'full_timestamp': now.strftime('%Y%m%d_%H%M%S_%f')[:-3],
                 'original_incident_type': 'unknown',
                 'is_valid_incident_type': False,
-                'filename': filename
+                'filename': filename,
+                'camera_longitude': '0.0',#added camera long and lat
+                'camera_latitude': '0.0'
             }
     
     def is_valid_incident_type(self, incident_type: str) -> bool:
