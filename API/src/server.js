@@ -24,13 +24,41 @@ const io = new Server(server, {
 const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
+// Global socket connection tracking
+let activeConnections = new Set();
+let connectedUsers = new Map(); // socket.id -> user info
+
+// Helper function to broadcast active user count
+const broadcastActiveUsers = () => {
+  const activeUsersCount = activeConnections.size;
+  io.emit('activeUsersUpdate', {
+    count: activeUsersCount,
+    timestamp: new Date()
+  });
+  console.log(`📊 Broadcasting active users: ${activeUsersCount}`);
+};
+
 var welcomeMsg;
 
 io.on('connection',(socket)=>{
+  // Track new connection
+  activeConnections.add(socket.id);
+  connectedUsers.set(socket.id, {
+    socketId: socket.id,
+    connectedAt: new Date(),
+    userAgent: socket.handshake.headers['user-agent'] || 'Unknown',
+    ip: socket.handshake.address || 'Unknown'
+  });
+  
   ILM.addUser(socket.id, {});
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
+  
+  // Broadcast updated user count
+  broadcastActiveUsers();
+  
+  console.log(`👤 New user connected: ${socket.id} (Total: ${activeConnections.size})`);
     
     //traffic prt
     traffic.getTraffic().then((data)=>{
@@ -258,8 +286,11 @@ io.on('connection',(socket)=>{
       }
     }, 30 * 60 * 1000); // 30 minutes
 
-    // Clean up intervals and remove user on disconnect
-    socket.on('disconnect', () => {
+    // Handle socket disconnection - Add user tracking cleanup
+    socket.on('disconnect', (reason) => {
+      // Remove from tracking
+      activeConnections.delete(socket.id);
+      connectedUsers.delete(socket.id);
       
       // Clean up archive intervals
       clearInterval(archiveStatsInterval);
@@ -267,11 +298,31 @@ io.on('connection',(socket)=>{
       
       // Remove user from ILM system
       ILM.removeUser(socket.id);
+      
+      // Broadcast updated user count
+      broadcastActiveUsers();
+      
+      console.log(`👋 User disconnected: ${socket.id} (Reason: ${reason}) (Total: ${activeConnections.size})`);
+    });
+    
+    // Handle request for current stats
+    socket.on('request-stats', () => {
+      socket.emit('activeUsersUpdate', {
+        count: activeConnections.size,
+        timestamp: new Date()
+      });
     });
 });
 
 // Set io instance in app for use in controllers
 app.set('io', io);
+
+// Periodic broadcast of active users count (every 30 seconds)
+setInterval(() => {
+  if (activeConnections.size > 0) {
+    broadcastActiveUsers();
+  }
+}, 30000);
 
 // ==================== ARCHIVE EVENT EMITTERS ====================
 
