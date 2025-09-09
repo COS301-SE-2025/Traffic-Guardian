@@ -7,6 +7,7 @@ import logo from '../assets/TrafficGuardianLogo1_LightFinal.png';
 const navItems = [
   { label: 'Dashboard', path: '/dashboard' },
   { label: 'Live Feed', path: '/live-feed' },
+  { label: 'Map', path: '/map' },
   { label: 'Incidents', path: '/incidents' },
   { label: 'Archives', path: '/archives' },
   { label: 'Analytics', path: '/analytics' },
@@ -35,7 +36,7 @@ const Navbar = () => {
             <img src={logo} alt="Logo" className="navbar-logo" />
           </li>
 
-          {navItems.slice(3, 6).map(item => (
+          {navItems.slice(3, 7).map(item => (
             <li
               key={item.label}
               className={`nav-item ${

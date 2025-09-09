@@ -8,6 +8,7 @@ import GlobalAlertBadge from './components/GlobalAlertBadge';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LiveFeed from './pages/LiveFeed';
+import Map from './pages/Map';
 import Incidents from './pages/Incidents';
 import Account from './pages/Account';
 import SignUp from './pages/SignUp';
@@ -59,6 +60,14 @@ const AnimatedRoutes = () => {
             element={
               <PageWrapper>
                 <LiveFeed />
+              </PageWrapper>
+            }
+          />
+          <Route
+            path="/map"
+            element={
+              <PageWrapper>
+                <Map />
               </PageWrapper>
             }
           />
