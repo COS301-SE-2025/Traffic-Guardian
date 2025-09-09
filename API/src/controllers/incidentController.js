@@ -54,7 +54,13 @@ const incidentController = {
       });
       
       const io = req.app.get('io');
-      //io.emit('newAlert', incident);
+      // Emit direct alert for real-time notifications
+      if (io) {
+        io.emit('newAlert', incident);
+        console.log('✅ Real-time alert emitted:', incident.Incidents_ID);
+      } else {
+        console.log('❌ Socket.IO not available');
+      }
       ILM.notifyUsersIncident(incident, io);
 
       return res.status(201).json({
