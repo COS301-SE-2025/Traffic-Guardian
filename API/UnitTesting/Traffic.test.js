@@ -65,3 +65,50 @@ describe('Incident Analysis Functions', () => {
     ]);
   });
 });
+
+describe('TomTom API Error Handling', () => {
+  const originalEnv = process.env.TOMTOMAPI;
+  
+  afterEach(() => {
+    process.env.TOMTOMAPI = originalEnv;
+  });
+
+  test('getTraffic should return empty data when API fails', async () => {
+    // Set invalid API key to simulate API failure
+    process.env.TOMTOMAPI = 'invalid_key';
+    
+    const result = await traffic.getTraffic();
+    
+    // Should return array with empty incidents for each region
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(11); // 11 regions defined
+    
+    result.forEach(regionData => {
+      expect(regionData).toHaveProperty('location');
+      expect(regionData).toHaveProperty('incidents');
+      expect(Array.isArray(regionData.incidents)).toBe(true);
+      expect(regionData.incidents).toHaveLength(0);
+    });
+  });
+
+  test('analysis functions should handle empty data gracefully', () => {
+    const emptyData = [
+      { location: 'Test', incidents: [] }
+    ];
+
+    const criticalResult = traffic.criticalIncidents(emptyData);
+    expect(criticalResult).toEqual({
+      Data: 'Amount of critical Incidents',
+      Amount: 0
+    });
+
+    const categoryResult = traffic.incidentCategory(emptyData);
+    expect(categoryResult.categories).toBeDefined();
+    expect(categoryResult.percentages).toBeDefined();
+
+    const locationsResult = traffic.incidentLocations(emptyData);
+    expect(locationsResult).toEqual([
+      { location: 'Test', amount: 0 }
+    ]);
+  });
+});

@@ -24,34 +24,75 @@ const io = new Server(server, {
 const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
+// Global socket connection tracking
+let activeConnections = new Set();
+let connectedUsers = new Map(); // socket.id -> user info
+
+// Helper function to broadcast active user count
+const broadcastActiveUsers = () => {
+  const activeUsersCount = activeConnections.size;
+  io.emit('activeUsersUpdate', {
+    count: activeUsersCount,
+    timestamp: new Date()
+  });
+  console.log(`📊 Broadcasting active users: ${activeUsersCount}`);
+};
+
 var welcomeMsg;
 
 io.on('connection',(socket)=>{
+  // Track new connection
+  activeConnections.add(socket.id);
+  connectedUsers.set(socket.id, {
+    socketId: socket.id,
+    connectedAt: new Date(),
+    userAgent: socket.handshake.headers['user-agent'] || 'Unknown',
+    ip: socket.handshake.address || 'Unknown'
+  });
+  
   ILM.addUser(socket.id, {});
-  console.log(socket.id + ' connected');
-  ILM.showUsers();
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
+  
+  // Broadcast updated user count
+  broadcastActiveUsers();
+  
+  console.log(`👤 New user connected: ${socket.id} (Total: ${activeConnections.size})`);
     
     //traffic prt
     traffic.getTraffic().then((data)=>{
-      socket.emit('trafficUpdate', data);
+      if (data && Array.isArray(data)) {
+        socket.emit('trafficUpdate', data);
 
-      //update regions Traffic
-      ILM.updateTraffic(data);
+        //update regions Traffic
+        ILM.updateTraffic(data);
 
-      //critical incidents
-      const res = traffic.criticalIncidents(data);
-      socket.emit('criticalIncidents', res);
+        //critical incidents
+        const res = traffic.criticalIncidents(data);
+        socket.emit('criticalIncidents', res);
 
-      //incident Category
-      const res_incidentCategory = traffic.incidentCategory(data);
-      socket.emit('incidentCategory', res_incidentCategory);
+        //incident Category
+        const res_incidentCategory = traffic.incidentCategory(data);
+        socket.emit('incidentCategory', res_incidentCategory);
 
-      //incident Locations
-      const res_incidentLocations =  traffic.incidentLocations(data);
-      socket.emit('incidentLocations', res_incidentLocations);
+        //incident Locations
+        const res_incidentLocations =  traffic.incidentLocations(data);
+        socket.emit('incidentLocations', res_incidentLocations);
+      } else {
+        console.log('⚠️  Traffic API unavailable on connection - using empty data');
+        socket.emit('trafficUpdate', []);
+        socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0 });
+        socket.emit('incidentCategory', { categories: [], percentages: [] });
+        socket.emit('incidentLocations', []);
+      }
+    }).catch((error) => {
+      console.error('Traffic API error on connection:', error.message);
+      // Send empty data instead of crashing
+      socket.emit('trafficUpdate', []);
+      socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0 });
+      socket.emit('incidentCategory', { categories: [], percentages: [] });
+      socket.emit('incidentLocations', []);
     })
     
     // Weather data on connection
@@ -62,23 +103,33 @@ io.on('connection',(socket)=>{
     });
     
     setInterval(async()=>{
-      const data = await traffic.getTraffic();
-      socket.emit('trafficUpdate', data);
-      
-      // Update regions traffic (from Dev branch)
-      ILM.updateTraffic(data);
+      try {
+        const data = await traffic.getTraffic();
+        
+        if (data && Array.isArray(data)) {
+          socket.emit('trafficUpdate', data);
+          
+          // Update regions traffic (from Dev branch)
+          ILM.updateTraffic(data);
 
-      //critical incidents
-      const res = traffic.criticalIncidents(data);
-      socket.emit('criticalIncidents', res);
+          //critical incidents
+          const res = traffic.criticalIncidents(data);
+          socket.emit('criticalIncidents', res);
 
-      //incident Category
-      const res_incidentCategory = traffic.incidentCategory(data);
-      socket.emit('incidentCategory', res_incidentCategory);
+          //incident Category
+          const res_incidentCategory = traffic.incidentCategory(data);
+          socket.emit('incidentCategory', res_incidentCategory);
 
-      //incident Locations
-      const res_incidentLocations =  traffic.incidentLocations(data);
-      socket.emit('incidentLocations', res_incidentLocations);
+          //incident Locations
+          const res_incidentLocations =  traffic.incidentLocations(data);
+          socket.emit('incidentLocations', res_incidentLocations);
+        } else {
+          console.log('⚠️  Traffic API unavailable in interval update - skipping');
+        }
+      } catch (error) {
+        console.error('Traffic API error in interval update:', error.message);
+        // Continue running - don't let API failures break the interval
+      }
       
       // Update weather data periodically
       try {
@@ -235,9 +286,11 @@ io.on('connection',(socket)=>{
       }
     }, 30 * 60 * 1000); // 30 minutes
 
-    // Clean up intervals and remove user on disconnect
-    socket.on('disconnect', () => {
-      console.log(socket.id + ' disconnected');
+    // Handle socket disconnection - Add user tracking cleanup
+    socket.on('disconnect', (reason) => {
+      // Remove from tracking
+      activeConnections.delete(socket.id);
+      connectedUsers.delete(socket.id);
       
       // Clean up archive intervals
       clearInterval(archiveStatsInterval);
@@ -245,11 +298,31 @@ io.on('connection',(socket)=>{
       
       // Remove user from ILM system
       ILM.removeUser(socket.id);
+      
+      // Broadcast updated user count
+      broadcastActiveUsers();
+      
+      console.log(`👋 User disconnected: ${socket.id} (Reason: ${reason}) (Total: ${activeConnections.size})`);
+    });
+    
+    // Handle request for current stats
+    socket.on('request-stats', () => {
+      socket.emit('activeUsersUpdate', {
+        count: activeConnections.size,
+        timestamp: new Date()
+      });
     });
 });
 
 // Set io instance in app for use in controllers
 app.set('io', io);
+
+// Periodic broadcast of active users count (every 30 seconds)
+setInterval(() => {
+  if (activeConnections.size > 0) {
+    broadcastActiveUsers();
+  }
+}, 30000);
 
 // ==================== ARCHIVE EVENT EMITTERS ====================
 
