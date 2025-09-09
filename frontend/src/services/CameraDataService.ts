@@ -45,8 +45,7 @@ class RobustCameraDataService {
   }
 
   private getAuthHeaders(): HeadersInit {
-    const apiKey =
-      sessionStorage.getItem('apiKey') || localStorage.getItem('apiKey');
+    const apiKey = sessionStorage.getItem('apiKey');
     return {
       'Content-Type': 'application/json',
       'X-API-Key': apiKey || '',

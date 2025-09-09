@@ -105,7 +105,7 @@ export interface IncidentStats {
 
 class ApiService {
   private static getAuthHeaders(): HeadersInit {
-    const apiKey = localStorage.getItem('apiKey');
+    const apiKey = sessionStorage.getItem('apiKey');
     return {
       'Content-Type': 'application/json',
       'X-API-Key': apiKey || '',
@@ -464,13 +464,13 @@ class ApiService {
 
   // Authentication check
   static isAuthenticated(): boolean {
-    const apiKey = localStorage.getItem('apiKey');
+    const apiKey = sessionStorage.getItem('apiKey');
     return !!apiKey && apiKey.length > 0;
   }
 
   // Get current user info
   static getCurrentUser(): any {
-    const userStr = localStorage.getItem('user');
+    const userStr = sessionStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   }
 
@@ -503,8 +503,8 @@ class ApiService {
 
       // Store authentication data
       if (result.apiKey) {
-        localStorage.setItem('apiKey', result.apiKey);
-        localStorage.setItem('user', JSON.stringify(result.user));
+        sessionStorage.setItem('apiKey', result.apiKey);
+        sessionStorage.setItem('user', JSON.stringify(result.user));
       }
 
       return result;
@@ -516,8 +516,8 @@ class ApiService {
 
   // Logout function
   static logout(): void {
-    localStorage.removeItem('apiKey');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('apiKey');
+    sessionStorage.removeItem('user');
   }
 }
 
