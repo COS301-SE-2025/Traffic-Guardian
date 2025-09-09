@@ -85,7 +85,7 @@ class CrashReport:
     emergency_priority: str
     # Camera-specific fields
     camera_id: str = None
-    camera_location: str = None
+    camera_location: str = None # MIGHT NEED TO REMOVE (EXCESS)
     camera_longitude: str = None
     camera_latitude: str = None
     # Incident filename fields
@@ -379,29 +379,29 @@ class EnhancedCrashClassifier:
             'sudden_speed_change': []
         }
         
-        # # API configuration for camera information NEED TO UPDATE API STUFF NEXT
+        # API configuration for camera information NEED TO UPDATE API STUFF NEXT
         self.api_base_url = "http://localhost:5000/api"  # Need to adjustr
         self.camera_info_cache = {}  # Cache camera information
-    # #MIGHT HAVE TO REMOVE double check
-    # def __del__(self):
-    #     """Cleanup method to properly close ThreadPool."""
-    #     try:
-    #         if hasattr(self, 'thread_pool') and self.thread_pool:
-    #             self.thread_pool.close()
-    #             self.thread_pool.join()
-    #     except:
-    #         pass  # Ignore cleanup errors
+        
+    def __del__(self):
+        """Cleanup method to properly close ThreadPool."""
+        try:
+            if hasattr(self, 'thread_pool') and self.thread_pool:
+                self.thread_pool.close()
+                self.thread_pool.join()
+        except:
+            pass  # Ignore cleanup errors
     
-    # def cleanup(self):
-    #     """Explicitly cleanup resources."""
-    #     try:
-    #         if hasattr(self, 'thread_pool') and self.thread_pool:
-    #             self.thread_pool.close()
-    #             self.thread_pool.join()
-    #             self.thread_pool = None
-    #     except:
-    #         pass  # Ignore cleanup errors
-    #     # MIGHT HAVE TO REMOVE
+    def cleanup(self):
+        """Explicitly cleanup resources."""
+        try:
+            if hasattr(self, 'thread_pool') and self.thread_pool:
+                self.thread_pool.close()
+                self.thread_pool.join()
+                self.thread_pool = None
+        except:
+            pass  # Ignore cleanup errors
+            
     def _get_optimized_config(self):
         """Optimized configuration for crash detection accuracy."""
         return {
@@ -3016,16 +3016,12 @@ def main():
                 description = (report.description or report.alerts_message)[:100]
                 print(f"   Description: {description}...")
                 
-                # Re-check API submission status if needed
-                print(f"  API Status: Checking submission result...")
-                api_recheck = classifier.submit_incident_to_api(report)
-                if api_recheck['success']:
-                    successful_submissions += 1
-                    print(f"      SUBMITTED TO DATABASE")
-                else:
-                    failed_submissions += 1
-                    print(f"      FAILED TO SUBMIT")
-            
+                # API was already submitted during processing - just show status
+                print(f"  API Status: Already submitted during processing")
+                successful_submissions += 1  # Since we only add reports that were successfully submitted
+                print(f"      SUBMITTED TO DATABASE")
+
+
             print(f"\n" + "=" * 70)
             print(f" FINAL STATISTICS")
             print("=" * 70)
