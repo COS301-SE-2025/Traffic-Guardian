@@ -678,7 +678,7 @@ const Incidents: React.FC = () => {
     if (isNaN(date.getTime())) {
       return 'Invalid Date';
     }
-    return date.toLocaleString('en-ZA', {
+    return date.toLocaleString('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
