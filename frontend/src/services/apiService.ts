@@ -339,17 +339,17 @@ class ApiService {
       if (archive.Archive_SearchText) {
         const searchText = archive.Archive_SearchText.toLowerCase();
         const locations = [
-          'rosebank',
-          'sandton',
-          'midrand',
-          'centurion',
-          'pretoria',
-          'soweto',
-          'randburg',
-          'boksburg',
-          'vereeniging',
-          'alberton',
-          'hatfield',
+          'san francisco',
+          'san jose',
+          'los angeles',
+          'san diego',
+          'sacramento',
+          'oakland',
+          'palo alto',
+          'pasadena',
+          'long beach',
+          'thousand oaks',
+          'torrance',
         ];
 
         for (const location of locations) {

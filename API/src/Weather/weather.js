@@ -5,18 +5,18 @@
 const axios = require('axios');
 const FormData = require('form-data');
 
-// Unique South African locations for weather data
+// California locations for weather data
 var regions = [
-  'Johannesburg', 
-  'Sandton', 
-  'Pretoria',
-  'Midrand', 
-  'Centurion', 
-  'Roodepoort',
-  'Kempton Park',
-  'Germiston',
-  'Boksburg',
-  'Benoni'
+  'San Francisco', 
+  'San Jose', 
+  'Los Angeles',
+  'San Diego', 
+  'Sacramento', 
+  'Oakland',
+  'Palo Alto',
+  'Pasadena',
+  'Long Beach',
+  'Torrance'
 ];
     
     async function getWeather(){
@@ -64,12 +64,12 @@ module.exports = {
 /*
 {
   location: {
-    name: 'Johannesburg',
-    region: 'Gauteng',
-    country: 'South Africa',
-    lat: -26.2,
-    lon: 28.083,
-    tz_id: 'Africa/Johannesburg',
+    name: 'San Francisco',
+    region: 'California',
+    country: 'United States',
+    lat: 37.7749,
+    lon: -122.4194,
+    tz_id: 'America/Los_Angeles',
     localtime_epoch: 1749900851,
     localtime: '2025-06-14 13:34'
   },

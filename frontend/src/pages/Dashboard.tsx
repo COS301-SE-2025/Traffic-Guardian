@@ -612,7 +612,7 @@ const Dashboard: React.FC = () => {
   }, [weatherLastUpdate]);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-ZA', {
+    return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
@@ -928,7 +928,7 @@ const Dashboard: React.FC = () => {
                       User {event.action}ed ({event.totalUsers} online)
                     </span>
                     <span className="timeline-time" data-cy="timeline-time">
-                      {new Date(event.timestamp).toLocaleTimeString('en-ZA', {
+                      {new Date(event.timestamp).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
