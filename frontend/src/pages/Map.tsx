@@ -186,12 +186,19 @@ const CameraModal: React.FC<CameraModalProps> = ({ camera, isOpen, onClose }) =>
   );
 };
 
+// Weather layer types
+type WeatherLayer = 'satellite';
+
 interface MapControlsProps {
   onRefresh: () => void;
   onFilterChange: (status: string) => void;
   activeFilter: string;
   totalCameras: number;
   visibleCameras: number;
+  onWeatherToggle: (layer: WeatherLayer | null) => void;
+  activeWeatherLayer: WeatherLayer | null;
+  weatherOpacity: number;
+  onOpacityChange: (opacity: number) => void;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -200,6 +207,10 @@ const MapControls: React.FC<MapControlsProps> = ({
   activeFilter,
   totalCameras,
   visibleCameras,
+  onWeatherToggle,
+  activeWeatherLayer,
+  weatherOpacity,
+  onOpacityChange,
 }) => (
   <div className="map-controls">
     <div className="map-controls-left">
@@ -244,8 +255,92 @@ const MapControls: React.FC<MapControlsProps> = ({
         Refresh
       </button>
     </div>
+
+    {/* Weather Controls */}
+    <div className="weather-controls">
+      <div className="weather-controls-header">
+        <h3>Weather Layers</h3>
+        {activeWeatherLayer && (
+          <button
+            className="clear-weather-button"
+            onClick={() => onWeatherToggle(null)}
+            title="Clear weather overlay"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        )}
+      </div>
+
+      <div className="weather-buttons-grid">
+        <button
+          className={`weather-button ${activeWeatherLayer === 'satellite' ? 'active' : ''}`}
+          onClick={() => onWeatherToggle(activeWeatherLayer === 'satellite' ? null : 'satellite')}
+        >
+          <div className="weather-button-icon satellite-icon"></div>
+          <span>Satellite</span>
+        </button>
+      </div>
+
+      {activeWeatherLayer && (
+        <div className="weather-opacity-control">
+          <div className="opacity-header">
+            <label htmlFor="weather-opacity">Layer Opacity</label>
+            <span className="opacity-value">{Math.round(weatherOpacity * 100)}%</span>
+          </div>
+          <input
+            id="weather-opacity"
+            type="range"
+            min="0.1"
+            max="1"
+            step="0.1"
+            value={weatherOpacity}
+            onChange={(e) => onOpacityChange(parseFloat(e.target.value))}
+            className="opacity-slider"
+          />
+        </div>
+      )}
+    </div>
   </div>
 );
+
+// Weather overlay component
+const WeatherOverlay: React.FC<{
+  layer: WeatherLayer | null;
+  opacity: number;
+}> = ({ layer, opacity }) => {
+  const getWeatherTileUrl = (layer: WeatherLayer): string => {
+    const layerMap: Record<WeatherLayer, string> = {
+      satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+    };
+
+    return layerMap[layer];
+  };
+
+  const [tileUrl, setTileUrl] = React.useState<string>('');
+
+  React.useEffect(() => {
+    if (!layer) {
+      setTileUrl('');
+      return;
+    }
+
+    setTileUrl(getWeatherTileUrl(layer));
+  }, [layer]);
+
+  if (!layer || !tileUrl) return null;
+
+  return (
+    <TileLayer
+      url={tileUrl}
+      opacity={opacity}
+      zIndex={1000}
+      attribution='© Esri, World Imagery'
+    />
+  );
+};
 
 // Component to fit map bounds to markers
 const FitBounds: React.FC<{ cameras: CameraFeed[] }> = ({ cameras }) => {
@@ -270,6 +365,8 @@ const Map: React.FC = () => {
   const { cameraFeeds, loading, error, refreshFeeds } = useLiveFeed();
   const [selectedCamera, setSelectedCamera] = useState<CameraFeed | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [activeWeatherLayer, setActiveWeatherLayer] = useState<WeatherLayer | null>(null);
+  const [weatherOpacity, setWeatherOpacity] = useState<number>(0.6);
 
   // Filter cameras based on status and coordinates
   const filteredCameras = useMemo(() => {
@@ -290,6 +387,14 @@ const Map: React.FC = () => {
 
   const handleRefresh = () => {
     refreshFeeds();
+  };
+
+  const handleWeatherToggle = (layer: WeatherLayer | null) => {
+    setActiveWeatherLayer(layer);
+  };
+
+  const handleOpacityChange = (opacity: number) => {
+    setWeatherOpacity(opacity);
   };
 
   if (loading) {
@@ -325,6 +430,10 @@ const Map: React.FC = () => {
         activeFilter={statusFilter}
         totalCameras={cameraFeeds.filter(c => c.coordinates).length}
         visibleCameras={filteredCameras.length}
+        onWeatherToggle={handleWeatherToggle}
+        activeWeatherLayer={activeWeatherLayer}
+        weatherOpacity={weatherOpacity}
+        onOpacityChange={handleOpacityChange}
       />
 
       <div className="map-container">
@@ -337,7 +446,10 @@ const Map: React.FC = () => {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          
+
+          {/* Weather Overlay */}
+          <WeatherOverlay layer={activeWeatherLayer} opacity={weatherOpacity} />
+
           <FitBounds cameras={filteredCameras} />
 
           {filteredCameras.map((camera) => (
