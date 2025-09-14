@@ -11,7 +11,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './LiveFeed.css';
 import { useLiveFeed, CameraFeed } from '../contexts/LiveFeedContext';
-import CarLoadingAnimation from '../components/CarLoadingAnimation';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
@@ -371,7 +371,7 @@ const LiveFeed: React.FC = () => {
   }, [userRole]);
 
   if (loading && cameraFeeds.length === 0) {
-    return <CarLoadingAnimation />;
+    return <LoadingSpinner size="large" text="Loading camera feeds..." className="content" />;
   }
 
   if (error && cameraFeeds.length === 0) {

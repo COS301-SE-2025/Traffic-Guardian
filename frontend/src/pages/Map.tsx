@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import { motion } from 'framer-motion';
 import { useLiveFeed, CameraFeed } from '../contexts/LiveFeedContext';
-import CarLoadingAnimation from '../components/CarLoadingAnimation';
+import LoadingSpinner from '../components/LoadingSpinner';
 import 'leaflet/dist/leaflet.css';
 import './Map.css';
 
@@ -295,8 +295,7 @@ const Map: React.FC = () => {
   if (loading) {
     return (
       <div className="map-loading">
-        <CarLoadingAnimation />
-        <p>Loading camera map...</p>
+        <LoadingSpinner size="large" text="Loading camera map..." className="content" />
       </div>
     );
   }
