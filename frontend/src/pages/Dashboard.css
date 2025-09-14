@@ -1549,6 +1549,23 @@ body {
   font-size: 1.1em;
 }
 
+/* PEMS Status Indicators - minimal styling to maintain original look */
+.stat-card.system-status-card.status-healthy {
+  border-left-color: var(--severity-low-text);
+}
+
+.stat-card.system-status-card.status-warning {
+  border-left-color: var(--severity-medium-text);
+}
+
+.stat-card.system-status-card.status-critical {
+  border-left-color: var(--severity-critical-text);
+}
+
+.stat-card.risk-indicator {
+  border-left: 4px solid var(--severity-critical-text);
+}
+
 /* Responsive adjustments for real-time events */
 @media (max-width: 768px) {
   .realtime-header {
