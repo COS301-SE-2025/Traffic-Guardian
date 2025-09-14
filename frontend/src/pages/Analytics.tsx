@@ -22,6 +22,7 @@ import ApiService, {
 } from '../services/apiService';
 import './Analytics.css';
 import io from 'socket.io-client';
+import PEMSAnalytics from '../components/PEMSAnalytics';
 
 const ChartIcon = () => (
   <svg
@@ -129,6 +130,7 @@ const Analytics: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [_socket, _setSocket] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'incidents' | 'pems'>('incidents');
 
   // Existing traffic data state
   const [categoryBreakdown, setCategoryBreakdown] = useState<
@@ -444,14 +446,31 @@ const Analytics: React.FC = () => {
           <div className="analytics-title">
             <h1>Traffic Analytics Dashboard</h1>
             <p>
-              Real-time traffic incident insights, analytics, and archive
+              Real-time traffic incident insights, PEMS data analytics, and archive
               management
             </p>
+            <div className="analytics-tabs">
+              <button
+                className={activeTab === 'incidents' ? 'active' : ''}
+                onClick={() => setActiveTab('incidents')}
+              >
+                Incident Analytics
+              </button>
+              <button
+                className={activeTab === 'pems' ? 'active' : ''}
+                onClick={() => setActiveTab('pems')}
+              >
+                PEMS Analytics
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Enhanced Summary Cards including Archive Stats */}
-        <div className="summary-cards">
+        {/* Tab Content */}
+        {activeTab === 'incidents' && (
+          <>
+            {/* Enhanced Summary Cards including Archive Stats */}
+            <div className="summary-cards">
           <div className="summary-card">
             <div className="card-icon incidents">
               <ChartIcon />
@@ -893,6 +912,15 @@ const Analytics: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+          </>
+        )}
+
+        {/* PEMS Analytics Tab */}
+        {activeTab === 'pems' && (
+          <div className="pems-analytics-section">
+            <PEMSAnalytics />
           </div>
         )}
       </div>

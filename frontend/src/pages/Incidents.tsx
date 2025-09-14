@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Incidents.css';
-import CarLoadingAnimation from '../components/CarLoadingAnimation';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { useSocket } from '../consts/SocketContext';
 
 // SVG icon components
@@ -688,7 +688,7 @@ const Incidents: React.FC = () => {
   };
 
   if (isLoading && incidents.length === 0) {
-    return <CarLoadingAnimation />;
+    return <LoadingSpinner size="large" text="Loading incidents..." className="content" />;
   }
 
   return (
