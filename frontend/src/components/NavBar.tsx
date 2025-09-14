@@ -21,7 +21,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-content">
         <ul className="tg-nav-links">
-          {navItems.slice(0, 3).map(item => (
+          {navItems.slice(0, 4).map(item => (
             <li
               key={item.label}
               className={`nav-item ${
@@ -36,7 +36,7 @@ const Navbar = () => {
             <img src={logo} alt="Logo" className="navbar-logo" />
           </li>
 
-          {navItems.slice(3, 7).map(item => (
+          {navItems.slice(4, 7).map(item => (
             <li
               key={item.label}
               className={`nav-item ${
