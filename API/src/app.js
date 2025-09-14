@@ -15,6 +15,7 @@ const userRoutes = require('./routes/user');
 const incidentRoutes = require('./routes/incidents');
 const alertRoutes = require('./routes/alerts');
 const trafficRoutes = require('./routes/traffic'); // NEW LINE ADDED
+const pemsRoutes = require('./routes/pems'); // PEMS traffic data routes
 const archivesRoutes = require('./routes/archives');
 const adminRoutes = require('./routes/admin');
 const cameraRoutes = require('./routes/cameras');
@@ -47,6 +48,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/traffic', trafficRoutes); // NEW LINE ADDED
+app.use('/api/pems', pemsRoutes); // PEMS traffic data endpoints
 app.use('/api/archives', archivesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cameras', cameraRoutes);

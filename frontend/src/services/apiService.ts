@@ -519,6 +519,67 @@ class ApiService {
     sessionStorage.removeItem('apiKey');
     sessionStorage.removeItem('user');
   }
+
+ 
+  static async fetchPEMSDashboardSummary(): Promise<any | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/pems/dashboard-summary`, {
+        headers: this.getAuthHeaders(),
+      });
+
+      const pemsData = await this.handleResponse<any>(response);
+      return pemsData;
+    } catch (error) {
+      console.error('Error fetching PEMS dashboard summary:', error);
+      return null;
+    }
+  }
+
+  // Get high-risk areas across all districts
+  static async fetchPEMSHighRiskAreas(): Promise<any | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/pems/high-risk-areas`, {
+        headers: this.getAuthHeaders(),
+      });
+
+      const highRiskData = await this.handleResponse<any>(response);
+      return highRiskData;
+    } catch (error) {
+      console.error('Error fetching PEMS high-risk areas:', error);
+      return null;
+    }
+  }
+
+  // Get PEMS alerts for analytics
+  static async fetchPEMSAlerts(priority?: string): Promise<any | null> {
+    try {
+      const queryParams = priority ? `?priority=${priority}` : '';
+      const response = await fetch(`${API_BASE_URL}/pems/alerts${queryParams}`, {
+        headers: this.getAuthHeaders(),
+      });
+
+      const alertsData = await this.handleResponse<any>(response);
+      return alertsData;
+    } catch (error) {
+      console.error('Error fetching PEMS alerts:', error);
+      return null;
+    }
+  }
+
+  // Get PEMS data for specific district (for detailed analytics)
+  static async fetchPEMSDistrictData(district: number): Promise<any | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/pems/district/${district}`, {
+        headers: this.getAuthHeaders(),
+      });
+
+      const districtData = await this.handleResponse<any>(response);
+      return districtData;
+    } catch (error) {
+      console.error(`Error fetching PEMS district ${district} data:`, error);
+      return null;
+    }
+  }
 }
 
 export default ApiService;
