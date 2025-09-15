@@ -14,6 +14,7 @@
     "@types/jest": "^27.5.2",
     "framer-motion": "^12.15.0",
     "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
     "lucide-react": "^0.522.0",
     "postcss": "^8.4.31",
     "react": "^19.1.0",
@@ -63,6 +64,7 @@
   "devDependencies": {
     "@types/cypress": "^1.1.6",
     "@types/leaflet": "^1.9.18",
+    "@types/leaflet.heat": "^0.2.5",
     "@types/node": "^16.18.126",
     "@types/react": "^18.3.22",
     "@types/react-dom": "^18.3.7",
