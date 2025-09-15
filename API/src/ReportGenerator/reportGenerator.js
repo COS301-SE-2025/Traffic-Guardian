@@ -2,12 +2,33 @@ const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
 
-async function generatePDF() {
+async function generatePDF(incidents = []) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
   const filePath = path.join(__dirname, "template.html");
-  await page.goto(`file://${filePath}`, { waitUntil: "networkidle0" });
+  let htmlContent = fs.readFileSync(filePath, "utf-8");
+
+  // Build incident cards styled like the form
+  const incidentsHtml = incidents.map(incident => `
+    <div class="incident-entry">
+      <div class="form-group"><label>Date & Time:</label> ${incident.Incidents_DateTime}</div>
+      <div class="form-group"><label>Longitude:</label> ${incident.Incidents_Longitude}</div>
+      <div class="form-group"><label>Latitude:</label> ${incident.Incidents_Latitude}</div>
+      <div class="form-group"><label>Severity:</label> ${incident.Incident_Severity}</div>
+      <div class="form-group"><label>Status:</label> ${incident.Incident_Status}</div>
+      <div class="form-group"><label>Reporter:</label> ${incident.Incident_Reporter}</div>
+      <div class="form-group"><label>Camera ID:</label> ${incident.Incident_CameraID}</div>
+      <div class="form-group"><label>Description:</label> ${incident.Incident_Description}</div>
+      <hr>
+    </div>
+  `).join("");
+
+  // Replace placeholder in HTML
+  htmlContent = htmlContent.replace("<!-- INCIDENTS_PLACEHOLDER -->", incidentsHtml);
+
+  // Load the HTML content into Puppeteer
+  await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
   const reportsDir = path.join(__dirname, "reports");
   if (!fs.existsSync(reportsDir)) {
@@ -27,4 +48,23 @@ async function generatePDF() {
   console.log("Report generated:", pdfPath);
 }
 
-generatePDF();
+module.exports = { 
+  generatePDF 
+};
+
+
+//testing
+const incidents = [
+  {
+    Incidents_DateTime: "2025-09-15 14:00",
+    Incidents_Longitude: 28.0473,
+    Incidents_Latitude: -26.2041,
+    Incident_Severity: "High",
+    Incident_Status: "Open",
+    Incident_Reporter: "John Doe",
+    Incident_CameraID: "CAM123",
+    Incident_Description: "Minor collision at intersection"
+  }
+];
+
+generatePDF(incidents);
