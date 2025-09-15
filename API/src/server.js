@@ -35,7 +35,7 @@ const broadcastActiveUsers = () => {
     count: activeUsersCount,
     timestamp: new Date()
   });
-  console.log(`📊 Broadcasting active users: ${activeUsersCount}`);
+  console.log(`Broadcasting active users: ${activeUsersCount}`);
 };
 
 var welcomeMsg;
@@ -58,7 +58,7 @@ io.on('connection',(socket)=>{
   // Broadcast updated user count
   broadcastActiveUsers();
   
-  console.log(`👤 New user connected: ${socket.id} (Total: ${activeConnections.size})`);
+  console.log(`New user connected: ${socket.id} (Total: ${activeConnections.size})`);
     
     //traffic prt
     traffic.getTraffic().then((data)=>{
@@ -80,7 +80,7 @@ io.on('connection',(socket)=>{
         const res_incidentLocations =  traffic.incidentLocations(data);
         socket.emit('incidentLocations', res_incidentLocations);
       } else {
-        console.log('⚠️  Traffic API unavailable on connection - using empty data');
+        console.log('Traffic API unavailable on connection - using empty data');
         socket.emit('trafficUpdate', []);
         socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0 });
         socket.emit('incidentCategory', { categories: [], percentages: [] });
@@ -124,7 +124,7 @@ io.on('connection',(socket)=>{
           const res_incidentLocations =  traffic.incidentLocations(data);
           socket.emit('incidentLocations', res_incidentLocations);
         } else {
-          console.log('⚠️  Traffic API unavailable in interval update - skipping');
+          console.log('Traffic API unavailable in interval update - skipping');
         }
       } catch (error) {
         console.error('Traffic API error in interval update:', error.message);
@@ -302,7 +302,7 @@ io.on('connection',(socket)=>{
       // Broadcast updated user count
       broadcastActiveUsers();
       
-      console.log(`👋 User disconnected: ${socket.id} (Reason: ${reason}) (Total: ${activeConnections.size})`);
+      console.log(`User disconnected: ${socket.id} (Reason: ${reason}) (Total: ${activeConnections.size})`);
     });
     
     // Handle request for current stats
