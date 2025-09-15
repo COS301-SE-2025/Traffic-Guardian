@@ -29,6 +29,7 @@
     "morgan": "^1.10.0",
     "node-cache": "^5.1.2",
     "pg": "^8.16.0",
+    "puppeteer": "^24.20.0",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
@@ -43,7 +44,7 @@
       "form-data": ">=4.0.4"
     },
     "axios": {
-      "form-data": ">=4.0.4"  
+      "form-data": ">=4.0.4"
     },
     "nodemon": {
       "semver": ">=7.5.2"
