@@ -1,25 +1,27 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Icon } from 'leaflet';
+import L from 'leaflet';
 import { motion } from 'framer-motion';
 import { useLiveFeed, CameraFeed } from '../contexts/LiveFeedContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import TrafficHeatmap from '../components/TrafficHeatmap';
+import trafficDensityService, { HeatmapPoint, TrafficDensityAnalysis } from '../services/trafficDensityService';
 import 'leaflet/dist/leaflet.css';
 import './Map.css';
 
 // Fix for default markers in Leaflet with Webpack
-delete (Icon.Default.prototype as any)._getIconUrl;
-Icon.Default.mergeOptions({
+delete ((L as any).Icon.Default.prototype as any)._getIconUrl;
+(L as any).Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
 // Custom camera icons based on status
-const createCameraIcon = (status: 'Online' | 'Offline' | 'Loading'): Icon => {
+const createCameraIcon = (status: 'Online' | 'Offline' | 'Loading'): any => {
   const color = status === 'Online' ? '#4ade80' : status === 'Loading' ? '#f59e0b' : '#ef4444';
-  
-  return new Icon({
+
+  return new (L as any).Icon({
     iconUrl: `data:image/svg+xml;base64,${btoa(`
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="16" cy="16" r="15" fill="${color}" stroke="white" stroke-width="2"/>
@@ -199,6 +201,11 @@ interface MapControlsProps {
   activeWeatherLayer: WeatherLayer | null;
   weatherOpacity: number;
   onOpacityChange: (opacity: number) => void;
+  onHeatmapToggle: () => void;
+  heatmapVisible: boolean;
+  heatmapOpacity: number;
+  onHeatmapOpacityChange: (opacity: number) => void;
+  trafficAnalysis: TrafficDensityAnalysis | null;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -211,97 +218,196 @@ const MapControls: React.FC<MapControlsProps> = ({
   activeWeatherLayer,
   weatherOpacity,
   onOpacityChange,
+  onHeatmapToggle,
+  heatmapVisible,
+  heatmapOpacity,
+  onHeatmapOpacityChange,
+  trafficAnalysis,
 }) => (
   <div className="map-controls">
-    <div className="map-controls-left">
-      <h2>Traffic Camera Map</h2>
-      <p>
-        Showing {visibleCameras} of {totalCameras} cameras
-      </p>
-    </div>
-    <div className="map-controls-right">
-      <div className="map-filter-buttons">
-        <button
-          className={`filter-button ${activeFilter === 'all' ? 'active' : ''}`}
-          onClick={() => onFilterChange('all')}
-        >
-          All
-        </button>
-        <button
-          className={`filter-button online ${activeFilter === 'Online' ? 'active' : ''}`}
-          onClick={() => onFilterChange('Online')}
-        >
-          Online
-        </button>
-        <button
-          className={`filter-button loading ${activeFilter === 'Loading' ? 'active' : ''}`}
-          onClick={() => onFilterChange('Loading')}
-        >
-          Loading
-        </button>
-        <button
-          className={`filter-button offline ${activeFilter === 'Offline' ? 'active' : ''}`}
-          onClick={() => onFilterChange('Offline')}
-        >
-          Offline
-        </button>
+    {/* Main Header */}
+    <div className="map-header">
+      <div className="map-title-section">
+        <h2>Traffic Camera Map</h2>
+        <div className="camera-count">
+          <span className="count-number">{visibleCameras}</span>
+          <span className="count-label">of {totalCameras} cameras</span>
+        </div>
       </div>
+
       <button className="refresh-button" onClick={onRefresh}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="23 4 23 10 17 10"></polyline>
           <polyline points="1 20 1 14 7 14"></polyline>
           <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
         </svg>
-        Refresh
+        Refresh Data
       </button>
     </div>
 
-    {/* Weather Controls */}
-    <div className="weather-controls">
-      <div className="weather-controls-header">
-        <h3>Weather Layers</h3>
-        {activeWeatherLayer && (
+    {/* Control Panels Row */}
+    <div className="control-panels">
+      {/* Camera Filters Panel */}
+      <div className="control-panel camera-panel">
+        <div className="panel-header">
+          <h3>Camera Status</h3>
+        </div>
+        <div className="filter-buttons-grid">
           <button
-            className="clear-weather-button"
-            onClick={() => onWeatherToggle(null)}
-            title="Clear weather overlay"
+            className={`filter-chip ${activeFilter === 'all' ? 'active' : ''}`}
+            onClick={() => onFilterChange('all')}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <span className="chip-label">All</span>
           </button>
+          <button
+            className={`filter-chip online ${activeFilter === 'Online' ? 'active' : ''}`}
+            onClick={() => onFilterChange('Online')}
+          >
+            <div className="chip-indicator online-indicator"></div>
+            <span className="chip-label">Online</span>
+          </button>
+          <button
+            className={`filter-chip loading ${activeFilter === 'Loading' ? 'active' : ''}`}
+            onClick={() => onFilterChange('Loading')}
+          >
+            <div className="chip-indicator loading-indicator"></div>
+            <span className="chip-label">Loading</span>
+          </button>
+          <button
+            className={`filter-chip offline ${activeFilter === 'Offline' ? 'active' : ''}`}
+            onClick={() => onFilterChange('Offline')}
+          >
+            <div className="chip-indicator offline-indicator"></div>
+            <span className="chip-label">Offline</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Weather Panel */}
+      <div className="control-panel weather-panel">
+        <div className="panel-header">
+          <h3>Weather Layer</h3>
+          <button
+            className={`toggle-button satellite ${activeWeatherLayer === 'satellite' ? 'active' : ''}`}
+            onClick={() => onWeatherToggle(activeWeatherLayer === 'satellite' ? null : 'satellite')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+            </svg>
+            Satellite
+          </button>
+        </div>
+
+        {activeWeatherLayer && (
+          <div className="panel-content">
+            <div className="slider-control">
+              <div className="slider-header">
+                <label>Opacity</label>
+                <span className="slider-value">{Math.round(weatherOpacity * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min="0.1"
+                max="1"
+                step="0.1"
+                value={weatherOpacity}
+                onChange={(e) => onOpacityChange(parseFloat(e.target.value))}
+                className="modern-slider"
+              />
+            </div>
+          </div>
         )}
       </div>
 
-      <div className="weather-buttons-grid">
-        <button
-          className={`weather-button ${activeWeatherLayer === 'satellite' ? 'active' : ''}`}
-          onClick={() => onWeatherToggle(activeWeatherLayer === 'satellite' ? null : 'satellite')}
-        >
-          <div className="weather-button-icon satellite-icon"></div>
-          <span>Satellite</span>
-        </button>
-      </div>
-
-      {activeWeatherLayer && (
-        <div className="weather-opacity-control">
-          <div className="opacity-header">
-            <label htmlFor="weather-opacity">Layer Opacity</label>
-            <span className="opacity-value">{Math.round(weatherOpacity * 100)}%</span>
-          </div>
-          <input
-            id="weather-opacity"
-            type="range"
-            min="0.1"
-            max="1"
-            step="0.1"
-            value={weatherOpacity}
-            onChange={(e) => onOpacityChange(parseFloat(e.target.value))}
-            className="opacity-slider"
-          />
+      {/* Traffic Density Panel */}
+      <div className="control-panel traffic-panel">
+        <div className="panel-header">
+          <h3>Traffic Density</h3>
+          <button
+            className={`toggle-button heatmap ${heatmapVisible ? 'active' : ''}`}
+            onClick={onHeatmapToggle}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M2 20h20v2H2zm1.64-6.36c.9.9 2.15.9 3.05 0l2.83-2.83c.9-.9.9-2.15 0-3.05-.9-.9-2.15-.9-3.05 0l-2.83 2.83c-.9.9-.9 2.15 0 3.05z"></path>
+              <path d="m6.5 17.5-5-5c-.9-.9-.9-2.15 0-3.05L6.34 4.6c.9-.9 2.15-.9 3.05 0 .9.9.9 2.15 0 3.05l-4.84 4.85c-.9.9-2.15.9-3.05 0z"></path>
+            </svg>
+            Heatmap
+          </button>
         </div>
-      )}
+
+        <div className="panel-content">
+          {trafficAnalysis ? (
+            <div className="traffic-metrics">
+              <div className="metric">
+                <div className="metric-value">{trafficAnalysis.totalVehicles}</div>
+                <div className="metric-label">Vehicles</div>
+              </div>
+              <div className="metric">
+                <div className={`metric-value ${trafficAnalysis.riskAreas.length > 0 ? 'warning' : ''}`}>
+                  {trafficAnalysis.riskAreas.length}
+                </div>
+                <div className="metric-label">Risk Areas</div>
+              </div>
+              <div className="metric intensity-metric">
+                <div className="metric-label">Peak Intensity</div>
+                <div className="intensity-bar-modern">
+                  <div
+                    className="intensity-fill-modern"
+                    style={{ width: `${trafficAnalysis.peakIntensity * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="traffic-metrics">
+              <div className="metric">
+                <div className="metric-value">-</div>
+                <div className="metric-label">Vehicles</div>
+              </div>
+              <div className="metric">
+                <div className="metric-value">-</div>
+                <div className="metric-label">Risk Areas</div>
+              </div>
+              <div className="metric intensity-metric">
+                <div className="metric-label">Peak Intensity</div>
+                <div className="intensity-bar-modern">
+                  <div className="intensity-fill-modern" style={{ width: '0%' }}></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Always show heatmap controls when heatmap is visible */}
+          {heatmapVisible && (
+            <div className="slider-control">
+              <div className="slider-header">
+                <label>Heatmap Opacity</label>
+                <span className="slider-value">{Math.round(heatmapOpacity * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min="0.1"
+                max="1"
+                step="0.1"
+                value={heatmapOpacity}
+                onChange={(e) => onHeatmapOpacityChange(parseFloat(e.target.value))}
+                className="modern-slider heatmap-slider"
+              />
+
+              <div className="traffic-legend">
+                <div className="legend-label">Traffic Intensity</div>
+                <div className="legend-bar"></div>
+                <div className="legend-markers">
+                  <span>Low</span>
+                  <span>High</span>
+                  <span>Critical</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   </div>
 );
@@ -334,10 +440,10 @@ const WeatherOverlay: React.FC<{
 
   return (
     <TileLayer
-      url={tileUrl}
-      opacity={opacity}
-      zIndex={1000}
-      attribution='© Esri, World Imagery'
+      {...({
+        url: tileUrl,
+        attribution: '© Esri, World Imagery'
+      } as any)}
     />
   );
 };
@@ -368,6 +474,12 @@ const Map: React.FC = () => {
   const [activeWeatherLayer, setActiveWeatherLayer] = useState<WeatherLayer | null>(null);
   const [weatherOpacity, setWeatherOpacity] = useState<number>(0.6);
 
+  // Heatmap state - Enable by default for testing
+  const [heatmapVisible, setHeatmapVisible] = useState<boolean>(true);
+  const [heatmapOpacity, setHeatmapOpacity] = useState<number>(0.7);
+  const [heatmapData, setHeatmapData] = useState<HeatmapPoint[]>([]);
+  const [trafficAnalysis, setTrafficAnalysis] = useState<TrafficDensityAnalysis | null>(null);
+
   // Filter cameras based on status and coordinates
   const filteredCameras = useMemo(() => {
     return cameraFeeds.filter(camera => {
@@ -396,6 +508,71 @@ const Map: React.FC = () => {
   const handleOpacityChange = (opacity: number) => {
     setWeatherOpacity(opacity);
   };
+
+  const handleHeatmapToggle = () => {
+    const newVisible = !heatmapVisible;
+    console.log(`🔄 Toggling heatmap: ${heatmapVisible} -> ${newVisible}`);
+    setHeatmapVisible(newVisible);
+  };
+
+  const handleHeatmapOpacityChange = (opacity: number) => {
+    setHeatmapOpacity(opacity);
+  };
+
+  // Subscribe to heatmap updates
+  useEffect(() => {
+    console.log('🔗 Subscribing to traffic density service...');
+    const unsubscribe = trafficDensityService.subscribe((data: HeatmapPoint[]) => {
+      console.log(`📊 Received heatmap update: ${data.length} points`, {
+        sampleData: data.slice(0, 2),
+        heatmapVisible,
+        heatmapOpacity
+      });
+      setHeatmapData(data);
+      setTrafficAnalysis(trafficDensityService.getTrafficAnalysis());
+    });
+
+    // Get any existing data immediately
+    const existingData = trafficDensityService.getCurrentHeatmapData();
+    if (existingData.length > 0) {
+      console.log(`📋 Using ${existingData.length} existing heatmap points`);
+      setHeatmapData(existingData);
+    }
+
+    // Always set initial traffic analysis (even if empty)
+    setTrafficAnalysis(trafficDensityService.getTrafficAnalysis());
+
+    return unsubscribe;
+  }, [heatmapVisible, heatmapOpacity]);
+
+  // Generate simulated traffic data when cameras are available
+  useEffect(() => {
+    if (cameraFeeds.length > 0) {
+      console.log(`🎬 Starting traffic simulation with ${cameraFeeds.length} cameras`);
+
+      const interval = setInterval(() => {
+        console.log('🔄 Generating new traffic data...');
+        trafficDensityService.generateSimulatedData(cameraFeeds);
+      }, 3000); // Update every 3 seconds for better visibility
+
+      // Initial generation with multiple rounds for immediate visibility
+      console.log('🏁 Initial traffic data generation...');
+      trafficDensityService.generateSimulatedData(cameraFeeds);
+
+      // Generate additional data immediately to ensure heatmap visibility
+      setTimeout(() => {
+        console.log('🔁 Secondary traffic data generation...');
+        trafficDensityService.generateSimulatedData(cameraFeeds);
+      }, 500);
+
+      setTimeout(() => {
+        console.log('🔁 Tertiary traffic data generation...');
+        trafficDensityService.generateSimulatedData(cameraFeeds);
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [cameraFeeds]);
 
   if (loading) {
     return (
@@ -434,32 +611,50 @@ const Map: React.FC = () => {
         activeWeatherLayer={activeWeatherLayer}
         weatherOpacity={weatherOpacity}
         onOpacityChange={handleOpacityChange}
+        onHeatmapToggle={handleHeatmapToggle}
+        heatmapVisible={heatmapVisible}
+        heatmapOpacity={heatmapOpacity}
+        onHeatmapOpacityChange={handleHeatmapOpacityChange}
+        trafficAnalysis={trafficAnalysis}
       />
 
       <div className="map-container">
         <MapContainer
-          center={[33.6846, -117.8265]} // Orange County center
-          zoom={10}
-          className="leaflet-map"
+          {...({
+            center: [33.6846, -117.8265] as [number, number], // Orange County center
+            zoom: 10,
+            className: "leaflet-map"
+          } as any)}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            {...({
+              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+              url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            } as any)}
           />
 
           {/* Weather Overlay */}
           <WeatherOverlay layer={activeWeatherLayer} opacity={weatherOpacity} />
+
+          {/* Traffic Heatmap */}
+          <TrafficHeatmap
+            data={heatmapData}
+            visible={heatmapVisible}
+            opacity={heatmapOpacity}
+          />
 
           <FitBounds cameras={filteredCameras} />
 
           {filteredCameras.map((camera) => (
             <Marker
               key={camera.id}
-              position={[camera.coordinates!.lat, camera.coordinates!.lng]}
-              icon={createCameraIcon(camera.status)}
-              eventHandlers={{
-                click: () => handleMarkerClick(camera),
-              }}
+              {...({
+                position: [camera.coordinates!.lat, camera.coordinates!.lng] as [number, number],
+                icon: createCameraIcon(camera.status),
+                eventHandlers: {
+                  click: () => handleMarkerClick(camera),
+                }
+              } as any)}
             >
               <Popup>
                 <div className="marker-popup">
