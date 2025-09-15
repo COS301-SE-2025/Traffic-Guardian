@@ -102,8 +102,7 @@ const Archives: React.FC = () => {
       setLoading(true);
       setError('');
 
-      const apiKey =
-        sessionStorage.getItem('apiKey') || localStorage.getItem('apiKey');
+      const apiKey = sessionStorage.getItem('apiKey');
       if (!apiKey) {
         setError('No API key found. Please log in.');
         navigate('/account');

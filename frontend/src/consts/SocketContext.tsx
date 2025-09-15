@@ -98,6 +98,8 @@ interface SocketContextType {
   weatherData: WeatherData[];
   weatherLoading: boolean;
   weatherLastUpdate: Date | null;
+  // ADDED FOR ACTIVE USERS TRACKING
+  activeUsersCount: number;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -125,6 +127,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherLastUpdate, setWeatherLastUpdate] = useState<Date | null>(null);
+  
+  // ADDED FOR ACTIVE USERS TRACKING
+  const [activeUsersCount, setActiveUsersCount] = useState<number>(0);
 
   // Function to play notification sound
   const playNotificationSound = (severity: string) => {
@@ -414,6 +419,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       console.log('Incident locations update:', data);
     });
 
+    // ACTIVE USERS TRACKING EVENT HANDLER
+    newSocket.on('activeUsersUpdate', (data: { count: number; timestamp: Date }) => {
+      console.log('Active users update:', data);
+      setActiveUsersCount(data.count);
+    });
+
     // Cleanup on unmount
     return () => {
       console.log('Cleaning up socket connection');
@@ -450,7 +461,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     console.log('New incident added locally:', incident);
   };
 
-  // Enhanced context value with weather data
+  // Enhanced context value with weather data and active users
   const value: SocketContextType = {
     socket,
     isConnected,
@@ -464,6 +475,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     weatherData,
     weatherLoading,
     weatherLastUpdate,
+    // ADDED FOR ACTIVE USERS TRACKING
+    activeUsersCount,
   };
 
   return (
