@@ -9,7 +9,6 @@ async function generatePDF(incidents = []) {
   const filePath = path.join(__dirname, "template.html");
   let htmlContent = fs.readFileSync(filePath, "utf-8");
 
-  // Build incident cards styled like the form
   const incidentsHtml = incidents.map(incident => `
     <div class="incident-entry">
       <div class="form-group"><label>Date & Time:</label> ${incident.Incidents_DateTime}</div>
@@ -24,10 +23,8 @@ async function generatePDF(incidents = []) {
     </div>
   `).join("");
 
-  // Replace placeholder in HTML
   htmlContent = htmlContent.replace("<!-- INCIDENTS_PLACEHOLDER -->", incidentsHtml);
 
-  // Load the HTML content into Puppeteer
   await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
   const reportsDir = path.join(__dirname, "reports");
@@ -63,7 +60,7 @@ const incidents = [
     Incident_Status: "Open",
     Incident_Reporter: "John Doe",
     Incident_CameraID: "CAM123",
-    Incident_Description: "Minor collision at intersection"
+    Incident_Description: "Minor collision"
   }
 ];
 
