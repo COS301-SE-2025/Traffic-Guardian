@@ -354,6 +354,7 @@ const Dashboard: React.FC = () => {
   const [activeIncidents, setActiveIncidents] = useState<number>(0);
   const [criticalIncidentsCount, setCriticalIncidentsCount] =
     useState<number>(0);
+  const [activeUsersCount, setActiveUsersCount] = useState<number>(0);
 
   const addNotification = useCallback(
     (notification: Omit<Notification, 'id' | 'timestamp'>) => {
@@ -435,8 +436,8 @@ const Dashboard: React.FC = () => {
 
     newSocket.on('connect', () => {
       // Send authentication info if available
-      const userToken = localStorage.getItem('token');
-      const userInfo = localStorage.getItem('userInfo');
+      const userToken = sessionStorage.getItem('token');
+      const userInfo = sessionStorage.getItem('userInfo');
       
       if (userToken && userInfo) {
         newSocket.emit('authenticate', { 
@@ -561,6 +562,12 @@ const Dashboard: React.FC = () => {
       addEvent('Critical incidents: ' + data);
     });
 
+    // Listen for active users updates
+    newSocket.on('activeUsersUpdate', (data: { count: number; timestamp: Date }) => {
+      setActiveUsersCount(data.count);
+      addEvent(`Active users updated: ${data.count} users online`);
+    });
+
     // Set up periodic stats request as fallback
     const statsInterval = setInterval(() => {
       if (newSocket.connected) {
@@ -617,15 +624,16 @@ const Dashboard: React.FC = () => {
   React.useEffect(() => {
     (window as any).debugDashboard = () => {
       console.log('🐛 Dashboard Debug Info:');
-      console.log('- Users Online:', usersOnline);
+      console.log('- Active Users Count:', activeUsersCount);
+      console.log('- Users Online (old):', usersOnline);
       console.log('- Active Incidents:', activeIncidents);
       console.log('- Critical Incidents:', criticalIncidentsCount);
       console.log('- Realtime Events Count:', realtimeEvents?.length || 0);
-      console.log('- Auth Token:', localStorage.getItem('token') ? 'Present' : 'Missing');
-      console.log('- User Info:', localStorage.getItem('userInfo') ? 'Present' : 'Missing');
+      console.log('- Auth Token:', sessionStorage.getItem('token') ? 'Present' : 'Missing');
+      console.log('- User Info:', sessionStorage.getItem('userInfo') ? 'Present' : 'Missing');
       console.log('- SERVER_URL:', process.env.REACT_APP_SERVER_URL || 'http://localhost:5000');
     };
-  }, [usersOnline, activeIncidents, criticalIncidentsCount, realtimeEvents]);
+  }, [activeUsersCount, usersOnline, activeIncidents, criticalIncidentsCount, realtimeEvents]);
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -803,7 +811,7 @@ const Dashboard: React.FC = () => {
               Users Online
             </div>
             <div className="stat-card-value" data-cy="stat-card-value">
-              {userStats.totalOnline}
+              {activeUsersCount}
             </div>
             <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
               Currently connected
@@ -1249,10 +1257,10 @@ const Dashboard: React.FC = () => {
             <h3 data-cy="realtime-title">Real-time System Events</h3>
             <div className="realtime-stats" data-cy="realtime-stats">
               <div className="stat-pill" data-cy="stat-pill-users">
-                👥 {usersOnline} online
-                {usersOnline === 0 && (
+                👥 {activeUsersCount} online
+                {activeUsersCount === 0 && (
                   <span style={{ fontSize: '10px', color: '#999', marginLeft: '5px' }}>
-                    (no data)
+                    (no connections)
                   </span>
                 )}
               </div>
