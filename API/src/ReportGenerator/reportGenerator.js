@@ -67,4 +67,4 @@ const incidents = [
   }
 ];
 
-generatePDF(incidents);
+// generatePDF(incidents);
