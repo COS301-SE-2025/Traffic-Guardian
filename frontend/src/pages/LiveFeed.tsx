@@ -16,8 +16,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
+delete ((L as any).Icon.Default.prototype as any)._getIconUrl;
+(L as any).Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
   iconUrl: require('leaflet/dist/images/marker-icon.png'),
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
@@ -230,7 +230,7 @@ const LiveFeed: React.FC = () => {
 
   const cameraIcon = useMemo(
     () =>
-      new L.Icon({
+      new (L as any).Icon({
         iconUrl:
           'data:image/svg+xml;base64,' +
           btoa(`
@@ -590,13 +590,15 @@ const LiveFeed: React.FC = () => {
               ) : viewMode === 'map' && selectedCamera.coordinates ? (
                 <div className="map-container">
                   <MapContainer
-                    center={[
-                      selectedCamera.coordinates.lat,
-                      selectedCamera.coordinates.lng,
-                    ]}
-                    zoom={15}
-                    style={{ height: '400px', width: '100%' }}
-                    className="camera-map"
+                    {...({
+                      center: [
+                        selectedCamera.coordinates.lat,
+                        selectedCamera.coordinates.lng,
+                      ],
+                      zoom: 15,
+                      style: { height: '400px', width: '100%' },
+                      className: "camera-map"
+                    } as any)}
                   >
                     <MapUpdater
                       center={[
@@ -605,15 +607,19 @@ const LiveFeed: React.FC = () => {
                       ]}
                     />
                     <TileLayer
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      {...({
+                        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      } as any)}
                     />
                     <Marker
-                      position={[
-                        selectedCamera.coordinates.lat,
-                        selectedCamera.coordinates.lng,
-                      ]}
-                      icon={cameraIcon}
+                      {...({
+                        position: [
+                          selectedCamera.coordinates.lat,
+                          selectedCamera.coordinates.lng,
+                        ],
+                        icon: cameraIcon
+                      } as any)}
                     >
                       <Popup>
                         <div className="map-popup">
