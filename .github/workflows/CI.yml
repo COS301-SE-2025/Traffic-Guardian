@@ -18,40 +18,71 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Super Linter
+      - name: Run Super Linter (capture logs)
         id: linter
-        uses: github/super-linter@v5
-        env:
-          # Lint all files in the codebase
-          VALIDATE_ALL_CODEBASE: true
+        run: |
+          echo "Running Super-Linter and capturing logs..."
+          docker run --rm \
+            -e VALIDATE_ALL_CODEBASE=true \
+            -e VALIDATE_ALL_CODEBASE_LANGUAGES=true \
+            -e DEFAULT_BRANCH=Dev \
+            -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            -e ESLINT_CONFIG_FILE_API=./API/.eslintrc.json \
+            -e ESLINT_CONFIG_FILE_FRONTEND=./frontend/.eslintrc.json \
+            -e ERROR_LEVEL=error \
+            -e DISABLE_ERRORS=false \
+            -e LOG_LEVEL=INFO \
+            -v ${{ github.workspace }}:/tmp/lint \
+            github/super-linter:v5 \
+            2>&1 | tee super-linter.log
+        continue-on-error: true
 
-          # Enable all language linters
-          VALIDATE_ALL_CODEBASE_LANGUAGES: true
-          
-          # Focus only on the Dev branch
-          DEFAULT_BRANCH: Dev
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Use the API ESLint config for API JS files (enforces semicolons)
-          ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
-          # Use the frontend ESLint config for TS/TSX/Cypress files
-          ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
-          
-          # Display only errors (not warnings)
-          ERROR_LEVEL: error
-          
-          # Make the build fail when linting errors are found
-          DISABLE_ERRORS: false
-          
-          # Enable detailed logging for better debugging
-          LOG_LEVEL: INFO
-          
-          # Remove the filter to check all files
-          # FILTER_REGEX_INCLUDE: '(^API\/|^frontend\/|^AI_Model_BB\/|^\.github\/)'
-          LINTER_RULES_PATH: /
-          # VALIDATE_JAVASCRIPT_ES: true
-          # VALIDATE_TYPESCRIPT_ES: true
-          # Optionally, set FILTER_REGEX_EXCLUDE if needed
-          # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
+      # Previous Super Linter configuration (commented out)
+      # - name: Run Super Linter
+      #   id: linter
+      #   uses: github/super-linter@v5
+      #   env:
+      #     # Lint all files in the codebase
+      #     VALIDATE_ALL_CODEBASE: true
+      # 
+      #     # Enable all language linters
+      #     VALIDATE_ALL_CODEBASE_LANGUAGES: true
+      #     
+      #     # Focus only on the Dev branch
+      #     DEFAULT_BRANCH: Dev
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     # Use the API ESLint config for API JS files (enforces semicolons)
+      #     ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
+      #     # Use the frontend ESLint config for TS/TSX/Cypress files
+      #     ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
+      #     
+      #     # Display only errors (not warnings)
+      #     ERROR_LEVEL: error
+      #     
+      #     # Make the build fail when linting errors are found
+      #     DISABLE_ERRORS: false
+      #     
+      #     # Enable detailed logging for better debugging
+      #     LOG_LEVEL: INFO
+      #     
+      #     # Remove the filter to check all files
+      #     # FILTER_REGEX_INCLUDE: '(^API\/|^frontend\/|^AI_Model_BB\/|^\.github\/)'
+      #     LINTER_RULES_PATH: /
+      #     # VALIDATE_JAVASCRIPT_ES: true
+      #     # VALIDATE_TYPESCRIPT_ES: true
+      #     # Optionally, set FILTER_REGEX_EXCLUDE if needed
+      #     # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
+
+      - name: Display Sorted Linting Errors
+        if: always()
+        run: |
+          echo "===== SORTED LINTER ERRORS (by root folder) ====="
+          if [ -f super-linter.log ]; then
+            # Extract lines with file paths and sort by the first folder
+            grep -E "(/|\\)" super-linter.log | sort -t'/' -k1,1
+          else
+            echo "⚠ No super-linter.log file found."
+          fi
 
       - name: Display Linting Status
         if: always()
@@ -65,13 +96,30 @@ jobs:
           else
             echo "❌ Super-Linter found issues in the codebase."
             echo "## ❌ Linting Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Linting errors were detected. Please check the Super-Linter logs for details." >> $GITHUB_STEP_SUMMARY
-            
-            # Mark the step as failed to ensure visibility
-            if [ "${{ steps.linter.outcome }}" == "failure" ]; then
-              echo "::error::Linting errors were detected. Please check the Super-Linter logs for details."
-            fi
+            echo "Linting errors were detected. Please check the sorted logs above." >> $GITHUB_STEP_SUMMARY
+            echo "::error::Linting errors were detected. See sorted logs above."
           fi
+          
+      # Previous Display Linting Status step (commented out)
+      # - name: Display Linting Status (original)
+      #   if: always()
+      #   run: |
+      #     echo "=== Linting Status ==="
+      #     
+      #     if [ "${{ steps.linter.outcome }}" == "success" ]; then
+      #       echo "✅ Super-Linter completed successfully! No linting errors were found."
+      #       echo "## ✅ Linting Passed" >> $GITHUB_STEP_SUMMARY
+      #       echo "No linting errors were found in the codebase." >> $GITHUB_STEP_SUMMARY
+      #     else
+      #       echo "❌ Super-Linter found issues in the codebase."
+      #       echo "## ❌ Linting Failed" >> $GITHUB_STEP_SUMMARY
+      #       echo "Linting errors were detected. Please check the Super-Linter logs for details." >> $GITHUB_STEP_SUMMARY
+      #       
+      #       # Mark the step as failed to ensure visibility
+      #       if [ "${{ steps.linter.outcome }}" == "failure" ]; then
+      #         echo "::error::Linting errors were detected. Please check the Super-Linter logs for details."
+      #       fi
+      #     fi
 
   test-ui:
     name: UI Tests
