@@ -31,26 +31,59 @@ jobs:
           LOG_LEVEL: INFO
           # Save logs for processing
           SAVE_SUPER_LINTER_LOG: true
+          # Force output log to a known location
+          OUTPUT_FOLDER: "${{ github.workspace }}"
+          OUTPUT_DETAILS: "detailed"
 
       - name: Sort Linter Errors by Root Folder
         if: failure() # Only run if the linter failed
         run: |
           echo "===== SORTED LINTER ERRORS (by root folder) ====="
-          # Look for the log file in standard locations
-          if [ -f "/tmp/lint/super-linter.log" ]; then
-            LOG_FILE="/tmp/lint/super-linter.log"
-          elif [ -f "$GITHUB_WORKSPACE/super-linter.log" ]; then
-            LOG_FILE="$GITHUB_WORKSPACE/super-linter.log"
-          elif [ -f "super-linter.log" ]; then
-            LOG_FILE="super-linter.log"
-          else
-            echo "⚠ No super-linter.log file found."
-            exit 0
+          
+          # Define potential log file locations
+          LOG_FILES=(
+            "$GITHUB_WORKSPACE/super-linter.log"
+            "$GITHUB_WORKSPACE/.github/linters/super-linter.log"
+            "/tmp/lint/super-linter.log"
+            "super-linter.log"
+            ".github/super-linter.log"
+          )
+          
+          # Search for log file
+          LOG_FILE=""
+          for file in "${LOG_FILES[@]}"; do
+            if [ -f "$file" ]; then
+              LOG_FILE="$file"
+              echo "Found log file at: $LOG_FILE"
+              break
+            fi
+          done
+          
+          # If no log file found, search for any log files
+          if [ -z "$LOG_FILE" ]; then
+            echo "⚠ No super-linter.log file found in standard locations."
+            echo "Searching for any log files..."
+            
+            # First search directly in the workspace
+            FOUND_LOGS=$(find $GITHUB_WORKSPACE -name "*linter*.log" -type f 2>/dev/null)
+            
+            if [ -n "$FOUND_LOGS" ]; then
+              # Use the first found log file
+              LOG_FILE=$(echo "$FOUND_LOGS" | head -n 1)
+              echo "Found alternative log file: $LOG_FILE"
+            else
+              echo "No log files found. Cannot sort errors."
+              exit 0
+            fi
           fi
           
           # Extract lines with file paths and sort by the first folder
-          # Use a simpler regex that won't cause shell issues
-          grep -E "^[^ ]+/" $LOG_FILE 2>/dev/null | sort -t'/' -k1,1 || echo "No specific file paths found in logs."
+          echo "===== SORTED ERRORS BY FOLDER ====="
+          grep -E "^[^ ]+/" "$LOG_FILE" 2>/dev/null | sort -t'/' -k1,1 || echo "No specific file paths found in logs."
+          
+          # Display file head for debugging
+          echo "===== LOG FILE PREVIEW ====="
+          head -n 20 "$LOG_FILE" || echo "Could not preview log file."
 
       - name: Display Linting Status
         if: always()
