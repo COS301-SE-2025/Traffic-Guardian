@@ -1,5 +1,5 @@
 name: Continuous Integration Pipeline
-
+# Lecturer Restrictions: only runs on main and Dev branches
 on:
   push:
     branches: [main, Dev]
@@ -58,7 +58,9 @@ jobs:
         working-directory: ./frontend
         run: |
           # Create a .env file for Cypress testing
-          echo "CYPRESS_BASE_URL=http://localhost:3000" > .env
+          # This file will be used by Cypress to configure the testing environment and will run locally on github actions on these specific ports
+          echo "REACT_APP_API_URL=http://localhost:5000" > .env
+          echo "CYPRESS_BASE_URL=http://localhost:3000" >> .env
           echo "CYPRESS_API_URL=http://localhost:5000/api" >> .env
           echo "Environment set up for Cypress tests"
           
