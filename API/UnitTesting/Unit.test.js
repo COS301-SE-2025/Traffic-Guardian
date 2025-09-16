@@ -68,7 +68,7 @@ describe('Incident endpoints', ()=>{
 */
     test('Get specific incident', async ()=>{
         const payload = artifacts[3];
-        const response = await axios.get('http://localhost:5000/api/incidents/75',{
+        const response = await axios.get('http://localhost:5000/api/incidents/141',{
         headers: {
             'Content-Type': 'application/json',
             'X-API-KEY': yeah
@@ -82,7 +82,7 @@ describe('Incident endpoints', ()=>{
 
     test('Update incident', async ()=>{
         const payload = artifacts[4];
-        const response = await axios.put('http://localhost:5000/api/incidents/75', payload ,{
+        const response = await axios.put('http://localhost:5000/api/incidents/141', payload ,{
         headers: {
             'Content-Type': 'application/json',
             'X-API-KEY': yeah
