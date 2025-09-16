@@ -8,13 +8,13 @@ describe('Landing Page', () => {
     cy.get('[data-testid="get-started-button"], [data-testid="hero-cta"]').should('exist');
   });
 
-  it('should navigate to dashboard from CTA button', () => {
+  it('should navigate to account from CTA button', () => {
     cy.get('[data-testid="get-started-button"], [data-testid="hero-cta"]').first().click();
-    cy.url().should('include', '/dashboard');
+    cy.url().should('include', '/account');
   });
 
   it('should have working navigation to account page', () => {
-    cy.get('[data-testid="login-link"], a[href="/account"]').should('exist').click();
+    cy.get('.nav-btn-login').should('exist').click();
     cy.url().should('include', '/account');
   });
 
