@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const reportGen = require('../ReportGenerator/reportGenerator');
 
 const incidentModel = {  async createIncident(incidentData) {
     const { 
@@ -38,6 +39,7 @@ const incidentModel = {  async createIncident(incidentData) {
     ];
     
     const { rows } = await db.query(query, values);
+    //reportGen.generatePDF(values) did not test yet
     return rows[0];
   },  async getIncidentById(Incidents_ID) {
     const query = 'SELECT * FROM "Incidents" WHERE "Incidents_ID" = $1';
