@@ -17,7 +17,7 @@
   "author": "Quantum Quenchers",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.1.0",
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -43,7 +43,7 @@
       "form-data": ">=4.0.4"
     },
     "axios": {
-      "form-data": ">=4.0.4"  
+      "form-data": ">=4.0.4"
     },
     "nodemon": {
       "semver": ">=7.5.2"
