@@ -20,9 +20,6 @@ jobs:
       - name: Run Super Linter
         uses: github/super-linter@v5
         env:
-          
-          # # Only lint changed files (not the entire codebase)
-          # VALIDATE_ALL_CODEBASE: false
           # Lint all files in the codebase
           VALIDATE_ALL_CODEBASE: true
 
@@ -39,9 +36,10 @@ jobs:
           # Display only errors (not warnings)
           ERROR_LEVEL: error
           
-          # Enable logging by component folders
-          LOG_LEVEL: NOTICE
+          # Enable verbose logging and write to a file
+          LOG_LEVEL: ERROR
           LOG_FILE: super-linter.log
+          DISABLE_ERRORS: false
           
           # Group output by folder components 
           FILTER_REGEX_INCLUDE: '(^API\/|^frontend\/|^AI_Model_BB\/|^\.github\/)'
@@ -57,28 +55,45 @@ jobs:
       - name: Display Linting Errors by Component
         if: always()
         run: |
+          echo "Checking for linting errors..."
+          
+          # First, check if the log file exists and list its location
+          find $GITHUB_WORKSPACE -name "super-linter.log" || echo "Log file not found in workspace"
+          
+          # Try to find the log file in the container's output
+          if [ ! -f "super-linter.log" ]; then
+            echo "Log file not found in current directory, checking Docker output..."
+            # Check if there are any errors in the Docker output
+            grep -A 5 "ERROR" $GITHUB_STEP_SUMMARY || echo "No errors found in Docker output"
+          fi
+          
+          # If we find the log file, process it
           if [ -f "super-linter.log" ]; then
+            echo "===== Processing super-linter.log ====="
+            
             echo "=== AI_Model_BB Component Errors ==="
-            grep -A 2 "AI_Model_BB" super-linter.log | grep -v "NOTICE\|INFO" || echo "No errors found"
+            grep -A 2 "AI_Model_BB" super-linter.log | grep "ERROR" || echo "No errors found"
             echo ""
             
             echo "=== API Component Errors ==="
-            grep -A 2 "API/" super-linter.log | grep -v "NOTICE\|INFO" || echo "No errors found"
+            grep -A 2 "API/" super-linter.log | grep "ERROR" || echo "No errors found"
             echo ""
             
             echo "=== Frontend Component Errors ==="
-            grep -A 2 "frontend/" super-linter.log | grep -v "NOTICE\|INFO" || echo "No errors found"
+            grep -A 2 "frontend/" super-linter.log | grep "ERROR" || echo "No errors found"
             echo ""
             
             echo "=== CI/CD Component Errors ==="
-            grep -A 2 "\.github/" super-linter.log | grep -v "NOTICE\|INFO" || echo "No errors found"
+            grep -A 2 "\.github/" super-linter.log | grep "ERROR" || echo "No errors found"
             echo ""
             
             echo "=== Summary of All Errors ==="
-            grep "ERROR" super-linter.log | wc -l
-            echo " errors found in total"
+            ERROR_COUNT=$(grep "ERROR" super-linter.log | wc -l)
+            echo "$ERROR_COUNT errors found in total"
           else
-            echo "No super-linter.log file found. Linting may have failed."
+            # Fallback: Display any errors from the action output
+            echo "===== Checking Action Output for Errors ====="
+            cat $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No step summary available"
           fi
 
   test-ui:
