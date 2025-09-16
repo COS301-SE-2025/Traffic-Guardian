@@ -108,6 +108,8 @@ jobs:
           
           echo "Test report generated"
           
+  # Check to see in the .json lock for plugin dependencies for mochawesome-merge and mochawesome-report-generator
+          
       - name: Upload Cypress screenshots
         uses: actions/upload-artifact@v4
         if: always()
