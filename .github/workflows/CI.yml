@@ -35,13 +35,8 @@ jobs:
           # Use the frontend ESLint config for TS/TSX/Cypress files
           ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
           FILTER_REGEX_EXCLUDE: ".*node_modules/.*"
-          # Configure language-specific file mappings
-          JAVASCRIPT_ES_CONFIG_FILE: ./API/.eslintrc.json
-          JAVASCRIPT_LINTER_RULES: ./API/.eslintrc.json
-          TYPESCRIPT_ES_CONFIG_FILE: ./frontend/.eslintrc.json
-          TYPESCRIPT_LINTER_RULES: ./frontend/.eslintrc.json
           # Enable debuggable output
-          LOG_LEVEL: INFO
+          LOG_LEVEL: ERROR
           # Report errors directly to the console
           DISABLE_ERRORS: false
 
