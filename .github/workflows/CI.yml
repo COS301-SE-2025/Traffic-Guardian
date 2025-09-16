@@ -18,7 +18,9 @@ jobs:
       - name: Run Super Linter
         uses: github/super-linter@v5
         env:
-          VALIDATE_ALL_CODEBASE: false
+          # Enable all linting
+          VALIDATE_ALL_CODEBASE: true
+
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Use the API ESLint config for API JS files (enforces semicolons)
@@ -26,8 +28,8 @@ jobs:
           # Use the frontend ESLint config for TS/TSX/Cypress files
           ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
           # Lint all relevant extensions
-          VALIDATE_JAVASCRIPT_ES: true
-          VALIDATE_TYPESCRIPT_ES: true
+          # VALIDATE_JAVASCRIPT_ES: true
+          # VALIDATE_TYPESCRIPT_ES: true
           # Optionally, set FILTER_REGEX_INCLUDE/FILTER_REGEX_EXCLUDE if needed
           # FILTER_REGEX_INCLUDE: 'src/|models/|controllers/|routes/|frontend/'
           # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
