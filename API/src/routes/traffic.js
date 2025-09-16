@@ -15,7 +15,7 @@ router.get('/incidents', async (req, res) => {
     console.log('Fetching traffic data...');
     const trafficData = await getTraffic();
     
-    if (!trafficData) {
+    if (!trafficData || !Array.isArray(trafficData)) {
       console.error('No traffic data returned from getTraffic()');
       return res.status(500).json({ error: 'Failed to fetch traffic data' });
     }
@@ -32,13 +32,13 @@ router.get('/criticalIncidents', async (req, res) => {
   try {
     console.log('Fetching traffic data...');
     const trafficData = await getTraffic();
-    const resp = traffic.criticalIncidents(trafficData);
     
-    if (!trafficData) {
+    if (!trafficData || !Array.isArray(trafficData)) {
       console.error('No criticalIncidents data returned');
       return res.status(500).json({ error: 'Failed to fetch criticalIncidents data' });
     }
     
+    const resp = traffic.criticalIncidents(trafficData);
     console.log(`Successfully fetched criticalIncidents data for ${trafficData.length} locations`);
     res.status(200).json(resp);
   } catch (error) {
@@ -51,13 +51,13 @@ router.get('/incidentCategory', async (req, res) => {
   try {
     console.log('Fetching traffic data...');
     const trafficData = await getTraffic();
-    const resp = traffic.incidentCategory(trafficData);
     
-    if (!trafficData) {
+    if (!trafficData || !Array.isArray(trafficData)) {
       console.error('No incidentCategory data returned');
       return res.status(500).json({ error: 'Failed to fetch incidentCategory data' });
     }
     
+    const resp = traffic.incidentCategory(trafficData);
     console.log(`Successfully fetched incidentCategory data for ${trafficData.length} locations`);
     res.status(200).json(resp);
   } catch (error) {
@@ -70,13 +70,13 @@ router.get('/incidentLocations', async (req, res) => {
   try {
     console.log('Fetching traffic data...');
     const trafficData = await getTraffic();
-    const resp = traffic.incidentLocations(trafficData);
     
-    if (!trafficData) {
+    if (!trafficData || !Array.isArray(trafficData)) {
       console.error('No incidentLocations data returned');
       return res.status(500).json({ error: 'Failed to fetch incidentLocations data' });
     }
     
+    const resp = traffic.incidentLocations(trafficData);
     console.log(`Successfully fetched incidentLocations data for ${trafficData.length} locations`);
     res.status(200).json(resp);
   } catch (error) {

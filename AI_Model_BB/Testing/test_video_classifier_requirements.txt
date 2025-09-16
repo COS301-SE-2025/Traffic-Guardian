@@ -1,0 +1,29 @@
+# Test Requirements for Video Incident Classifier
+# Additional packages needed specifically for testing
+
+# Core testing framework (usually included with Python)
+unittest2>=1.1.0; python_version < "3.2"
+
+# Mocking and testing utilities
+mock>=4.0.3; python_version < "3.3"
+
+# Coverage analysis
+coverage>=6.0
+
+# Test data generation
+Faker>=15.0.0
+
+# Performance testing
+memory-profiler>=0.60.0
+
+# Additional testing utilities
+parameterized>=0.8.1
+testfixtures>=7.0.0
+
+# Note: Main dependencies should already be installed:
+# - torch
+# - torchvision 
+# - opencv-python
+# - numpy
+# - pillow
+# - requests

@@ -27,7 +27,9 @@ const Profile: React.FC = () => {
     alertLevel: 'medium',
     theme: 'dark',
   });
-  const [tempPreferences, setTempPreferences] = useState<Preferences>({ ...preferences });
+  const [tempPreferences, setTempPreferences] = useState<Preferences>({
+    ...preferences,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [incidentCount, setIncidentCount] = useState(0);
@@ -36,12 +38,15 @@ const Profile: React.FC = () => {
   // Efficient function to fetch admin stats in a single API call
   const fetchAdminStats = useCallback(async (apiKey: string) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/stats`, {
-        headers: {
-          'X-API-Key': apiKey,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/admin/stats`,
+        {
+          headers: {
+            'X-API-Key': apiKey,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to fetch admin stats: ${response.status}`);
@@ -62,25 +67,33 @@ const Profile: React.FC = () => {
     if (hasInitialized.current) {
       return;
     }
-    
+
     hasInitialized.current = true;
-    
+
     const fetchProfileData = async () => {
       try {
         const apiKey = sessionStorage.getItem('apiKey');
         const savedTheme = localStorage.getItem('theme');
-        console.log('Profile useEffect: apiKey=', apiKey, 'savedTheme=', savedTheme);
+        console.log(
+          'Profile useEffect: apiKey=',
+          apiKey,
+          'savedTheme=',
+          savedTheme
+        );
 
         if (!apiKey) {
           throw new Error('No API key found. Please log in.');
         }
 
-        const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/profile`, {
-          headers: {
-            'X-API-Key': apiKey,
-            'Content-Type': 'application/json',
-          },
-        });
+        const userResponse = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/auth/profile`,
+          {
+            headers: {
+              'X-API-Key': apiKey,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
         if (!userResponse.ok) {
           throw new Error('Failed to fetch profile data');
@@ -93,12 +106,15 @@ const Profile: React.FC = () => {
           role: userData.User_Role,
         });
 
-        const prefsResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
-          headers: {
-            'X-API-Key': apiKey,
-            'Content-Type': 'application/json',
-          },
-        });
+        const prefsResponse = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/user/preferences`,
+          {
+            headers: {
+              'X-API-Key': apiKey,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
         let currentPrefs = {
           notifications: true,
@@ -111,15 +127,23 @@ const Profile: React.FC = () => {
           console.log('Profile fetched preferences:', prefsData);
           let fetchedPrefs;
           try {
-            fetchedPrefs = typeof prefsData.preferences === 'string' && prefsData.preferences.trim()
-              ? JSON.parse(prefsData.preferences)
-              : prefsData.preferences || {};
+            fetchedPrefs =
+              typeof prefsData.preferences === 'string' &&
+              prefsData.preferences.trim()
+                ? JSON.parse(prefsData.preferences)
+                : prefsData.preferences || {};
           } catch (err) {
-            console.warn('Profile: Failed to parse preferences, using fallback', err);
+            console.warn(
+              'Profile: Failed to parse preferences, using fallback',
+              err
+            );
             fetchedPrefs = {};
           }
 
-          const validTheme = fetchedPrefs.theme === 'dark' || fetchedPrefs.theme === 'light' ? fetchedPrefs.theme : savedTheme || 'dark';
+          const validTheme =
+            fetchedPrefs.theme === 'dark' || fetchedPrefs.theme === 'light'
+              ? fetchedPrefs.theme
+              : savedTheme || 'dark';
           currentPrefs = {
             notifications: fetchedPrefs.notifications ?? true,
             alertLevel: fetchedPrefs.alertLevel || 'medium',
@@ -129,7 +153,10 @@ const Profile: React.FC = () => {
           console.log('Profile processed preferences:', currentPrefs);
           localStorage.setItem('theme', currentPrefs.theme);
         } else {
-          console.warn('Profile: Failed to fetch preferences, using saved theme:', savedTheme);
+          console.warn(
+            'Profile: Failed to fetch preferences, using saved theme:',
+            savedTheme
+          );
           if (savedTheme) {
             currentPrefs = {
               notifications: true,
@@ -151,7 +178,10 @@ const Profile: React.FC = () => {
         toggleDarkMode(currentPrefs.theme === 'dark');
       } catch (err: any) {
         setError(err.message);
-        if (err.message.includes('unauthorized') || err.message.includes('API key')) {
+        if (
+          err.message.includes('unauthorized') ||
+          err.message.includes('API key')
+        ) {
           navigate('/account');
         }
       } finally {
@@ -180,23 +210,29 @@ const Profile: React.FC = () => {
         return;
       }
 
-      const validTheme = tempPreferences.theme === 'dark' || tempPreferences.theme === 'light' ? tempPreferences.theme : 'dark';
+      const validTheme =
+        tempPreferences.theme === 'dark' || tempPreferences.theme === 'light'
+          ? tempPreferences.theme
+          : 'dark';
       const validatedPrefs = {
         ...tempPreferences,
         theme: validTheme,
       };
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user/preferences`, {
-        method: 'PUT',
-        headers: {
-          'X-API-Key': apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          User_Email: user.email,
-          preferences: validatedPrefs,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/user/preferences`,
+        {
+          method: 'PUT',
+          headers: {
+            'X-API-Key': apiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            User_Email: user.email,
+            preferences: validatedPrefs,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -207,15 +243,23 @@ const Profile: React.FC = () => {
       let updatedPrefs;
       if (responseData.user && responseData.user.User_Preferences) {
         try {
-          updatedPrefs = typeof responseData.user.User_Preferences === 'string' && responseData.user.User_Preferences.trim()
-            ? JSON.parse(responseData.user.User_Preferences)
-            : responseData.user.User_Preferences;
+          updatedPrefs =
+            typeof responseData.user.User_Preferences === 'string' &&
+            responseData.user.User_Preferences.trim()
+              ? JSON.parse(responseData.user.User_Preferences)
+              : responseData.user.User_Preferences;
         } catch (err) {
-          console.warn('Profile: Failed to parse updated preferences, using temp', err);
+          console.warn(
+            'Profile: Failed to parse updated preferences, using temp',
+            err
+          );
           updatedPrefs = validatedPrefs;
         }
 
-        updatedPrefs.theme = updatedPrefs.theme === 'dark' || updatedPrefs.theme === 'light' ? updatedPrefs.theme : validatedPrefs.theme;
+        updatedPrefs.theme =
+          updatedPrefs.theme === 'dark' || updatedPrefs.theme === 'light'
+            ? updatedPrefs.theme
+            : validatedPrefs.theme;
 
         console.log('Profile saved preferences:', updatedPrefs);
         setPreferences(updatedPrefs);
@@ -253,10 +297,18 @@ const Profile: React.FC = () => {
 
   return (
     <div className="profile-page" data-cy="profile-page" id="profile-page">
-      <div className="profile-header" data-cy="profile-header" id="profile-header">
+      <div
+        className="profile-header"
+        data-cy="profile-header"
+        id="profile-header"
+      >
         <div className="welcome-message" data-cy="welcome-message">
           Welcome back, <strong data-cy="user-name">{user.name}</strong>
-          {user.role === 'admin' && <span className="admin-badge" data-cy="admin-badge">Admin</span>}
+          {user.role === 'admin' && (
+            <span className="admin-badge" data-cy="admin-badge">
+              Admin
+            </span>
+          )}
         </div>
       </div>
 
@@ -307,13 +359,18 @@ const Profile: React.FC = () => {
           <h3 data-cy="notification-prefs-title" id="notification-prefs-title">
             Notification Preferences
           </h3>
-          <div className="preference-item" data-cy="preference-item-notifications">
+          <div
+            className="preference-item"
+            data-cy="preference-item-notifications"
+          >
             <label htmlFor="notifications">
               <input
                 type="checkbox"
                 id="notifications"
                 checked={tempPreferences.notifications}
-                onChange={(e) => handlePreferenceChange('notifications', e.target.checked)}
+                onChange={e =>
+                  handlePreferenceChange('notifications', e.target.checked)
+                }
                 data-cy="notifications-checkbox"
                 aria-label="Receive event notifications"
               />
@@ -327,7 +384,7 @@ const Profile: React.FC = () => {
             <select
               id="theme"
               value={tempPreferences.theme}
-              onChange={(e) => handlePreferenceChange('theme', e.target.value)}
+              onChange={e => handlePreferenceChange('theme', e.target.value)}
               data-cy="theme-select"
               aria-label="Select theme"
             >
@@ -346,7 +403,9 @@ const Profile: React.FC = () => {
             <select
               id="alertLevel"
               value={tempPreferences.alertLevel}
-              onChange={(e) => handlePreferenceChange('alertLevel', e.target.value)}
+              onChange={e =>
+                handlePreferenceChange('alertLevel', e.target.value)
+              }
               data-cy="alert-level-select"
               aria-label="Select alert level"
             >
@@ -376,7 +435,8 @@ const Profile: React.FC = () => {
             className="profile-section"
             data-cy="admin-dashboard-section"
             id="admin-dashboard-section"
-            aria-labelledby="admin-section-title">
+            aria-labelledby="admin-section-title"
+          >
             <h3 data-testid="admin-section-title" id="admin-section-title">
               Admin Dashboard
             </h3>

@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from 'react';
 import HlsPlayer from 'react-hls-player';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -9,7 +15,6 @@ import CarLoadingAnimation from '../components/CarLoadingAnimation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
-
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -23,23 +28,23 @@ L.Icon.Default.mergeOptions({
 // Map component to handle center changes
 const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
   const map = useMap();
-  
+
   useEffect(() => {
     map.setView(center, map.getZoom());
   }, [map, center]);
-  
+
   return null;
 };
 
 const LiveFeed: React.FC = () => {
   // Use context for camera feeds data
-  const { 
-    cameraFeeds, 
-    loading, 
-    error, 
-    lastRefresh, 
-    refreshFeeds, 
-    setCameraStatus
+  const {
+    cameraFeeds,
+    loading,
+    error,
+    lastRefresh,
+    refreshFeeds,
+    setCameraStatus,
   } = useLiveFeed();
 
   const [selectedCamera, setSelectedCamera] = useState<CameraFeed | null>(null);
@@ -47,7 +52,8 @@ const LiveFeed: React.FC = () => {
   const [timelapseImages, setTimelapseImages] = useState<string[]>([]);
   const [currentTimelapseIndex, setCurrentTimelapseIndex] = useState(0);
   const [isPlayingTimelapse, setIsPlayingTimelapse] = useState(false);
-  const [timelapseInterval, setTimelapseInterval] = useState<NodeJS.Timeout | null>(null);
+  const [timelapseInterval, setTimelapseInterval] =
+    useState<NodeJS.Timeout | null>(null);
   const [viewMode, setViewMode] = useState<'video' | 'images' | 'map'>('video');
   const [showIncidentForm, setShowIncidentForm] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -60,7 +66,7 @@ const LiveFeed: React.FC = () => {
   // Incident form state
   const [incidentForm, setIncidentForm] = useState({
     severity: 'medium' as 'high' | 'medium' | 'low',
-    description: ''
+    description: '',
   });
 
   // Check user role on component mount
@@ -69,14 +75,17 @@ const LiveFeed: React.FC = () => {
       try {
         const apiKey = sessionStorage.getItem('apiKey');
         if (!apiKey) return;
-        
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/profile`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': apiKey,
+
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/auth/profile`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Key': apiKey,
+            },
           }
-        });
-        
+        );
+
         if (response.ok) {
           const userResponse = await response.json();
           setUserRole(userResponse.User_Role || 'user');
@@ -85,7 +94,7 @@ const LiveFeed: React.FC = () => {
         console.error('Error fetching user role:', error);
       }
     };
-    
+
     fetchUserRole();
   }, []);
 
@@ -94,29 +103,41 @@ const LiveFeed: React.FC = () => {
     refreshFeeds();
   }, [refreshFeeds]);
 
-  const handleImageError = useCallback((feedId: string) => {
-    setCameraStatus(feedId, 'Offline');
-  }, [setCameraStatus]);
+  const handleImageError = useCallback(
+    (feedId: string) => {
+      setCameraStatus(feedId, 'Offline');
+    },
+    [setCameraStatus]
+  );
 
-  const handleImageLoad = useCallback((feedId: string) => {
-    setCameraStatus(feedId, 'Online');
-  }, [setCameraStatus]);
-
-  const handleVideoError = useCallback((feedId: string) => {
-    setCameraStatus(feedId, 'Offline');
-  }, [setCameraStatus]);
-
-  const handleVideoLoadStart = useCallback((feedId: string) => {
-    // Set a timeout to mark as Online if no error occurs within 3 seconds
-    setTimeout(() => {
+  const handleImageLoad = useCallback(
+    (feedId: string) => {
       setCameraStatus(feedId, 'Online');
-    }, 3000);
-  }, [setCameraStatus]);
+    },
+    [setCameraStatus]
+  );
+
+  const handleVideoError = useCallback(
+    (feedId: string) => {
+      setCameraStatus(feedId, 'Offline');
+    },
+    [setCameraStatus]
+  );
+
+  const handleVideoLoadStart = useCallback(
+    (feedId: string) => {
+      // Set a timeout to mark as Online if no error occurs within 3 seconds
+      setTimeout(() => {
+        setCameraStatus(feedId, 'Online');
+      }, 3000);
+    },
+    [setCameraStatus]
+  );
 
   const handleCameraClick = useCallback((camera: CameraFeed) => {
     setSelectedCamera(camera);
     setShowVideoModal(true);
-    
+
     // Determine initial view mode based on available features
     if (camera.hasLiveStream) {
       setViewMode('video');
@@ -125,7 +146,7 @@ const LiveFeed: React.FC = () => {
     } else {
       setViewMode('images');
     }
-    
+
     if (camera.historicalImages && camera.historicalImages.length > 0) {
       const allImages = [camera.image, ...camera.historicalImages];
       setTimelapseImages(allImages);
@@ -153,10 +174,10 @@ const LiveFeed: React.FC = () => {
 
   const startTimelapse = useCallback(() => {
     if (timelapseImages.length <= 1) return;
-    
+
     setIsPlayingTimelapse(true);
     const interval = setInterval(() => {
-      setCurrentTimelapseIndex(prev => 
+      setCurrentTimelapseIndex(prev =>
         prev >= timelapseImages.length - 1 ? 0 : prev + 1
       );
     }, 1500);
@@ -178,7 +199,7 @@ const LiveFeed: React.FC = () => {
 
   const goToPreviousFrame = useCallback(() => {
     if (!isPlayingTimelapse) {
-      setCurrentTimelapseIndex(prev => 
+      setCurrentTimelapseIndex(prev =>
         prev <= 0 ? timelapseImages.length - 1 : prev - 1
       );
     }
@@ -186,13 +207,16 @@ const LiveFeed: React.FC = () => {
 
   const goToNextFrame = useCallback(() => {
     if (!isPlayingTimelapse) {
-      setCurrentTimelapseIndex(prev => 
+      setCurrentTimelapseIndex(prev =>
         prev >= timelapseImages.length - 1 ? 0 : prev + 1
       );
     }
   }, [isPlayingTimelapse, timelapseImages.length]);
 
-  const getStatusClass = useCallback((status: string) => status.toLowerCase(), []);
+  const getStatusClass = useCallback(
+    (status: string) => status.toLowerCase(),
+    []
+  );
 
   const memoizedCameraFeeds = useMemo(() => cameraFeeds, [cameraFeeds]);
 
@@ -204,50 +228,62 @@ const LiveFeed: React.FC = () => {
     return gridPlayerRefs.current[feedId];
   }, []);
 
-  const cameraIcon = useMemo(() => 
-    new L.Icon({
-      iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+  const cameraIcon = useMemo(
+    () =>
+      new L.Icon({
+        iconUrl:
+          'data:image/svg+xml;base64,' +
+          btoa(`
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
           <circle cx="12" cy="12" r="10" fill="#ff4444" stroke="#fff" stroke-width="2"/>
           <path d="M8 12l4-4v3h4v2h-4v3z" fill="#fff"/>
         </svg>
       `),
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-      popupAnchor: [0, -12]
-    }), []
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12],
+      }),
+    []
   );
 
   // API request helper
-  const apiRequest = useCallback(async (endpoint: string, options: RequestInit = {}) => {
-    const apiKey = sessionStorage.getItem('apiKey');
-    if (!apiKey) {
-      throw new Error('No API key found. Please log in.');
-    }
+  const apiRequest = useCallback(
+    async (endpoint: string, options: RequestInit = {}) => {
+      const apiKey = sessionStorage.getItem('apiKey');
+      if (!apiKey) {
+        throw new Error('No API key found. Please log in.');
+      }
 
-    const url = `${process.env.REACT_APP_API_URL}${endpoint}`;
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-API-Key': apiKey,
-      ...options.headers,
-    };
+      const url = `${process.env.REACT_APP_API_URL}${endpoint}`;
+      const headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+        ...options.headers,
+      };
 
-    try {
-      const response = await fetch(url, { ...options, headers });
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Unauthorized: Invalid or missing API key');
+      try {
+        const response = await fetch(url, { ...options, headers });
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('Unauthorized: Invalid or missing API key');
+          }
+          throw new Error(
+            `API request failed: ${response.status} ${response.statusText}`
+          );
         }
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        return await response.json();
+      } catch (error: any) {
+        if (
+          error.message.includes('Unauthorized') ||
+          error.message.includes('API key')
+        ) {
+          navigate('/account');
+        }
+        throw error;
       }
-      return await response.json();
-    } catch (error: any) {
-      if (error.message.includes('Unauthorized') || error.message.includes('API key')) {
-        navigate('/account');
-      }
-      throw error;
-    }
-  }, [navigate]);
+    },
+    [navigate]
+  );
 
   // Handle incident reporting
   const handleReportIncident = useCallback(async () => {
@@ -263,20 +299,32 @@ const LiveFeed: React.FC = () => {
 
     try {
       const currentUser = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const reporterName = currentUser.User_FirstName ? 
-        `${currentUser.User_FirstName} ${currentUser.User_LastName || ''}`.trim() : 
-        currentUser.User_Email || 'Admin User';
+      const reporterName = currentUser.User_FirstName
+        ? `${currentUser.User_FirstName} ${
+            currentUser.User_LastName || ''
+          }`.trim()
+        : currentUser.User_Email || 'Admin User';
 
       // Look up the database Camera_ID using the external ID
       let databaseCameraID = null;
       try {
-        const cameraResponse = await apiRequest(`/api/cameras/external/${encodeURIComponent(selectedCamera.id)}`);
+        const cameraResponse = await apiRequest(
+          `/api/cameras/external/${encodeURIComponent(selectedCamera.id)}`
+        );
         console.log('Full camera response:', cameraResponse);
         databaseCameraID = cameraResponse.Camera_ID;
-        console.log(`Mapped external ID ${selectedCamera.id} to database Camera_ID ${databaseCameraID}`);
+        console.log(
+          `Mapped external ID ${selectedCamera.id} to database Camera_ID ${databaseCameraID}`
+        );
       } catch (cameraError) {
-        console.warn('Could not find camera in database:', selectedCamera.id, cameraError);
-        toast.warning('Camera not found in database, but incident will still be reported');
+        console.warn(
+          'Could not find camera in database:',
+          selectedCamera.id,
+          cameraError
+        );
+        toast.warning(
+          'Camera not found in database, but incident will still be reported'
+        );
       }
 
       const apiPayload = {
@@ -287,25 +335,27 @@ const LiveFeed: React.FC = () => {
         Incident_Status: 'open',
         Incident_Reporter: reporterName,
         Incident_CameraID: databaseCameraID,
-        Incident_Description: `${incidentForm.description}\n\nCamera: ${selectedCamera.location} (${selectedCamera.id})\nImage: ${selectedCamera.image}`
+        Incident_Description: `${incidentForm.description}\n\nCamera: ${selectedCamera.location} (${selectedCamera.id})\nImage: ${selectedCamera.image}`,
       };
-      
+
       console.log('Incident API payload:', apiPayload);
 
       await apiRequest('/api/incidents', {
         method: 'POST',
-        body: JSON.stringify(apiPayload)
+        body: JSON.stringify(apiPayload),
       });
 
-      toast.success('Incident reported successfully! All users have been alerted.', {
-        autoClose: 5000,
-      });
+      toast.success(
+        'Incident reported successfully! All users have been alerted.',
+        {
+          autoClose: 5000,
+        }
+      );
 
       // Reset form and close modal
       setIncidentForm({ severity: 'medium', description: '' });
       setShowIncidentForm(false);
       closeVideoModal();
-      
     } catch (error: any) {
       toast.error(`Failed to report incident: ${error.message}`);
     }
@@ -348,8 +398,8 @@ const LiveFeed: React.FC = () => {
       <div className="livefeed-header">
         <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
         <div className="livefeed-controls">
-          <button 
-            onClick={handleRefresh} 
+          <button
+            onClick={handleRefresh}
             className="refresh-button"
             disabled={loading}
           >
@@ -386,10 +436,10 @@ const LiveFeed: React.FC = () => {
       </div>
 
       <div className="livefeed-grid" data-cy="livefeed-grid">
-        {memoizedCameraFeeds.map((feed) => (
-          <div 
-            key={feed.id} 
-            className="feed-tile clickable" 
+        {memoizedCameraFeeds.map(feed => (
+          <div
+            key={feed.id}
+            className="feed-tile clickable"
             data-cy={`feed-tile-${feed.id}`}
             onClick={() => handleCameraClick(feed)}
           >
@@ -406,7 +456,7 @@ const LiveFeed: React.FC = () => {
                   onError={() => handleVideoError(feed.id)}
                   onLoad={() => handleImageLoad(feed.id)}
                   onLoadStart={() => handleVideoLoadStart(feed.id)}
-                  preload="metadata" 
+                  preload="metadata"
                 />
               ) : (
                 <img
@@ -420,7 +470,10 @@ const LiveFeed: React.FC = () => {
                 />
               )}
               <div className="live-feed-overlay" data-cy="live-feed-overlay">
-                <div className={`status-badge ${getStatusClass(feed.status)}`} data-cy="feed-status">
+                <div
+                  className={`status-badge ${getStatusClass(feed.status)}`}
+                  data-cy="feed-status"
+                >
                   {feed.status}
                 </div>
                 {feed.hasLiveStream && (
@@ -459,7 +512,8 @@ const LiveFeed: React.FC = () => {
                   )}
                   {feed.coordinates && (
                     <div className="feed-coordinates">
-                      Location: {feed.coordinates.lat.toFixed(4)}, {feed.coordinates.lng.toFixed(4)}
+                      Location: {feed.coordinates.lat.toFixed(4)},{' '}
+                      {feed.coordinates.lng.toFixed(4)}
                     </div>
                   )}
                   <div className="feed-last-update">
@@ -484,26 +538,26 @@ const LiveFeed: React.FC = () => {
 
       {showVideoModal && selectedCamera && (
         <div className="video-modal-overlay" onClick={closeVideoModal}>
-          <div className="video-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="video-modal" onClick={e => e.stopPropagation()}>
             <div className="video-modal-header">
               <h3>{selectedCamera.location}</h3>
               <div className="view-mode-selector">
                 {selectedCamera.hasLiveStream && selectedCamera.videoUrl && (
-                  <button 
+                  <button
                     className={viewMode === 'video' ? 'active' : ''}
                     onClick={() => setViewMode('video')}
                   >
                     Live Video
                   </button>
                 )}
-                <button 
+                <button
                   className={viewMode === 'images' ? 'active' : ''}
                   onClick={() => setViewMode('images')}
                 >
                   Images
                 </button>
                 {selectedCamera.coordinates && (
-                  <button 
+                  <button
                     className={viewMode === 'map' ? 'active' : ''}
                     onClick={() => setViewMode('map')}
                   >
@@ -511,11 +565,15 @@ const LiveFeed: React.FC = () => {
                   </button>
                 )}
               </div>
-              <button className="close-modal" onClick={closeVideoModal}>×</button>
+              <button className="close-modal" onClick={closeVideoModal}>
+                ×
+              </button>
             </div>
-            
+
             <div className="video-modal-content">
-              {viewMode === 'video' && selectedCamera.hasLiveStream && selectedCamera.videoUrl ? (
+              {viewMode === 'video' &&
+              selectedCamera.hasLiveStream &&
+              selectedCamera.videoUrl ? (
                 <div className="video-container">
                   <HlsPlayer
                     src={selectedCamera.videoUrl}
@@ -526,47 +584,79 @@ const LiveFeed: React.FC = () => {
                     className="camera-video"
                     playerRef={modalPlayerRef}
                     onError={() => handleVideoError(selectedCamera.id)}
-                    poster={selectedCamera.image}  // Show still image while video loads
+                    poster={selectedCamera.image} // Show still image while video loads
                   />
                 </div>
               ) : viewMode === 'map' && selectedCamera.coordinates ? (
                 <div className="map-container">
                   <MapContainer
-                    center={[selectedCamera.coordinates.lat, selectedCamera.coordinates.lng]}
+                    center={[
+                      selectedCamera.coordinates.lat,
+                      selectedCamera.coordinates.lng,
+                    ]}
                     zoom={15}
                     style={{ height: '400px', width: '100%' }}
                     className="camera-map"
                   >
-                    <MapUpdater center={[selectedCamera.coordinates.lat, selectedCamera.coordinates.lng]} />
+                    <MapUpdater
+                      center={[
+                        selectedCamera.coordinates.lat,
+                        selectedCamera.coordinates.lng,
+                      ]}
+                    />
                     <TileLayer
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
-                    <Marker 
-                      position={[selectedCamera.coordinates.lat, selectedCamera.coordinates.lng]}
+                    <Marker
+                      position={[
+                        selectedCamera.coordinates.lat,
+                        selectedCamera.coordinates.lng,
+                      ]}
                       icon={cameraIcon}
                     >
                       <Popup>
                         <div className="map-popup">
                           <h4>{selectedCamera.location}</h4>
-                          <p><strong>Route:</strong> {selectedCamera.route}</p>
+                          <p>
+                            <strong>Route:</strong> {selectedCamera.route}
+                          </p>
                           {selectedCamera.direction && (
-                            <p><strong>Direction:</strong> {selectedCamera.direction}</p>
+                            <p>
+                              <strong>Direction:</strong>{' '}
+                              {selectedCamera.direction}
+                            </p>
                           )}
                           {selectedCamera.county && (
-                            <p><strong>County:</strong> {selectedCamera.county}</p>
+                            <p>
+                              <strong>County:</strong> {selectedCamera.county}
+                            </p>
                           )}
                           {selectedCamera.milepost && (
-                            <p><strong>Milepost:</strong> {selectedCamera.milepost}</p>
+                            <p>
+                              <strong>Milepost:</strong>{' '}
+                              {selectedCamera.milepost}
+                            </p>
                           )}
-                          <p><strong>Coordinates:</strong> {selectedCamera.coordinates.lat.toFixed(6)}, {selectedCamera.coordinates.lng.toFixed(6)}</p>
+                          <p>
+                            <strong>Coordinates:</strong>{' '}
+                            {selectedCamera.coordinates.lat.toFixed(6)},{' '}
+                            {selectedCamera.coordinates.lng.toFixed(6)}
+                          </p>
                         </div>
                       </Popup>
                     </Marker>
                   </MapContainer>
                   <div className="map-info">
-                    <p><strong>Camera Location:</strong> {selectedCamera.coordinates.lat.toFixed(6)}, {selectedCamera.coordinates.lng.toFixed(6)}</p>
-                    <p><strong>Viewing:</strong> {selectedCamera.imageDescription || 'Highway conditions'}</p>
+                    <p>
+                      <strong>Camera Location:</strong>{' '}
+                      {selectedCamera.coordinates.lat.toFixed(6)},{' '}
+                      {selectedCamera.coordinates.lng.toFixed(6)}
+                    </p>
+                    <p>
+                      <strong>Viewing:</strong>{' '}
+                      {selectedCamera.imageDescription || 'Highway conditions'}
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -574,34 +664,43 @@ const LiveFeed: React.FC = () => {
                   <div className="timelapse-viewer">
                     <img
                       src={timelapseImages[currentTimelapseIndex]}
-                      alt={`${selectedCamera.location} - Frame ${currentTimelapseIndex + 1}`}
+                      alt={`${selectedCamera.location} - Frame ${
+                        currentTimelapseIndex + 1
+                      }`}
                       className="timelapse-image"
                     />
                     <div className="timelapse-info">
-                      Frame {currentTimelapseIndex + 1} of {timelapseImages.length}
-                      {currentTimelapseIndex === 0 ? ' (Current)' : ` (${currentTimelapseIndex} updates ago)`}
+                      Frame {currentTimelapseIndex + 1} of{' '}
+                      {timelapseImages.length}
+                      {currentTimelapseIndex === 0
+                        ? ' (Current)'
+                        : ` (${currentTimelapseIndex} updates ago)`}
                     </div>
                   </div>
-                  
+
                   {timelapseImages.length > 1 && (
                     <div className="timelapse-controls">
-                      <button 
-                        className="timelapse-btn" 
+                      <button
+                        className="timelapse-btn"
                         onClick={goToPreviousFrame}
                         disabled={isPlayingTimelapse}
                         title="Previous frame"
                       >
                         ◀
                       </button>
-                      <button 
-                        className="timelapse-btn primary" 
+                      <button
+                        className="timelapse-btn primary"
                         onClick={toggleTimelapse}
-                        title={isPlayingTimelapse ? 'Pause timelapse' : 'Play timelapse'}
+                        title={
+                          isPlayingTimelapse
+                            ? 'Pause timelapse'
+                            : 'Play timelapse'
+                        }
                       >
                         {isPlayingTimelapse ? '⏸' : '▶'}
                       </button>
-                      <button 
-                        className="timelapse-btn" 
+                      <button
+                        className="timelapse-btn"
                         onClick={goToNextFrame}
                         disabled={isPlayingTimelapse}
                         title="Next frame"
@@ -613,34 +712,53 @@ const LiveFeed: React.FC = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="video-modal-info">
               <div className="camera-details-modal">
-                <p><strong>Route:</strong> {selectedCamera.route}</p>
-                <p><strong>District:</strong> {selectedCamera.district}</p>
+                <p>
+                  <strong>Route:</strong> {selectedCamera.route}
+                </p>
+                <p>
+                  <strong>District:</strong> {selectedCamera.district}
+                </p>
                 {selectedCamera.direction && (
-                  <p><strong>Direction:</strong> {selectedCamera.direction}</p>
+                  <p>
+                    <strong>Direction:</strong> {selectedCamera.direction}
+                  </p>
                 )}
                 {selectedCamera.county && (
-                  <p><strong>County:</strong> {selectedCamera.county}</p>
+                  <p>
+                    <strong>County:</strong> {selectedCamera.county}
+                  </p>
                 )}
                 {selectedCamera.milepost && (
-                  <p><strong>Milepost:</strong> {selectedCamera.milepost}</p>
+                  <p>
+                    <strong>Milepost:</strong> {selectedCamera.milepost}
+                  </p>
                 )}
                 {selectedCamera.imageDescription && (
-                  <p><strong>View:</strong> {selectedCamera.imageDescription}</p>
+                  <p>
+                    <strong>View:</strong> {selectedCamera.imageDescription}
+                  </p>
                 )}
-                <p><strong>Update Frequency:</strong> Every {selectedCamera.updateFrequency || '?'} minutes</p>
+                <p>
+                  <strong>Update Frequency:</strong> Every{' '}
+                  {selectedCamera.updateFrequency || '?'} minutes
+                </p>
                 {selectedCamera.coordinates && (
-                  <p><strong>Coordinates:</strong> {selectedCamera.coordinates.lat.toFixed(6)}, {selectedCamera.coordinates.lng.toFixed(6)}</p>
+                  <p>
+                    <strong>Coordinates:</strong>{' '}
+                    {selectedCamera.coordinates.lat.toFixed(6)},{' '}
+                    {selectedCamera.coordinates.lng.toFixed(6)}
+                  </p>
                 )}
               </div>
-              
+
               {userRole === 'admin' && (
                 <div className="incident-reporting-section">
                   <div className="incident-actions">
                     {!showIncidentForm ? (
-                      <button 
+                      <button
                         className="report-incident-btn"
                         onClick={handleShowIncidentForm}
                         style={{
@@ -651,50 +769,82 @@ const LiveFeed: React.FC = () => {
                           borderRadius: '5px',
                           cursor: 'pointer',
                           marginTop: '10px',
-                          fontWeight: 'bold'
+                          fontWeight: 'bold',
                         }}
                       >
-                         Report Incident
+                        Report Incident
                       </button>
                     ) : (
-                      <div className="incident-form" style={{
-                        marginTop: '15px',
-                        padding: '15px',
-                        border: '2px solid #ff4444',
-                        borderRadius: '8px',
-                        backgroundColor: 'rgba(255, 68, 68, 0.05)'
-                      }}>
-                        <h4 style={{ color: '#ff4444', marginBottom: '10px' }}>Report Incident</h4>
-                        
+                      <div
+                        className="incident-form"
+                        style={{
+                          marginTop: '15px',
+                          padding: '15px',
+                          border: '2px solid #ff4444',
+                          borderRadius: '8px',
+                          backgroundColor: 'rgba(255, 68, 68, 0.05)',
+                        }}
+                      >
+                        <h4 style={{ color: '#ff4444', marginBottom: '10px' }}>
+                          Report Incident
+                        </h4>
+
                         <div style={{ marginBottom: '10px' }}>
-                          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Severity:</label>
-                          <select 
+                          <label
+                            style={{
+                              display: 'block',
+                              marginBottom: '5px',
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            Severity:
+                          </label>
+                          <select
                             value={incidentForm.severity}
-                            onChange={(e) => setIncidentForm(prev => ({ 
-                              ...prev, 
-                              severity: e.target.value as 'high' | 'medium' | 'low' 
-                            }))}
+                            onChange={e =>
+                              setIncidentForm(prev => ({
+                                ...prev,
+                                severity: e.target.value as
+                                  | 'high'
+                                  | 'medium'
+                                  | 'low',
+                              }))
+                            }
                             style={{
                               width: '100%',
                               padding: '8px',
                               borderRadius: '4px',
-                              border: '1px solid #ccc'
+                              border: '1px solid #ccc',
                             }}
                           >
                             <option value="low">Low - Minor disruption</option>
-                            <option value="medium">Medium - Moderate impact</option>
-                            <option value="high">High - Critical incident</option>
+                            <option value="medium">
+                              Medium - Moderate impact
+                            </option>
+                            <option value="high">
+                              High - Critical incident
+                            </option>
                           </select>
                         </div>
-                        
+
                         <div style={{ marginBottom: '15px' }}>
-                          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Description:</label>
+                          <label
+                            style={{
+                              display: 'block',
+                              marginBottom: '5px',
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            Description:
+                          </label>
                           <textarea
                             value={incidentForm.description}
-                            onChange={(e) => setIncidentForm(prev => ({ 
-                              ...prev, 
-                              description: e.target.value 
-                            }))}
+                            onChange={e =>
+                              setIncidentForm(prev => ({
+                                ...prev,
+                                description: e.target.value,
+                              }))
+                            }
                             placeholder="Describe what you see in the camera feed..."
                             rows={3}
                             style={{
@@ -703,17 +853,20 @@ const LiveFeed: React.FC = () => {
                               borderRadius: '4px',
                               border: '1px solid #ccc',
                               resize: 'vertical',
-                              minHeight: '60px'
+                              minHeight: '60px',
                             }}
                             required
                           />
                         </div>
-                        
-                        <div className="incident-form-actions" style={{ 
-                          display: 'flex', 
-                          gap: '10px' 
-                        }}>
-                          <button 
+
+                        <div
+                          className="incident-form-actions"
+                          style={{
+                            display: 'flex',
+                            gap: '10px',
+                          }}
+                        >
+                          <button
                             onClick={handleReportIncident}
                             disabled={!incidentForm.description.trim()}
                             style={{
@@ -722,16 +875,23 @@ const LiveFeed: React.FC = () => {
                               border: 'none',
                               padding: '8px 16px',
                               borderRadius: '4px',
-                              cursor: incidentForm.description.trim() ? 'pointer' : 'not-allowed',
-                              opacity: incidentForm.description.trim() ? 1 : 0.5
+                              cursor: incidentForm.description.trim()
+                                ? 'pointer'
+                                : 'not-allowed',
+                              opacity: incidentForm.description.trim()
+                                ? 1
+                                : 0.5,
                             }}
                           >
                             Submit Report
                           </button>
-                          <button 
+                          <button
                             onClick={() => {
                               setShowIncidentForm(false);
-                              setIncidentForm({ severity: 'medium', description: '' });
+                              setIncidentForm({
+                                severity: 'medium',
+                                description: '',
+                              });
                             }}
                             style={{
                               backgroundColor: '#666',
@@ -739,7 +899,7 @@ const LiveFeed: React.FC = () => {
                               border: 'none',
                               padding: '8px 16px',
                               borderRadius: '4px',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
                             }}
                           >
                             Cancel
@@ -754,7 +914,7 @@ const LiveFeed: React.FC = () => {
           </div>
         </div>
       )}
-      <ToastContainer 
+      <ToastContainer
         position="top-right"
         autoClose={3000}
         hideProgressBar={false}

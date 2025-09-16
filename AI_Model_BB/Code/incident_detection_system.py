@@ -11,8 +11,13 @@ import os
 import threading
 import subprocess
 from dotenv import load_dotenv
+from hls_stream_adapter import StreamCapture
 
 load_dotenv()
+
+# Global quit signal for multithreaded GUI handling on macOS
+global_quit_signal = False
+global_display_frames = {}  # Global frame storage for main thread display
 
 class AdvancedIncidentDetectionSystem:
     def __init__(self, camera_config=None, config=None):
@@ -20,8 +25,13 @@ class AdvancedIncidentDetectionSystem:
         Advanced incident detection system with multi-layer collision detection.
         Modified for multi-camera support and video clip recording.
         """
-        self.camera_config = camera_config  # Single camera config
-        self.config = config or self._default_config()
+        self.camera_config = camera_config  # Fix: Set camera_config before using it
+        self.config = self._default_config()
+        if config:
+            self.config.update(config)
+        
+        # Apply camera-specific threshold adjustments
+        self._adapt_thresholds_for_camera()
         
         # Initialize YOLO model
         self.model = self._load_model()
@@ -40,7 +50,7 @@ class AdvancedIncidentDetectionSystem:
         self.recent_incidents = []  # Store recent incidents to prevent duplicates
         self.incident_cooldown = {}  # Cooldown periods for different incident types
         
-        # ADVANCED COLLISION DETECTION COMPONENTS
+        # ENHANCED COLLISION DETECTION COMPONENTS
         self.previous_frame = None
         self.collision_verification_layers = {
             'trajectory': [],
@@ -48,6 +58,12 @@ class AdvancedIncidentDetectionSystem:
             'optical_flow': [],
             'physics_validation': []
         }
+        
+        # Enhanced evidence tracking
+        self.collision_evidence_buffer = {}  # Track evidence over time
+        self.incident_candidates = {}  # store incident candidates with persistence tracking
+        self.persistence_required = 5  # number of consecutive frames to confirm incident
+        self.ttc_history = {}  # track TTC trends
         
         # Physics tracking
         self.velocity_history = {}  # Track velocity over time for physics
@@ -65,6 +81,64 @@ class AdvancedIncidentDetectionSystem:
             'sudden_speed_change': []
         }
         
+    # =============================================================================
+    # CONFIGURATION AND INITIALIZATION METHODS
+    # =============================================================================
+        
+    def _adapt_thresholds_for_camera(self):
+        """
+        Adapt detection thresholds based on camera characteristics and stream type.
+        Provides better balance between false positive reduction and collision detection.
+        """
+        if not self.camera_config:
+            return
+            
+        camera_url = self.camera_config.get('url', '')
+        camera_id = self.camera_config.get('camera_id', '')
+        
+        # Detect stream type and camera characteristics
+        is_live_stream = '.m3u8' in camera_url.lower() or 'stream' in camera_url.lower()
+        is_highway_camera = 'highway' in camera_url.lower() or 'arterial' in camera_url.lower()
+        is_intersection_camera = 'intersection' in camera_url.lower() or 'traffic' in camera_url.lower()
+        
+        if is_live_stream:
+
+            self.config['collision_confidence_threshold'] = 0.5  # Reduced from 0.7
+            self.config['minimum_layer_agreement'] = 2  # Keep at 2 for balance
+            self.config['collision_distance_threshold'] = 25  # Slightly closer
+            self.config['min_collision_speed'] = 6.0  # Lower minimum speed
+            
+        if is_live_stream:
+            self.config['collision_confidence_threshold'] = 0.45  # Lower for live streams
+            self.config['collision_angle_threshold'] = 45  # Allow more varied collision angles
+            self.config['min_collision_speed'] = 6.0  # Reasonable speed for live detection
+            self.config['prediction_horizon'] = 20  # Longer prediction for stream latency
+            
+        elif camera_url.endswith(('.mp4', '.avi', '.mov')):
+
+            if is_intersection_camera:
+                self.config['collision_confidence_threshold'] = 0.6  # Higher for intersections
+                self.config['collision_angle_threshold'] = 25  # Stricter angles for T-bone detection
+                self.config['min_collision_speed'] = 5.0  # Lower speeds in intersections
+            elif is_highway_camera:
+                self.config['collision_confidence_threshold'] = 0.55  # Moderate for highway videos
+                self.config['collision_angle_threshold'] = 35  # Highway collision angles
+                self.config['min_collision_speed'] = 7.0  # Higher speeds expected
+            else:
+                # Default video file settings - stable feed allows higher confidence
+                self.config['collision_confidence_threshold'] = 0.65
+            
+        stream_type = "Live Stream" if is_live_stream else "Video File"
+        print(f"Camera {camera_id} ({stream_type}) thresholds adapted:")
+        print(f"   Confidence threshold: {self.config['collision_confidence_threshold']}")
+        print(f"   Distance threshold: {self.config['collision_distance_threshold']}")
+        print(f"   Speed threshold: {self.config['min_collision_speed']}")
+        print(f"   Angle threshold: {self.config['collision_angle_threshold']}")
+        
+        # Traffic density monitoring for adaptive thresholds
+        self.traffic_density_history = deque(maxlen=30)  # Last 30 frames
+        self.current_density_level = 'normal'  # low, normal, high, very_high
+        
         # Analytics and logging
         self.analytics = {
             'total_frames': 0,
@@ -81,49 +155,18 @@ class AdvancedIncidentDetectionSystem:
                 'physics_confirmed': 0,
                 'final_confirmed': 0
             },
-            'api_reports_sent': 0,
-            'api_failures': 0,
             'clips_recorded': 0 
         }
-        
-        self.api_config = self._load_api_config()
         
         # Video capture
         self.cap = None
         self.initialize_capture()
 
-    def _load_api_config(self):
-        """
-        Securely load API configuration from environment variables.
-        """
-        api_key = os.getenv('API_KEY')
-        
-        if not api_key:
-            print("⚠️ WARNING: API_KEY not found in environment variables!")
-            print("   Please create a .env file with your API key")
-            print("   API integration will be disabled")
-            return {
-                'endpoint': 'http://localhost:5000/api/incidents',
-                'api_key': None,
-                'timeout': 5,
-                'retry_attempts': 2,
-                'enabled': False
-            }
-        
-        return {
-            'endpoint': os.getenv('API_ENDPOINT', 'http://localhost:5000/api/incidents'),
-            'api_key': api_key,
-            'timeout': int(os.getenv('API_TIMEOUT', '5')),
-            'retry_attempts': int(os.getenv('API_RETRY_ATTEMPTS', '2')),
-            'enabled': True
-        }
-    
-
-    
+   
     def _default_config(self):
         """Enhanced configuration with advanced collision detection settings."""
         return {
-            # YOLO settings - can be overridden by environment variables
+            # YOLO settings 
             'model_version': os.getenv('MODEL_VERSION', 'yolov8s'),
             'confidence_threshold': float(os.getenv('CONFIDENCE_THRESHOLD', '0.4')),
             'iou_threshold': 0.45,
@@ -137,14 +180,14 @@ class AdvancedIncidentDetectionSystem:
             # Location configuration from environment
             'incident_location': os.getenv('INCIDENT_LOCATION', 'Traffic Camera Location'),
             
-            # MULTI-LAYER COLLISION DETECTION SETTINGS
-            'collision_distance_threshold': 35,    # Even tighter
-            'prediction_horizon': 12,              # Shorter prediction
-            'min_tracking_confidence': 0.7,        # Higher confidence
-            'min_collision_speed': 5.0,            # Must be moving faster
-            'collision_angle_threshold': 30,       # More restrictive angle
-            'min_trajectory_length': 8,            # Longer history required
-            'collision_persistence': 5,            # Must persist longer
+            # ENHANCED MULTI-LAYER COLLISION DETECTION SETTINGS
+            'collision_distance_threshold': 30,    # Adjusted for better precision
+            'prediction_horizon': 15,              # Prediction window for trajectory analysis
+            'min_tracking_confidence': 0.7,        # Reasonable confidence for tracking
+            'min_collision_speed': 8.0,            # Increased to avoid slow traffic
+            'collision_angle_threshold': 30,       # Allow more collision angles (T-bone, side impacts)
+            'min_trajectory_length': 10,           # Shorter history - accidents happen quickly
+            'collision_persistence': 5,            # Shorter persistence requirement
             
             # DEPTH ESTIMATION SETTINGS
             'depth_analysis_enabled': True,
@@ -160,12 +203,12 @@ class AdvancedIncidentDetectionSystem:
             'physics_validation_enabled': True,
             'max_realistic_acceleration': 15.0,    # Max believable acceleration change
             'momentum_change_threshold': 25.0,     # Significant momentum change
-            'deceleration_threshold': 12.0,        # Sudden stop indicator
+            'deceleration_threshold': 10.0,        # Adjusted sudden stop indicator
             
-            # FINAL VALIDATION REQUIREMENTS
-            'require_all_layers': False,           # True = all layers must agree
-            'minimum_layer_agreement': 3,          # At least 3 layers must agree
-            'collision_confidence_threshold': 0.8, # Final confidence threshold
+            # ENHANCED VALIDATION REQUIREMENTS
+            'require_all_layers': False,           # Don't require ALL layers - real accidents are complex
+            'minimum_layer_agreement': 2,          # Require 2 out of 4 layers minimum
+            'collision_confidence_threshold': 0.7, # Higher confidence threshold
             
             # Other incident detection thresholds
             'stopped_vehicle_time': 10,
@@ -192,25 +235,45 @@ class AdvancedIncidentDetectionSystem:
                 return None
     
     def initialize_capture(self):
-        """Initialize video capture for single camera."""
+        """Initialize video capture for single camera with HLS support."""
         if not self.camera_config:
-            print("✗ No camera configuration provided")
+            print("No camera configuration provided")
             return False
             
         stream_url = self.camera_config['url']
-        max_retries = 5
+        camera_id = self.camera_config['camera_id']
         
-        for attempt in range(max_retries):
-            self.cap = cv2.VideoCapture(stream_url)
-            if self.cap.isOpened():
-                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                print(f"✓ Camera {self.camera_config['camera_id']} connected: {stream_url}")
-                return True
-            print(f"Camera {self.camera_config['camera_id']} connection attempt {attempt+1}/{max_retries} failed...")
-            time.sleep(2)
-        return False
-
-
+        print(f"Initializing camera {camera_id}...")
+        
+        # Use StreamCapture wrapper for both MP4 and HLS streams
+        self.cap = StreamCapture(stream_url, max_retries=5)
+        
+        if self.cap.open():
+            print(f"✓ Camera {camera_id} connected successfully")
+            print(f"   URL: {stream_url}")
+            return True
+        else:
+            print(f"✗ Failed to connect camera {camera_id}")
+            print(f"   URL: {stream_url}")
+            return False
+    
+    # =============================================================================
+    # UTILITY AND HELPER METHODS
+    # =============================================================================
+    
+    def _relative_velocity_score(self, v1, v2):
+        v1 = np.array(v1)
+        v2 = np.array(v2)
+        return np.linalg.norm(v1 - v2)
+    
+    def _calculate_angle(self, v1, v2):
+        v1 = np.array(v1)
+        v2 = np.array(v2)
+        if np.linalg.norm(v1) == 0 or np.linalg.norm(v2) == 0:
+            return 0
+        cos_angle = np.clip(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)), -1, 1)
+        return math.degrees(math.acos(cos_angle))
+    
     def _is_duplicate_incident(self, incident, current_frame):
         """Check if this incident is a duplicate of a recent one."""
         incident_type = incident['type']
@@ -366,7 +429,7 @@ class AdvancedIncidentDetectionSystem:
             
             if frames_written > 0:
                 self.analytics['clips_recorded'] += 1
-                print(f"   Incident clip recorded: {final_filename}")
+                print(f"✓ Incident clip recorded: {final_filename}")
                 print(f"   Frames: {frames_written}, Duration: {frames_written/fps:.1f}s")
                 print(f"   Resolution: {width}x{height}")
                 
@@ -394,24 +457,28 @@ class AdvancedIncidentDetectionSystem:
                 'python', 'video_incident_classifier.py'
             ], cwd='.', stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-            print(f"Classification called")
+            print(f"✓ Classification called")
             
         except Exception as e:
             print(f"✗ Error calling video_incident_classifier.py: {e}")
     
+    # =============================================================================
+    # MAIN DETECTION LOOP AND PROCESSING
+    # =============================================================================
+    
     def run_detection(self):
-        """Main detection loop with advanced multi-layer collision detection."""
+        """Main detection loop with enhanced multi-layer collision detection."""
         if not self.cap or not self.cap.isOpened():
             print("✗ Video capture not initialized")
             return
         
         camera_id = self.camera_config['camera_id']
         print(f"Starting detection for camera: {camera_id}")
-        print("  Multi-layer collision detection enabled:")
-        print("  Layer 1: Trajectory Prediction")
-        print("  Layer 2: Depth Analysis") 
-        print("  Layer 3: Optical Flow Analysis")
-        print("  Layer 4: Physics Validation")
+        print("Enhanced collision detection enabled:")
+        print("  Layer 1: Traffic-Aware Trajectory Prediction")
+        print("  Layer 2: Evidence Persistence Validation") 
+        print("  Layer 3: Enhanced Physics Analysis")
+        print("  Layer 4: Smart Traffic Flow Filtering")
         print("Controls:")
         print("  'q' = quit")
         print("  's' = save frame") 
@@ -428,19 +495,32 @@ class AdvancedIncidentDetectionSystem:
             while True:
                 ret, frame = self.cap.read()
                 if not ret:
-                    if self.camera_config['url'].endswith(('.mp4', '.avi', '.mov')):  
-                        # Video ended - wait a moment before restarting to allow video writing to complete
-                        print(f" Video ended for camera {camera_id}")
-                        video_ended = True
-                        time.sleep(2)  # Give time for any ongoing video writing to complete
-                        
-                        # Check if user wants to exit instead of looping
-                        print(f" Restarting video for camera {camera_id} (press 'q' to quit)")
+                    stream_url = self.camera_config['url']
+                    is_hls = stream_url.lower().endswith('.m3u8') or 'm3u8' in stream_url.lower()
+                    is_video_file = stream_url.endswith(('.mp4', '.avi', '.mov'))
+                    
+                    if is_hls:
+                        # For HLS streams, try to reconnect using the stream handler
+                        print(f"HLS stream disconnected for camera {camera_id}")
+                        if hasattr(self.cap, 'reconnect') and self.cap.reconnect():
+                            print(f"HLS stream reconnected")
+                            continue
+                        else:
+                            print(f"Failed to reconnect HLS stream")
+                            break
+                            
+                    elif is_video_file:  
+                        # Video file ended - restart from beginning
+                        print(f"Video ended for camera {camera_id}, restarting...")
+                        time.sleep(2)  # Allow video writing to complete
                         self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Restart video
                         continue
-                    else:  # Stream - try to reconnect
-                        print(f" Camera {camera_id} disconnected, attempting reconnection...")
+                        
+                    else:
+                        # Other stream types - try to reconnect
+                        print(f"Stream disconnected for camera {camera_id}, reconnecting...")
                         if not self.initialize_capture():
+                            print(f"Failed to reconnect stream")
                             break
                         continue
                 
@@ -457,7 +537,10 @@ class AdvancedIncidentDetectionSystem:
                 # Vehicle tracking and trajectory analysis
                 tracking_results = self._update_vehicle_tracking(detection_results['detections'])
                 
-                # ADVANCED Multi-Layer Incident Detection
+                # Update traffic density for adaptive thresholds
+                self._update_traffic_density(detection_results['detections'])
+                
+                # ENHANCED Multi-Layer Incident Detection with traffic awareness
                 incidents = self._detect_incidents_multilayer(frame, detection_results, tracking_results)
                 
                 # Update analytics
@@ -469,56 +552,41 @@ class AdvancedIncidentDetectionSystem:
                     if frame_count - last_incident_frame > 90:  # 3 seconds gap at 30fps
                         self._process_alerts_and_record(incidents, frame_count)
                         last_incident_frame = frame_count
-                        print(f"Incident recorded at frame {frame_count}. Press 'q' to exit after recording completes.")
+                        print(f" Incident recorded at frame {frame_count}. Press 'q' to exit after recording completes.")
                 
                 # Create visualization
                 annotated_frame = self._create_visualization(frame, detection_results, incidents)
                 
-                # Display
+                # Display - Store frame for main thread GUI handling
                 if self.config['display_window']:
-                    window_name = f"Camera {camera_id} - Advanced Incident Detection"
-                    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-                    cv2.imshow(window_name, annotated_frame)
+                    global global_display_frames
+                    try:
+                        # Store frame globally for main thread access
+                        global_display_frames[camera_id] = {
+                            'frame': annotated_frame.copy(),
+                            'timestamp': time.time()
+                        }
+                    except:
+                        pass  # Continue processing if storage fails
                 
                 # Store previous frame for optical flow
                 self.previous_frame = frame.copy()
                 
-                # Handle keyboard input with improved timing
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('q'):
+                # Check for quit signal from main thread
+                global global_quit_signal
+                if global_quit_signal:
                     print(f" Quit requested for camera {camera_id}")
-                    # Give a moment for any ongoing video writing to complete
-                    time.sleep(1)
                     break
-                elif key == ord('s'):
-                    self._save_frame(annotated_frame, frame_count, manual=True)
-                elif key == ord('r'):
-                    self._reset_analytics()
-                elif key == ord('f'):
-                    # Toggle fullscreen
-                    window_name = f"Camera {camera_id} - Advanced Incident Detection"
-                    is_fullscreen = not is_fullscreen
-                    if is_fullscreen:
-                        cv2.setWindowProperty(window_name, 
-                                            cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                        print("Switched to fullscreen mode (Press ESC or 'f' to exit)")
-                    else:
-                        cv2.setWindowProperty(window_name, 
-                                            cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
-                        print("Switched to windowed mode")
-                elif key == 27:  # ESC key
-                    if is_fullscreen:
-                        window_name = f"Camera {camera_id} - Advanced Incident Detection"
-                        is_fullscreen = False
-                        cv2.setWindowProperty(window_name, 
-                                            cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
-                        print("🪟 Exited fullscreen mode")
                 
         except KeyboardInterrupt:
             print(f"\n Detection stopped for camera {camera_id}")
         finally:
-            print(f"Cleaning up camera {camera_id}...")
+            print(f" Cleaning up camera {camera_id}...")
             self._cleanup()
+    
+    # =============================================================================
+    # OBJECT DETECTION AND TRACKING
+    # =============================================================================
     
     def _detect_objects(self, frame):
         """Perform YOLO object detection."""
@@ -595,38 +663,42 @@ class AdvancedIncidentDetectionSystem:
         
         return {'active_tracks': matched_ids}
     
+    # =============================================================================
+    # MULTI-LAYER INCIDENT DETECTION PIPELINE
+    # =============================================================================
+    
     def _detect_incidents_multilayer(self, frame, detection_results, tracking_results):
-        """ADVANCED Multi-Layer Incident Detection Pipeline."""
+        """ENHANCED Multi-Layer Incident Detection Pipeline with Traffic Awareness."""
         incidents = []
         current_frame = self.analytics['total_frames']
         
-        # 1. LAYER 1: Basic Trajectory Collision Detection
-        trajectory_collisions = self._detect_trajectory_collisions(tracking_results['active_tracks'])
+        # 1. ENHANCED LAYER 1: Traffic-Aware Trajectory Collision Detection
+        trajectory_collisions = self._enhanced_traffic_aware_collision_detection(tracking_results['active_tracks'])
         self.analytics['collision_layers']['trajectory_detected'] += len(trajectory_collisions)
         
-        # 2. LAYER 2: Depth Analysis Validation
+        # 2. LAYER 2: Depth Analysis Validation (if enabled)
         if self.config['depth_analysis_enabled'] and trajectory_collisions:
             depth_validated = self._validate_collisions_with_depth(frame, trajectory_collisions, detection_results['detections'])
             self.analytics['collision_layers']['depth_confirmed'] += len(depth_validated)
         else:
             depth_validated = trajectory_collisions
         
-        # 3. LAYER 3: Optical Flow Validation  
+        # 3. LAYER 3: Optical Flow Validation (if enabled)
         if self.config['optical_flow_enabled'] and depth_validated and self.previous_frame is not None:
             flow_validated = self._validate_collisions_with_optical_flow(frame, self.previous_frame, depth_validated)
             self.analytics['collision_layers']['flow_confirmed'] += len(flow_validated)
         else:
             flow_validated = depth_validated
         
-        # 4. LAYER 4: Physics Validation
+        # 4. LAYER 4: Enhanced Physics Validation
         if self.config['physics_validation_enabled'] and flow_validated:
             physics_validated = self._validate_collisions_with_physics(flow_validated)
             self.analytics['collision_layers']['physics_confirmed'] += len(physics_validated)
         else:
             physics_validated = flow_validated
         
-        # 5. FINAL VALIDATION: Combine all layers
-        final_collisions = self._final_collision_validation(physics_validated)
+        # 5. ENHANCED FINAL VALIDATION: Evidence Persistence + Smart Filtering
+        final_collisions = self._persistent_collision_validation(physics_validated)
         self.analytics['collision_layers']['final_confirmed'] += len(final_collisions)
         
         incidents.extend(final_collisions)
@@ -643,38 +715,1033 @@ class AdvancedIncidentDetectionSystem:
         
         return incidents
     
-    def _detect_trajectory_collisions(self, active_tracks):
-        """LAYER 1: Basic trajectory-based collision detection."""
+    # =============================================================================
+    # COLLISION DETECTION ALGORITHMS
+    # =============================================================================
+
+    def _enhanced_traffic_aware_collision_detection(self, active_tracks):
+        """
+        BALANCED VERSION - Catches real incidents while filtering false positives
+        """
         potential_collisions = []
-        prediction_horizon = self.config['prediction_horizon']
-        min_trajectory_length = self.config['min_trajectory_length']
+        
+        # BALANCED traffic state assessment - less aggressive thresholds
+        vehicle_count = len(active_tracks)
+        if vehicle_count <= 2:
+            traffic_state = 'sparse'
+            distance_threshold = 50
+            speed_threshold = 3.0        # Reduced from 4.0
+            confidence_threshold = 0.3   # Reduced from 0.4
+            parallel_filter_strict = False
+        elif vehicle_count <= 6:
+            traffic_state = 'moderate' 
+            distance_threshold = 40
+            speed_threshold = 5.0        # Reduced from 6.0
+            confidence_threshold = 0.5   # Reduced from 0.65
+            parallel_filter_strict = True
+        elif vehicle_count <= 12:
+            traffic_state = 'heavy'
+            distance_threshold = 30      # Increased from 25
+            speed_threshold = 7.0        # Reduced from 10.0
+            confidence_threshold = 0.7   # Reduced from 0.85
+            parallel_filter_strict = True
+        else:
+            traffic_state = 'congested'
+            distance_threshold = 25      # Increased from 20
+            speed_threshold = 10.0       # Reduced from 15.0
+            confidence_threshold = 0.8   # Reduced from 0.95
+            parallel_filter_strict = True
+        
+        print(f"    Traffic State: {traffic_state}, Vehicles: {vehicle_count}")
+        
+        # Pre-filter vehicle pairs using enhanced lane analysis
+        viable_pairs = self._get_viable_collision_pairs(active_tracks, parallel_filter_strict)
+        
+        for track1_id, track2_id in viable_pairs:
+            track1 = self.tracked_vehicles.get(track1_id)
+            track2 = self.tracked_vehicles.get(track2_id)
+            
+            if not self._balanced_collision_candidate_check(track1, track2, speed_threshold, traffic_state):
+                continue
+            
+            # Enhanced collision prediction with balanced validation
+            collision_data = self._balanced_collision_prediction(
+                track1, track2, distance_threshold, traffic_state)
+            
+            if collision_data and collision_data['confidence'] >= confidence_threshold:
+                potential_collisions.append({
+                    'track1_id': track1_id,
+                    'track2_id': track2_id, 
+                    'track1': track1,
+                    'track2': track2,
+                    'collision_data': collision_data,
+                    'validation_layers': {'trajectory': True},
+                    'traffic_state': traffic_state
+                })
+        
+        return potential_collisions
+    
+    def _is_following_pattern(self, track1, track2):
+        """
+        Detect if vehicles are in a following pattern (major cause of false positives)
+        FIXED: Added proper velocity null checks
+        """
+        # Add null checks first
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return False
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return False
+        
+        pos1 = np.array(track1['center'])
+        pos2 = np.array(track2['center'])
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        
+        # Check if vehicles are roughly aligned (one behind the other)
+        relative_pos = pos2 - pos1
+        
+        # If one vehicle's velocity aligns with the relative position vector,
+        # they might be following each other
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(relative_pos) > 0:
+            vel1_norm = vel1 / np.linalg.norm(vel1)
+            rel_pos_norm = relative_pos / np.linalg.norm(relative_pos)
+            
+            # Check alignment
+            alignment = np.dot(vel1_norm, rel_pos_norm)
+            
+            # If vehicle 1 is moving toward vehicle 2's current position (following)
+            if alignment > 0.7:  # Strong alignment
+                # Check if speeds are similar (following traffic)
+                speed_diff = abs(np.linalg.norm(vel1) - np.linalg.norm(vel2))
+                if speed_diff < 3.0:  # Similar speeds
+                    return True
+        
+        return False
+    def _same_lane_following(self, track1, track2):
+        """
+        Detect vehicles following in the same lane
+        """
+        # Add null checks first
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return False
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return False
+        
+        pos1 = np.array(track1['center'])
+        pos2 = np.array(track2['center'])
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        
+        # Check if vehicles are vertically aligned (same lane in typical highway view)
+        horizontal_diff = abs(pos1[0] - pos2[0])
+        vertical_diff = abs(pos1[1] - pos2[1])
+        
+        # If horizontally close but vertically separated = same lane following
+        if horizontal_diff < 80 and vertical_diff > 40:  # Adjust based on your camera angle
+            # Check if both moving in similar direction
+            if np.linalg.norm(vel1) > 0 and np.linalg.norm(vel2) > 0:
+                vel_similarity = np.dot(vel1, vel2) / (np.linalg.norm(vel1) * np.linalg.norm(vel2))
+                if vel_similarity > 0.8:  # Very similar directions
+                    return True
+        
+        return False
+    
+    #balanced version 
+    def _balanced_collision_candidate_check(self, track1, track2, speed_threshold, traffic_state):
+        """
+        BALANCED candidate filtering - less aggressive than ultra-strict version
+        """
+        if not track1 or not track2:
+            return False
+        
+        # Enhanced null checks
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return False
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return False
+        
+        # BALANCED speed check - allow one vehicle to be slower
+        speed1 = track1.get('speed', 0)
+        speed2 = track2.get('speed', 0)
+        
+        # At least ONE vehicle must meet speed threshold (not both)
+        if speed1 < speed_threshold and speed2 < speed_threshold:
+            return False
+        
+        pos1 = np.array(track1['center'])
+        pos2 = np.array(track2['center'])
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        
+        # BALANCED parallel traffic filtering - less strict
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(vel2) > 0:
+            # Calculate angle between velocity vectors
+            dot_product = np.dot(vel1, vel2)
+            magnitudes = np.linalg.norm(vel1) * np.linalg.norm(vel2)
+            
+            if magnitudes > 0:
+                cos_angle = np.clip(dot_product / magnitudes, -1, 1)
+                angle = math.degrees(math.acos(cos_angle))
+                
+                # Less strict filtering for parallel traffic
+                if angle < 30:  # Reduced from 45 degrees
+                    relative_speed = np.linalg.norm(vel2 - vel1)
+                    
+                    # BALANCED relative speed thresholds - less aggressive
+                    if traffic_state == 'congested':
+                        if relative_speed < 5.0:  # Reduced from 8.0
+                            return False
+                    elif traffic_state == 'heavy':
+                        if relative_speed < 4.0:  # Reduced from 6.0
+                            return False
+                    else:
+                        if relative_speed < 3.0:  # Reduced from 4.0
+                            return False
+        
+        # Enhanced distance check - more generous
+        distance = np.linalg.norm(pos2 - pos1)
+        max_distance = {
+            'sparse': 250,     # Increased from 200
+            'moderate': 200,   # Increased from 150
+            'heavy': 150,      # Increased from 100
+            'congested': 120   # Increased from 80
+        }
+        
+        if distance > max_distance.get(traffic_state, 200):
+            return False
+        
+        # BALANCED approach check - less strict
+        relative_pos = pos2 - pos1
+        relative_vel = vel2 - vel1
+        approach_rate = np.dot(relative_pos, relative_vel)
+        
+        # More lenient approach thresholds
+        approach_thresholds = {
+            'sparse': -0.5,    # More lenient
+            'moderate': -1.0,  # More lenient
+            'heavy': -2.0,     # More lenient
+            'congested': -3.0  # More lenient
+        }
+        
+        return approach_rate < approach_thresholds.get(traffic_state, -1.0)
+
+    def _balanced_collision_prediction(self, track1, track2, distance_threshold, traffic_state):
+        """
+        Balanced collision prediction - catches real incidents
+        """
+        # Enhanced null checks
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return None
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return None
+        
+        pos1 = np.array(track1['center'], dtype=float)
+        pos2 = np.array(track2['center'], dtype=float)
+        vel1 = np.array(track1['velocity'], dtype=float)  
+        vel2 = np.array(track2['velocity'], dtype=float)
+        
+        # BALANCED horizons - longer for better detection
+        horizon_map = {'sparse': 20, 'moderate': 18, 'heavy': 15, 'congested': 12}
+        horizon = horizon_map[traffic_state]
+        
+        min_distance = float('inf')
+        collision_time = None
+        collision_point = None
+        trajectory_convergence = False
+        
+        # Track if trajectories are converging - less strict requirement
+        convergence_count = 0
+        
+        for t in range(1, horizon + 1):
+            future_pos1 = pos1 + vel1 * t
+            future_pos2 = pos2 + vel2 * t
+            distance = np.linalg.norm(future_pos2 - future_pos1)
+            
+            # Check if distance is decreasing (convergence)
+            if t > 1 and distance < min_distance:
+                convergence_count += 1
+            
+            min_distance = min(min_distance, distance)
+            
+            if distance < distance_threshold:
+                collision_time = t
+                collision_point = (future_pos1 + future_pos2) / 2
+                trajectory_convergence = convergence_count >= 2  # Reduced from 3
+                break
+        
+        if collision_time and trajectory_convergence:
+            # BALANCED confidence calculation
+            confidence = self._balanced_confidence_calculation(
+                track1, track2, min_distance, collision_time, traffic_state)
+            
+            # Lower base confidence threshold
+            if confidence > 0.2:  # Reduced from 0.4
+                return {
+                    'ttc': collision_time / 30,
+                    'collision_point': collision_point.tolist(),
+                    'min_distance': min_distance,
+                    'confidence': confidence,
+                    'traffic_context': traffic_state,
+                    'trajectory_convergence': trajectory_convergence
+                }
+        
+        return None
+
+    def _balanced_confidence_calculation(self, track1, track2, distance, time_steps, traffic_state):
+        """
+        Balanced confidence calculation - not too strict
+        """
+        confidence = 0.0
+        
+        # Distance factor - more generous
+        distance_score = max(0, 1.0 - (distance / 40.0))  # Increased from 30.0
+        confidence += distance_score * 0.3
+        
+        # Enhanced null checks for velocity
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return 0.0
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return 0.0
+        
+        # Speed differential - more lenient
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        relative_speed = np.linalg.norm(vel2 - vel1)
+        speed_score = min(1.0, relative_speed / 10.0)  # Reduced from 15.0
+        confidence += speed_score * 0.25
+        
+        # Time urgency - more generous
+        time_score = max(0, 1.0 - (time_steps / 15.0))  # Increased from 10.0
+        confidence += time_score * 0.2
+        
+        # BALANCED physics anomaly check - don't require both vehicles
+        physics_score = 0.0
+        anomaly_count = 0
+        
+        for track in [track1, track2]:
+            if track['id'] in self.acceleration_history:
+                recent_accel = self.acceleration_history[track['id']][-3:]
+                if recent_accel and max(recent_accel) > 8.0:  # Reduced from 10.0
+                    anomaly_count += 1
+        
+        if anomaly_count >= 1:  # Only require ONE vehicle (not both)
+            physics_score = 0.3 if anomaly_count == 1 else 0.4
+        
+        confidence += physics_score
+        
+        # Trajectory angle - more generous scoring
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(vel2) > 0:
+            cos_angle = np.dot(vel1, vel2) / (np.linalg.norm(vel1) * np.linalg.norm(vel2))
+            angle = math.degrees(math.acos(np.clip(cos_angle, -1, 1)))
+            
+            # More generous angle requirements
+            if 60 <= angle <= 120:  # T-bone (wider range)
+                confidence += 0.15
+            elif angle > 120:  # Head-on
+                confidence += 0.2
+            # No penalty for other angles
+        
+        # REDUCED traffic state penalties
+        traffic_penalties = {
+            'sparse': 0.0,
+            'moderate': 0.05,  # Reduced from 0.1
+            'heavy': 0.15,     # Reduced from 0.25
+            'congested': 0.2   # Reduced from 0.35
+        }
+        confidence -= traffic_penalties.get(traffic_state, 0)
+        
+        return max(0.0, min(1.0, confidence))
+     
+    
+    
+    #ultra strict version of the code 
+    def _ultra_strict_collision_candidate_check(self, track1, track2, speed_threshold, traffic_state):
+        """
+        ULTRA STRICT candidate filtering
+        FIXED: Added proper velocity null checks
+        """
+        if not track1 or not track2:
+            return False
+        
+        # Enhanced null checks
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return False
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return False
+        
+        # Enhanced speed check with traffic-aware thresholds
+        speed1 = track1.get('speed', 0)
+        speed2 = track2.get('speed', 0)
+        
+        # Both vehicles must have significant speed
+        if speed1 < speed_threshold or speed2 < speed_threshold:
+            return False
+        
+        pos1 = np.array(track1['center'])
+        pos2 = np.array(track2['center'])
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        
+        # ULTRA STRICT parallel traffic filtering
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(vel2) > 0:
+            # Calculate angle between velocity vectors
+            dot_product = np.dot(vel1, vel2)
+            magnitudes = np.linalg.norm(vel1) * np.linalg.norm(vel2)
+            
+            if magnitudes > 0:
+                cos_angle = np.clip(dot_product / magnitudes, -1, 1)
+                angle = math.degrees(math.acos(cos_angle))
+                
+                # Much stricter filtering for parallel traffic
+                if angle < 45:  # Vehicles moving in similar direction
+                    relative_speed = np.linalg.norm(vel2 - vel1)
+                    
+                    # Traffic-state aware relative speed thresholds
+                    if traffic_state == 'congested':
+                        if relative_speed < 8.0:  # Very strict for congested traffic
+                            return False
+                    elif traffic_state == 'heavy':
+                        if relative_speed < 6.0:  # Strict for heavy traffic
+                            return False
+                    else:
+                        if relative_speed < 4.0:  # Moderate for lighter traffic
+                            return False
+        
+        # Enhanced distance check
+        distance = np.linalg.norm(pos2 - pos1)
+        max_distance = {
+            'sparse': 200,
+            'moderate': 150,
+            'heavy': 100,
+            'congested': 80
+        }
+        
+        if distance > max_distance.get(traffic_state, 150):
+            return False
+        
+        # ENHANCED approach check - must be strongly approaching
+        relative_pos = pos2 - pos1
+        relative_vel = vel2 - vel1
+        approach_rate = np.dot(relative_pos, relative_vel)
+        
+        # Traffic-aware approach thresholds
+        approach_thresholds = {
+            'sparse': -1.0,
+            'moderate': -2.0,
+            'heavy': -4.0,
+            'congested': -6.0
+        }
+        
+        return approach_rate < approach_thresholds.get(traffic_state, -2.0)
+
+    def _ultra_conservative_collision_prediction(self, track1, track2, distance_threshold, traffic_state):
+        """
+        Ultra conservative collision prediction with enhanced filtering
+        FIXED: Added proper velocity null checks
+        """
+        # Enhanced null checks
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return None
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return None
+        
+        pos1 = np.array(track1['center'], dtype=float)
+        pos2 = np.array(track2['center'], dtype=float)
+        vel1 = np.array(track1['velocity'], dtype=float)  
+        vel2 = np.array(track2['velocity'], dtype=float)
+        
+        # Shorter horizons for stricter validation
+        horizon_map = {'sparse': 15, 'moderate': 12, 'heavy': 8, 'congested': 6}
+        horizon = horizon_map[traffic_state]
+        
+        min_distance = float('inf')
+        collision_time = None
+        collision_point = None
+        trajectory_convergence = False
+        
+        # Track if trajectories are actually converging
+        convergence_count = 0
+        
+        for t in range(1, horizon + 1):
+            future_pos1 = pos1 + vel1 * t
+            future_pos2 = pos2 + vel2 * t
+            distance = np.linalg.norm(future_pos2 - future_pos1)
+            
+            # Check if distance is decreasing (convergence)
+            if t > 1 and distance < min_distance:
+                convergence_count += 1
+            
+            min_distance = min(min_distance, distance)
+            
+            if distance < distance_threshold:
+                collision_time = t
+                collision_point = (future_pos1 + future_pos2) / 2
+                trajectory_convergence = convergence_count >= 3  # Require sustained convergence
+                break
+        
+        if collision_time and trajectory_convergence:
+            # Enhanced confidence calculation with stricter criteria
+            confidence = self._ultra_strict_confidence_calculation(
+                track1, track2, min_distance, collision_time, traffic_state)
+            
+            # Higher base confidence threshold
+            if confidence > 0.4:
+                return {
+                    'ttc': collision_time / 30,
+                    'collision_point': collision_point.tolist(),
+                    'min_distance': min_distance,
+                    'confidence': confidence,
+                    'traffic_context': traffic_state,
+                    'trajectory_convergence': trajectory_convergence
+                }
+        
+        return None
+
+    def _ultra_strict_confidence_calculation(self, track1, track2, distance, time_steps, traffic_state):
+        """
+        Ultra strict confidence calculation with enhanced penalties
+        FIXED: Added proper velocity null checks
+        """
+        confidence = 0.0
+        
+        # Distance factor (much stricter)
+        distance_score = max(0, 1.0 - (distance / 30.0))  # Stricter than before
+        confidence += distance_score * 0.25
+        
+        # Enhanced null checks for velocity
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return 0.0
+        
+        if track1['velocity'] is None or track2['velocity'] is None:
+            return 0.0
+        
+        # Speed differential (require higher relative speed)
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        relative_speed = np.linalg.norm(vel2 - vel1)
+        speed_score = min(1.0, relative_speed / 15.0)  # Higher threshold
+        confidence += speed_score * 0.25
+        
+        # Time urgency (shorter time required)
+        time_score = max(0, 1.0 - (time_steps / 10.0))  # Stricter timing
+        confidence += time_score * 0.2
+        
+        # ENHANCED physics anomaly check (require stronger evidence)
+        physics_score = 0.0
+        anomaly_count = 0
+        
+        for track in [track1, track2]:
+            if track['id'] in self.acceleration_history:
+                recent_accel = self.acceleration_history[track['id']][-3:]
+                if recent_accel and max(recent_accel) > 10.0:  # Higher threshold
+                    anomaly_count += 1
+        
+        if anomaly_count >= 2:  # Require both vehicles to show anomalies
+            physics_score = 0.5
+        elif anomaly_count == 1:
+            physics_score = 0.2
+        
+        confidence += physics_score
+        
+        # Trajectory angle (much stricter requirements)
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(vel2) > 0:
+            cos_angle = np.dot(vel1, vel2) / (np.linalg.norm(vel1) * np.linalg.norm(vel2))
+            angle = math.degrees(math.acos(np.clip(cos_angle, -1, 1)))
+            
+            # Only give credit for clear perpendicular/head-on collisions
+            if 70 <= angle <= 110:  # T-bone (stricter range)
+                confidence += 0.2
+            elif angle > 130:  # Head-on (stricter range)
+                confidence += 0.25
+            else:
+                confidence -= 0.1  # Penalty for unclear angles
+        
+        # ENHANCED traffic state penalties
+        traffic_penalties = {
+            'sparse': 0.0,
+            'moderate': 0.1,
+            'heavy': 0.25,     # Increased penalty
+            'congested': 0.35  # Much higher penalty
+        }
+        confidence -= traffic_penalties.get(traffic_state, 0)
+        
+        return max(0.0, min(1.0, confidence))
+
+    def _get_viable_collision_pairs(self, active_tracks, strict_filtering):
+        """
+        Pre-filter vehicle pairs to eliminate obvious non-collision scenarios
+        FIXED: Added better error handling
+        """
+        viable_pairs = []
         
         for i, track1_id in enumerate(active_tracks):
             for track2_id in active_tracks[i+1:]:
                 track1 = self.tracked_vehicles.get(track1_id)
                 track2 = self.tracked_vehicles.get(track2_id)
                 
-                # Basic candidate check
-                if not self._is_collision_candidate(track1, track2, min_trajectory_length):
+                if not track1 or not track2:
                     continue
                 
-                # Check if approaching
-                if not self._are_vehicles_approaching(track1, track2):
+                try:
+                    # Skip if vehicles are in obvious following pattern
+                    if self._is_following_pattern(track1, track2):
+                        continue
+                    
+                    # Skip if vehicles are in same lane (highway following)
+                    if strict_filtering and self._same_lane_following(track1, track2):
+                        continue
+                    
+                    # Skip if vehicles have been maintaining consistent distance
+                    if self._maintaining_consistent_distance(track1_id, track2_id):
+                        continue
+                    
+                    viable_pairs.append((track1_id, track2_id))
+                    
+                except Exception as e:
+                    # Log the error but continue processing other pairs
+                    print(f"    Error processing pair V{track1_id}-V{track2_id}: {e}")
                     continue
-                
-                # Predict collision
-                collision_data = self._predict_basic_collision(track1, track2, prediction_horizon)
-                if collision_data:
-                    potential_collisions.append({
-                        'track1_id': track1_id,
-                        'track2_id': track2_id,
-                        'track1': track1,
-                        'track2': track2,
-                        'collision_data': collision_data,
-                        'validation_layers': {'trajectory': True}
-                    })
         
-        return potential_collisions
+        return viable_pairs
+
+        
+    def _maintaining_consistent_distance(self, track1_id, track2_id):
+        """
+        Check if two vehicles have been maintaining consistent distance (not colliding)
+        """
+        if track1_id not in self.vehicle_history or track2_id not in self.vehicle_history:
+            return False
+        
+        hist1 = self.vehicle_history[track1_id]
+        hist2 = self.vehicle_history[track2_id]
+        
+        if len(hist1) < 5 or len(hist2) < 5:
+            return False
+        
+        # Calculate distances over last 5 frames
+        recent_distances = []
+        for i in range(-5, 0):
+            if i < -len(hist1) or i < -len(hist2):
+                continue
+            pos1 = np.array(hist1[i])
+            pos2 = np.array(hist2[i])
+            distance = np.linalg.norm(pos2 - pos1)
+            recent_distances.append(distance)
+        
+        if len(recent_distances) < 3:
+            return False
+        
+        # Check if distance variance is low (consistent following distance)
+        distance_variance = np.var(recent_distances)
+        if distance_variance < 100:  # Low variance = consistent distance
+            return True
+        
+        return False
+
+
+  
+
+    def _smart_collision_candidate_check(self, track1, track2, speed_threshold):
+        """
+        Enhanced candidate filtering that reduces false positives
+        """
+        if not track1 or not track2:
+            return False
+        
+        if not track1.get('velocity') or not track2.get('velocity'):
+            return False
+        
+        # Speed check with dynamic threshold
+        speed1 = track1.get('speed', 0)
+        speed2 = track2.get('speed', 0)
+        
+        if speed1 < speed_threshold and speed2 < speed_threshold:
+            return False
+        
+        # Smart approach detection - filter out parallel traffic
+        pos1 = np.array(track1['center'])
+        pos2 = np.array(track2['center'])
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        
+        # Check if vehicles are moving in similar directions (parallel traffic)
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(vel2) > 0:
+            # Calculate angle between velocity vectors
+            dot_product = np.dot(vel1, vel2)
+            magnitudes = np.linalg.norm(vel1) * np.linalg.norm(vel2)
+            
+            if magnitudes > 0:
+                cos_angle = np.clip(dot_product / magnitudes, -1, 1)
+                angle = math.degrees(math.acos(cos_angle))
+                
+                # If vehicles moving in same direction (< 30 degrees), check relative speed
+                if angle < 30:
+                    relative_speed = np.linalg.norm(vel2 - vel1)
+                    # Parallel traffic typically has low relative speed
+                    if relative_speed < 5.0:
+                        return False
+        
+        # Distance check
+        distance = np.linalg.norm(pos2 - pos1)
+        if distance > 200:  # Too far apart
+            return False
+        
+        # Enhanced approach check
+        relative_pos = pos2 - pos1
+        relative_vel = vel2 - vel1
+        approach_rate = np.dot(relative_pos, relative_vel)
+        
+        return approach_rate < -1.5  # Must be approaching
+
+    def _traffic_aware_collision_prediction(self, track1, track2, distance_threshold, traffic_state):
+        """
+        Enhanced collision prediction with evidence scoring
+        """
+        pos1 = np.array(track1['center'], dtype=float)
+        pos2 = np.array(track2['center'], dtype=float)
+        vel1 = np.array(track1['velocity'], dtype=float)  
+        vel2 = np.array(track2['velocity'], dtype=float)
+        
+        # Adaptive horizon based on traffic
+        horizon_map = {'sparse': 20, 'moderate': 15, 'heavy': 10, 'congested': 8}
+        horizon = horizon_map[traffic_state]
+        
+        min_distance = float('inf')
+        collision_time = None
+        collision_point = None
+        
+        for t in range(1, horizon + 1):
+            future_pos1 = pos1 + vel1 * t
+            future_pos2 = pos2 + vel2 * t
+            distance = np.linalg.norm(future_pos2 - future_pos1)
+            
+            if distance < min_distance:
+                min_distance = distance
+            
+            if distance < distance_threshold:
+                collision_time = t
+                collision_point = (future_pos1 + future_pos2) / 2
+                break
+        
+        if collision_time:
+            # Calculate confidence score
+            confidence = self._calculate_enhanced_confidence(
+                track1, track2, min_distance, collision_time, traffic_state)
+            
+            if confidence > 0.3:  # Base threshold
+                return {
+                    'ttc': collision_time / 30,
+                    'collision_point': collision_point.tolist(),
+                    'min_distance': min_distance,
+                    'confidence': confidence,
+                    'traffic_context': traffic_state
+                }
+        
+        return None
+
+    def _calculate_enhanced_confidence(self, track1, track2, distance, time_steps, traffic_state):
+        """
+        Smart confidence calculation that considers multiple factors
+        """
+        confidence = 0.0
+        
+        # Distance factor (closer = higher confidence)
+        distance_score = max(0, 1.0 - (distance / 50.0))
+        confidence += distance_score * 0.3
+        
+        # Speed differential (higher relative speed = more confident)
+        vel1 = np.array(track1['velocity'])
+        vel2 = np.array(track2['velocity'])
+        relative_speed = np.linalg.norm(vel2 - vel1)
+        speed_score = min(1.0, relative_speed / 12.0)
+        confidence += speed_score * 0.25
+        
+        # Time urgency (shorter time = higher confidence)
+        time_score = max(0, 1.0 - (time_steps / 15.0))
+        confidence += time_score * 0.2
+        
+        # Physics anomaly check (sudden deceleration/direction change)
+        physics_score = 0.0
+        for track in [track1, track2]:
+            if track['id'] in self.acceleration_history:
+                recent_accel = self.acceleration_history[track['id']][-3:]
+                if recent_accel and max(recent_accel) > 8.0:
+                    physics_score = 0.4
+                    break
+        confidence += physics_score
+        
+        # Trajectory angle (perpendicular = higher confidence)
+        if np.linalg.norm(vel1) > 0 and np.linalg.norm(vel2) > 0:
+            cos_angle = np.dot(vel1, vel2) / (np.linalg.norm(vel1) * np.linalg.norm(vel2))
+            angle = math.degrees(math.acos(np.clip(cos_angle, -1, 1)))
+            # T-bone collisions (60-120 degrees) are more confident
+            if 60 <= angle <= 120:
+                confidence += 0.15
+            elif angle > 120:  # Head-on
+                confidence += 0.2
+        
+        # Traffic state penalty (reduce confidence in heavy traffic)
+        traffic_penalties = {'sparse': 0.0, 'moderate': 0.05, 'heavy': 0.15, 'congested': 0.25}
+        confidence -= traffic_penalties.get(traffic_state, 0)
+        
+        return max(0.0, min(1.0, confidence))
+
+    def _persistent_collision_validation(self, potential_collisions):
+        """
+        EVENT-BASED collision validation - detects collision events immediately
+        rather than requiring persistence. Real collisions are momentary events.
+        """
+        final_collisions = []
+        current_frame = self.analytics['total_frames']
+        
+        for collision in potential_collisions:
+            track1_id = collision['track1_id']
+            track2_id = collision['track2_id']
+            key = tuple(sorted([track1_id, track2_id]))
+            
+            confidence = collision['collision_data']['confidence']
+            
+            # Check if this collision pair was recently processed to prevent duplicates
+            if key in self.collision_evidence_buffer:
+                buffer = self.collision_evidence_buffer[key]
+                # Skip if recently processed (within last 5 frames)
+                if current_frame - buffer.get('last_detection_frame', 0) < 5:
+                    continue
+            
+            # Count validation layers that passed
+            validation_layers = collision.get('validation_layers', {})
+            layers_passed = sum([
+                validation_layers.get('trajectory', True),  # Always true if we got here
+                validation_layers.get('depth', True),
+                validation_layers.get('optical_flow', True), 
+                validation_layers.get('physics', True)
+            ])
+            
+            # Adaptive confidence threshold based on camera type and layers passed
+            camera_id = self.camera_config.get('camera_id', '')
+            camera_url = self.camera_config.get('url', '')
+            base_threshold = self.config['collision_confidence_threshold']
+            
+            # Detect stream type for additional validation
+            is_live_stream = '.m3u8' in camera_url.lower() or 'stream' in camera_url.lower()
+            is_demo_video = camera_url.endswith(('.mp4', '.avi', '.mov'))
+            
+            # Layer agreement bonus - more layers passed = lower threshold needed
+            layer_bonus = (layers_passed - self.config['minimum_layer_agreement']) * 0.05
+            effective_threshold = max(0.25, base_threshold - layer_bonus)
+            
+            # Stream-specific false positive reduction
+            if is_live_stream:
+                # For live streams, require additional validation to reduce false positives
+                stream_validation_passed = self._validate_live_stream_collision(collision, confidence, layers_passed)
+                validation_passed = (
+                    confidence >= effective_threshold and
+                    layers_passed >= self.config['minimum_layer_agreement'] and
+                    stream_validation_passed  # Additional check for live streams
+                )
+                
+                # Debug output for live stream validation
+                if not stream_validation_passed:
+                    print(f" Live stream collision rejected: conf={confidence:.3f}, layers={layers_passed}/4")
+                
+            else:
+                # For demo videos, use standard validation (current working behavior)
+                validation_passed = (
+                    confidence >= effective_threshold and
+                    layers_passed >= self.config['minimum_layer_agreement']
+                )
+            
+            if validation_passed:
+                # Create collision incident immediately
+                final_incident = self._create_enhanced_final_collision_incident(
+                    collision, confidence, confidence)
+                
+                # Add event-based validation metrics
+                final_incident['event_validation'] = {
+                    'detection_method': 'immediate_event',
+                    'layers_passed': layers_passed,
+                    'effective_threshold': effective_threshold,
+                    'confidence_margin': confidence - effective_threshold,
+                    'camera_adaptive': True
+                }
+                
+                final_collisions.append(final_incident)
+                
+                # Mark this pair as recently detected to prevent immediate duplicates
+                self.collision_evidence_buffer[key] = {
+                    'last_detection_frame': current_frame,
+                    'confidence': confidence
+                }
+                
+                stream_type = "Live Stream" if is_live_stream else "Demo Video"
+                print(f" Collision detected! [{stream_type}] Confidence: {confidence:.3f}, Threshold: {effective_threshold:.3f}, Layers: {layers_passed}/4")
+        
+        # Clean up old tracking data (prevent memory buildup)
+        to_remove = []
+        for key, buffer in self.collision_evidence_buffer.items():
+            if current_frame - buffer.get('last_detection_frame', 0) > 30:
+                to_remove.append(key)
+        
+        for key in to_remove:
+            del self.collision_evidence_buffer[key]
+        
+        return final_collisions
+
+    def _validate_live_stream_collision(self, collision, confidence, layers_passed):
+        """
+        STRICT validation for live streams to eliminate false positives.
+        Uses multiple mandatory checks - ALL must pass for detection.
+        """
+        track1 = collision['track1']
+        track2 = collision['track2']
+        
+        validation_score = 0
+        max_score = 6  # Total possible validation points
+        
+        try:
+            # 1. MANDATORY: High confidence requirement for live streams
+            if confidence < 0.55:  # Raised from 0.45
+                return False
+            validation_score += 1
+            
+            # 2. MANDATORY: Layer agreement - require 3+ layers for live streams
+            if layers_passed < 3:  # Stricter than the 2 minimum for videos
+                return False
+            validation_score += 1
+            
+            # 3. MANDATORY: Speed validation
+            vel1 = np.array(track1.get('velocity', [0, 0]))
+            vel2 = np.array(track2.get('velocity', [0, 0]))
+            
+            speed1 = np.linalg.norm(vel1)
+            speed2 = np.linalg.norm(vel2)
+            
+            # At least one vehicle must have significant speed
+            if speed1 < 4.0 and speed2 < 4.0:  # Raised from 3.0
+                return False
+            validation_score += 1
+            
+            # 4. MANDATORY: Trajectory convergence validation
+            pos1 = np.array(track1['position'])
+            pos2 = np.array(track2['position'])
+            
+            if len(vel1) >= 2 and len(vel2) >= 2:
+                # Project future positions
+                future_pos1 = pos1 + vel1 * 2
+                future_pos2 = pos2 + vel2 * 2
+                
+                current_distance = np.linalg.norm(pos1 - pos2)
+                future_distance = np.linalg.norm(future_pos1 - future_pos2)
+                
+                # STRICT: Vehicles MUST be converging significantly
+                if future_distance >= current_distance * 0.9:  # Must be getting closer
+                    return False
+            validation_score += 1
+            
+            # 5. MANDATORY: Validation layer consistency
+            validation_layers = collision.get('validation_layers', {})
+            consistent_detections = sum([
+                validation_layers.get('depth', False),
+                validation_layers.get('optical_flow', False),
+                validation_layers.get('physics', False)
+            ])
+            
+            # Require ALL 3 validation layers to agree for live streams
+            if consistent_detections < 3:
+                return False
+            validation_score += 1
+            
+            # 6. STRICT: Traffic density and time-of-day awareness
+            if self.current_density_level in ['heavy', 'congested']:
+                # In heavy traffic, require very high confidence
+                if confidence < 0.7:
+                    return False
+            validation_score += 1
+            
+            # FINAL CHECK: Must pass ALL validation criteria
+            return validation_score >= max_score
+                
+        except Exception as e:
+            # Any error = automatic rejection for live streams
+            print(f" Live stream validation error: {e}")
+            return False
+    
+    # =============================================================================
+    # INCIDENT CREATION AND REPORTING
+    # =============================================================================
+    
+    def _create_enhanced_final_collision_incident(self, collision, sustained_confidence, peak_confidence):
+        """
+        Create final incident with enhanced confidence metrics
+        """
+        track1 = collision['track1']
+        track2 = collision['track2']
+        collision_data = collision['collision_data']
+        
+        return {
+            'type': 'collision',
+            'severity': self._determine_enhanced_severity(sustained_confidence, peak_confidence),
+            'time_to_collision': collision_data['ttc'],
+            'vehicles': [track1['class'], track2['class']],
+            'vehicle_ids': [track1['id'], track2['id']],
+            'positions': [track1['center'], track2['center']],
+            'predicted_point': collision_data['collision_point'],
+            'confidence': sustained_confidence,
+            'peak_confidence': peak_confidence,
+            'validation_layers': collision['validation_layers'],
+            'traffic_context': collision['traffic_state'],
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    def _determine_enhanced_severity(self, sustained_confidence, peak_confidence):
+        """Determine severity based on sustained and peak confidence."""
+        if sustained_confidence >= 0.85 and peak_confidence >= 0.95:
+            return 'CRITICAL'
+        elif sustained_confidence >= 0.75 and peak_confidence >= 0.85:
+            return 'HIGH'
+        elif sustained_confidence >= 0.65 and peak_confidence >= 0.75:
+            return 'MEDIUM'
+        else:
+            return 'LOW'
+    
+    def _update_traffic_density(self, detections):
+        """Monitor traffic density and adjust sensitivity accordingly."""
+        # Count vehicles only (exclude pedestrians)
+        vehicle_count = len([d for d in detections if d['class'] in ['car', 'truck', 'bus', 'motorcycle']])
+        
+        # Store in history
+        self.traffic_density_history.append(vehicle_count)
+        
+        # Calculate average density over recent frames
+        if len(self.traffic_density_history) >= 10:
+            avg_density = sum(self.traffic_density_history) / len(self.traffic_density_history)
+            
+            # Determine density level and adjust thresholds
+            previous_level = self.current_density_level
+            
+            if avg_density >= 20:
+                self.current_density_level = 'very_high'
+            elif avg_density >= 12:
+                self.current_density_level = 'high'
+            elif avg_density >= 6:
+                self.current_density_level = 'normal'
+            else:
+                self.current_density_level = 'low'
+            
+            # Log density changes
+            if previous_level != self.current_density_level:
+                print(f"    Traffic density changed: {previous_level} → {self.current_density_level} (avg: {avg_density:.1f} vehicles)")
+    
+    # =============================================================================
+    # VALIDATION LAYER METHODS
+    # =============================================================================
     
     def _validate_collisions_with_depth(self, frame, potential_collisions, all_detections):
         """LAYER 2: Validate collisions using depth estimation from intensity/shadows."""
@@ -870,86 +1937,50 @@ class AdvancedIncidentDetectionSystem:
         return validated_collisions
     
     def _detect_physics_anomaly(self, vehicle_id):
-        """Detect physics anomalies for a specific vehicle."""
-        if vehicle_id not in self.acceleration_history:
+        """Enhanced physics anomaly detection specifically for collisions."""
+        if vehicle_id not in self.acceleration_history or vehicle_id not in self.velocity_history:
             return False
         
         accelerations = self.acceleration_history[vehicle_id]
-        if len(accelerations) < 3:
+        velocities = self.velocity_history[vehicle_id]
+        
+        if len(accelerations) < 3 or len(velocities) < 3:
             return False
         
-        # Look for sudden deceleration (collision indicator)
+        # Check for sudden deceleration (collision indicator)
         recent_accelerations = accelerations[-3:]
         max_deceleration = max(recent_accelerations)
         
+        # Check for sudden direction change (T-bone collision indicator)
+        if len(velocities) >= 3:
+            vel_before = np.array(velocities[-3])
+            vel_after = np.array(velocities[-1])
+            
+            # Calculate direction change
+            if np.linalg.norm(vel_before) > 0 and np.linalg.norm(vel_after) > 0:
+                dot_product = np.dot(vel_before, vel_after)
+                magnitude_product = np.linalg.norm(vel_before) * np.linalg.norm(vel_after)
+                
+                if magnitude_product > 0:
+                    cos_angle = np.clip(dot_product / magnitude_product, -1, 1)
+                    direction_change = math.degrees(math.acos(abs(cos_angle)))
+                    
+                    # Sudden direction change indicates collision
+                    if direction_change > 45:  # Significant direction change
+                        return True
+        
+        # Check for acceleration spike followed by deceleration (impact pattern)
+        if len(accelerations) >= 4:
+            accel_pattern = accelerations[-4:]
+            # Look for spike then drop pattern
+            max_accel = max(accel_pattern)
+            min_accel = min(accel_pattern)
+            
+            if max_accel > 8.0 and (max_accel - min_accel) > 6.0:
+                return True
+        
+        # Standard deceleration check
         return max_deceleration > self.config['deceleration_threshold']
-    
-    def _final_collision_validation(self, potential_collisions):
-        """Final validation combining all layers."""
-        final_collisions = []
-        
-        for collision in potential_collisions:
-            layers = collision['validation_layers']
-            
-            # Count how many layers confirmed the collision
-            confirmed_layers = sum([
-                layers.get('trajectory', False),
-                layers.get('depth', False),
-                layers.get('optical_flow', False),
-                layers.get('physics', False)
-            ])
-            
-            # Calculate overall confidence
-            total_layers = 4
-            confidence = confirmed_layers / total_layers
-            
-            # Apply validation rules
-            if self.config['require_all_layers']:
-                # Require ALL layers to agree (very strict)
-                if confirmed_layers == total_layers:
-                    final_collisions.append(self._create_final_collision_incident(collision, confidence))
-            else:
-                # Require minimum number of layers to agree
-                if (confirmed_layers >= self.config['minimum_layer_agreement'] and 
-                    confidence >= self.config['collision_confidence_threshold']):
-                    final_collisions.append(self._create_final_collision_incident(collision, confidence))
-        
-        return final_collisions
-    
-    def _create_final_collision_incident(self, collision, confidence):
-        """Create the final collision incident with all validation data."""
-        track1 = collision['track1']
-        track2 = collision['track2']
-        collision_data = collision['collision_data']
-        
-        return {
-            'type': 'collision',
-            'severity': self._determine_multilayer_severity(collision, confidence),
-            'time_to_collision': collision_data['ttc'],
-            'vehicles': [track1['class'], track2['class']],
-            'vehicle_ids': [track1['id'], track2['id']],
-            'positions': [track1['center'], track2['center']],
-            'predicted_point': collision_data['collision_point'],
-            'confidence': confidence,
-            'validation_layers': collision['validation_layers'],
-            'layer_analysis': {
-                'depth': collision.get('depth_analysis', {}),
-                'optical_flow': collision.get('optical_flow_analysis', {}),
-                'physics': collision.get('physics_analysis', {})
-            },
-            'timestamp': datetime.now().isoformat()
-        }
-    
-    def _determine_multilayer_severity(self, collision, confidence):
-        """Determine severity based on multi-layer analysis."""
-        if confidence >= 0.9:
-            return 'CRITICAL'
-        elif confidence >= 0.8:
-            return 'HIGH'
-        elif confidence >= 0.6:
-            return 'MEDIUM'
-        else:
-            return 'LOW'
     
     def _find_depth_for_vehicle(self, vehicle, all_detections, depth_estimates):
         """Find depth estimate for a specific tracked vehicle."""
@@ -1023,83 +2054,6 @@ class AdvancedIncidentDetectionSystem:
             vehicle['speed_history'].append(vehicle['speed'])
             if len(vehicle['speed_history']) > 10:
                 vehicle['speed_history'].pop(0)
-    
-    def _is_collision_candidate(self, track1, track2, min_trajectory_length):
-        """Check if two vehicles are candidates for collision detection."""
-        if not track1 or not track2:
-            return False
-        
-        if not track1.get('velocity') or not track2.get('velocity'):
-            return False
-        
-        hist1 = self.vehicle_history.get(track1['id'], [])
-        hist2 = self.vehicle_history.get(track2['id'], [])
-        
-        if len(hist1) < min_trajectory_length or len(hist2) < min_trajectory_length:
-            return False
-        
-        speed1 = track1.get('speed', 0)
-        speed2 = track2.get('speed', 0)
-        min_speed = self.config['min_collision_speed']
-        
-        return speed1 >= min_speed and speed2 >= min_speed
-    
-    def _are_vehicles_approaching(self, track1, track2):
-        """Check if vehicles are approaching each other."""
-        pos1 = np.array(track1['center'])
-        pos2 = np.array(track2['center'])
-        vel1 = np.array(track1['velocity'])
-        vel2 = np.array(track2['velocity'])
-        
-        relative_pos = pos2 - pos1
-        relative_vel = vel2 - vel1
-        
-        approach_rate = np.dot(relative_pos, relative_vel)
-        
-        if np.linalg.norm(relative_pos) > 0 and np.linalg.norm(relative_vel) > 0:
-            cos_angle = approach_rate / (np.linalg.norm(relative_pos) * np.linalg.norm(relative_vel))
-            cos_angle = np.clip(cos_angle, -1, 1)
-            angle = math.degrees(math.acos(abs(cos_angle)))
-            
-            if angle > self.config['collision_angle_threshold']:
-                return False
-        
-        return approach_rate < -2.0  # Stricter approach threshold
-    
-    def _predict_basic_collision(self, track1, track2, horizon):
-        """Basic collision prediction for Layer 1."""
-        pos1 = np.array(track1['center'], dtype=float)
-        pos2 = np.array(track2['center'], dtype=float)
-        vel1 = np.array(track1['velocity'], dtype=float)
-        vel2 = np.array(track2['velocity'], dtype=float)
-        
-        min_distance = float('inf')
-        collision_time = None
-        collision_point = None
-        
-        for t in range(1, horizon + 1):
-            future_pos1 = pos1 + vel1 * t
-            future_pos2 = pos2 + vel2 * t
-            
-            distance = np.linalg.norm(future_pos2 - future_pos1)
-            
-            if distance < min_distance:
-                min_distance = distance
-            
-            if distance < self.config['collision_distance_threshold']:
-                collision_time = t
-                collision_point = (future_pos1 + future_pos2) / 2
-                break
-        
-        if collision_time:
-            ttc = collision_time / 30  # Convert to seconds
-            return {
-                'ttc': ttc,
-                'collision_point': collision_point.tolist(),
-                'min_distance': min_distance
-            }
-        
-        return None
     
     def _detect_stopped_vehicles(self, current_frame):
         """Detect vehicles that have been stationary for too long."""
@@ -1183,16 +2137,25 @@ class AdvancedIncidentDetectionSystem:
         return incidents
     
     def _find_best_match(self, vehicle, current_frame):
-        """Find the best matching tracked vehicle."""
+        """Find the best matching tracked vehicle with balanced filtering."""
         best_match = None
-        min_distance = 80  # Stricter matching
+        min_distance = 80  # Reasonable matching distance
         
         for track_id, tracked in self.tracked_vehicles.items():
-            if current_frame - tracked['last_seen'] > 5:
+            if current_frame - tracked['last_seen'] > 3:  # Shorter tolerance
                 continue
             
             distance = np.sqrt((vehicle['center'][0] - tracked['center'][0])**2 + 
                              (vehicle['center'][1] - tracked['center'][1])**2)
+            
+            # Additional filter: ensure similar sizes (prevents cars matching with trucks)
+            if 'bbox' in tracked and 'bbox' in vehicle:
+                tracked_area = tracked['bbox'][2] * tracked['bbox'][3]
+                vehicle_area = vehicle['bbox'][2] * vehicle['bbox'][3]
+                size_ratio = max(tracked_area, vehicle_area) / max(min(tracked_area, vehicle_area), 1)
+                
+                if size_ratio > 2.0:  # Skip if size difference is too large
+                    continue
             
             if distance < min_distance:
                 min_distance = distance
@@ -1250,81 +2213,84 @@ class AdvancedIncidentDetectionSystem:
         return road_left <= x <= road_right and road_top <= y <= road_bottom
 
     def _process_alerts_and_record(self, incidents, current_frame):
-        """Process alerts and record clips instead of API calls."""
+        """Process alerts and record clips with enhanced traffic context awareness."""
+
         for incident in incidents:
             incident_type = incident['type']
             severity = incident.get('severity', 'MEDIUM')
-            
+            confidence = incident.get('confidence', 1)
+
             if incident_type == 'collision':
                 ttc = incident['time_to_collision']
                 vehicles = ' and '.join(incident['vehicles'])
-                confidence = incident.get('confidence', 0)
                 layers = incident.get('validation_layers', {})
-                
-                print(f"   {severity} COLLISION ALERT:")
-                print(f"   Camera: {self.camera_config['camera_id']}")
-                print(f"   Vehicles: {vehicles}")
-                print(f"   Time to collision: {ttc:.1f}s")
-                print(f"   Multi-layer confidence: {confidence:.2f}")
-                print(f"   Validation layers: {layers}")
-                
-                # Record clip only if not duplicate
+                traffic_context = incident.get('traffic_context', 'unknown')
+                peak_confidence = incident.get('peak_confidence', confidence)
+
+                print(f" {severity} COLLISION ALERT:")
+                print(f"    Camera: {self.camera_config['camera_id']}")
+                print(f"    Vehicles: {vehicles}")
+                print(f"    Time to collision: {ttc:.1f}s")
+                print(f"    Sustained confidence: {confidence:.2f}")
+                print(f"   📈 Peak confidence: {peak_confidence:.2f}")
+                print(f"    Traffic context: {traffic_context}")
+                print(f"    Validation layers: {layers}")
+
                 if self._record_incident_if_not_duplicate(incident, current_frame):
-                    print(f" Recording collision incident clip")
+                    print(f"    Recording collision incident clip")
                 else:
-                    print(f" Skipping duplicate collision incident")
-            
+                    print(f"   ⏭️ Skipping duplicate collision incident")
+
             elif incident_type == 'stopped_vehicle':
                 duration = incident['stopped_duration']
                 vehicle_class = incident['vehicle_class']
                 print(f" {severity} ALERT: {vehicle_class} stopped for {duration:.1f}s")
-                print(f"   Camera: {self.camera_config['camera_id']}")
-                
+                print(f"    Camera: {self.camera_config['camera_id']}")
+
                 if duration > 15:  # Only record for longer stops
                     if self._record_incident_if_not_duplicate(incident, current_frame):
-                        print(f" Recording stopped vehicle incident clip")
+                        print(f"    Recording stopped vehicle incident clip")
                     else:
-                        print(f" Skipping duplicate stopped vehicle incident")
-            
+                        print(f"   ⏭️ Skipping duplicate stopped vehicle incident")
+
             elif incident_type == 'pedestrian_on_road':
-                print(f"  {severity} ALERT: Pedestrian detected on roadway!")
-                print(f"   Camera: {self.camera_config['camera_id']}")
-                
+                print(f" {severity} ALERT: Pedestrian detected on roadway!")
+                print(f"    Camera: {self.camera_config['camera_id']}")
+
                 if self._record_incident_if_not_duplicate(incident, current_frame):
-                    print(f" Recording pedestrian incident clip")
+                    print(f"    Recording pedestrian incident clip")
                 else:
-                    print(f" Skipping duplicate pedestrian incident")
-            
+                    print(f"   ⏭️ Skipping duplicate pedestrian incident")
+
             elif incident_type == 'sudden_speed_change':
                 vehicle_class = incident['vehicle_class']
                 speed_change = incident['speed_change']
-                print(f"  {severity} ALERT: {vehicle_class} sudden speed change ({speed_change:.1f}x)")
-                print(f"   Camera: {self.camera_config['camera_id']}")
-                
-                # Only record clips for significant speed changes
+                print(f" {severity} ALERT: {vehicle_class} sudden speed change ({speed_change:.1f}x)")
+                print(f"    Camera: {self.camera_config['camera_id']}")
+
                 if speed_change > 1.5:
                     if self._record_incident_if_not_duplicate(incident, current_frame):
-                        print(f" Recording speed change incident clip")
+                        print(f"    Recording speed change incident clip")
                     else:
-                        print(f" Skipping duplicate speed change incident")
-            
+                        print(f"   ⏭️ Skipping duplicate speed change incident")
+
             self.analytics['alerts'].append(incident)
-        
+    
     def _create_visualization(self, frame, detection_results, incidents):
-        """Create annotated frame with advanced visualizations."""
+        """Create annotated frame with enhanced visualizations."""
         viz_frame = frame.copy()
         
         # Draw object detections
         viz_frame = self._draw_detections(viz_frame, detection_results)
         
         # Draw incidents with layer information
-        viz_frame = self._draw_advanced_incidents(viz_frame, incidents)
+        viz_frame = self._draw_enhanced_incidents(viz_frame, incidents)
         
         # Draw tracking information
         viz_frame = self._draw_tracking_info(viz_frame)
         
-        # Add advanced analytics overlay
-        viz_frame = self._add_advanced_analytics_overlay(viz_frame, incidents)
+        # Add enhanced analytics overlay
+        viz_frame = self._add_enhanced_analytics_overlay(viz_frame, incidents)
         
         return viz_frame
     
@@ -1354,8 +2320,8 @@ class AdvancedIncidentDetectionSystem:
         
         return frame
     
-    def _draw_advanced_incidents(self, frame, incidents):
-        """Draw incidents with multi-layer validation information."""
+    def _draw_enhanced_incidents(self, frame, incidents):
+        """Draw incidents with enhanced validation information."""
         for incident in incidents:
             incident_type = incident['type']
             severity = incident.get('severity', 'MEDIUM')
@@ -1378,31 +2344,37 @@ class AdvancedIncidentDetectionSystem:
                 cv2.putText(frame, label, (int(pos[0]) - 40, int(pos[1]) - 30),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             
-            # Enhanced collision display with layer information
+            # Enhanced collision display with validation information
             if incident_type == 'collision' and 'predicted_point' in incident:
                 pred_point = incident['predicted_point']
                 cv2.circle(frame, (int(pred_point[0]), int(pred_point[1])), 25, color, 3)
                 
                 ttc = incident['time_to_collision']
                 confidence = incident.get('confidence', 0)
+                peak_confidence = incident.get('peak_confidence', confidence)
+                traffic_context = incident.get('traffic_context', 'unknown')
                 
                 # Show collision details
                 collision_text = f"COLLISION: {ttc:.1f}s"
-                confidence_text = f"Confidence: {confidence:.2f}"
+                confidence_text = f"Conf: {confidence:.2f}/{peak_confidence:.2f}"
+                context_text = f"Traffic: {traffic_context}"
                 
                 cv2.putText(frame, collision_text, 
-                           (int(pred_point[0]) - 70, int(pred_point[1]) - 50),
+                           (int(pred_point[0]) - 70, int(pred_point[1]) - 60),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
                 cv2.putText(frame, confidence_text, 
-                           (int(pred_point[0]) - 60, int(pred_point[1]) - 25),
+                           (int(pred_point[0]) - 60, int(pred_point[1]) - 35),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                cv2.putText(frame, context_text, 
+                           (int(pred_point[0]) - 50, int(pred_point[1]) - 10),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
                 
                 # Show validation layers
                 if 'validation_layers' in incident:
                     layers = incident['validation_layers']
                     layer_text = f"Layers: T:{layers.get('trajectory', 'F')} D:{layers.get('depth', 'F')} O:{layers.get('optical_flow', 'F')} P:{layers.get('physics', 'F')}"
                     cv2.putText(frame, layer_text, 
-                               (int(pred_point[0]) - 80, int(pred_point[1]) + 5),
+                               (int(pred_point[0]) - 80, int(pred_point[1]) + 15),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
         
         return frame
@@ -1474,8 +2446,8 @@ class AdvancedIncidentDetectionSystem:
         
         return frame
     
-    def _add_advanced_analytics_overlay(self, frame, incidents):
-        """Add responsive analytics overlay that adapts to window size."""
+    def _add_enhanced_analytics_overlay(self, frame, incidents):
+        """Add enhanced analytics overlay with traffic awareness information."""
         height, width = frame.shape[:2]
         
         # Create incident summary
@@ -1489,47 +2461,56 @@ class AdvancedIncidentDetectionSystem:
         runtime = time.time() - self.analytics['start_time']
         layers = self.analytics['collision_layers']
         
-        # Create responsive overlay text with camera ID
+        # Get current traffic analysis
+        current_vehicles = len([d for d in self.tracked_vehicles.values() 
+                               if self.analytics['total_frames'] - d.get('last_seen', 0) <= 10])
+        
+        # Create enhanced overlay text with traffic awareness info
         overlay_text = [
-            f"Camera {self.camera_config['camera_id']} - Traffic Monitor",
+            f" Camera {self.camera_config['camera_id']} - Enhanced Traffic Monitor",
             "",
-            f"Runtime: {runtime:.0f}s",
-            f"Vehicles: {len(self.tracked_vehicles)}",
-            f"Frames: {self.analytics['total_frames']:,}",
+            f" Runtime: {runtime:.0f}s",
+            f" Current Vehicles: {current_vehicles}",
+            f" Frames: {self.analytics['total_frames']:,}",
             "",
-            "Multi-Layer Detection:",
-            f"  Trajectory: {layers['trajectory_detected']}",
-            f"  Depth: {layers['depth_confirmed']}",
-            f"  Motion: {layers['flow_confirmed']}",
-            f"  Physics: {layers['physics_confirmed']}",
+            f" Traffic Density: {self.current_density_level.upper()}",
             "",
-            f"Confirmed: {layers['final_confirmed']}",
-            f"Clips Recorded: {self.analytics['clips_recorded']}",
+            " Enhanced Detection Layers:",
+            f"   Traffic-Aware Trajectory: {layers['trajectory_detected']}",
+            f"   Depth Analysis: {layers['depth_confirmed']}",
+            f"   Motion Flow: {layers['flow_confirmed']}",
+            f"   Physics Validation: {layers['physics_confirmed']}",
+            "",
+            f" Final Confirmed: {layers['final_confirmed']}",
+            f" Clips Recorded: {self.analytics['clips_recorded']}",
         ]
         
         # Add active incidents if any
         if collision_incidents:
             overlay_text.append("")
-            overlay_text.append("ACTIVE ALERTS:")
+            overlay_text.append(" ACTIVE ALERTS:")
             for incident in collision_incidents[:2]:  # Show max 2
                 ttc = incident.get('time_to_collision', 0)
                 vehicles = ' & '.join(incident.get('vehicles', ['Unknown', 'Unknown']))
-                overlay_text.append(f"  {vehicles}: {ttc:.1f}s")
+                confidence = incident.get('confidence', 0)
+                traffic_context = incident.get('traffic_context', 'unknown')
+                overlay_text.append(f"   {vehicles}: {ttc:.1f}s ({confidence:.2f})")
+                overlay_text.append(f"     Context: {traffic_context}")
         
         # Calculate responsive overlay dimensions based on frame size
         # Scale overlay size based on resolution
         if width > 1500:  # Large/fullscreen
-            overlay_width = 350
+            overlay_width = 380
             font_scale = 0.6
             line_height = 28
             padding = 20
         elif width > 1000:  # Medium
-            overlay_width = 300
+            overlay_width = 330
             font_scale = 0.55
             line_height = 25
             padding = 15
         else:  # Small
-            overlay_width = 250
+            overlay_width = 280
             font_scale = 0.5
             line_height = 22
             padding = 12
@@ -1556,7 +2537,7 @@ class AdvancedIncidentDetectionSystem:
                      (overlay_x + overlay_width, overlay_y + overlay_height), 
                      (200, 200, 200), 2)  # Light gray border
         
-        # Draw text with responsive sizing
+        # Draw text with enhanced responsive sizing
         for i, text in enumerate(overlay_text):
             text_y = overlay_y + padding + (i + 1) * line_height
             text_x = overlay_x + padding
@@ -1565,12 +2546,12 @@ class AdvancedIncidentDetectionSystem:
             if text_y > height - 10:
                 break
             
-            # Responsive color scheme
+            # Enhanced color scheme
             if i == 0:  # Title
                 color = (255, 255, 255)
                 font_size = font_scale + 0.1
                 thickness = 2
-            elif "Confirmed" in text:
+            elif "Final Confirmed" in text:
                 if layers['final_confirmed'] > 0:
                     color = (0, 100, 255)  # Orange for incidents
                 else:
@@ -1581,11 +2562,12 @@ class AdvancedIncidentDetectionSystem:
                 color = (0, 0, 255)  # Red for alerts
                 font_size = font_scale
                 thickness = 2
-            elif text.startswith("  ") and ":" in text:  # Alert details or stats
-                if "ALERTS" in overlay_text[max(0, i-1)]:  # Alert details
-                    color = (0, 0, 255)  # Red for alert details
-                else:  # Layer stats
-                    color = (180, 180, 180)  # Light gray for stats
+            elif text.startswith("  ") or text.startswith("     "):  # Alert details
+                color = (255, 255, 255)  # Red for alert details
+                font_size = font_scale - 0.05
+                thickness = 1
+            elif text.startswith("  ") and ":" in text:  # Layer stats
+                color = (255, 255, 255)  # White for stats like other info
                 font_size = font_scale - 0.05
                 thickness = 1
             elif text == "":  # Empty lines
@@ -1631,7 +2613,7 @@ class AdvancedIncidentDetectionSystem:
         filename += ".jpg"
         
         cv2.imwrite(filename, frame)
-        print(f" Frame saved: {filename}")
+        print(f"📸 Frame saved: {filename}")
     
     def _reset_analytics(self):
         """Reset analytics counters."""
@@ -1659,11 +2641,16 @@ class AdvancedIncidentDetectionSystem:
         self.velocity_history.clear()
         self.acceleration_history.clear()
         self.flow_points.clear()
+        self.collision_evidence_buffer.clear()  # Clear evidence buffer
         self.next_vehicle_id = 0
         self.recent_incidents.clear()
         self.incident_cooldown.clear()
         
         print(f" Analytics and tracking data reset for camera {self.camera_config['camera_id']}")
+    
+    # =============================================================================
+    # CLEANUP AND REPORTING
+    # =============================================================================
     
     def _cleanup(self):
         """Cleanup resources and save final report."""
@@ -1675,11 +2662,11 @@ class AdvancedIncidentDetectionSystem:
         # Release video capture
         if self.cap:
             self.cap.release()
-            print(f" Released video capture for camera {camera_id}")
+            print(f"✓ Released video capture for camera {camera_id}")
         
         # Close OpenCV windows for this camera
         try:
-            window_name = f"Camera {camera_id} - Advanced Incident Detection"
+            window_name = f"Camera {camera_id} - Enhanced Incident Detection"
             cv2.destroyWindow(window_name)
             cv2.waitKey(1)  # Allow window destruction to complete
         except:
@@ -1727,12 +2714,12 @@ class AdvancedIncidentDetectionSystem:
             },
             'detection_summary': {k: int(v) for k, v in self.analytics['class_totals'].items()},
             'incident_summary': {},
-            'collision_layer_performance': {
-                'layer1_trajectory_detected': int(layers['trajectory_detected']),
-                'layer2_depth_confirmed': int(layers['depth_confirmed']),
-                'layer3_flow_confirmed': int(layers['flow_confirmed']),
-                'layer4_physics_confirmed': int(layers['physics_confirmed']),
-                'final_confirmed_collisions': int(layers['final_confirmed']),
+            'enhanced_collision_performance': {
+                'traffic_aware_trajectory_detected': int(layers['trajectory_detected']),
+                'depth_confirmed': int(layers['depth_confirmed']),
+                'flow_confirmed': int(layers['flow_confirmed']),
+                'physics_confirmed': int(layers['physics_confirmed']),
+                'final_validated_collisions': int(layers['final_confirmed']),
                 'false_positive_reduction': float((layers['trajectory_detected'] - layers['final_confirmed']) / max(layers['trajectory_detected'], 1))
             },
             'all_incidents': convert_to_json_serializable(self.analytics['incident_log']),
@@ -1752,35 +2739,35 @@ class AdvancedIncidentDetectionSystem:
         # Save report with error handling
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"advanced_incident_report_{camera_id}_{timestamp}.json"
+            filename = f"enhanced_incident_report_{camera_id}_{timestamp}.json"
             
             with open(filename, 'w') as f:
                 json.dump(report, f, indent=2, default=str)  # Use default=str as fallback
             
-            # Print summary
+            # Print enhanced summary
             print(f"\n{'='*60}")
-            print(f"CAMERA {camera_id} - INCIDENT DETECTION REPORT")
+            print(f" CAMERA {camera_id} - ENHANCED INCIDENT DETECTION REPORT")
             print(f"{'='*60}")
-            print(f"Runtime: {runtime:.1f} seconds")
-            print(f"Frames processed: {self.analytics['total_frames']}")
-            print(f"Average FPS: {report['session_summary']['average_fps']:.1f}")
-            print(f"Total detections: {self.analytics['total_detections']}")
-            print(f"Total incidents: {self.analytics['incidents_detected']}")
-            print(f"Clips recorded: {self.analytics['clips_recorded']}")
+            print(f" Runtime: {runtime:.1f} seconds")
+            print(f" Frames processed: {self.analytics['total_frames']}")
+            print(f" Average FPS: {report['session_summary']['average_fps']:.1f}")
+            print(f" Total detections: {self.analytics['total_detections']}")
+            print(f" Total incidents: {self.analytics['incidents_detected']}")
+            print(f" Clips recorded: {self.analytics['clips_recorded']}")
             
-            print(f"\n COLLISION DETECTION LAYER PERFORMANCE:")
-            print(f"  Layer 1 (Trajectory): {layers['trajectory_detected']} detected")
-            print(f"  Layer 2 (Depth): {layers['depth_confirmed']} confirmed")
-            print(f"  Layer 3 (Optical Flow): {layers['flow_confirmed']} confirmed")
-            print(f"  Layer 4 (Physics): {layers['physics_confirmed']} confirmed")
-            print(f"  FINAL Collisions: {layers['final_confirmed']} confirmed")
+            print(f"\n ENHANCED COLLISION DETECTION PERFORMANCE:")
+            print(f"   Traffic-Aware Trajectory: {layers['trajectory_detected']} detected")
+            print(f"   Depth Validation: {layers['depth_confirmed']} confirmed")
+            print(f"   Optical Flow: {layers['flow_confirmed']} confirmed")
+            print(f"   Physics Validation: {layers['physics_confirmed']} confirmed")
+            print(f"   FINAL Validated: {layers['final_confirmed']} confirmed")
             
             if layers['trajectory_detected'] > 0:
                 reduction = (layers['trajectory_detected'] - layers['final_confirmed']) / layers['trajectory_detected'] * 100
-                print(f"  False Positive Reduction: {reduction:.1f}%")
+                print(f"   False Positive Reduction: {reduction:.1f}%")
             
             if report['incident_summary']:
-                print(f"\nIncident breakdown:")
+                print(f"\n Incident breakdown:")
                 for incident_type, count in report['incident_summary'].items():
                     print(f"  {incident_type}: {count}")
             else:
@@ -1793,8 +2780,8 @@ class AdvancedIncidentDetectionSystem:
             print(f"\n Detailed report saved to: {filename}")
             
         except Exception as e:
-            print(f"Error saving report: {e}")
-            print("Analytics data:")
+            print(f" Error saving report: {e}")
+            print(" Analytics data:")
             print(f"  Runtime: {runtime:.1f}s")
             print(f"  Frames: {self.analytics['total_frames']}")
             print(f"  Incidents: {self.analytics['incidents_detected']}")
@@ -1821,9 +2808,15 @@ def run_camera_detection(camera_config, config):
     detector.run_detection()
 
 
+# =============================================================================
+# MAIN EXECUTION AND SETUP FUNCTIONS
+# =============================================================================
+
 def main():
     """Main function to run multi-camera incident detection system."""
-    # Advanced configuration
+    global global_quit_signal
+    
+    # Enhanced configuration
     config = {
         # YOLO model settings
         'model_version': 'yolov8s',
@@ -1836,13 +2829,13 @@ def main():
         'log_detections': True,
         'frame_skip': 2,
         
-        # ADVANCED MULTI-LAYER COLLISION DETECTION
-        'collision_distance_threshold': 35,
-        'prediction_horizon': 12,
+        # ENHANCED MULTI-LAYER COLLISION DETECTION
+        'collision_distance_threshold': 30,        # Adjusted for better precision
+        'prediction_horizon': 15,
         'min_tracking_confidence': 0.7,
-        'min_collision_speed': 5.0,
+        'min_collision_speed': 8.0,               # Increased to avoid slow traffic
         'collision_angle_threshold': 30,
-        'min_trajectory_length': 8,
+        'min_trajectory_length': 10,
         'collision_persistence': 5,
         
         # DEPTH ANALYSIS SETTINGS
@@ -1859,12 +2852,12 @@ def main():
         'physics_validation_enabled': True,
         'max_realistic_acceleration': 15.0,
         'momentum_change_threshold': 25.0,
-        'deceleration_threshold': 12.0,
+        'deceleration_threshold': 10.0,        # Adjusted for better detection
         
-        # FINAL VALIDATION REQUIREMENTS
+        # ENHANCED VALIDATION REQUIREMENTS
         'require_all_layers': False,
-        'minimum_layer_agreement': 3,
-        'collision_confidence_threshold': 0.75,
+        'minimum_layer_agreement': 2,
+        'collision_confidence_threshold': 0.7,  # Higher confidence threshold
         
         # Other settings
         'stopped_vehicle_time': 10,
@@ -1872,7 +2865,7 @@ def main():
         'pedestrian_road_threshold': 50,
     }
     
-    print(" Initializing ADVANCED Multi-Camera Incident Detection System...")
+    print(" Initializing ENHANCED Multi-Camera Incident Detection System...")
     print("="*70)
     
     # Load camera configurations
@@ -1886,7 +2879,6 @@ def main():
     for cam in cameras:
         print(f"   Camera ID: {cam.get('camera_id', 'Unknown')}")
         print(f"   URL: {cam.get('url', 'Unknown')}")
-    
     
     # Create and start detection threads for each camera
     threads = []
@@ -1912,15 +2904,59 @@ def main():
         return
     
     print(f"\n {len(threads)} camera thread(s) running. Press Ctrl+C to stop all cameras.")
+    print(" Enhanced Features Active:")
+    print("  • Traffic-aware collision detection")
+    print("  • Evidence persistence validation")
+    print("  • Smart parallel traffic filtering")
+    print("  • Enhanced physics analysis")
+    print("  • Adaptive threshold adjustment")
+    
+    # Main thread GUI handling for macOS compatibility
+    print("🖥️  GUI thread running on main thread (macOS compatible)...")
     
     try:
-        # Wait for all threads to complete
-        for thread in threads:
-            thread.join()
+        # Give threads time to start
+        time.sleep(0.5)
+        
+        while any(thread.is_alive() for thread in threads):
+            frames_displayed = False
+            
+            # Display frames from all cameras in main thread
+            global global_display_frames
+            for camera_id, frame_data in global_display_frames.items():
+                try:
+                    window_name = f"Camera {camera_id} - Enhanced Incident Detection"
+                    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+                    cv2.imshow(window_name, frame_data['frame'])
+                    frames_displayed = True
+                except cv2.error as e:
+                    print(f"Warning: GUI error for camera {camera_id}: {e}")
+                    continue
+            
+            # Handle keyboard input in main thread
+            try:
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('q'):
+                    print("\n Quit requested from GUI...")
+                    # Set global quit signal
+                    global_quit_signal = True
+                    break
+            except cv2.error:
+                # If waitKey fails, continue without keyboard input
+                pass
+            
+            # Small sleep to prevent excessive CPU usage
+            if not frames_displayed:
+                time.sleep(0.01)
+                
     except KeyboardInterrupt:
-        print("\nStopping all camera detection threads...")
-        print("   Waiting for cleanup to complete...")
-        time.sleep(3)  # Give time for cleanup
+        print("\n Stopping all camera detection threads...")
+        global_quit_signal = True
+        
+    # Wait for threads to complete
+    print("   Waiting for cleanup to complete...")
+    for thread in threads:
+        thread.join(timeout=3.0)
         
     print(" All camera threads stopped.")
     
