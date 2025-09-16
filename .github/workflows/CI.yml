@@ -35,12 +35,51 @@ jobs:
           ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
           # Use the frontend ESLint config for TS/TSX/Cypress files
           ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
+          
+          # Display only errors (not warnings)
+          ERROR_LEVEL: error
+          
+          # Enable logging by component folders
+          LOG_LEVEL: NOTICE
+          LOG_FILE: super-linter.log
+          
+          # Group output by folder components 
+          FILTER_REGEX_INCLUDE: '(^API\/|^frontend\/|^AI_Model_BB\/|^\.github\/)'
+          LINTER_RULES_PATH: /
+          
           # # Lint all relevant extensions
           # VALIDATE_JAVASCRIPT_ES: true
           # VALIDATE_TYPESCRIPT_ES: true
           # Optionally, set FILTER_REGEX_INCLUDE/FILTER_REGEX_EXCLUDE if needed
           # FILTER_REGEX_INCLUDE: 'src/|models/|controllers/|routes/|frontend/'
           # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
+      
+      - name: Display Linting Errors by Component
+        if: always()
+        run: |
+          if [ -f "super-linter.log" ]; then
+            echo "=== AI_Model_BB Component Errors ==="
+            grep -A 2 "AI_Model_BB" super-linter.log | grep -v "NOTICE\|INFO" || echo "No errors found"
+            echo ""
+            
+            echo "=== API Component Errors ==="
+            grep -A 2 "API/" super-linter.log | grep -v "NOTICE\|INFO" || echo "No errors found"
+            echo ""
+            
+            echo "=== Frontend Component Errors ==="
+            grep -A 2 "frontend/" super-linter.log | grep -v "NOTICE\|INFO" || echo "No errors found"
+            echo ""
+            
+            echo "=== CI/CD Component Errors ==="
+            grep -A 2 "\.github/" super-linter.log | grep -v "NOTICE\|INFO" || echo "No errors found"
+            echo ""
+            
+            echo "=== Summary of All Errors ==="
+            grep "ERROR" super-linter.log | wc -l
+            echo " errors found in total"
+          else
+            echo "No super-linter.log file found. Linting may have failed."
+          fi
 
   test-ui:
     name: UI Tests
