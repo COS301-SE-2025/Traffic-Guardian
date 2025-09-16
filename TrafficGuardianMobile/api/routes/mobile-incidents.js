@@ -199,3 +199,145 @@ router.post('/report', authenticateToken, checkPermission('report_incidents'), (
   }
 });
 
+// Get incident details
+router.get('/:id', authenticateToken, checkPermission('view_public_data'), (req, res) => {
+  try {
+    const incidentId = parseInt(req.params.id);
+    const incident = incidents.find(i => i.id === incidentId);
+
+    if (!incident) {
+      return res.status(404).json({ error: 'Incident not found' });
+    }
+
+    // Return filtered data based on user role
+    if (req.user.role === 'citizen') {
+      const publicIncident = {
+        id: incident.id,
+        type: incident.type,
+        severity: incident.severity,
+        location: incident.location,
+        description: incident.description,
+        status: incident.status,
+        trafficImpact: incident.trafficImpact,
+        estimatedClearanceTime: incident.estimatedClearanceTime,
+        emergencyServices: incident.emergencyServices,
+        createdAt: incident.createdAt
+      };
+      return res.json({ incident: publicIncident });
+    }
+
+    res.json({ incident });
+
+  } catch (error) {
+    console.error('Get incident error:', error);
+    res.status(500).json({ error: 'Failed to fetch incident' });
+  }
+});
+
+// Update incident (for field responders)
+router.put('/:id', authenticateToken, checkPermission('update_incidents'), (req, res) => {
+  try {
+    const incidentId = parseInt(req.params.id);
+    const incident = incidents.find(i => i.id === incidentId);
+
+    if (!incident) {
+      return res.status(404).json({ error: 'Incident not found' });
+    }
+
+    const {
+      status,
+      severity,
+      description,
+      estimatedClearanceTime,
+      affectedLanes,
+      trafficImpact,
+      emergencyServices
+    } = req.body;
+
+    // Update incident
+    if (status) incident.status = status;
+    if (severity) incident.severity = severity;
+    if (description) incident.description = description;
+    if (estimatedClearanceTime) incident.estimatedClearanceTime = estimatedClearanceTime;
+    if (affectedLanes !== undefined) incident.affectedLanes = affectedLanes;
+    if (trafficImpact) incident.trafficImpact = trafficImpact;
+    if (emergencyServices) incident.emergencyServices = emergencyServices;
+
+    // Assign responder if not already assigned
+    if (!incident.assignedTo) {
+      incident.assignedTo = {
+        userId: req.user.userId,
+        name: req.user.name || 'Field Responder',
+        estimatedArrival: '10 minutes'
+      };
+    }
+
+    // Set resolved time if status is resolved
+    if (status === 'resolved') {
+      incident.resolvedAt = new Date().toISOString();
+    }
+
+    incident.updatedAt = new Date().toISOString();
+
+    res.json({
+      message: 'Incident updated successfully',
+      incident
+    });
+
+  } catch (error) {
+    console.error('Update incident error:', error);
+    res.status(500).json({ error: 'Failed to update incident' });
+  }
+});
+
+// Get user's reported incidents
+router.get('/user/reports', authenticateToken, (req, res) => {
+  try {
+    const userIncidents = incidents.filter(i => i.reportedBy.userId === req.user.userId);
+    
+    res.json({
+      incidents: userIncidents,
+      total: userIncidents.length
+    });
+
+  } catch (error) {
+    console.error('Get user incidents error:', error);
+    res.status(500).json({ error: 'Failed to fetch user incidents' });
+  }
+});
+
+// Get incidents assigned to responder
+router.get('/responder/assigned', authenticateToken, checkPermission('update_incidents'), (req, res) => {
+  try {
+    const assignedIncidents = incidents.filter(i => 
+      i.assignedTo && i.assignedTo.userId === req.user.userId
+    );
+    
+    res.json({
+      incidents: assignedIncidents,
+      total: assignedIncidents.length
+    });
+
+  } catch (error) {
+    console.error('Get assigned incidents error:', error);
+    res.status(500).json({ error: 'Failed to fetch assigned incidents' });
+  }
+});
+
+// Helper function to calculate distance between two coordinates
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = toRadians(lat2 - lat1);
+  const dLng = toRadians(lng2 - lng1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function toRadians(degrees) {
+  return degrees * (Math.PI / 180);
+}
+
+module.exports = router;
