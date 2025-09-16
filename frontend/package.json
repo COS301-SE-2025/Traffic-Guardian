@@ -46,6 +46,11 @@
     "format": "prettier --write 'src/**/*.{ts,tsx,css,json,md}'",
     "format:check": "prettier --check 'src/**/*.{ts,tsx,css,json,md}'",
     "type-check": "tsc --noEmit",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "cypress:run:headless": "cypress run --headless",
+    "e2e": "cypress run --headless",
+    "e2e:open": "cypress open",
     "validate": "npm run lint:all && npm run type-check && npm run test:ci",
     "pre-commit": "npm run format && npm run lint:all:fix && npm run type-check && npm run test:coverage"
   },

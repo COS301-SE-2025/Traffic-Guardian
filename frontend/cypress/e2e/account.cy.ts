@@ -34,11 +34,17 @@ describe('Account Page', () => {
       body: { apiKey: 'fake-api-key' }
     }).as('loginRequest');
 
+    cy.intercept('GET', `${Cypress.env('API_URL')}/user/preferences`, {
+      statusCode: 200,
+      body: { preferences: '{"theme":"dark","notifications":true,"alertLevel":"medium"}' }
+    }).as('preferencesRequest');
+
     cy.get('[data-testid="email-input"]').type('test@example.com');
     cy.get('[data-testid="password-input"]').type('correctpassword');
     cy.get('[data-testid="submit-button"]').click();
 
     cy.wait('@loginRequest');
+    cy.wait('@preferencesRequest');
     cy.url().should('include', '/profile');
   });
 
