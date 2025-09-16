@@ -27,13 +27,17 @@ jobs:
           VALIDATE_JAVASCRIPT: true
           VALIDATE_CSS: true
           VALIDATE_HTML: true
-          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: Dev
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use the API ESLint config for API JS files (enforces semicolons)
+          ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
+          # Use the frontend ESLint config for TS/TSX/Cypress files
+          ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
           FILTER_REGEX_EXCLUDE: ".*node_modules/.*"
-          ERROR_LEVEL: error
-          DISABLE_ERRORS: false
-          LOG_LEVEL: DEBUG
+          # ERROR_LEVEL: error
+          # DISABLE_ERRORS: false
+          # LOG_LEVEL: DEBUG
           # Configure output format and location
           OUTPUT_FORMAT: "json"
           OUTPUT_DETAIL: "detailed"
