@@ -11,8 +11,13 @@
   <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CICD.yml">
     <img src="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CICD.yml/badge.svg" alt="CI/CD Pipeline">
   </a>
-  <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/graphs/commit-activity">
+
+  <!--   <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/graphs/commit-activity">
+
     <img src="https://img.shields.io/github/commit-activity/m/COS301-SE-2025/Traffic-Guardian" alt="GitHub commit activity">
+  </a> -->
+  <a href="https://img.shields.io/github/commit-activity/m/COS301-SE-2025/Traffic-Guardian/Dev">
+    <img src="https://img.shields.io/github/commit-activity/m/COS301-SE-2025/Traffic-Guardian/Dev" alt="GitHub commit activity">
   </a>
   <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/issues">
     <img src="https://img.shields.io/github/issues-raw/COS301-SE-2025/Traffic-Guardian?color=blue" alt="Open GitHub Issues">
@@ -100,7 +105,7 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
 
 | Name              | Role                                  | Top Skills/Frameworks                                                 | GitHub Profile                                                                                    | LinkedIn Profile                                                                                                             |
 | ----------------- | ------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Nicholas Dobson   | Full-Stack Developer, DevOps          | Java, C++, SQL, JavaScript/TypeScript, Docker                         | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/NicholasDobson)  | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/nicholas-dobson-a64a84355)   |
+| Nicholas Dobson   | Full-Stack Developer, DevOps, Database          | Java, C++, SQL, JavaScript/TypeScript, Docker                         | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/NicholasDobson)  | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/nicholas-dobson-a64a84355)   |
 | Mpho Tsotetsi     | Backend Developer, Database           | SQL, PL/SQL, .NET, JavaScript, C#, TypeScript                         | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/u22668323)       | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/mpho-tsotetsi-256375287/)    |
 | Shaylin Govender  | Full-Stack Developer, Team Lead       | JavaScript (React), Python, Java, C++, MySQL, MongoDB, GitHub Actions | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/ShaylinGovender) | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/shaylin-govender-827347343)  |
 | Lonwabo Kwitshana | Frontend Developer, UI/UX             | JavaScript (React), HTML/CSS, Java, Figma                             | [<img src="assets/github-icon.png" alt="GitHub" width="50"/>](https://github.com/7onwabo)         | [<img src="assets/linkedin-icon-2.svg" alt="LinkedIn" width="50"/>](https://www.linkedin.com/in/lonwabo-kwitshana-b483831a6) |

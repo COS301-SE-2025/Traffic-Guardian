@@ -30,7 +30,11 @@ app.use('/api', rateLimiters.general);
 
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
