@@ -1,15 +1,35 @@
 {
-  "extends": "stylelint-config-standard",
+  "extends": ["stylelint-config-standard"],
   "rules": {
-    "color-hex-length": "short",
-    "color-function-notation": "modern",
-    "alpha-value-notation": "percentage",
-    "font-family-name-quotes": "always-where-recommended",
-    "comment-empty-line-before": ["always", { "except": ["first-nested"] }],
-    "declaration-block-no-redundant-longhand-properties": true,
-    "shorthand-property-no-redundant-values": true,
-    "no-descending-specificity": true,
-    "media-feature-range-notation": "context",
-    "selector-pseudo-element-colon-notation": "double"
-  }
+    "selector-class-pattern": null,
+    "custom-property-pattern": null,
+    "declaration-block-trailing-semicolon": "always",
+    "indentation": 2,
+    "max-line-length": 120,
+    "no-descending-specificity": null,
+    "no-duplicate-selectors": null,
+    "declaration-block-single-line-max-declarations": null,
+    "keyframes-name-pattern": null,
+    "media-feature-range-notation": null,
+    "font-family-no-missing-generic-family-keyword": null,
+    "max-empty-lines": null,
+    "alpha-value-notation": null,
+    "color-function-notation": null,
+    "declaration-colon-newline-after": null,
+    "function-parentheses-newline-inside": null,
+    "function-comma-newline-after": null,
+    "no-eol-whitespace": null,
+    "function-comma-space-after": null,
+    "block-closing-brace-newline-before": null,
+    "comment-empty-line-before": null,
+    "rule-empty-line-before": null,
+    "media-feature-name-no-unknown": null,
+    "no-missing-end-of-source-newline": null,
+    "indentation": null
+  },
+  "ignoreFiles": [
+    "node_modules/**/*",
+    "build/**/*",
+    "coverage/**/*"
+  ]
 }

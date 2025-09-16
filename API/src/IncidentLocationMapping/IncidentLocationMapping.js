@@ -36,6 +36,11 @@ class ILM{
     }
 
     updateTraffic(trafficData){
+        if (!trafficData || !Array.isArray(trafficData)) {
+            console.log('⚠️  No traffic data provided to updateTraffic - skipping update');
+            return;
+        }
+        
         var count = 0;
         for(let i=0; i<trafficData.length; i++){
             var region = this.regions.get(trafficData[i].location);
@@ -118,13 +123,7 @@ class ILM{
             longitude : newIncident.Incidents_Longitude
         };
 
-        console.log("from ILM:" + newIncident);
-
         this.users.forEach((uValue, uKey)=>{
-            console.log("User="+uValue.coordinates);
-            console.dir(uValue.coordinates, {depth: null, colors: true});
-            console.log("Incident="+incidentLocation);
-            console.dir(incidentLocation, {depth : null, colors: true});
             if(this.isNearby(uValue.coordinates, incidentLocation)){
                 io.to(uKey).emit('new-incident', newIncident);
             }
@@ -138,7 +137,6 @@ class ILM{
 
     removeUser(userID){
         this.users.delete(userID);
-        console.log(userID + ' disconnected');
     }
 
 
@@ -177,17 +175,11 @@ class ILM{
     }
 
     showRegions(){
-        this.regions.forEach((value, key)=>{
-            console.log(`${key} : ${value}`);
-            console.dir(value, { depth: null, colors: true });
-        })
+        console.log(`${this.regions.size} regions configured`);
     }
 
     showUsers(){
-        console.log(`${this.users.size} connected`);
-        this.users.forEach((value, key)=>{
-            console.dir(value, {depth: null, colors: true});
-        })
+        console.log(`${this.users.size} users connected`);
     }
 }
 

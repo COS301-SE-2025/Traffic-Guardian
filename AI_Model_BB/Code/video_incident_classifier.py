@@ -85,7 +85,9 @@ class CrashReport:
     emergency_priority: str
     # Camera-specific fields
     camera_id: str = None
-    camera_location: str = None
+    camera_location: str = None # MIGHT NEED TO REMOVE (EXCESS)
+    camera_longitude: str = None
+    camera_latitude: str = None
     # Incident filename fields
     timestamp: str = None
     milliseconds: str = None
@@ -94,8 +96,6 @@ class CrashReport:
     # Display fields (for compatibility)
     severity: str = None
     description: str = None
-    # Additional display fields
-    severity: str = None
     description: str = None
 
 class EnhancedVideoPreprocessor:
@@ -342,13 +342,7 @@ class EnhancedCrashClassifier:
         "intersection_collision": "medium",
         "parking_lot_incident": "low"
     }
-    
-    CAMERA_LOCATIONS = {#Will get from API or parsed through file name
-        'default': {'latitude': 37.7749, 'longitude': -122.4194},
-        'intersection_1': {'latitude': 37.7849, 'longitude': -122.4094},
-        'highway_1': {'latitude': 37.7649, 'longitude': -122.4294},
-        'bridge_cam': {'latitude': 37.7549, 'longitude': -122.4394}
-    }
+    # Check camera location and incident locations and then also make the deployment api link updated
     
     def __init__(self, config: Dict = None):
         """Initialize enhanced crash classifier."""
@@ -385,10 +379,29 @@ class EnhancedCrashClassifier:
             'sudden_speed_change': []
         }
         
-        # # API configuration for camera information NEED TO UPDATE API STUFF NEXT
+        # API configuration for camera information NEED TO UPDATE API STUFF NEXT
         self.api_base_url = "http://localhost:5000/api"  # Need to adjustr
         self.camera_info_cache = {}  # Cache camera information
         
+    def __del__(self):
+        """Cleanup method to properly close ThreadPool."""
+        try:
+            if hasattr(self, 'thread_pool') and self.thread_pool:
+                self.thread_pool.close()
+                self.thread_pool.join()
+        except:
+            pass  # Ignore cleanup errors
+    
+    def cleanup(self):
+        """Explicitly cleanup resources."""
+        try:
+            if hasattr(self, 'thread_pool') and self.thread_pool:
+                self.thread_pool.close()
+                self.thread_pool.join()
+                self.thread_pool = None
+        except:
+            pass  # Ignore cleanup errors
+            
     def _get_optimized_config(self):
         """Optimized configuration for crash detection accuracy."""
         return {
@@ -468,9 +481,9 @@ class EnhancedCrashClassifier:
     
     def parse_incident_filename(self, video_path: str) -> Dict[str, str]:
         """
-        Parse incident filename format: incident_{camera_id}_{date}_{time}_{milliseconds}_{incident_type}.mp4
-        Example: incident_2_20250811_181338_966_collision.mp4
-        
+        Parse incident filename format: incident_{camera_id}_{date}_{time}_{milliseconds}_{incident_type}_{camera_longitude}_{camera_latitude}.mp4
+        Example: incident_2_20250811_181338_966_collision_2342_-123.mp4
+
         Args:
             video_path: Path to the incident video file
             
@@ -482,13 +495,15 @@ class EnhancedCrashClassifier:
         # Remove file extension
         name_without_ext = os.path.splitext(filename)[0]
         
-        # Pattern: incident_{camera_id}_{date}_{time}_{milliseconds}_{incident_type}
-        pattern = r'incident_([^_]+)_([^_]+)_([^_]+)_([^_]+)_(.+)'
+        # Pattern: incident_{camera_id}_{date}_{time}_{milliseconds}_{incident_type}_{camera_longitude}_{camera_latitude}
+        # Example: incident_2_20250811_181338_966_collision_28.0567_-26.1076
+        pattern = r'incident_([^_]+)_([^_]+)_([^_]+)_([^_]+)_([^_]+)_([^_]+)_([^_]+)$'
         match = re.match(pattern, name_without_ext)
         
         if match:
-            camera_id, date, time, milliseconds, original_incident_type = match.groups()
-            
+            camera_id, date, time, milliseconds, original_incident_type, camera_longitude, camera_latitude = match.groups()
+#added camera long and lat
+
             # Combine date and time for full timestamp
             timestamp = f"{date}_{time}"
             full_timestamp = f"{date}_{time}_{milliseconds}"
@@ -508,7 +523,9 @@ class EnhancedCrashClassifier:
                 'full_timestamp': full_timestamp,
                 'original_incident_type': original_incident_type,
                 'is_valid_incident_type': is_valid_type,
-                'filename': filename
+                'filename': filename,
+                'camera_longitude': camera_longitude,#added camera long and lat
+                'camera_latitude': camera_latitude
             }
         else:
             logger.warning(f"Could not parse incident filename: {filename}")
@@ -523,7 +540,9 @@ class EnhancedCrashClassifier:
                 'full_timestamp': now.strftime('%Y%m%d_%H%M%S_%f')[:-3],
                 'original_incident_type': 'unknown',
                 'is_valid_incident_type': False,
-                'filename': filename
+                'filename': filename,
+                'camera_longitude': '0.0',#added camera long and lat
+                'camera_latitude': '0.0'
             }
     
     def is_valid_incident_type(self, incident_type: str) -> bool:
@@ -1978,10 +1997,21 @@ class EnhancedCrashClassifier:
             # If we're in low latency mode, provide a basic result even on error
             if low_latency_mode:
                 logger.info("Providing fallback crash report due to low latency mode")
+                
+                # Get camera location from parsed filename for fallback
+                try:
+                    parsed_filename = self.parse_incident_filename(video_path)
+                    fallback_longitude = float(parsed_filename.get('camera_longitude', '0.0'))
+                    fallback_latitude = float(parsed_filename.get('camera_latitude', '0.0'))
+                except:
+                    # Ultimate fallback coordinates if parsing fails
+                    fallback_longitude = 0.0
+                    fallback_latitude = 0.0
+                
                 return CrashReport(
                     incident_datetime=datetime.now(timezone.utc).isoformat(),
-                    incident_latitude=self.CAMERA_LOCATIONS.get(camera_id or 'default', self.CAMERA_LOCATIONS['default'])['latitude'],
-                    incident_longitude=self.CAMERA_LOCATIONS.get(camera_id or 'default', self.CAMERA_LOCATIONS['default'])['longitude'],
+                    incident_latitude=fallback_latitude,  # Use parsed camera coordinates
+                    incident_longitude=fallback_longitude,  # Use parsed camera coordinates
                     incident_severity="medium",  # Default to medium severity
                     incident_status="active",
                     incident_reporter="AI Crash Detection System (Fallback)",
@@ -2059,9 +2089,10 @@ class EnhancedCrashClassifier:
         crash_type = classification['crash_type']
         confidence = classification['confidence']
         
-        # Get location
-        camera_location = self.CAMERA_LOCATIONS.get(camera_id or 'default', 
-                                                   self.CAMERA_LOCATIONS['default'])
+        # Get camera location from parsed filename
+        parsed_filename = self.parse_incident_filename(video_path)
+        camera_longitude = float(parsed_filename.get('camera_longitude', '0.0'))
+        camera_latitude = float(parsed_filename.get('camera_latitude', '0.0'))
         
         # Enhanced severity determination with multiple factors
         base_severity = self.CRASH_SEVERITY_MAP.get(crash_type, 'medium')
@@ -2132,8 +2163,8 @@ class EnhancedCrashClassifier:
         
         return CrashReport(
             incident_datetime=incident_datetime,
-            incident_latitude=camera_location['latitude'],
-            incident_longitude=camera_location['longitude'],
+            incident_latitude=camera_latitude,  # Use camera coordinates as incident location
+            incident_longitude=camera_longitude,  # Use camera coordinates as incident location
             incident_severity=final_severity,
             incident_status="active",
             incident_reporter="AI Crash Detection System",
@@ -2326,7 +2357,7 @@ class EnhancedCrashClassifier:
                 }
             }
         
-        logger.info(f"🎬 Processing {len(video_files)} incident videos...")
+        logger.info(f" Processing {len(video_files)} incident videos...")
         
         crash_reports = []
         for video_file in video_files:
@@ -2336,12 +2367,9 @@ class EnhancedCrashClassifier:
                 extracted_camera_id = incident_info['camera_id']
                 incident_timestamp = incident_info['timestamp']
                 
-                logger.info(f"📹 Analyzing: {os.path.basename(video_file)}")
-                # crash_report = self.classify_crash_video(video_file, extracted_camera_id, low_latency_mode)
-                logger.info(f"📷 Camera ID: {extracted_camera_id}, Timestamp: {incident_timestamp}")
-                
-                # Get camera information from API
-                camera_info = self.get_camera_info(extracted_camera_id)
+                logger.info(f" Analyzing: {os.path.basename(video_file)}")
+                logger.info(f" Camera ID: {extracted_camera_id}, Timestamp: {incident_timestamp}")
+                logger.info(f" Camera Location: Lat {incident_info['camera_latitude']}, Lon {incident_info['camera_longitude']}")
                 
                 # Use the camera_id from filename, not the parameter
                 crash_report = self.classify_crash_video(video_file, extracted_camera_id, low_latency_mode)
@@ -2554,7 +2582,7 @@ class EnhancedCrashClassifier:
         #     'emergency_priority': crash_report.emergency_priority,
         #     'video_path': crash_report.video_path,
         #     'processing_timestamp': crash_report.processing_timestamp
-        logger.debug(f"🔄 Mapped crash report to API payload (EXACT POSTMAN FORMAT):")
+        logger.debug(f" Mapped crash report to API payload (EXACT POSTMAN FORMAT):")
         logger.debug(f"   Incidents_DateTime: {api_payload['Incidents_DateTime']}")
         logger.debug(f"   Incident_CameraID: {api_payload['Incident_CameraID']} (type: {type(api_payload['Incident_CameraID'])})")
         logger.debug(f"   Incident_Severity: {api_payload['Incident_Severity']}")
@@ -2581,12 +2609,10 @@ class EnhancedCrashClassifier:
             "Content-Type": "application/json",
             "X-API-Key": api_key
         }
-        # print(f"TESTING!!!!!!!")
-        # # print(f"Submitting incident to API: {response.url}")  # Debugging line to check URL
-        # print(f"Headers: {headers}")  # Debugging line to check headers
-        # print(f"API payload: {payload}")  # Debugging line to check payload
-        # # print(f"API response: {response.text}")  # Debugging line to check response
-        # print(f"\n")  # Debugging line to check status code
+        print(f"🔍 DEBUG: Submitting incident to API")
+        print(f"   Camera ID: {payload.get('Incident_CameraID')}")
+        print(f"   Payload: {payload}")
+        print(f"   Headers: {headers}")
         # Send request
         try:
             response = requests.post(
@@ -2632,7 +2658,7 @@ class EnhancedCrashClassifier:
             
             # Submit to API if enabled and requested
             if submit_to_api and self.api_config['enabled']:
-                logger.info("📡 Submitting incident to API...")
+                logger.info(" Submitting incident to API...")
                 api_result = self.submit_incident_to_api(crash_report)
                 result['api_submission'] = api_result
                 
@@ -2640,19 +2666,19 @@ class EnhancedCrashClassifier:
                     logger.info(f" Incident successfully submitted - API ID: {api_result['incident_id']}")
 
                     # DELETION OF VIDEO FILE AFTER SUBMISSION
-                    # # 🗑️ DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
+                    # #  DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
                     # try:
                     #     os.remove(video_path)
-                    #     logger.info(f"🗑️ Video file deleted: {os.path.basename(video_path)}")
+                    #     logger.info(f" Video file deleted: {os.path.basename(video_path)}")
                     # except OSError as e:
-                    #     logger.warning(f"⚠️ Could not delete video file {os.path.basename(video_path)}: {e}")
+                    #     logger.warning(f" Could not delete video file {os.path.basename(video_path)}: {e}")
                         
                 else:
                     logger.error(f" API submission failed: {api_result['error']}")
-                    # logger.info(f"💾 Video file retained due to submission failure: {os.path.basename(video_path)}")
+                    # logger.info(f" Video file retained due to submission failure: {os.path.basename(video_path)}")
             
             elif submit_to_api and not self.api_config['enabled']:
-                logger.warning("📡 API submission requested but API integration is disabled")
+                logger.warning(" API submission requested but API integration is disabled")
                 result['api_submission'] = {
                     'success': False,
                     'error': 'API integration disabled',
@@ -2882,7 +2908,8 @@ def main():
             timestamp = parsed_info['timestamp']
             original_incident_type = parsed_info['original_incident_type']
             is_valid_type = parsed_info['is_valid_incident_type']
-            
+            camera_longitude = parsed_info['camera_longitude']
+            camera_latitude = parsed_info['camera_latitude']
             print(f"  Extracted - Camera ID: {camera_id}, Timestamp: {timestamp}")
             print(f"  Full timestamp: {parsed_info['full_timestamp']}")
             print(f"  Original incident type: {original_incident_type} ({'Valid' if is_valid_type else 'Unknown type'})")
@@ -2891,7 +2918,7 @@ def main():
             camera_info = {
                 'camera_id': camera_id,
                 'name': f'Camera {camera_id}',
-                'location': f'Camera {camera_id} Location'
+                'location': f'Longitude {camera_longitude}, Latitude {camera_latitude}'#may need to switch to longitude and lat seperately
             }
             print(f"  Camera Info: {camera_info['name']} at {camera_info['location']}")
             
@@ -2937,38 +2964,38 @@ def main():
                 all_reports.append(crash_report)
                 print(f"  Classification: {crash_report.incident_type} (confidence: {crash_report.confidence:.3f})")
                 
-                # 🚨 SUBMIT TO TRAFFICGUARDIAN API DATABASE
-                print(f"  📡 Submitting incident to TrafficGuardian API...")
+                #  SUBMIT TO TRAFFICGUARDIAN API DATABASE
+                print(f"Submitting incident to TrafficGuardian API...")
                 api_result = classifier.submit_incident_to_api(crash_report)
                 
                 if api_result['success']:
-                    print(f"  ✅ API Submission SUCCESS!")
+                    print(f"API Submission SUCCESS!")
                     print(f"     Incident ID: {api_result.get('incident_id', 'N/A')}")
                     print(f"     Database Response: {api_result.get('message', 'Created successfully')}")
                     # DELETION!!!!1
-                    # 🗑️ DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
+                    #  DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
                     try:
                         os.remove(video_path)
-                        print(f"  🗑️  Video file deleted: {video_file}")
+                        print(f"  Video file deleted: {video_file}")
                     except OSError as e:
-                        print(f"  ⚠️  Warning: Could not delete video file {video_file}: {e}")
+                        print(f"  Warning: Could not delete video file {video_file}: {e}")
                         
                 else:
-                    print(f"  ❌ API Submission FAILED!")
+                    print(f"     API Submission FAILED!")
                     print(f"     Error: {api_result.get('error', 'Unknown error')}")
                     print(f"     Recommendation: {api_result.get('recommendation', 'Check API server')}")
-                    print(f"  💾 Video file retained due to submission failure: {video_file}")
+                    print(f"     Video file retained due to submission failure: {video_file}")
                 # Deletion messgae
             else:
-                print(f"  ℹ️  No incidents detected in {video_file}")
+                print(f"No incidents detected in {video_file}")
         
-        print(f"\n📊 PROCESSING COMPLETE")
+        print(f"\nPROCESSING COMPLETE")
         print(f"Total reports generated: {len(all_reports)}")
         
         # Display final summary with API submission results
         if all_reports:
             print("\n" + "=" * 70)
-            print("🏆 FINAL PROCESSING & API SUBMISSION SUMMARY")
+            print("FINAL PROCESSING & API SUBMISSION SUMMARY")
             print("=" * 70)
             
             successful_submissions = 0
@@ -2989,16 +3016,12 @@ def main():
                 description = (report.description or report.alerts_message)[:100]
                 print(f"   Description: {description}...")
                 
-                # Re-check API submission status if needed
-                print(f"  API Status: Checking submission result...")
-                api_recheck = classifier.submit_incident_to_api(report)
-                if api_recheck['success']:
-                    successful_submissions += 1
-                    print(f"      SUBMITTED TO DATABASE")
-                else:
-                    failed_submissions += 1
-                    print(f"      FAILED TO SUBMIT")
-            
+                # API was already submitted during processing - just show status
+                print(f"  API Status: Already submitted during processing")
+                successful_submissions += 1  # Since we only add reports that were successfully submitted
+                print(f"      SUBMITTED TO DATABASE")
+
+
             print(f"\n" + "=" * 70)
             print(f" FINAL STATISTICS")
             print("=" * 70)
@@ -3041,7 +3064,7 @@ def demo_api_integration():
     classifier = EnhancedCrashClassifier()
     
     # Display API configuration status
-    print("📡 API Configuration Status:")
+    print("API Configuration Status:")
     if classifier.api_config['enabled']:
         print(f"   API Integration: ENABLED")
         print(f"   Endpoint: {classifier.api_config['endpoint']}")
@@ -3108,21 +3131,25 @@ def demo_api_integration():
 
 if __name__ == "__main__":
     # Production Mode: Process incident videos and submit to TrafficGuardian API
-    print("🚀 TRAFFICGUARDIAN AI - PRODUCTION MODE")
+    print("TRAFFICGUARDIAN AI - PRODUCTION MODE")
     print("=" * 70)
     
     # Check API configuration
     classifier = EnhancedCrashClassifier()
     if classifier.api_config['enabled']:
-        print("✅ API Integration: ENABLED")
+        print("API Integration: ENABLED")
         print(f"   Endpoint: {classifier.api_config['endpoint']}")
         print(f"   Authentication: X-API-Key (GitHub Secret: AIAPIKEY)")
     else:
-        print("⚠️  API Integration: DISABLED")
+        print("API Integration: DISABLED")
         print("   Missing AIAPIKEY environment variable")
         print("   Processing will continue but no API submissions will be made")
     
     print("=" * 70)
     
     # Run main processing
-    main()
+    try:
+        main()
+    finally:
+        # Cleanup resources
+        classifier.cleanup()

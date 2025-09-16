@@ -18,7 +18,10 @@ svg {
   --button-secondary-bg: transparent;
   --button-secondary-text: #333;
   --button-secondary-border: #999;
-  --button-secondary-hover-bg: rgb(217 119 0 / 10%); /* Adjusted for darker accent */
+  --button-secondary-hover-bg: rgb(
+    217 119 0 / 10%
+  ); /* Adjusted for darker accent */
+
   --button-secondary-hover-border: #d97700; /* Darker accent */
   --content-bg: #f9f9f9;
   --filter-bg: #f0f0f0;
@@ -31,12 +34,14 @@ svg {
   --table-border: #d1d1d1;
   --table-hover-bg: rgb(217 119 0 / 5%); /* Adjusted for darker accent */
   --incident-id-color: #d97700; /* Darker accent */
-  --severity-critical-bg: rgb(255 68 68 / 20%);
-  --severity-critical-text: #f44;
-  --severity-medium-bg: rgb(217 119 0 / 20%); /* Adjusted for darker accent */
-  --severity-medium-text: #d97700; /* Darker accent */
-  --severity-low-bg: rgb(68 255 68 / 20%);
-  --severity-low-text: #199019;
+  --severity-critical-bg: rgb(220 38 38 / 15%);
+  --severity-critical-text: #dc2626;
+  --severity-high-bg: rgb(220 38 38 / 15%);
+  --severity-high-text: #dc2626;
+  --severity-medium-bg: rgb(245 158 11 / 15%);
+  --severity-medium-text: #f59e0b;
+  --severity-low-bg: rgb(34 197 94 / 15%);
+  --severity-low-text: #22c55e;
   --status-active-bg: rgb(255 68 68 / 20%);
   --status-active-text: #f44;
   --status-inprogress-bg: rgb(0 123 255 / 20%);
@@ -59,7 +64,10 @@ svg {
   --form-help-text: #666;
   --file-upload-border: #ccc;
   --file-upload-hover-border: #d97700; /* Darker accent */
-  --file-upload-dragover-bg: rgb(217 119 0 / 5%); /* Adjusted for darker accent */
+  --file-upload-dragover-bg: rgb(
+    217 119 0 / 5%
+  ); /* Adjusted for darker accent */
+
   --file-upload-text: #666;
   --file-upload-btn-bg: transparent;
   --file-upload-btn-text: #d97700; /* Darker accent */
@@ -108,12 +116,14 @@ svg {
   --table-border: #555;
   --table-hover-bg: rgb(255 140 0 / 5%);
   --incident-id-color: #fa3;
-  --severity-critical-bg: rgb(255 68 68 / 20%);
-  --severity-critical-text: #f44;
-  --severity-medium-bg: rgb(255 170 0 / 20%);
-  --severity-medium-text: #fa0;
-  --severity-low-bg: rgb(68 255 68 / 20%);
-  --severity-low-text: #4f4;
+  --severity-critical-bg: rgb(248 113 113 / 20%);
+  --severity-critical-text: #f87171;
+  --severity-high-bg: rgb(248 113 113 / 20%);
+  --severity-high-text: #f87171;
+  --severity-medium-bg: rgb(251 191 36 / 20%);
+  --severity-medium-text: #fbbf24;
+  --severity-low-bg: rgb(74 222 128 / 20%);
+  --severity-low-text: #4ade80;
   --status-active-bg: rgb(255 68 68 / 20%);
   --status-active-text: #f44;
   --status-inprogress-bg: rgb(0 123 255 / 20%);
@@ -274,35 +284,46 @@ svg {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  align-items: end;
+  align-items: center;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .filter-label {
   color: var(--subtitle-color);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
+  white-space: nowrap;
+  margin-bottom: 0.2rem;
 }
 
 .filter-input,
 .filter-select {
   background-color: var(--filter-input-bg);
   border: 1px solid var(--filter-border);
-  border-radius: 4px;
+  border-radius: 6px;
   color: var(--form-input-text);
   padding: 0.75rem;
   font-size: 0.9rem;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  height: 44px;
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
 .filter-input:focus,
 .filter-select:focus {
   outline: none;
+  border-color: var(--title-color);
+  box-shadow: 0 0 0 2px var(--button-secondary-hover-bg);
+}
+
+.filter-input:hover,
+.filter-select:hover {
   border-color: var(--title-color);
 }
 
@@ -313,6 +334,7 @@ svg {
 .filter-select option {
   background-color: var(--filter-input-bg);
   color: var(--form-input-text);
+  padding: 0.5rem;
 }
 
 .incidents-list {
@@ -322,7 +344,10 @@ svg {
   max-width: 100%;
   min-width: 100%;
   box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
-  min-height: calc(100vh - 300px); /* Increased to ensure pagination visibility */
+  min-height: calc(
+    100vh - 300px
+  ); /* Increased to ensure pagination visibility */
+
   height: auto;
   overflow: visible; /* Ensure content is not clipped */
 }
@@ -432,14 +457,17 @@ svg {
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
 .severity-badge.critical {
   background-color: var(--severity-critical-bg);
   color: var(--severity-critical-text);
+}
+
+.severity-badge.high {
+  background-color: var(--severity-high-bg);
+  color: var(--severity-high-text);
 }
 
 .severity-badge.medium {
