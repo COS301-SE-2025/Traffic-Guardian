@@ -116,4 +116,109 @@ const TabNavigator: React.FC = () => {
     );
   };
 
-  
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, size }) => 
+          getTabBarIcon(route.name, focused, size),
+        tabBarActiveTintColor: colors.primary.main,
+        tabBarInactiveTintColor: colors.tab.inactive,
+        tabBarStyle: {
+          backgroundColor: colors.tab.background,
+          borderTopColor: colors.tab.border,
+          borderTopWidth: 1,
+          paddingBottom: 8,
+          paddingTop: 8,
+          height: 70,
+        },
+        tabBarLabelStyle: {
+          ...typography.tabLabel,
+          marginTop: 4,
+        },
+        headerShown: false,
+      })}
+    >
+      {/* Dashboard Tab */}
+      <Tab.Screen 
+        name="Dashboard" 
+        component={isRole('field_responder') || isRole('admin') ? ResponderDashboard : PublicDashboard}
+        options={{ 
+          title: 'Home',
+          tabBarTestID: 'tab-dashboard'
+        }}
+      />
+
+      {/* Incidents Tab - Only for responders and admins */}
+      {(hasPermission('view_incidents') || hasPermission('update_incidents')) && (
+        <Tab.Screen 
+          name="Incidents" 
+          component={IncidentStack}
+          options={{ 
+            title: 'Incidents',
+            tabBarTestID: 'tab-incidents'
+          }}
+        />
+      )}
+
+      {/* Report Tab - For all users who can report incidents */}
+      {hasPermission('report_incidents') && (
+        <Tab.Screen 
+          name="Report" 
+          component={IncidentReporting}
+          options={{ 
+            title: 'Report',
+            tabBarTestID: 'tab-report',
+            tabBarStyle: {
+              backgroundColor: colors.tab.background,
+              borderTopColor: colors.tab.border,
+              borderTopWidth: 1,
+              paddingBottom: 8,
+              paddingTop: 8,
+              height: 70,
+            },
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: colors.primary.main,
+            },
+            headerTintColor: colors.text.light,
+            headerTitle: 'Report Incident',
+            headerTitleStyle: {
+              ...typography.navTitle,
+            },
+          }}
+        />
+      )}
+
+      {/* Analytics Tab */}
+      <Tab.Screen 
+        name="Analytics" 
+        component={AnalyticsStack}
+        options={{ 
+          title: 'Analytics',
+          tabBarTestID: 'tab-analytics'
+        }}
+      />
+
+      {/* Profile Tab */}
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{ 
+          title: 'Profile',
+          tabBarTestID: 'tab-profile',
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: colors.primary.main,
+          },
+          headerTintColor: colors.text.light,
+          headerTitle: `${user?.name || 'Profile'}`,
+          headerTitleStyle: {
+            ...typography.navTitle,
+          },
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
+export default TabNavigator;
