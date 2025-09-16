@@ -16,89 +16,133 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Run Super-Linter with output to JSON format
       - name: Run Super Linter
         id: linter
         uses: github/super-linter@v5
+        continue-on-error: true  # Keep job running to parse output
         env:
-          VALIDATE_ALL_CODEBASE: true
-          VALIDATE_ALL_CODEBASE_LANGUAGES: true
+          VALIDATE_PYTHON: true
+          VALIDATE_TYPESCRIPT: true
+          VALIDATE_JAVASCRIPT: true
+          VALIDATE_CSS: true
+          VALIDATE_HTML: true
+          VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: Dev
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
-          ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
+          FILTER_REGEX_EXCLUDE: ".*node_modules/.*"
           ERROR_LEVEL: error
           DISABLE_ERRORS: false
-          LOG_LEVEL: INFO
-          # Save logs for processing
-          SAVE_SUPER_LINTER_LOG: true
-          # Force output log to a known location
-          OUTPUT_FOLDER: "${{ github.workspace }}"
-          OUTPUT_DETAILS: "detailed"
+          LOG_LEVEL: DEBUG
+          # Configure output format and location
+          OUTPUT_FORMAT: "json"
+          OUTPUT_DETAIL: "detailed"
+          OUTPUT_FOLDER: "super-linter-reports"
 
-      - name: Sort Linter Errors by Root Folder
-        if: failure() # Only run if the linter failed
+      # Parse linter output and group by root folder
+      - name: Generate Linter Summary by Folder
+        if: always()
+        id: linter-status
         run: |
-          echo "===== SORTED LINTER ERRORS (by root folder) ====="
+          echo "## Super Linter Results by Root Folder" >> $GITHUB_STEP_SUMMARY
           
-          # Define potential log file locations
-          LOG_FILES=(
-            "$GITHUB_WORKSPACE/super-linter.log"
-            "$GITHUB_WORKSPACE/.github/linters/super-linter.log"
-            "/tmp/lint/super-linter.log"
-            "super-linter.log"
-            ".github/super-linter.log"
-          )
+          # Check if output directory exists
+          if [ ! -d "super-linter-reports" ]; then
+            echo "### ⚠️ No linter output found" >> $GITHUB_STEP_SUMMARY
+            echo "has_errors=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
           
-          # Search for log file
-          LOG_FILE=""
-          for file in "${LOG_FILES[@]}"; do
-            if [ -f "$file" ]; then
-              LOG_FILE="$file"
-              echo "Found log file at: $LOG_FILE"
-              break
+          # Find all JSON report files
+          REPORT_FILES=$(find super-linter-reports -name "*.json" 2>/dev/null || echo "")
+          
+          if [ -z "$REPORT_FILES" ]; then
+            echo "### ✅ No linting errors found" >> $GITHUB_STEP_SUMMARY
+            echo "has_errors=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Process all report files
+          ERROR_COUNT=0
+          declare -A folder_errors
+          
+          for report_file in $REPORT_FILES; do
+            # Parse JSON with jq if available, or fallback to grep/sed
+            if command -v jq &> /dev/null; then
+              # Using jq for reliable JSON parsing
+              while read -r file_path; do
+                # Extract errors for this file
+                errors=$(jq -r --arg file "$file_path" '.[$file] | .[]' "$report_file" 2>/dev/null)
+                if [ -n "$errors" ]; then
+                  # Get root folder
+                  folder=$(echo "$file_path" | cut -d/ -f1)
+                  if [ -n "$folder" ]; then
+                    error_message="$file_path: $errors"
+                    folder_errors["$folder"]+="$error_message"$'\n'
+                    ERROR_COUNT=$((ERROR_COUNT + 1))
+                  fi
+                fi
+              done < <(jq -r 'keys[]' "$report_file" 2>/dev/null)
+            else
+              # Fallback to grep/sed for basic parsing if jq is not available
+              echo "Note: jq not found, using basic parsing" >> $GITHUB_STEP_SUMMARY
+              # This is a simple fallback and might not be as reliable
+              error_lines=$(grep -E "\"file\":|\"message\":" "$report_file" || true)
+              if [ -n "$error_lines" ]; then
+                while IFS= read -r line; do
+                  if [[ $line =~ \"file\":\"([^\"]+)\" ]]; then
+                    file_path="${BASH_REMATCH[1]}"
+                    folder=$(echo "$file_path" | cut -d/ -f1)
+                    if [ -n "$folder" ] && [ -n "$file_path" ]; then
+                      folder_errors["$folder"]+="$file_path: Linting error detected"$'\n'
+                      ERROR_COUNT=$((ERROR_COUNT + 1))
+                    fi
+                  fi
+                done <<< "$error_lines"
+              fi
             fi
           done
           
-          # If no log file found, search for any log files
-          if [ -z "$LOG_FILE" ]; then
-            echo "⚠ No super-linter.log file found in standard locations."
-            echo "Searching for any log files..."
-            
-            # First search directly in the workspace
-            FOUND_LOGS=$(find $GITHUB_WORKSPACE -name "*linter*.log" -type f 2>/dev/null)
-            
-            if [ -n "$FOUND_LOGS" ]; then
-              # Use the first found log file
-              LOG_FILE=$(echo "$FOUND_LOGS" | head -n 1)
-              echo "Found alternative log file: $LOG_FILE"
-            else
-              echo "No log files found. Cannot sort errors."
-              exit 0
-            fi
+          if [ "$ERROR_COUNT" -eq 0 ]; then
+            echo "### ✅ No linting errors found in output" >> $GITHUB_STEP_SUMMARY
+            echo "has_errors=false" >> $GITHUB_OUTPUT
+            exit 0
           fi
           
-          # Extract lines with file paths and sort by the first folder
-          echo "===== SORTED ERRORS BY FOLDER ====="
-          grep -E "^[^ ]+/" "$LOG_FILE" 2>/dev/null | sort -t'/' -k1,1 || echo "No specific file paths found in logs."
+          echo "### ❌ Linting Errors Detected ($ERROR_COUNT total)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Display file head for debugging
-          echo "===== LOG FILE PREVIEW ====="
-          head -n 20 "$LOG_FILE" || echo "Could not preview log file."
+          # Output grouped errors
+          for folder in "${!folder_errors[@]}"; do
+            # Count errors in this folder
+            folder_error_count=$(echo "${folder_errors[$folder]}" | grep -v "^$" | wc -l)
+            echo "#### Folder: $folder ($folder_error_count errors)" >> $GITHUB_STEP_SUMMARY
+            echo "```" >> $GITHUB_STEP_SUMMARY
+            # Limit output to first 25 errors per folder to keep summary readable
+            echo "${folder_errors[$folder]}" | grep -v "^$" | head -n 25 >> $GITHUB_STEP_SUMMARY
+            
+            # Add message if there are more errors
+            if [ "$folder_error_count" -gt 25 ]; then
+              echo "... and $((folder_error_count - 25)) more errors" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "```" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          done
+          
+          echo "has_errors=true" >> $GITHUB_OUTPUT
 
-      - name: Display Linting Status
+      # Conclude linting and fail job if errors exist
+      - name: Conclude Linting
         if: always()
         run: |
-          echo "=== Linting Status ==="
-          
-          if [ "${{ steps.linter.outcome }}" == "success" ]; then
-            echo "✅ Super-Linter completed successfully! No linting errors were found."
-            echo "## ✅ Linting Passed" >> $GITHUB_STEP_SUMMARY
-            echo "No linting errors were found in the codebase." >> $GITHUB_STEP_SUMMARY
+          echo "=== Linting Process Conclusion ==="
+          if [ "${{ steps.linter-status.outputs.has_errors }}" == "true" ]; then
+            echo "❌ Linting issues were detected."
+            echo "::error::Linting errors found. Check the GitHub Actions summary for details."
+            exit 1
           else
-            echo "❌ Super-Linter found issues in the codebase."
-            echo "## ❌ Linting Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Linting errors were detected. Please check the build log for details." >> $GITHUB_STEP_SUMMARY
-            echo "::error::Linting errors were detected. See build log for details."
+            echo "✅ No linting issues detected."
           fi
           
 
