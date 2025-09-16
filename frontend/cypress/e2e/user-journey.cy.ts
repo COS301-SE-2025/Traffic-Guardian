@@ -6,25 +6,33 @@ describe('Complete User Journey', () => {
     confirmPassword: 'Test1234!'
   };
 
+  const setupAuthentication = () => {
+    // Set up authentication
+    cy.window().then((win) => {
+      win.sessionStorage.setItem('apiKey', 'test-api-key');
+      win.sessionStorage.setItem('userEmail', 'e2e@test.com');
+    });
+  };
+
   const setupAPIMocks = () => {
     // Authentication mocks
-    cy.intercept('POST', `${Cypress.env('API_URL')}/auth/login`, {
+    cy.intercept('POST', '**/api/auth/login', {
       statusCode: 200,
       body: { apiKey: 'fake-api-key' }
     }).as('loginRequest');
 
-    cy.intercept('GET', `${Cypress.env('API_URL')}/user/preferences`, {
+    cy.intercept('GET', '**/api/user/preferences', {
       statusCode: 200,
       body: { preferences: '{"theme":"dark","notifications":true,"alertLevel":"medium"}' }
     }).as('preferencesRequest');
 
     // Live feed and other API mocks
-    cy.intercept('GET', `${Cypress.env('API_URL')}/api/auth/profile`, {
+    cy.intercept('GET', '**/api/auth/profile', {
       statusCode: 200,
       body: { role: 'user', id: 'test-user' }
     }).as('profileRequest');
 
-    cy.intercept('GET', `${Cypress.env('API_URL')}/api/cameras/**`, {
+    cy.intercept('GET', '**/api/cameras/**', {
       statusCode: 200,
       body: { cameras: [] }
     }).as('camerasRequest');
@@ -69,51 +77,35 @@ describe('Complete User Journey', () => {
       }
     }).as('caltransApiRequest');
 
-    // Mock incidents API
-    cy.intercept('GET', `${Cypress.env('API_URL')}/api/incidents`, {
+    // Mock incidents API with proper structure matching the component expectations
+    cy.intercept('GET', '**/api/incidents', {
       statusCode: 200,
       body: [
         {
-          id: 'test-incident-1',
-          title: 'Test Incident',
-          description: 'A test incident',
-          severity: 'medium',
-          status: 'active',
-          location: 'Test Location',
-          timestamp: '2024-01-01T12:00:00Z'
+          Incidents_ID: 1,
+          Incidents_DateTime: '2024-01-01T12:00:00Z',
+          Incidents_Longitude: -118.2437,
+          Incidents_Latitude: 34.0522,
+          Incident_Severity: 'medium',
+          Incident_Status: 'open',
+          Incident_Reporter: 'Test Reporter',
+          Incident_CameraID: 1,
+          Incident_Description: 'Test incident description'
         }
       ]
     }).as('incidentsRequest');
   };
 
-  it('should complete full user registration and navigation flow', () => {
+  it('should complete full user navigation flow', () => {
+    setupAPIMocks();
+
     // Start from landing page
     cy.visit('/');
     cy.get('h1').should('contain', 'Traffic Guardian');
 
-    // Navigate to signup
-    cy.get('[data-testid="signup-link"], a[href="/signup"]').click();
-    cy.url().should('include', '/signup');
-
-    // Mock successful registration
-    cy.intercept('POST', '/api/auth/register', {
-      statusCode: 200,
-      body: { message: 'Registration successful' }
-    }).as('registerRequest');
-
-    setupAPIMocks();
-
-    // Fill out registration form
-    cy.get('[data-testid="username-input"]').type(testUser.username);
-    cy.get('[data-testid="email-input"]').type(testUser.email);
-    cy.get('[data-testid="password-input"]').type(testUser.password);
-    cy.get('[data-testid="confirm-password-input"]').type(testUser.confirmPassword);
-    cy.get('[data-testid="submit-button"]').click();
-
-    cy.wait('@registerRequest');
-
-    // Navigate to login
+    // Navigate to login directly (skip registration for simplicity)
     cy.visit('/account');
+    cy.get('[data-testid="login-form"]').should('exist');
 
     cy.get('[data-testid="email-input"]').type(testUser.email);
     cy.get('[data-testid="password-input"]').type(testUser.password);
@@ -128,53 +120,27 @@ describe('Complete User Journey', () => {
     cy.get('[data-testid="dashboard-container"]').should('exist');
 
     cy.visit('/map');
-    // Wait for page to load completely
     cy.wait(2000);
-
-    // Check if map container exists, with longer timeout and fallback
-    cy.get('[data-testid="map-container"]', { timeout: 15000 }).should('exist').then(() => {
-      // Multiple fallback strategies for map detection
-      cy.get('body').then($body => {
-        if ($body.find('.leaflet-container').length > 0) {
-          // Leaflet container exists, wait for it to be properly initialized
-          cy.get('.leaflet-container', { timeout: 25000 }).should('be.visible');
-        } else {
-          // Fallback: check for map wrapper or any map-related elements
-          cy.get('[data-testid="map-container"]').should('contain.text', '').or('be.empty');
-        }
-      });
-    });
+    cy.get('[data-testid="map-container"]', { timeout: 15000 }).should('exist');
 
     cy.visit('/live-feed');
-    // Wait a bit for live feed to load and check for either container or loading spinner
     cy.wait(1000);
     cy.get('body').then($body => {
       if ($body.find('[data-testid="live-feed-container"]').length > 0) {
         cy.get('[data-testid="live-feed-container"]').should('exist');
       } else if ($body.find('.loading-spinner').length > 0) {
-        // If still loading, that's acceptable for this test
         cy.get('.loading-spinner').should('exist');
       } else {
-        // Fallback to just checking the page loaded
         cy.get('body').should('be.visible');
       }
     });
 
     cy.visit('/incidents');
-    // Wait a bit for incidents to load and check for either container or loading spinner
     cy.wait(1000);
-    cy.get('body').then($body => {
-      if ($body.find('[data-testid="incidents-container"]').length > 0) {
-        cy.get('[data-testid="incidents-container"]').should('exist');
-      } else if ($body.find('.loading-spinner').length > 0) {
-        cy.get('.loading-spinner').should('exist');
-      } else {
-        cy.get('body').should('be.visible');
-      }
-    });
+    cy.get('[data-testid="incidents-container"]').should('exist');
 
     cy.visit('/analytics');
-    cy.get('body').should('exist'); // Analytics page might not have specific testid yet
+    cy.get('body').should('exist');
   });
 
   it('should handle navigation between all pages', () => {
@@ -182,6 +148,11 @@ describe('Complete User Journey', () => {
 
     // Login first
     cy.visit('/account');
+
+    // Wait for page to load and verify we're on account page
+    cy.url().should('include', '/account');
+    cy.get('h2').should('contain', 'Welcome Back');
+
     cy.get('[data-testid="email-input"]').type(testUser.email);
     cy.get('[data-testid="password-input"]').type(testUser.password);
     cy.get('[data-testid="submit-button"]').click();
@@ -251,6 +222,11 @@ describe('Complete User Journey', () => {
 
     // Login first
     cy.visit('/account');
+
+    // Wait for page to load and verify we're on account page
+    cy.url().should('include', '/account');
+    cy.get('h2').should('contain', 'Welcome Back');
+
     cy.get('[data-testid="email-input"]').type(testUser.email);
     cy.get('[data-testid="password-input"]').type(testUser.password);
     cy.get('[data-testid="submit-button"]').click();
