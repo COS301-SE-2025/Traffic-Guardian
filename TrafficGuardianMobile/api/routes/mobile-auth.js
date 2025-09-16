@@ -132,3 +132,137 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Login user
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validation
+    if (!email || !password) {
+      return res.status(400).json({ 
+        error: 'Email and password are required' 
+      });
+    }
+
+    // Find user
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Update last login
+    user.lastLogin = new Date().toISOString();
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role,
+        permissions: user.permissions
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Remove password from response
+    const { password: _, ...userResponse } = user;
+
+    res.json({
+      message: 'Login successful',
+      user: userResponse,
+      token,
+      expiresIn: '24h'
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Verify token and get user info
+router.get('/me', authenticateToken, (req, res) => {
+  try {
+    const user = users.find(u => u.id === req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const { password: _, ...userResponse } = user;
+    res.json({ user: userResponse });
+
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Failed to get user information' });
+  }
+});
+
+// Refresh token
+router.post('/refresh', authenticateToken, (req, res) => {
+  try {
+    const user = users.find(u => u.id === req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate new token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role,
+        permissions: user.permissions
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      token,
+      expiresIn: '24h'
+    });
+
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    res.status(500).json({ error: 'Failed to refresh token' });
+  }
+});
+
+// Logout (invalidate token - in the real app, we would maintain a blacklist)
+router.post('/logout', authenticateToken, (req, res) => {
+  // In the real app, we would add the token to a blacklist
+  res.json({ message: 'Logged out successfully' });
+});
+
+// Middleware to authenticate JWT token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ error: 'Token expired' });
+      }
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    req.user = user;
+    next();
+  });
+}
+
+// Export the middleware for use in other routes
+router.authenticateToken = authenticateToken;
+
+module.exports = router;
