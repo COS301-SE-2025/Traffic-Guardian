@@ -15,7 +15,7 @@ describe('Account Page', () => {
   });
 
   it('should display error for invalid credentials', () => {
-    cy.intercept('POST', `${Cypress.env('API_URL')}/auth/login`, {
+    cy.intercept('POST', '**/api/auth/login', {
       statusCode: 401,
       body: { message: 'Invalid email or password' }
     }).as('loginRequest');
@@ -29,12 +29,12 @@ describe('Account Page', () => {
   });
 
   it('should successfully login with valid credentials', () => {
-    cy.intercept('POST', `${Cypress.env('API_URL')}/auth/login`, {
+    cy.intercept('POST', '**/api/auth/login', {
       statusCode: 200,
       body: { apiKey: 'fake-api-key' }
     }).as('loginRequest');
 
-    cy.intercept('GET', `${Cypress.env('API_URL')}/user/preferences`, {
+    cy.intercept('GET', '**/api/user/preferences', {
       statusCode: 200,
       body: { preferences: '{"theme":"dark","notifications":true,"alertLevel":"medium"}' }
     }).as('preferencesRequest');
