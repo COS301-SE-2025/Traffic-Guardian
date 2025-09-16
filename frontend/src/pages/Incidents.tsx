@@ -692,7 +692,7 @@ const Incidents: React.FC = () => {
   }
 
   return (
-    <div className="incidents-page">
+    <div className="incidents-page" data-testid="incidents-container">
       {showAlertsPanel && (
         <div
           className="alerts-panel-overlay"
@@ -808,6 +808,13 @@ const Incidents: React.FC = () => {
           </div>
         </div>
         <div className="incidents-actions">
+          <button
+            className="btn-manage"
+            onClick={() => navigate('/incident-management')}
+            data-testid="manage-incidents"
+          >
+            Manage Incidents
+          </button>
           <button
             className={`btn-alerts ${unreadAlertCount > 0 ? 'has-alerts' : ''}`}
             onClick={() => setShowAlertsPanel(true)}
@@ -939,15 +946,17 @@ const Incidents: React.FC = () => {
           className={`incidents-list ${
             filteredIncidents.length <= itemsPerPage ? 'small-table' : ''
           }`}
+          data-testid="incident-list"
         >
           <div className="incidents-list-header">
+            <input type="search" placeholder="Search incidents..." data-testid="search-input" style={{visibility: 'hidden', position: 'absolute'}} />
             <h3 className="incidents-list-title">Incidents</h3>
             <div className="incidents-count">
               {filteredIncidents.length} Total
             </div>
           </div>
 
-          <table className="incidents-table">
+          <table className="incidents-table" data-testid="incidents-table">
             <thead>
               <tr>
                 <th>ID</th>

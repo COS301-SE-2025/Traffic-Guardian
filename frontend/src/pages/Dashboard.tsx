@@ -6,6 +6,8 @@ import ApiService, {
 } from '../services/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PEMSTrafficAnalysis from '../components/PEMSTrafficAnalysis';
+import { useIncidents, useArchiveStats, usePemsDashboard, useIncidentLocations, useCriticalIncidents, useIncidentCategory } from '../hooks/useCachedData';
+import dataPrefetchService from '../services/DataPrefetchService';
 import './Dashboard.css';
 
 interface CriticalIncidentsData {
@@ -727,7 +729,7 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="dashboard" data-cy="dashboard" id="dashboard">
+    <div className="dashboard" data-cy="dashboard" data-testid="dashboard-container" id="dashboard">
       <div
         className="notification-panel"
         data-cy="notification-panel"
@@ -843,7 +845,7 @@ const Dashboard: React.FC = () => {
 
         <div className="stats-grid" data-cy="stats-grid">
           {/* Traffic Detectors */}
-          <div className="stat-card" data-cy="stat-card-detectors">
+          <div className="stat-card" data-cy="stat-card-detectors" data-testid="stats-card">
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <GaugeIcon />
             </div>
@@ -859,7 +861,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Average Speed */}
-          <div className="stat-card" data-cy="stat-card-avg-speed">
+          <div className="stat-card" data-cy="stat-card-avg-speed" data-testid="stats-card">
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <TrendingUpIcon />
             </div>
@@ -875,7 +877,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* High Risk Areas */}
-          <div className="stat-card risk-indicator" data-cy="stat-card-high-risk">
+          <div className="stat-card risk-indicator" data-cy="stat-card-high-risk" data-testid="stats-card">
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <AlertTriangleIcon />
             </div>
@@ -1062,6 +1064,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* PEMS Traffic Analysis Section */}
+        <div data-testid="incident-chart">
         <PEMSTrafficAnalysis 
           district={12}
           onAlertSelect={(alert) => {
@@ -1079,6 +1082,7 @@ const Dashboard: React.FC = () => {
             });
           }}
         />
+        </div>
 
         {/* Traffic Incidents Section */}
         <div className="dashboard-main-grid" data-cy="dashboard-main-grid">
