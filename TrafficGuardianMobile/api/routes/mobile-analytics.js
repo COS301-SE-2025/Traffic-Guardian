@@ -153,3 +153,208 @@ router.get('/personal', authenticateToken, (req, res) => {
   }
 });
 
+// Get route optimisation data
+router.get('/routes', authenticateToken, checkPermission('view_public_data'), (req, res) => {
+  try {
+    const { origin, destination } = req.query;
+
+    if (!origin || !destination) {
+      return res.status(400).json({ 
+        error: 'Origin and destination coordinates are required' 
+      });
+    }
+
+    // Mock route data with incident information
+    const routes = [
+      {
+        id: 1,
+        name: 'Primary Route (N1)',
+        distance: '24.5 km',
+        estimatedTime: '28 minutes',
+        incidentCount: 2,
+        trafficLevel: 'moderate',
+        fuelCost: 'R45.50',
+        tolls: 'R12.00',
+        incidents: [
+          { type: 'accident', severity: 'medium', location: 'km 15' },
+          { type: 'roadwork', severity: 'low', location: 'km 22' }
+        ],
+        recommendation: 'Current best option with moderate traffic'
+      },
+      {
+        id: 2,
+        name: 'Alternative Route (M1)',
+        distance: '27.8 km',
+        estimatedTime: '25 minutes',
+        incidentCount: 0,
+        trafficLevel: 'light',
+        fuelCost: 'R48.20',
+        tolls: 'R0.00',
+        incidents: [],
+        recommendation: 'Fastest route with no incidents'
+      },
+      {
+        id: 3,
+        name: 'Scenic Route (R21)',
+        distance: '31.2 km',
+        estimatedTime: '35 minutes',
+        incidentCount: 1,
+        trafficLevel: 'light',
+        fuelCost: 'R52.10',
+        tolls: 'R8.00',
+        incidents: [
+          { type: 'breakdown', severity: 'low', location: 'km 18' }
+        ],
+        recommendation: 'Longer but peaceful drive'
+      }
+    ];
+
+    const response = {
+      origin,
+      destination,
+      routes,
+      recommendedRoute: routes.find(r => r.id === 2), // Route with no incidents
+      lastUpdated: new Date().toISOString(),
+      weatherImpact: {
+        current: 'clear',
+        visibility: 'good',
+        roadConditions: 'dry'
+      }
+    };
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('Get route analytics error:', error);
+    res.status(500).json({ error: 'Failed to fetch route data' });
+  }
+});
+
+// Get area safety score
+router.get('/safety-score', authenticateToken, checkPermission('view_public_data'), (req, res) => {
+  try {
+    const { latitude, longitude, radius = 5 } = req.query;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({ 
+        error: 'Latitude and longitude are required' 
+      });
+    }
+
+    // Mock safety analysis
+    const safetyScore = Math.floor(Math.random() * 30) + 70; // 70-100
+    const riskFactors = [];
+    
+    if (safetyScore < 80) {
+      riskFactors.push('High traffic volume during peak hours');
+    }
+    if (safetyScore < 85) {
+      riskFactors.push('Construction work in area');
+    }
+    if (Math.random() > 0.7) {
+      riskFactors.push('Weather conditions may affect visibility');
+    }
+
+    const analysis = {
+      location: { latitude: parseFloat(latitude), longitude: parseFloat(longitude) },
+      radius: parseFloat(radius),
+      safetyScore,
+      scoreCategory: safetyScore >= 90 ? 'excellent' : safetyScore >= 80 ? 'good' : safetyScore >= 70 ? 'fair' : 'poor',
+      riskFactors,
+      recentIncidents: Math.floor(Math.random() * 5),
+      avgResponseTime: Math.floor(Math.random() * 8) + 7,
+      recommendations: [
+        'Avoid peak hours (7-9 AM, 5-7 PM) if possible',
+        'Keep emergency contacts readily available',
+        'Maintain safe following distance',
+        'Stay updated on traffic conditions'
+      ],
+      historicalTrend: 'stable', // improving, stable, declining
+      lastUpdated: new Date().toISOString()
+    };
+
+    res.json(analysis);
+
+  } catch (error) {
+    console.error('Get safety score error:', error);
+    res.status(500).json({ error: 'Failed to calculate safety score' });
+  }
+});
+
+// Get responder analytics (for field responders)
+router.get('/responder', authenticateToken, checkPermission('update_incidents'), (req, res) => {
+  try {
+    const { timeframe = '30d' } = req.query;
+    
+    const responderStats = {
+      incidentsHandled: Math.floor(Math.random() * 20) + 15,
+      avgResponseTime: Math.floor(Math.random() * 5) + 8,
+      avgResolutionTime: Math.floor(Math.random() * 15) + 25,
+      successRate: Math.floor(Math.random() * 10) + 90,
+      incidentTypes: {
+        accidents: Math.floor(Math.random() * 8) + 5,
+        breakdowns: Math.floor(Math.random() * 10) + 8,
+        debris: Math.floor(Math.random() * 3) + 1,
+        weather: Math.floor(Math.random() * 2) + 1
+      },
+      performanceMetrics: {
+        rating: 4.7,
+        commendations: Math.floor(Math.random() * 3) + 1,
+        efficiency: 92
+      }
+    };
+
+    const response = {
+      timeframe,
+      responderId: req.user.userId,
+      stats: responderStats,
+      weeklyPerformance: generateResponderPerformance(7),
+      goals: {
+        responseTime: 'Under 10 minutes',
+        resolutionTime: 'Under 30 minutes',
+        successRate: 'Above 95%'
+      },
+      lastUpdated: new Date().toISOString()
+    };
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('Get responder analytics error:', error);
+    res.status(500).json({ error: 'Failed to fetch responder analytics' });
+  }
+});
+
+// Helper functions
+function generatePersonalActivity(days) {
+  const activity = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    activity.push({
+      date: date.toISOString().split('T')[0],
+      reportsSubmitted: Math.floor(Math.random() * 2),
+      routesChecked: Math.floor(Math.random() * 5) + 1,
+      alertsReceived: Math.floor(Math.random() * 3)
+    });
+  }
+  return activity;
+}
+
+function generateResponderPerformance(days) {
+  const performance = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    performance.push({
+      date: date.toISOString().split('T')[0],
+      incidentsHandled: Math.floor(Math.random() * 5) + 1,
+      avgResponseTime: Math.floor(Math.random() * 5) + 7,
+      avgResolutionTime: Math.floor(Math.random() * 10) + 20,
+      rating: 4.5 + (Math.random() * 0.5)
+    });
+  }
+  return performance;
+}
+
+module.exports = router;
