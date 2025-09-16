@@ -17,10 +17,10 @@ jobs:
         uses: actions/checkout@v4
 
       # Run Super-Linter with output to JSON format
+      # Run Super-Linter with direct output capture
       - name: Run Super Linter
         id: linter
         uses: github/super-linter@v5
-        continue-on-error: true  # Keep job running to parse output
         env:
           VALIDATE_PYTHON: true
           VALIDATE_TYPESCRIPT: true
@@ -35,118 +35,51 @@ jobs:
           # Use the frontend ESLint config for TS/TSX/Cypress files
           ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
           FILTER_REGEX_EXCLUDE: ".*node_modules/.*"
-          # ERROR_LEVEL: error
-          # DISABLE_ERRORS: false
-          # LOG_LEVEL: DEBUG
-          # Configure output format and location
-          OUTPUT_FORMAT: "json"
-          OUTPUT_DETAIL: "detailed"
-          OUTPUT_FOLDER: "super-linter-reports"
+          # Configure language-specific file mappings
+          JAVASCRIPT_ES_CONFIG_FILE: ./API/.eslintrc.json
+          JAVASCRIPT_LINTER_RULES: ./API/.eslintrc.json
+          TYPESCRIPT_ES_CONFIG_FILE: ./frontend/.eslintrc.json
+          TYPESCRIPT_LINTER_RULES: ./frontend/.eslintrc.json
+          # Enable debuggable output
+          LOG_LEVEL: INFO
+          # Report errors directly to the console
+          DISABLE_ERRORS: false
 
-      # Parse linter output and group by root folder
-      - name: Generate Linter Summary by Folder
+      # Create a simple summary based on the linter step success/failure
+      - name: Generate Linter Summary
         if: always()
         id: linter-status
         run: |
-          echo "## Super Linter Results by Root Folder" >> $GITHUB_STEP_SUMMARY
+          echo "## Super Linter Results" >> $GITHUB_STEP_SUMMARY
           
-          # Check if output directory exists
-          if [ ! -d "super-linter-reports" ]; then
-            echo "### ⚠️ No linter output found" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.linter.outcome }}" == "success" ]; then
+            echo "### ✅ No linting issues detected" >> $GITHUB_STEP_SUMMARY
             echo "has_errors=false" >> $GITHUB_OUTPUT
-            exit 0
+          else
+            echo "### ❌ Linting issues were detected" >> $GITHUB_STEP_SUMMARY
+            echo "See the linter step output for details." >> $GITHUB_STEP_SUMMARY
+            echo "has_errors=true" >> $GITHUB_OUTPUT
           fi
           
-          # Find all JSON report files
-          REPORT_FILES=$(find super-linter-reports -name "*.json" 2>/dev/null || echo "")
-          
-          if [ -z "$REPORT_FILES" ]; then
-            echo "### ✅ No linting errors found" >> $GITHUB_STEP_SUMMARY
-            echo "has_errors=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          # Process all report files
-          ERROR_COUNT=0
-          declare -A folder_errors
-          
-          for report_file in $REPORT_FILES; do
-            # Parse JSON with jq if available, or fallback to grep/sed
-            if command -v jq &> /dev/null; then
-              # Using jq for reliable JSON parsing
-              while read -r file_path; do
-                # Extract errors for this file
-                errors=$(jq -r --arg file "$file_path" '.[$file] | .[]' "$report_file" 2>/dev/null)
-                if [ -n "$errors" ]; then
-                  # Get root folder
-                  folder=$(echo "$file_path" | cut -d/ -f1)
-                  if [ -n "$folder" ]; then
-                    error_message="$file_path: $errors"
-                    folder_errors["$folder"]+="$error_message"$'\n'
-                    ERROR_COUNT=$((ERROR_COUNT + 1))
-                  fi
-                fi
-              done < <(jq -r 'keys[]' "$report_file" 2>/dev/null)
-            else
-              # Fallback to grep/sed for basic parsing if jq is not available
-              echo "Note: jq not found, using basic parsing" >> $GITHUB_STEP_SUMMARY
-              # This is a simple fallback and might not be as reliable
-              error_lines=$(grep -E "\"file\":|\"message\":" "$report_file" || true)
-              if [ -n "$error_lines" ]; then
-                while IFS= read -r line; do
-                  if [[ $line =~ \"file\":\"([^\"]+)\" ]]; then
-                    file_path="${BASH_REMATCH[1]}"
-                    folder=$(echo "$file_path" | cut -d/ -f1)
-                    if [ -n "$folder" ] && [ -n "$file_path" ]; then
-                      folder_errors["$folder"]+="$file_path: Linting error detected"$'\n'
-                      ERROR_COUNT=$((ERROR_COUNT + 1))
-                    fi
-                  fi
-                done <<< "$error_lines"
-              fi
-            fi
-          done
-          
-          if [ "$ERROR_COUNT" -eq 0 ]; then
-            echo "### ✅ No linting errors found in output" >> $GITHUB_STEP_SUMMARY
-            echo "has_errors=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          echo "### ❌ Linting Errors Detected ($ERROR_COUNT total)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          # Output grouped errors
-          for folder in "${!folder_errors[@]}"; do
-            # Count errors in this folder
-            folder_error_count=$(echo "${folder_errors[$folder]}" | grep -v "^$" | wc -l)
-            echo "#### Folder: $folder ($folder_error_count errors)" >> $GITHUB_STEP_SUMMARY
-            echo "```" >> $GITHUB_STEP_SUMMARY
-            # Limit output to first 25 errors per folder to keep summary readable
-            echo "${folder_errors[$folder]}" | grep -v "^$" | head -n 25 >> $GITHUB_STEP_SUMMARY
-            
-            # Add message if there are more errors
-            if [ "$folder_error_count" -gt 25 ]; then
-              echo "... and $((folder_error_count - 25)) more errors" >> $GITHUB_STEP_SUMMARY
-            fi
-            
-            echo "```" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          done
-          
-          echo "has_errors=true" >> $GITHUB_OUTPUT
+          # Print summary of which linters ran
+          echo "### Linters Run" >> $GITHUB_STEP_SUMMARY
+          echo "- Python: Yes" >> $GITHUB_STEP_SUMMARY
+          echo "- TypeScript: Yes" >> $GITHUB_STEP_SUMMARY
+          echo "- JavaScript: Yes" >> $GITHUB_STEP_SUMMARY
+          echo "- CSS: Yes" >> $GITHUB_STEP_SUMMARY
+          echo "- HTML: Yes" >> $GITHUB_STEP_SUMMARY
 
       # Conclude linting and fail job if errors exist
       - name: Conclude Linting
         if: always()
         run: |
           echo "=== Linting Process Conclusion ==="
-          if [ "${{ steps.linter-status.outputs.has_errors }}" == "true" ]; then
-            echo "❌ Linting issues were detected."
-            echo "::error::Linting errors found. Check the GitHub Actions summary for details."
-            exit 1
-          else
+          if [ "${{ steps.linter.outcome }}" == "success" ]; then
             echo "✅ No linting issues detected."
+          else
+            echo "❌ Linting issues were detected."
+            echo "::error::Linting errors found. Check the GitHub Actions logs for details."
+            exit 1
           fi
           
 
