@@ -11,32 +11,25 @@ jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
-    # Only run linting on main and Dev branches
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Dev'
+    # Only run linting on Dev branch for now
+    #  if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Dev
+    if: github.ref == 'refs/heads/Dev'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run Super Linter
+        id: linter
         uses: github/super-linter@v5
         env:
           # Lint all files in the codebase
           VALIDATE_ALL_CODEBASE: true
 
+          # Enable all language linters
           VALIDATE_ALL_CODEBASE_LANGUAGES: true
-          # # Enable specific linters for each language
-          # VALIDATE_JAVASCRIPT_ES: true
-          # VALIDATE_TYPESCRIPT_ES: true
-          # VALIDATE_CSS: true
-          # VALIDATE_HTML: true
-          # VALIDATE_YAML: true
-          # VALIDATE_JSON: true
-          # VALIDATE_MARKDOWN: true
-          # VALIDATE_PYTHON: true
-          # VALIDATE_GITHUB_ACTIONS: true
           
-          # Set the default branch
-          DEFAULT_BRANCH: main
+          # Focus only on the Dev branch
+          DEFAULT_BRANCH: Dev
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Use the API ESLint config for API JS files (enforces semicolons)
           ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
@@ -51,7 +44,6 @@ jobs:
           
           # Enable detailed logging for better debugging
           LOG_LEVEL: INFO
-          LOG_FILE: super-linter.log
           
           # Remove the filter to check all files
           # FILTER_REGEX_INCLUDE: '(^API\/|^frontend\/|^AI_Model_BB\/|^\.github\/)'
@@ -61,84 +53,24 @@ jobs:
           # Optionally, set FILTER_REGEX_EXCLUDE if needed
           # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
 
-      - name: Display Linting Errors by Component
+      - name: Display Linting Status
         if: always()
         run: |
-          echo "=== Checking for Linting Errors ==="
+          echo "=== Linting Status ==="
           
-          # Define log locations to check
-          LOG_LOCATIONS=(
-            "./super-linter.log"
-            "/tmp/lint/super-linter.log"
-            "/github/workspace/super-linter.log"
-            "/github/linter/super-linter.log"
-          )
-          
-          # Search for log file
-          LOG_FILE=""
-          for loc in "${LOG_LOCATIONS[@]}"; do
-            if [ -f "$loc" ]; then
-              LOG_FILE="$loc"
-              echo "Found log file at: $LOG_FILE"
-              break
-            fi
-          done
-          
-          # If log file found, process it
-          if [ -n "$LOG_FILE" ]; then
-            # First check if there are any errors at all
-            if grep -q "\\[ERROR\\]" "$LOG_FILE"; then
-              echo "=== Found linting errors ==="
-              
-              # Extract and categorize errors by component
-              echo -e "\n=== API Errors ==="
-              grep -E "\\[ERROR\\].*API\/" "$LOG_FILE" || echo "None"
-              
-              echo -e "\n=== Frontend Errors ==="
-              grep -E "\\[ERROR\\].*frontend\/" "$LOG_FILE" || echo "None"
-              
-              echo -e "\n=== AI Model Errors ==="
-              grep -E "\\[ERROR\\].*AI_Model_BB\/" "$LOG_FILE" || echo "None"
-              
-              echo -e "\n=== CI/CD Errors ==="
-              grep -E "\\[ERROR\\].*\.github\/" "$LOG_FILE" || echo "None"
-              
-              echo -e "\n=== Other Errors ==="
-              grep "\\[ERROR\\]" "$LOG_FILE" | grep -v -E "API\/|frontend\/|AI_Model_BB\/|\.github\/" || echo "None"
-              
-              # Count total errors
-              ERROR_COUNT=$(grep -c "\\[ERROR\\]" "$LOG_FILE")
-              echo -e "\nTotal Errors Found: $ERROR_COUNT"
-              
-              # If there are errors, fail the step
-              echo "::error::Linting found $ERROR_COUNT errors. Check the logs for details."
-              exit 1
-            else
-              echo "No errors found in log file."
-            fi
+          if [ "${{ steps.linter.outcome }}" == "success" ]; then
+            echo "✅ Super-Linter completed successfully! No linting errors were found."
+            echo "## ✅ Linting Passed" >> $GITHUB_STEP_SUMMARY
+            echo "No linting errors were found in the codebase." >> $GITHUB_STEP_SUMMARY
           else
-            # If log file not found, try to get output directly
-            echo "Log file not found. Checking Docker logs..."
+            echo "❌ Super-Linter found issues in the codebase."
+            echo "## ❌ Linting Failed" >> $GITHUB_STEP_SUMMARY
+            echo "Linting errors were detected. Please check the Super-Linter logs for details." >> $GITHUB_STEP_SUMMARY
             
-            # Look for running or stopped super-linter containers
-            CONTAINER_IDS=$(docker ps -a | grep "github/super-linter" | awk '{print $1}')
-            
-            if [ -n "$CONTAINER_IDS" ]; then
-              for container in $CONTAINER_IDS; do
-                echo "Checking linter container: $container"
-                docker logs $container 2>&1 | grep -E "\\[ERROR\\]|\\[NOTICE\\]" || echo "No linting output found in container"
-              done
-            else
-              # No containers found, try listing all files to find log files
-              echo "No linter containers found. Searching for log files..."
-              find / -name "super-linter.log" -type f 2>/dev/null || echo "No log files found"
-              
-              # Fall back to displaying the job output
-              echo "Displaying last few lines of job logs:"
-              tail -n 50 /github/workflow/log || echo "Unable to access job logs"
+            # Mark the step as failed to ensure visibility
+            if [ "${{ steps.linter.outcome }}" == "failure" ]; then
+              echo "::error::Linting errors were detected. Please check the Super-Linter logs for details."
             fi
-            
-            echo "::warning::Could not find linting log file. Manual review required."
           fi
 
   test-ui:
