@@ -40,31 +40,6 @@ jobs:
           # Continue even when finding errors to see all errors
           DISABLE_ERRORS: true
 
-      # Create a simple summary based on the linter step success/failure
-      - name: Generate Linter Summary
-        if: always()
-        id: linter-status
-        run: |
-          echo "## Super Linter Results" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ steps.linter.outcome }}" == "success" ]; then
-            echo "### No linting issues detected" >> $GITHUB_STEP_SUMMARY
-            echo "has_errors=false" >> $GITHUB_OUTPUT
-          else
-            echo "### Linting issues were detected" >> $GITHUB_STEP_SUMMARY
-            echo "See the linter step output for details." >> $GITHUB_STEP_SUMMARY
-            echo "has_errors=true" >> $GITHUB_OUTPUT
-          fi
-          
-          # Print summary of which linters ran
-          echo "### Linters Run" >> $GITHUB_STEP_SUMMARY
-          echo "- Python: Yes" >> $GITHUB_STEP_SUMMARY
-          echo "- TypeScript: Yes" >> $GITHUB_STEP_SUMMARY
-          echo "- JavaScript: Yes" >> $GITHUB_STEP_SUMMARY
-          echo "- CSS: Yes" >> $GITHUB_STEP_SUMMARY
-          echo "- HTML: Yes" >> $GITHUB_STEP_SUMMARY
-          
-
   test-ui:
     name: UI Tests
     runs-on: ubuntu-latest
