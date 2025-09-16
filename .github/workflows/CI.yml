@@ -11,6 +11,8 @@ jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
+    # Only run linting on main and Dev branches
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Dev'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,16 +20,24 @@ jobs:
       - name: Run Super Linter
         uses: github/super-linter@v5
         env:
-          VALIDATE_ALL_CODEBASE: false
+          
+          # # Only lint changed files (not the entire codebase)
+          # VALIDATE_ALL_CODEBASE: false
+          # Lint all files in the codebase
+          VALIDATE_ALL_CODEBASE: true
+
+          # Enable ALL linters for all languages
+          VALIDATE_ALL_CODEBASE_LANGUAGES: true
+          # Set the default branch
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Use the API ESLint config for API JS files (enforces semicolons)
           ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
           # Use the frontend ESLint config for TS/TSX/Cypress files
           ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
-          # Lint all relevant extensions
-          VALIDATE_JAVASCRIPT_ES: true
-          VALIDATE_TYPESCRIPT_ES: true
+          # # Lint all relevant extensions
+          # VALIDATE_JAVASCRIPT_ES: true
+          # VALIDATE_TYPESCRIPT_ES: true
           # Optionally, set FILTER_REGEX_INCLUDE/FILTER_REGEX_EXCLUDE if needed
           # FILTER_REGEX_INCLUDE: 'src/|models/|controllers/|routes/|frontend/'
           # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
