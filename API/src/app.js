@@ -21,6 +21,7 @@ const archivesRoutes = require('./routes/archives');
 const adminRoutes = require('./routes/admin');
 const cameraRoutes = require('./routes/cameras');
 const systemRoutes = require('./routes/system');
+const uploadRoutes = require('./routes/voice');
 
 // Create Express application
 const app = express();
@@ -55,6 +56,7 @@ app.use('/api/archives', archivesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cameras', cameraRoutes);
 app.use('/api/system', systemRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 // Health check endpoint (includes optimization status)
 app.get('/api/health', (req, res) => {
@@ -97,5 +99,6 @@ cacheService.warmCache().catch(err => {
 });
 
 console.log('Optimization services initialized');
+
 
 module.exports = app;

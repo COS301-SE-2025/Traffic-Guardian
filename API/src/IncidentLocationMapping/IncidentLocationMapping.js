@@ -37,7 +37,7 @@ class ILM{
 
     updateTraffic(trafficData){
         if (!trafficData || !Array.isArray(trafficData)) {
-            console.log('⚠️  No traffic data provided to updateTraffic - skipping update');
+            console.log('No traffic data provided to updateTraffic - skipping update');
             return;
         }
         
