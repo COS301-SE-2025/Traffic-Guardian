@@ -336,3 +336,183 @@ const LoginScreen: React.FC = () => {
   );
 };
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.light,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  header: {
+    paddingTop: 60,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+    backgroundColor: colors.primary.main,
+  },
+  logoContainer: {
+    alignItems: 'center',
+  },
+  appTitle: {
+    ...typography.h2,
+    color: colors.text.light,
+    marginTop: 16,
+    fontWeight: '700',
+  },
+  appSubtitle: {
+    ...typography.body,
+    color: colors.text.light,
+    opacity: 0.9,
+    marginTop: 8,
+  },
+  form: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 20,
+  },
+  formTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  formSubtitle: {
+    ...typography.body,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    ...typography.label,
+    color: colors.text.primary,
+    marginBottom: 8,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: colors.surface.light,
+  },
+  inputError: {
+    borderColor: colors.error,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    ...typography.body,
+    color: colors.text.primary,
+  },
+  passwordToggle: {
+    padding: 8,
+  },
+  errorText: {
+    ...typography.caption,
+    color: colors.error,
+    marginTop: 4,
+  },
+  roleContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  roleOption: {
+    flex: 1,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: colors.surface.light,
+  },
+  roleOptionSelected: {
+    borderColor: colors.primary.main,
+    borderWidth: 2,
+    backgroundColor: colors.primary.background,
+  },
+  roleText: {
+    ...typography.label,
+    color: colors.text.primary,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  roleTextSelected: {
+    color: colors.primary.main,
+    fontWeight: '600',
+  },
+  roleDescription: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  submitButton: {
+    backgroundColor: colors.primary.main,
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    ...typography.button,
+    color: colors.text.light,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  toggleText: {
+    ...typography.body,
+    color: colors.text.secondary,
+  },
+  toggleLink: {
+    ...typography.body,
+    color: colors.primary.main,
+    fontWeight: '600',
+  },
+  demoContainer: {
+    marginTop: 32,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
+  },
+  demoTitle: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  demoButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    gap: 8,
+  },
+  demoButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.secondary.main,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    gap: 4,
+  },
+  demoButtonText: {
+    ...typography.buttonSmall,
+    color: colors.text.light,
+    fontSize: 12,
+  },
+});
+
+export default LoginScreen;
