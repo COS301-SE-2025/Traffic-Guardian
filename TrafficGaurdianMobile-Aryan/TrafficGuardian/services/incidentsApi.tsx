@@ -1,9 +1,6 @@
 import { Platform } from "react-native";
-import { useLocation } from "../services/location";
 
 const API_URL = "http://localhost:5000/api";
-
-const { coords } = useLocation();
 
 const getBaseUrl = () => {
   if (Platform.OS === "android") {
@@ -17,9 +14,9 @@ const getBaseUrl = () => {
   }
 };
 
-export async function createIncident(date : string,location : string, Incident_CarID : string, Incident_Severity : string, description : string){
-  
-    return coords;
+export async function createIncident(date : string,location : string, Incident_CarID : string, Incident_Severity : string, description : string, coords : any){
+    return JSON.stringify(coords);
+
     try{
     const response = await fetch(`${getBaseUrl()}/api/incidents`, {
       method: "POST",
