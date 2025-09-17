@@ -230,4 +230,194 @@ class ApiService {
     });
   }
 
+  // Location endpoints
+  async reverseGeocode(latitude: number, longitude: number) {
+    return this.post('/location/reverse-geocode', { latitude, longitude });
+  }
+
+  async geocodeAddress(address: string) {
+    return this.post('/location/geocode', { address });
+  }
+
+  async getNearbyPlaces(latitude: number, longitude: number, radius?: number, type?: string) {
+    return this.get('/location/nearby-places', {
+      params: { latitude, longitude, radius, type }
+    });
+  }
+
+  async updateLocation(latitude: number, longitude: number, accuracy?: number, heading?: number, speed?: number) {
+    return this.post('/location/update', {
+      latitude,
+      longitude,
+      accuracy,
+      heading,
+      speed
+    });
+  }
+
+  async getTrafficCameras(latitude: number, longitude: number, radius?: number) {
+    return this.get('/location/traffic-cameras', {
+      params: { latitude, longitude, radius }
+    });
+  }
+
+  async calculateRoute(origin: any, destination: any, avoidIncidents?: boolean) {
+    return this.post('/location/route', {
+      origin,
+      destination,
+      avoidIncidents
+    });
+  }
+
+  async shareEmergencyLocation(latitude: number, longitude: number, emergencyType: string, additionalInfo?: string, contacts?: string[]) {
+    return this.post('/location/emergency-share', {
+      latitude,
+      longitude,
+      emergencyType,
+      additionalInfo,
+      contacts
+    });
+  }
+
+  // File upload utility
+  async uploadFile(file: any, endpoint: string, additionalData?: any) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    if (additionalData) {
+      Object.keys(additionalData).forEach(key => {
+        formData.append(key, additionalData[key]);
+      });
+    }
+
+    return this.post(endpoint, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
+
+  // Health check
+  async healthCheck() {
+    return this.get('/health');
+  }
+
+  // Batch requests utility
+  async batchRequest(requests: Array<{ method: string; url: string; data?: any }>) {
+    const promises = requests.map(req => {
+      switch (req.method.toLowerCase()) {
+        case 'get':
+          return this.get(req.url);
+        case 'post':
+          return this.post(req.url, req.data);
+        case 'put':
+          return this.put(req.url, req.data);
+        case 'delete':
+          return this.delete(req.url);
+        default:
+          throw new Error(`Unsupported method: ${req.method}`);
+      }
+    });
+
+    try {
+      const results = await Promise.allSettled(promises);
+      return results.map((result, index) => ({
+        index,
+        success: result.status === 'fulfilled',
+        data: result.status === 'fulfilled' ? result.value : null,
+        error: result.status === 'rejected' ? result.reason : null,
+      }));
+    } catch (error) {
+      console.error('Batch request failed:', error);
+      throw error;
+    }
+  }
+
+  // Cancel request utility
+  getCancelToken() {
+    return axios.CancelToken.source();
+  }
+
+  // Check if error is due to cancellation
+  isRequestCancelled(error: any) {
+    return axios.isCancel(error);
+  }
+}
+
+// Create and export a singleton instance
+export const apiService = new ApiService();
+
+// Export types
+export type { ApiResponse };
+
+// Export utility functions
+export const apiUtils = {
+  // Create URL with query parameters
+  createUrl: (baseUrl: string, params: Record<string, any>) => {
+    const url = new URL(baseUrl, API_CONFIG.BASE_URL);
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== null) {
+        url.searchParams.append(key, params[key].toString());
+      }
+    });
+    return url.toString();
+  },
+
+  // Format error message for display
+  formatErrorMessage: (error: any): string => {
+    if (typeof error === 'string') return error;
+    if (error.message) return error.message;
+    if (error.response?.data?.error) return error.response.data.error;
+    if (error.response?.data?.message) return error.response.data.message;
+    return 'An unexpected error occurred';
+  },
+
+  // Check if error is a network error
+  isNetworkError: (error: any): boolean => {
+    return !error.response && error.request;
+  },
+
+  // Check if error is a client error (4xx)
+  isClientError: (error: any): boolean => {
+    return error.response && error.response.status >= 400 && error.response.status < 500;
+  },
+
+  // Check if error is a server error (5xx)
+  isServerError: (error: any): boolean => {
+    return error.response && error.response.status >= 500;
+  },
+
+  // Retry wrapper for failed requests
+  retryRequest: async (
+    requestFn: () => Promise<any>, 
+    maxRetries = 3, 
+    delay = 1000
+  ): Promise<any> => {
+    let lastError;
+    
+    for (let i = 0; i <= maxRetries; i++) {
+      try {
+        return await requestFn();
+      } catch (error) {
+        lastError = error;
+        
+        // Don't retry client errors (4xx) except 429 (rate limit)
+        if (apiUtils.isClientError(error) && error.response?.status !== 429) {
+          throw error;
+        }
+        
+        // Don't retry on last attempt
+        if (i === maxRetries) {
+          break;
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+      }
+    }
+    
+    throw lastError;
+  },
+};
+
   
