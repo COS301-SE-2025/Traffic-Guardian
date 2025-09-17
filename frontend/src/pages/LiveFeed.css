@@ -1,5 +1,5 @@
 /* Light mode variables */
-[data-theme='light'] {
+[data-theme="light"] {
   --livefeed-bg: #f9f9f9;
   --livefeed-text: #333;
   --livefeed-title: #d97700;
@@ -31,7 +31,7 @@
 }
 
 /* Dark mode variables */
-[data-theme='dark'] {
+[data-theme="dark"] {
   --livefeed-bg: #2e2e2e;
   --livefeed-text: #fff;
   --livefeed-title: #fa3;
@@ -67,7 +67,7 @@
   min-height: 100vh;
   background-color: var(--livefeed-bg);
   color: var(--livefeed-text);
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
 }
 
 .livefeed-header {
@@ -465,26 +465,7 @@
   flex-grow: 1;
 }
 
-.feed-info {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.feed-info h4 {
-  margin: 0 0 0.5rem;
-  color: var(--feed-info-text);
-  font-size: 0.9rem;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.feed-info p {
-  margin: 0 0 0.5rem;
-  color: var(--feed-info-subtext);
-  font-size: 0.8rem;
-  line-height: 1.3;
-}
+/* Duplicate selector removed - exists earlier in file */
 
 .feed-description {
   margin: 0 0 0.5rem;
@@ -740,7 +721,7 @@
   color: var(--livefeed-title);
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .livefeed-page {
     padding: 1rem;
   }
@@ -759,7 +740,7 @@
   }
 }
 
-@media (width <= 480px) {
+@media (max-width: 480px) {
   .livefeed-page h2 {
     font-size: 1.5rem;
   }
@@ -849,73 +830,7 @@
   color: var(--feed-info-subtext);
 }
 
-/* Modal Header Enhancements */
-.video-modal-header {
-  padding: 1.5rem 2rem;
-}
-
-.view-mode-selector {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.view-mode-selector button {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--feed-tile-border);
-  background-color: var(--feed-details-bg);
-  color: var(--feed-info-text);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.view-mode-selector button.active {
-  background-color: var(--livefeed-title);
-  color: white;
-  border-color: var(--livefeed-title);
-}
-
-.view-mode-selector button:hover:not(.active) {
-  background-color: var(--feed-tile-hover-bg);
-}
-
-.close-modal {
-  font-size: 1.8rem;
-  color: var(--feed-info-subtext);
-  transition: color 0.2s ease;
-}
-
-.close-modal:hover {
-  color: var(--error-text);
-}
-
-/* Video Container Styling */
-.video-container {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
-}
-
-/* Timelapse Enhancements */
-.timelapse-info {
-  background-color: rgb(0 0 0 / 80%);
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.timelapse-controls {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.timelapse-btn {
-  padding: 0.75rem 1.5rem;
-  font-size: 1.2rem;
-  border-radius: 8px;
-}
+/* Duplicate selectors removed - exist earlier in file */
 
 /* Map Info Styling */
 .map-info {

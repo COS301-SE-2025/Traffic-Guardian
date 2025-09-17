@@ -9,18 +9,19 @@
 }
 
 .btn-primary::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgb(255 255 255 / 20%),
-    transparent
-  );
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 20%),
+      transparent
+    );
   transition: left 0.6s ease;
 }
 
@@ -191,7 +192,7 @@
 }
 
 .hero::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50%;
   right: -50%;
@@ -269,7 +270,7 @@
 }
 
 .auth-section::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -311,54 +312,7 @@
   border: 2px solid transparent;
 }
 
-.btn-primary {
-  background: var(--accent-orange);
-  color: var(--primary-dark);
-  border: 2px solid var(--accent-orange);
-  font-weight: 700;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.btn-primary::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgb(255 255 255 / 20%),
-    transparent
-  );
-  transition: left 0.6s ease;
-}
-
-.btn-primary:hover::before {
-  left: 100%;
-}
-
-.btn-primary:hover {
-  background: var(--accent-orange-dark);
-  border-color: var(--accent-orange-dark);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgb(255 174 54 / 40%);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--accent-orange);
-  border: 2px solid var(--accent-orange);
-}
-
-.btn-secondary:hover {
-  background: var(--accent-orange);
-  color: var(--primary-dark);
-  box-shadow: 0 10px 30px rgb(255 174 54 / 40%);
-}
+/* Duplicate button selectors removed - exist earlier in file */
 
 .btn-login {
   background: transparent;
@@ -522,7 +476,7 @@
 }
 
 .solution-text li::before {
-  content: '✓ ';
+  content: "✓ ";
   color: var(--accent-orange);
   font-weight: bold;
   margin-right: 0.5rem;
@@ -548,7 +502,7 @@
 }
 
 .solution-visual::after {
-  content: '🚦 Live Detection Demo';
+  content: "🚦 Live Detection Demo";
   position: absolute;
   top: 20px;
   left: 20px;
@@ -593,7 +547,7 @@
 }
 
 .feature-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;

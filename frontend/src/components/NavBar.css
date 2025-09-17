@@ -31,7 +31,7 @@
 }
 
 .navbar .nav-item {
-  font-family: 'Merge One', sans-serif;
+  font-family: "Merge One", sans-serif;
   font-weight: 500;
   cursor: pointer;
   min-width: 0;
@@ -51,7 +51,7 @@
 }
 
 .navbar .nav-item a::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -4px;
   left: 50%;
@@ -108,7 +108,7 @@
   color: #ffae36;
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .navbar .tg-nav-links {
     gap: 1rem;
     justify-content: center;

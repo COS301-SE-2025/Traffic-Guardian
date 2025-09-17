@@ -98,7 +98,7 @@
 .analytics-tabs button.active {
   background: var(--title-color);
   color: var(--button-primary-text);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 15%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
 }
 
 /* Content */
@@ -127,7 +127,7 @@
 
 .summary-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 10%);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
 }
 
 .card-icon {

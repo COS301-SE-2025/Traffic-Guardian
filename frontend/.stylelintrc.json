@@ -3,7 +3,7 @@
   "rules": {
     "alpha-value-notation": "percentage",
     "color-hex-length": "short",
-    "color-function-notation": "legacy",
+    "color-function-notation": "modern",
     "property-no-vendor-prefix": [true, {
       "ignoreProperties": ["background-clip"]
     }],
