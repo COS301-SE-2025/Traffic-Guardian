@@ -2,9 +2,12 @@ import { router, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from "react-native";
 import { createIncident } from "../services/incidentsApi";
+import { useLocation } from "../services/location";
+
 
 export default function Report() {
     const router = useRouter();
+    const { coords } = useLocation();
     
   const [incidentDate, setIncidentDate] = useState(new Date().toISOString().split("T")[0]);
   const [incidentLocation, setIncidentLocation] = useState("");
@@ -20,7 +23,8 @@ export default function Report() {
         return;
         }
 
-        const response = await createIncident(incidentDate, incidentLocation, incidentCarID, incidentSeverity, incidentDescription);
+        const response = await createIncident(incidentDate, incidentLocation, incidentCarID, incidentSeverity, incidentDescription, coords);
+        console.log(coords);
         Alert.alert("Success:", response);
     }catch(error : any){
       Alert.alert("Error", error.message || "Something went wrong");
@@ -87,7 +91,7 @@ export default function Report() {
       />
 
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Submit Incident</Text>
+        <Text style={styles.buttonText}>Report</Text>
       </TouchableOpacity>
     </ScrollView>
   );
