@@ -1,10 +1,19 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
+  const router = useRouter();
   return (
-    <View>
+    <SafeAreaView>
+            <TouchableOpacity onPress={() => router.push("/login")}>
+              <Text>Login</Text>
+            </TouchableOpacity>
 
-    </View>
+              <TouchableOpacity onPress={() => router.push("/register")}>
+              <Text>Register</Text>
+            </TouchableOpacity>
+    </SafeAreaView>
   );
 }
