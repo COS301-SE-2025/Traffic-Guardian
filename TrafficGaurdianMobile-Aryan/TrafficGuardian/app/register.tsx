@@ -28,6 +28,15 @@ export default function Register() {
 
   return (
     <View style={styles.container}>
+            <View style={styles.navbar}>
+              <TouchableOpacity onPress={() => router.push("/")}>
+                <Text style={styles.navText}>Home</Text>
+              </TouchableOpacity>
+      
+              <TouchableOpacity onPress={() => router.push("/login")}>
+                <Text style={styles.navText}>Login</Text>
+              </TouchableOpacity>
+            </View>
       <Text style={styles.title}>Create Account</Text>
 
       <TextInput
@@ -69,4 +78,22 @@ const styles = StyleSheet.create({
   button: { backgroundColor: "#007bff", padding: 15, borderRadius: 8, alignItems: "center" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   link: { marginTop: 15, color: "#007bff", textAlign: "center" },
+
+    navbar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#333",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  navText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

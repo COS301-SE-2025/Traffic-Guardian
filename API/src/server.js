@@ -28,6 +28,7 @@ var welcomeMsg;
 
 io.on('connection',(socket)=>{
   ILM.addUser(socket.id, {});
+  console.log(socket.id + " connected");
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
