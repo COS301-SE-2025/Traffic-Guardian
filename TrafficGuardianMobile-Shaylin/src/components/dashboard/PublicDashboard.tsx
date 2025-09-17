@@ -446,7 +446,223 @@ const PublicDashboard: React.FC = () => {
   );
 };
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.light,
+  },
+  contentContainer: {
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  welcomeText: {
+    ...typography.h3,
+    color: colors.text.primary,
+  },
+  lastUpdateText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 4,
+  },
+  sectionTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: 16,
+  },
+  locationInfo: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  safetyContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  safetyCard: {
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...globalStyles.shadow,
+  },
+  safetyScoreContainer: {
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  safetyScoreValue: {
+    ...typography.statValue,
+    fontSize: 36,
+  },
+  safetyScoreLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 4,
+  },
+  safetyInfo: {
+    flex: 1,
+  },
+  safetyDescription: {
+    ...typography.body,
+    color: colors.text.primary,
+    marginBottom: 4,
+  },
+  riskFactors: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  statsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  incidentsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  noIncidentsContainer: {
+    alignItems: 'center',
+    padding: 40,
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    ...globalStyles.shadow,
+  },
+  noIncidentsText: {
+    ...typography.h4,
+    color: colors.success,
+    marginTop: 16,
+  },
+  noIncidentsSubtext: {
+    ...typography.body,
+    color: colors.text.secondary,
+    marginTop: 8,
+  },
+  incidentCard: {
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warning,
+    ...globalStyles.shadow,
+  },
+  incidentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  incidentTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  incidentType: {
+    ...typography.label,
+    color: colors.text.primary,
+    marginLeft: 8,
+  },
+  severityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  severityText: {
+    ...typography.caption,
+    fontWeight: '600',
+  },
+  incidentDescription: {
+    ...typography.body,
+    color: colors.text.primary,
+    marginBottom: 8,
+  },
+  incidentMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  incidentLocation: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    flex: 1,
+    marginRight: 8,
+  },
+  incidentTime: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  clearanceInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
+  },
+  clearanceText: {
+    ...typography.caption,
+    color: colors.warning,
+    marginLeft: 4,
+  },
+  insightsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  insightItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface.light,
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  insightText: {
+    ...typography.body,
+    color: colors.text.primary,
+    marginLeft: 12,
+    flex: 1,
+  },
+  quickActionsContainer: {
+    paddingHorizontal: 20,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  quickActionButton: {
+    width: (width - 64) / 2,
+    backgroundColor: colors.surface.light,
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    ...globalStyles.shadow,
+  },
+  quickActionText: {
+    ...typography.label,
+    color: colors.text.primary,
+    marginTop: 8,
+  },
+});
 
+export default PublicDashboard;
 
   
 
