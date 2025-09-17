@@ -207,4 +207,214 @@ export const globalStyles = StyleSheet.create({
     marginLeft: 12,
   },
 
-  
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  statusActive: {
+    backgroundColor: colors.success,
+  },
+  statusInactive: {
+    backgroundColor: colors.error,
+  },
+  statusWarning: {
+    backgroundColor: colors.warning,
+  },
+
+  badge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  badgeText: {
+    ...typography.caption,
+    fontWeight: '600',
+  },
+  badgePrimary: {
+    backgroundColor: colors.primary.light,
+  },
+  badgePrimaryText: {
+    color: colors.primary.main,
+  },
+  badgeSuccess: {
+    backgroundColor: colors.success + '20',
+  },
+  badgeSuccessText: {
+    color: colors.success,
+  },
+  badgeWarning: {
+    backgroundColor: colors.warning + '20',
+  },
+  badgeWarningText: {
+    color: colors.warning,
+  },
+  badgeError: {
+    backgroundColor: colors.error + '20',
+  },
+  badgeErrorText: {
+    color: colors.error,
+  },
+
+  padding: {
+    padding: 16,
+  },
+  paddingHorizontal: {
+    paddingHorizontal: 16,
+  },
+  paddingVertical: {
+    paddingVertical: 16,
+  },
+  margin: {
+    margin: 16,
+  },
+  marginHorizontal: {
+    marginHorizontal: 16,
+  },
+  marginVertical: {
+    marginVertical: 16,
+  },
+
+  row: {
+    flexDirection: 'row',
+  },
+  column: {
+    flexDirection: 'column',
+  },
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  spaceBetween: {
+    justifyContent: 'space-between',
+  },
+  spaceAround: {
+    justifyContent: 'space-around',
+  },
+  alignCenter: {
+    alignItems: 'center',
+  },
+  alignStart: {
+    alignItems: 'flex-start',
+  },
+  alignEnd: {
+    alignItems: 'flex-end',
+  },
+  justifyCenter: {
+    justifyContent: 'center',
+  },
+  justifyStart: {
+    justifyContent: 'flex-start',
+  },
+  justifyEnd: {
+    justifyContent: 'flex-end',
+  },
+  flex1: {
+    flex: 1,
+  },
+
+  fullWidth: {
+    width: width,
+  },
+  fullHeight: {
+    height: height,
+  },
+  halfWidth: {
+    width: width * 0.5,
+  },
+  screenPadding: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+
+  shadow: {
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  shadowLarge: {
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+
+  borderTop: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
+  },
+  borderBottom: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  borderLeft: {
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border.light,
+  },
+  borderRight: {
+    borderRightWidth: 1,
+    borderRightColor: colors.border.light,
+  },
+  borderAll: {
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    padding: 24,
+    margin: 20,
+    maxHeight: height * 0.8,
+  },
+  darkModalContent: {
+    backgroundColor: colors.surface.dark,
+  },
+
+  tabBar: {
+    backgroundColor: colors.surface.light,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
+    paddingBottom: 8,
+    paddingTop: 8,
+  },
+  darkTabBar: {
+    backgroundColor: colors.surface.dark,
+    borderTopColor: colors.border.dark,
+  },
+
+  emergency: {
+    backgroundColor: colors.error,
+    borderColor: colors.error,
+  },
+  emergencyText: {
+    color: colors.text.light,
+    fontWeight: 'bold',
+  },
+  safeZone: {
+    paddingTop: 44, // iOS status bar height
+    paddingBottom: 34, // iOS home indicator height
+  },
+});
