@@ -1,5 +1,5 @@
 /* Light mode variables */
-[data-theme="light"] {
+[data-theme='light'] {
   --livefeed-bg: #f9f9f9;
   --livefeed-text: #333;
   --livefeed-title: #d97700;
@@ -31,7 +31,7 @@
 }
 
 /* Dark mode variables */
-[data-theme="dark"] {
+[data-theme='dark'] {
   --livefeed-bg: #2e2e2e;
   --livefeed-text: #fff;
   --livefeed-title: #fa3;
@@ -67,7 +67,7 @@
   min-height: 100vh;
   background-color: var(--livefeed-bg);
   color: var(--livefeed-text);
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: 'Segoe UI', Arial, sans-serif;
 }
 
 .livefeed-header {
@@ -320,6 +320,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

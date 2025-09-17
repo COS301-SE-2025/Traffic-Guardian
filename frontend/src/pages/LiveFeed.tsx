@@ -57,7 +57,9 @@ const LiveFeed: React.FC = () => {
   const [viewMode, setViewMode] = useState<'video' | 'images' | 'map'>('video');
   const [showIncidentForm, setShowIncidentForm] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [incidentFilter, setIncidentFilter] = useState<'all' | 'accident' | 'construction' | 'weather'>('all');
+  const [incidentFilter, setIncidentFilter] = useState<
+    'all' | 'accident' | 'construction' | 'weather'
+  >('all');
   const navigate = useNavigate();
 
   // Add refs for HLS players
@@ -374,15 +376,29 @@ const LiveFeed: React.FC = () => {
   if (loading && cameraFeeds.length === 0) {
     return (
       <div className="livefeed-page" data-testid="live-feed-container">
-        <LoadingSpinner size="large" text="Loading camera feeds..." className="content loading car-loading" data-testid="loading-spinner" />
+        <LoadingSpinner
+          size="large"
+          text="Loading camera feeds..."
+          className="content loading car-loading"
+          data-testid="loading-spinner"
+        />
       </div>
     );
   }
 
   if (error && cameraFeeds.length === 0) {
     return (
-      <div className="livefeed-page" data-cy="livefeed-page" data-testid="live-feed-container">
-        <div data-testid="incident-carousel" style={{visibility: 'hidden', position: 'absolute'}}>Incident Carousel Placeholder</div>
+      <div
+        className="livefeed-page"
+        data-cy="livefeed-page"
+        data-testid="live-feed-container"
+      >
+        <div
+          data-testid="incident-carousel"
+          style={{ visibility: 'hidden', position: 'absolute' }}
+        >
+          Incident Carousel Placeholder
+        </div>
         <div className="livefeed-header">
           <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
           <div className="livefeed-subtitle" data-cy="livefeed-subtitle">
@@ -400,8 +416,17 @@ const LiveFeed: React.FC = () => {
   }
 
   return (
-    <div className="livefeed-page" data-cy="livefeed-page" data-testid="live-feed-container">
-      <div data-testid="incident-carousel" style={{visibility: 'hidden', position: 'absolute'}}>Incident Carousel Placeholder</div>
+    <div
+      className="livefeed-page"
+      data-cy="livefeed-page"
+      data-testid="live-feed-container"
+    >
+      <div
+        data-testid="incident-carousel"
+        style={{ visibility: 'hidden', position: 'absolute' }}
+      >
+        Incident Carousel Placeholder
+      </div>
       <div className="livefeed-header">
         <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
         <div className="livefeed-controls">
@@ -417,20 +442,26 @@ const LiveFeed: React.FC = () => {
             <div className="filter-buttons">
               <button
                 data-testid="filter-accident"
-                className={`filter-btn ${incidentFilter === 'accident' ? 'active' : ''}`}
+                className={`filter-btn ${
+                  incidentFilter === 'accident' ? 'active' : ''
+                }`}
                 onClick={() => setIncidentFilter('accident')}
               >
                 Accidents
               </button>
               <button
                 data-testid="filter-construction"
-                className={`filter-btn ${incidentFilter === 'construction' ? 'active' : ''}`}
+                className={`filter-btn ${
+                  incidentFilter === 'construction' ? 'active' : ''
+                }`}
                 onClick={() => setIncidentFilter('construction')}
               >
                 Construction
               </button>
               <button
-                className={`filter-btn ${incidentFilter === 'all' ? 'active' : ''}`}
+                className={`filter-btn ${
+                  incidentFilter === 'all' ? 'active' : ''
+                }`}
                 onClick={() => setIncidentFilter('all')}
               >
                 All
@@ -468,101 +499,118 @@ const LiveFeed: React.FC = () => {
       </div>
 
       <div className="livefeed-grid" data-cy="livefeed-grid">
-        {memoizedCameraFeeds.length > 0 ? memoizedCameraFeeds.map(feed => (
+        {memoizedCameraFeeds.length > 0 ? (
+          memoizedCameraFeeds.map(feed => (
+            <div
+              key={feed.id}
+              className="feed-tile clickable"
+              data-cy={`feed-tile-${feed.id}`}
+              data-testid="feed-item incident-item"
+              data-type="accident"
+              onClick={() => handleCameraClick(feed)}
+              onDoubleClick={() => navigate('/incident-management')}
+            >
+              <div className="feed-image-container">
+                {feed.hasLiveStream && feed.videoUrl ? (
+                  <HlsPlayer
+                    src={feed.videoUrl}
+                    autoPlay={false}
+                    controls={false}
+                    width="100%"
+                    height="auto"
+                    className="feed-video"
+                    playerRef={getGridPlayerRef(feed.id)}
+                    onError={() => handleVideoError(feed.id)}
+                    onLoad={() => handleImageLoad(feed.id)}
+                    onLoadStart={() => handleVideoLoadStart(feed.id)}
+                    preload="metadata"
+                  />
+                ) : (
+                  <img
+                    src={feed.image}
+                    alt={`Camera feed from ${feed.location}`}
+                    className="feed-image"
+                    loading="lazy"
+                    onError={() => handleImageError(feed.id)}
+                    onLoad={() => handleImageLoad(feed.id)}
+                    data-cy="feed-image"
+                  />
+                )}
+                <div className="live-feed-overlay" data-cy="live-feed-overlay">
+                  <div
+                    className={`status-badge ${getStatusClass(feed.status)}`}
+                    data-cy="feed-status"
+                  >
+                    {feed.status}
+                  </div>
+                  {feed.hasLiveStream && (
+                    <div className="video-available-badge">Live Video</div>
+                  )}
+                </div>
+                <div className="play-overlay">
+                  <div className="play-button">▶</div>
+                </div>
+                <div className="update-frequency">
+                  Updates every {feed.updateFrequency || '?'} min
+                </div>
+              </div>
+              <div className="feed-details" data-cy="feed-details">
+                <div className="feed-info">
+                  <div>
+                    <h4 data-cy="feed-id">{feed.id}</h4>
+                    <p data-cy="feed-location">{feed.location}</p>
+                    {feed.imageDescription && (
+                      <p className="feed-description">
+                        {feed.imageDescription}
+                      </p>
+                    )}
+                    <div className="feed-metadata">
+                      <span className="feed-route">{feed.route}</span>
+                      <span className="feed-district">{feed.district}</span>
+                      {feed.direction && (
+                        <span className="feed-direction">{feed.direction}</span>
+                      )}
+                      {feed.county && (
+                        <span className="feed-county">{feed.county}</span>
+                      )}
+                    </div>
+                    {feed.milepost && (
+                      <div className="feed-milepost">
+                        Milepost: {feed.milepost}
+                      </div>
+                    )}
+                    {feed.coordinates && (
+                      <div className="feed-coordinates">
+                        Location: {feed.coordinates.lat.toFixed(4)},{' '}
+                        {feed.coordinates.lng.toFixed(4)}
+                      </div>
+                    )}
+                    <div className="feed-last-update">
+                      Loaded: {feed.lastUpdate}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          // Empty state with test IDs for testing
           <div
-            key={feed.id}
             className="feed-tile clickable"
-            data-cy={`feed-tile-${feed.id}`}
             data-testid="feed-item incident-item"
             data-type="accident"
-            onClick={() => handleCameraClick(feed)}
-            onDoubleClick={() => navigate('/incident-management')}
+            style={{ opacity: 0.5 }}
           >
             <div className="feed-image-container">
-              {feed.hasLiveStream && feed.videoUrl ? (
-                <HlsPlayer
-                  src={feed.videoUrl}
-                  autoPlay={false}
-                  controls={false}
-                  width="100%"
-                  height="auto"
-                  className="feed-video"
-                  playerRef={getGridPlayerRef(feed.id)}
-                  onError={() => handleVideoError(feed.id)}
-                  onLoad={() => handleImageLoad(feed.id)}
-                  onLoadStart={() => handleVideoLoadStart(feed.id)}
-                  preload="metadata"
-                />
-              ) : (
-                <img
-                  src={feed.image}
-                  alt={`Camera feed from ${feed.location}`}
-                  className="feed-image"
-                  loading="lazy"
-                  onError={() => handleImageError(feed.id)}
-                  onLoad={() => handleImageLoad(feed.id)}
-                  data-cy="feed-image"
-                />
-              )}
-              <div className="live-feed-overlay" data-cy="live-feed-overlay">
-                <div
-                  className={`status-badge ${getStatusClass(feed.status)}`}
-                  data-cy="feed-status"
-                >
-                  {feed.status}
-                </div>
-                {feed.hasLiveStream && (
-                  <div className="video-available-badge">Live Video</div>
-                )}
-              </div>
-              <div className="play-overlay">
-                <div className="play-button">▶</div>
-              </div>
-              <div className="update-frequency">
-                Updates every {feed.updateFrequency || '?'} min
-              </div>
-            </div>
-            <div className="feed-details" data-cy="feed-details">
-              <div className="feed-info">
-                <div>
-                  <h4 data-cy="feed-id">{feed.id}</h4>
-                  <p data-cy="feed-location">{feed.location}</p>
-                  {feed.imageDescription && (
-                    <p className="feed-description">{feed.imageDescription}</p>
-                  )}
-                  <div className="feed-metadata">
-                    <span className="feed-route">{feed.route}</span>
-                    <span className="feed-district">{feed.district}</span>
-                    {feed.direction && (
-                      <span className="feed-direction">{feed.direction}</span>
-                    )}
-                    {feed.county && (
-                      <span className="feed-county">{feed.county}</span>
-                    )}
-                  </div>
-                  {feed.milepost && (
-                    <div className="feed-milepost">
-                      Milepost: {feed.milepost}
-                    </div>
-                  )}
-                  {feed.coordinates && (
-                    <div className="feed-coordinates">
-                      Location: {feed.coordinates.lat.toFixed(4)},{' '}
-                      {feed.coordinates.lng.toFixed(4)}
-                    </div>
-                  )}
-                  <div className="feed-last-update">
-                    Loaded: {feed.lastUpdate}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )) : (
-          // Empty state with test IDs for testing
-          <div className="feed-tile clickable" data-testid="feed-item incident-item" data-type="accident" style={{opacity: 0.5}}>
-            <div className="feed-image-container">
-              <div style={{height: '200px', backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+              <div
+                style={{
+                  height: '200px',
+                  backgroundColor: '#f0f0f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <span>No camera feeds available</span>
               </div>
             </div>
@@ -647,7 +695,7 @@ const LiveFeed: React.FC = () => {
                       ],
                       zoom: 15,
                       style: { height: '400px', width: '100%' },
-                      className: "camera-map"
+                      className: 'camera-map',
                     } as any)}
                   >
                     <MapUpdater
@@ -658,8 +706,9 @@ const LiveFeed: React.FC = () => {
                     />
                     <TileLayer
                       {...({
-                        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        attribution:
+                          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                       } as any)}
                     />
                     <Marker
@@ -668,7 +717,7 @@ const LiveFeed: React.FC = () => {
                           selectedCamera.coordinates.lat,
                           selectedCamera.coordinates.lng,
                         ],
-                        icon: cameraIcon
+                        icon: cameraIcon,
                       } as any)}
                     >
                       <Popup>

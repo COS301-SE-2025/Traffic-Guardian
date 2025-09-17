@@ -47,10 +47,10 @@ class TrafficDensityService {
 
   // Thresholds for traffic density classification
   private readonly THRESHOLDS = {
-    LOW: 5,      // 1-5 vehicles
-    MEDIUM: 10,  // 6-10 vehicles
-    HIGH: 15,    // 11-15 vehicles
-    CRITICAL: 20 // 16+ vehicles (high accident risk)
+    LOW: 5, // 1-5 vehicles
+    MEDIUM: 10, // 6-10 vehicles
+    HIGH: 15, // 11-15 vehicles
+    CRITICAL: 20, // 16+ vehicles (high accident risk)
   };
 
   // Subscribe to heatmap updates
@@ -97,11 +97,17 @@ class TrafficDensityService {
       intensity,
       timestamp,
       vehicleCount,
-      riskLevel
+      riskLevel,
     };
 
     // Debug logging
-    console.log(`🚗 Camera ${cameraId}: ${vehicleCount} vehicles at [${coordinates.lat.toFixed(4)}, ${coordinates.lng.toFixed(4)}], intensity: ${intensity.toFixed(2)}, risk: ${riskLevel}`);
+    console.log(
+      `🚗 Camera ${cameraId}: ${vehicleCount} vehicles at [${coordinates.lat.toFixed(
+        4
+      )}, ${coordinates.lng.toFixed(4)}], intensity: ${intensity.toFixed(
+        2
+      )}, risk: ${riskLevel}`
+    );
 
     // Update heatmap data
     this.updateHeatmapData(cameraId, heatmapPoint);
@@ -110,7 +116,9 @@ class TrafficDensityService {
   }
 
   // Calculate risk level based on vehicle count
-  private calculateRiskLevel(vehicleCount: number): 'low' | 'medium' | 'high' | 'critical' {
+  private calculateRiskLevel(
+    vehicleCount: number
+  ): 'low' | 'medium' | 'high' | 'critical' {
     if (vehicleCount <= this.THRESHOLDS.LOW) return 'low';
     if (vehicleCount <= this.THRESHOLDS.MEDIUM) return 'medium';
     if (vehicleCount <= this.THRESHOLDS.HIGH) return 'high';
@@ -134,12 +142,18 @@ class TrafficDensityService {
     );
 
     // Notify subscribers
-    console.log(`📡 Notifying ${this.updateCallbacks.length} subscribers with ${this.heatmapData.length} heatmap points`);
+    console.log(
+      `📡 Notifying ${this.updateCallbacks.length} subscribers with ${this.heatmapData.length} heatmap points`
+    );
     this.updateCallbacks.forEach(callback => callback(this.heatmapData));
   }
 
   // Check if two points are near each other
-  private isNearLocation(point1: HeatmapPoint, point2: HeatmapPoint, tolerance: number): boolean {
+  private isNearLocation(
+    point1: HeatmapPoint,
+    point2: HeatmapPoint,
+    tolerance: number
+  ): boolean {
     const latDiff = Math.abs(point1.lat - point2.lat);
     const lngDiff = Math.abs(point1.lng - point2.lng);
     return latDiff < tolerance && lngDiff < tolerance;
@@ -152,16 +166,22 @@ class TrafficDensityService {
 
   // Get traffic analysis for a specific area
   getTrafficAnalysis(): TrafficDensityAnalysis {
-    const totalVehicles = this.heatmapData.reduce((sum, point) => sum + point.vehicleCount, 0);
-    const averageIntensity = this.heatmapData.length > 0
-      ? this.heatmapData.reduce((sum, point) => sum + point.intensity, 0) / this.heatmapData.length
-      : 0;
-    const peakIntensity = this.heatmapData.length > 0
-      ? Math.max(...this.heatmapData.map(point => point.intensity))
-      : 0;
+    const totalVehicles = this.heatmapData.reduce(
+      (sum, point) => sum + point.vehicleCount,
+      0
+    );
+    const averageIntensity =
+      this.heatmapData.length > 0
+        ? this.heatmapData.reduce((sum, point) => sum + point.intensity, 0) /
+          this.heatmapData.length
+        : 0;
+    const peakIntensity =
+      this.heatmapData.length > 0
+        ? Math.max(...this.heatmapData.map(point => point.intensity))
+        : 0;
 
-    const riskAreas = this.heatmapData.filter(point =>
-      point.riskLevel === 'high' || point.riskLevel === 'critical'
+    const riskAreas = this.heatmapData.filter(
+      point => point.riskLevel === 'high' || point.riskLevel === 'critical'
     );
 
     return {
@@ -169,43 +189,57 @@ class TrafficDensityService {
       averageIntensity,
       peakIntensity,
       riskAreas,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 
   // Simulate object detection data for demo purposes
   // In production, this would come from your ML model
   generateSimulatedData(cameraFeeds: any[]): void {
-    console.log(`🎬 Processing ${cameraFeeds.length} camera feeds for traffic simulation`);
+    console.log(
+      `🎬 Processing ${cameraFeeds.length} camera feeds for traffic simulation`
+    );
 
     cameraFeeds.forEach(camera => {
-      console.log(`📹 Camera ${camera.id}: status=${camera.status}, hasCoords=${!!camera.coordinates}`);
+      console.log(
+        `📹 Camera ${camera.id}: status=${
+          camera.status
+        }, hasCoords=${!!camera.coordinates}`
+      );
 
       // Generate traffic for all cameras with coordinates, regardless of status
       if (camera.coordinates) {
         // Simulate variable traffic based on time and location
         const baseVehicleCount = this.getTimeBasedTrafficCount();
-        const locationMultiplier = this.getLocationTrafficMultiplier(camera.location);
-        const vehicleCount = Math.max(1, Math.floor(baseVehicleCount * locationMultiplier));
+        const locationMultiplier = this.getLocationTrafficMultiplier(
+          camera.location
+        );
+        const vehicleCount = Math.max(
+          1,
+          Math.floor(baseVehicleCount * locationMultiplier)
+        );
 
         // Generate mock vehicle detections
-        const vehicles: VehicleDetection[] = Array.from({ length: vehicleCount }, (_, i) => ({
-          id: `vehicle_${camera.id}_${i}`,
-          type: this.getRandomVehicleType(),
-          confidence: 0.8 + Math.random() * 0.2,
-          bbox: {
-            x: Math.random() * 640,
-            y: Math.random() * 480,
-            width: 50 + Math.random() * 100,
-            height: 30 + Math.random() * 60
-          }
-        }));
+        const vehicles: VehicleDetection[] = Array.from(
+          { length: vehicleCount },
+          (_, i) => ({
+            id: `vehicle_${camera.id}_${i}`,
+            type: this.getRandomVehicleType(),
+            confidence: 0.8 + Math.random() * 0.2,
+            bbox: {
+              x: Math.random() * 640,
+              y: Math.random() * 480,
+              width: 50 + Math.random() * 100,
+              height: 30 + Math.random() * 60,
+            },
+          })
+        );
 
         const detectionData: DetectionData = {
           cameraId: camera.id,
           timestamp: new Date(),
           vehicles,
-          coordinates: camera.coordinates
+          coordinates: camera.coordinates,
         };
 
         this.processDetectionData(detectionData);
@@ -214,7 +248,9 @@ class TrafficDensityService {
       }
     });
 
-    console.log(`📊 Total heatmap points after simulation: ${this.heatmapData.length}`);
+    console.log(
+      `📊 Total heatmap points after simulation: ${this.heatmapData.length}`
+    );
 
     // If no cameras generated traffic, create some test data for demonstration
     if (this.heatmapData.length === 0 && cameraFeeds.length > 0) {
@@ -228,9 +264,9 @@ class TrafficDensityService {
     const testPoints = [
       { lat: 33.6846, lng: -117.8265, vehicles: 15 }, // Orange County center
       { lat: 33.7175, lng: -117.8311, vehicles: 22 }, // North OC
-      { lat: 33.6478, lng: -117.8426, vehicles: 8 },  // South OC
-      { lat: 33.6920, lng: -117.7910, vehicles: 18 }, // East OC
-      { lat: 33.6773, lng: -117.8620, vehicles: 12 }, // West OC
+      { lat: 33.6478, lng: -117.8426, vehicles: 8 }, // South OC
+      { lat: 33.692, lng: -117.791, vehicles: 18 }, // East OC
+      { lat: 33.6773, lng: -117.862, vehicles: 12 }, // West OC
     ];
 
     testPoints.forEach((point, index) => {
@@ -243,15 +279,21 @@ class TrafficDensityService {
         intensity,
         timestamp: new Date(),
         vehicleCount: point.vehicles,
-        riskLevel
+        riskLevel,
       };
 
       this.heatmapData.push(heatmapPoint);
-      console.log(`🟡 Test point ${index + 1}: ${point.vehicles} vehicles at [${point.lat}, ${point.lng}], intensity: ${intensity.toFixed(2)}`);
+      console.log(
+        `🟡 Test point ${index + 1}: ${point.vehicles} vehicles at [${
+          point.lat
+        }, ${point.lng}], intensity: ${intensity.toFixed(2)}`
+      );
     });
 
     // Notify subscribers of test data
-    console.log(`📡 Notifying ${this.updateCallbacks.length} subscribers with ${this.heatmapData.length} test heatmap points`);
+    console.log(
+      `📡 Notifying ${this.updateCallbacks.length} subscribers with ${this.heatmapData.length} test heatmap points`
+    );
     this.updateCallbacks.forEach(callback => callback(this.heatmapData));
   }
 
@@ -275,11 +317,17 @@ class TrafficDensityService {
     const locationLower = location.toLowerCase();
 
     // Highway interchanges and major routes have more traffic
-    if (locationLower.includes('interchange') || locationLower.includes('junction')) {
+    if (
+      locationLower.includes('interchange') ||
+      locationLower.includes('junction')
+    ) {
       return 1.5 + Math.random() * 0.5; // 1.5-2x multiplier
     }
 
-    if (locationLower.includes('freeway') || locationLower.includes('highway')) {
+    if (
+      locationLower.includes('freeway') ||
+      locationLower.includes('highway')
+    ) {
       return 1.2 + Math.random() * 0.3; // 1.2-1.5x multiplier
     }
 

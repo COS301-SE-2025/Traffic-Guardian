@@ -127,7 +127,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherLastUpdate, setWeatherLastUpdate] = useState<Date | null>(null);
-  
+
   // ADDED FOR ACTIVE USERS TRACKING
   const [activeUsersCount, setActiveUsersCount] = useState<number>(0);
 
@@ -420,10 +420,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     });
 
     // ACTIVE USERS TRACKING EVENT HANDLER
-    newSocket.on('activeUsersUpdate', (data: { count: number; timestamp: Date }) => {
-      console.log('Active users update:', data);
-      setActiveUsersCount(data.count);
-    });
+    newSocket.on(
+      'activeUsersUpdate',
+      (data: { count: number; timestamp: Date }) => {
+        console.log('Active users update:', data);
+        setActiveUsersCount(data.count);
+      }
+    );
 
     // Cleanup on unmount
     return () => {

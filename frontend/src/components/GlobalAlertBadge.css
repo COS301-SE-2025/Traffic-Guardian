@@ -91,10 +91,12 @@
     transform: scale(0);
     opacity: 0%;
   }
+
   50% {
     transform: scale(1.2);
     opacity: 100%;
   }
+
   100% {
     transform: scale(1);
     opacity: 100%;
@@ -290,7 +292,7 @@
 }
 
 .global-alert-item.unread::before {
-  content: "";
+  content: '';
   position: absolute;
   left: 12px;
   top: 50%;

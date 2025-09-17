@@ -688,7 +688,13 @@ const Incidents: React.FC = () => {
   };
 
   if (isLoading && incidents.length === 0) {
-    return <LoadingSpinner size="large" text="Loading incidents..." className="content" />;
+    return (
+      <LoadingSpinner
+        size="large"
+        text="Loading incidents..."
+        className="content"
+      />
+    );
   }
 
   return (
@@ -949,7 +955,12 @@ const Incidents: React.FC = () => {
           data-testid="incident-list"
         >
           <div className="incidents-list-header">
-            <input type="search" placeholder="Search incidents..." data-testid="search-input" style={{visibility: 'hidden', position: 'absolute'}} />
+            <input
+              type="search"
+              placeholder="Search incidents..."
+              data-testid="search-input"
+              style={{ visibility: 'hidden', position: 'absolute' }}
+            />
             <h3 className="incidents-list-title">Incidents</h3>
             <div className="incidents-count">
               {filteredIncidents.length} Total

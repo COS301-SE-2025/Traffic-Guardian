@@ -6,7 +6,14 @@ import ApiService, {
 } from '../services/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PEMSTrafficAnalysis from '../components/PEMSTrafficAnalysis';
-import { useIncidents, useArchiveStats, usePemsDashboard, useIncidentLocations, useCriticalIncidents, useIncidentCategory } from '../hooks/useCachedData';
+import {
+  useIncidents,
+  useArchiveStats,
+  usePemsDashboard,
+  useIncidentLocations,
+  useCriticalIncidents,
+  useIncidentCategory,
+} from '../hooks/useCachedData';
 import dataPrefetchService from '../services/DataPrefetchService';
 import './Dashboard.css';
 
@@ -373,7 +380,7 @@ const Dashboard: React.FC = () => {
   const [activeIncidents, setActiveIncidents] = useState<number>(0);
   const [criticalIncidentsCount, setCriticalIncidentsCount] =
     useState<number>(0);
-  
+
   // PEMS dashboard data
   const [pemsDashboardData, setPemsDashboardData] = useState<any>(null);
   const [pemsLoading, setPemsLoading] = useState(true);
@@ -409,12 +416,17 @@ const Dashboard: React.FC = () => {
   const fetchPEMSData = useCallback(async () => {
     try {
       const apiKey = sessionStorage.getItem('apiKey');
-      const response = await fetch(`${process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api'}/pems/dashboard-summary`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey || '',
-        },
-      });
+      const response = await fetch(
+        `${
+          process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api'
+        }/pems/dashboard-summary`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey || '',
+          },
+        }
+      );
 
       if (response.ok) {
         const pemsData = await response.json();
@@ -432,10 +444,14 @@ const Dashboard: React.FC = () => {
   // Helper function to get system status class
   const getSystemStatusClass = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'healthy': return 'status-healthy';
-      case 'warning': return 'status-warning';
-      case 'critical': return 'status-critical';
-      default: return 'status-unknown';
+      case 'healthy':
+        return 'status-healthy';
+      case 'warning':
+        return 'status-warning';
+      case 'critical':
+        return 'status-critical';
+      default:
+        return 'status-unknown';
     }
   };
 
@@ -497,17 +513,17 @@ const Dashboard: React.FC = () => {
       // Send authentication info if available
       const userToken = sessionStorage.getItem('token');
       const userInfo = sessionStorage.getItem('userInfo');
-      
+
       if (userToken && userInfo) {
-        newSocket.emit('authenticate', { 
-          token: userToken, 
-          userInfo: JSON.parse(userInfo) 
+        newSocket.emit('authenticate', {
+          token: userToken,
+          userInfo: JSON.parse(userInfo),
         });
       }
-      
+
       // Request current stats immediately after connection
       newSocket.emit('request-stats');
-      
+
       addNotification({
         title: 'Connected',
         message: 'Real-time data connection established',
@@ -671,11 +687,25 @@ const Dashboard: React.FC = () => {
       console.log('- Critical Incidents:', criticalIncidentsCount);
       console.log('- PEMS Data:', pemsDashboardData);
       console.log('- Realtime Events Count:', realtimeEvents?.length || 0);
-      console.log('- Auth Token:', sessionStorage.getItem('token') ? 'Present' : 'Missing');
-      console.log('- User Info:', sessionStorage.getItem('userInfo') ? 'Present' : 'Missing');
-      console.log('- SERVER_URL:', process.env.REACT_APP_SERVER_URL || 'http://localhost:5000');
+      console.log(
+        '- Auth Token:',
+        sessionStorage.getItem('token') ? 'Present' : 'Missing'
+      );
+      console.log(
+        '- User Info:',
+        sessionStorage.getItem('userInfo') ? 'Present' : 'Missing'
+      );
+      console.log(
+        '- SERVER_URL:',
+        process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'
+      );
     };
-  }, [activeIncidents, criticalIncidentsCount, pemsDashboardData, realtimeEvents]);
+  }, [
+    activeIncidents,
+    criticalIncidentsCount,
+    pemsDashboardData,
+    realtimeEvents,
+  ]);
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -729,7 +759,12 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="dashboard" data-cy="dashboard" data-testid="dashboard-container" id="dashboard">
+    <div
+      className="dashboard"
+      data-cy="dashboard"
+      data-testid="dashboard-container"
+      id="dashboard"
+    >
       <div
         className="notification-panel"
         data-cy="notification-panel"
@@ -841,11 +876,21 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="dashboard-content" data-cy="dashboard-content">
-        {loading && <LoadingSpinner size="large" text="Loading dashboard data..." className="content" />}
+        {loading && (
+          <LoadingSpinner
+            size="large"
+            text="Loading dashboard data..."
+            className="content"
+          />
+        )}
 
         <div className="stats-grid" data-cy="stats-grid">
           {/* Traffic Detectors */}
-          <div className="stat-card" data-cy="stat-card-detectors" data-testid="stats-card">
+          <div
+            className="stat-card"
+            data-cy="stat-card-detectors"
+            data-testid="stats-card"
+          >
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <GaugeIcon />
             </div>
@@ -861,7 +906,11 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Average Speed */}
-          <div className="stat-card" data-cy="stat-card-avg-speed" data-testid="stats-card">
+          <div
+            className="stat-card"
+            data-cy="stat-card-avg-speed"
+            data-testid="stats-card"
+          >
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <TrendingUpIcon />
             </div>
@@ -877,7 +926,11 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* High Risk Areas */}
-          <div className="stat-card risk-indicator" data-cy="stat-card-high-risk" data-testid="stats-card">
+          <div
+            className="stat-card risk-indicator"
+            data-cy="stat-card-high-risk"
+            data-testid="stats-card"
+          >
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <AlertTriangleIcon />
             </div>
@@ -895,7 +948,8 @@ const Dashboard: React.FC = () => {
                 className="progress-fill critical"
                 style={{
                   width: `${Math.min(
-                    ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) * 100,
+                    ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) *
+                      100,
                     100
                   )}%`,
                 }}
@@ -905,7 +959,12 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* System Status */}
-          <div className={`stat-card system-status-card ${getSystemStatusClass(pemsDashboardData?.overview?.system_status)}`} data-cy="stat-card-system-status">
+          <div
+            className={`stat-card system-status-card ${getSystemStatusClass(
+              pemsDashboardData?.overview?.system_status
+            )}`}
+            data-cy="stat-card-system-status"
+          >
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <ActivityIcon />
             </div>
@@ -920,7 +979,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-
 
         {/* Weather Section */}
         <div
@@ -1065,23 +1123,23 @@ const Dashboard: React.FC = () => {
 
         {/* PEMS Traffic Analysis Section */}
         <div data-testid="incident-chart">
-        <PEMSTrafficAnalysis 
-          district={12}
-          onAlertSelect={(alert) => {
-            addNotification({
-              title: 'Traffic Alert Selected',
-              message: `Alert for detector ${alert.detector_id}: ${alert.message}`,
-              type: 'info'
-            });
-          }}
-          onDetectorSelect={(detector) => {
-            addNotification({
-              title: 'Detector Selected',
-              message: `Monitoring detector ${detector.detector_id} on ${detector.freeway} ${detector.direction}`,
-              type: 'info'
-            });
-          }}
-        />
+          <PEMSTrafficAnalysis
+            district={12}
+            onAlertSelect={alert => {
+              addNotification({
+                title: 'Traffic Alert Selected',
+                message: `Alert for detector ${alert.detector_id}: ${alert.message}`,
+                type: 'info',
+              });
+            }}
+            onDetectorSelect={detector => {
+              addNotification({
+                title: 'Detector Selected',
+                message: `Monitoring detector ${detector.detector_id} on ${detector.freeway} ${detector.direction}`,
+                type: 'info',
+              });
+            }}
+          />
         </div>
 
         {/* Traffic Incidents Section */}

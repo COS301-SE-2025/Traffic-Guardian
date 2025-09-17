@@ -520,7 +520,6 @@ class ApiService {
     sessionStorage.removeItem('user');
   }
 
- 
   static async fetchPEMSDashboardSummary(): Promise<any | null> {
     try {
       const response = await fetch(`${API_BASE_URL}/pems/dashboard-summary`, {
@@ -554,9 +553,12 @@ class ApiService {
   static async fetchPEMSAlerts(priority?: string): Promise<any | null> {
     try {
       const queryParams = priority ? `?priority=${priority}` : '';
-      const response = await fetch(`${API_BASE_URL}/pems/alerts${queryParams}`, {
-        headers: this.getAuthHeaders(),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/pems/alerts${queryParams}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      );
 
       const alertsData = await this.handleResponse<any>(response);
       return alertsData;
@@ -569,9 +571,12 @@ class ApiService {
   // Get PEMS data for specific district (for detailed analytics)
   static async fetchPEMSDistrictData(district: number): Promise<any | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/pems/district/${district}`, {
-        headers: this.getAuthHeaders(),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/pems/district/${district}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      );
 
       const districtData = await this.handleResponse<any>(response);
       return districtData;

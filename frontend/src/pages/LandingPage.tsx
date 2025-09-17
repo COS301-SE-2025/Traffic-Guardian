@@ -118,7 +118,9 @@ const LandingPage: React.FC = () => {
 
       <section className="hero" id="home">
         <div className="hero-content">
-          <h1 className="floating" data-testid="hero-title">Traffic Guardian - AI-Powered Traffic Safety for Gauteng</h1>
+          <h1 className="floating" data-testid="hero-title">
+            Traffic Guardian - AI-Powered Traffic Safety for Gauteng
+          </h1>
           <p className="hero-subtitle">
             Transforming highway monitoring with real-time computer vision to
             detect incidents instantly and save lives
@@ -134,10 +136,18 @@ const LandingPage: React.FC = () => {
           <div className="auth-section">
             <h3>Get Started Today</h3>
             <div className="auth-buttons">
-              <button className="btn btn-login" onClick={handleLogin} data-testid="get-started-button">
+              <button
+                className="btn btn-login"
+                onClick={handleLogin}
+                data-testid="get-started-button"
+              >
                 Login
               </button>
-              <button className="btn btn-signup" onClick={handleSignUp} data-testid="signup-link">
+              <button
+                className="btn btn-signup"
+                onClick={handleSignUp}
+                data-testid="signup-link"
+              >
                 Sign Up
               </button>
             </div>

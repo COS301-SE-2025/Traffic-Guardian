@@ -24,12 +24,12 @@
 }
 
 .pems-analytics-error h3 {
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   color: var(--text-color);
 }
 
 .pems-analytics-error p {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: var(--subtitle-color);
 }
 
@@ -59,7 +59,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: var(--title-color);
   font-size: 1.8rem;
   font-weight: 700;
@@ -98,7 +98,7 @@
 .analytics-tabs button.active {
   background: var(--title-color);
   color: var(--button-primary-text);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 15%);
 }
 
 /* Content */
@@ -127,7 +127,7 @@
 
 .summary-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 10%);
 }
 
 .card-icon {
@@ -167,7 +167,7 @@
 }
 
 .card-content h3 {
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
   font-size: 1.8rem;
   font-weight: 700;
   color: var(--text-color);
@@ -175,7 +175,7 @@
 }
 
 .card-content p {
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
   font-weight: 600;
   color: var(--text-color);
   font-size: 0.95rem;
@@ -206,14 +206,14 @@
 }
 
 .chart-container h3 {
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
   color: var(--text-color);
   font-size: 1.2rem;
   font-weight: 600;
 }
 
 .chart-description {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: var(--subtitle-color);
   font-size: 0.9rem;
   line-height: 1.5;
@@ -225,7 +225,7 @@
 }
 
 .section-description h3 {
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   color: var(--text-color);
   font-size: 1.4rem;
   font-weight: 600;
@@ -244,7 +244,7 @@
 }
 
 .high-risk-areas-list h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: var(--text-color);
   font-size: 1.2rem;
   font-weight: 600;
@@ -324,7 +324,7 @@
 }
 
 .performance-insights h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: var(--text-color);
   font-size: 1.2rem;
   font-weight: 600;
@@ -363,7 +363,7 @@
 }
 
 .insight-content h4 {
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
   color: var(--text-color);
   font-size: 1rem;
   font-weight: 600;
@@ -411,11 +411,11 @@
   .analytics-charts-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .analytics-summary-cards {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .risk-areas-grid {
     grid-template-columns: 1fr;
   }
@@ -425,29 +425,29 @@
   .analytics-header {
     padding: 16px;
   }
-  
+
   .analytics-content {
     padding: 16px;
   }
-  
+
   .analytics-summary-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .analytics-tabs {
     flex-direction: column;
   }
-  
+
   .summary-card {
     flex-direction: column;
     text-align: center;
     gap: 12px;
   }
-  
+
   .chart-container {
     padding: 16px;
   }
-  
+
   .analytics-footer {
     flex-direction: column;
     gap: 12px;
@@ -459,17 +459,17 @@
   .analytics-header h2 {
     font-size: 1.5rem;
   }
-  
+
   .insight-item {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .area-header {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .area-metrics {
     flex-direction: column;
     gap: 4px;
