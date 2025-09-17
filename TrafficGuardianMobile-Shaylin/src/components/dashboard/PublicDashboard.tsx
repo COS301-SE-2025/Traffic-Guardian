@@ -123,4 +123,95 @@ const PublicDashboard: React.FC = () => {
         })
       );
 
+      const [incidentsResponse, safetyResponse, analyticsResponse] = await Promise.all(promises);
+
+      setNearbyIncidents(incidentsResponse?.incidents || []);
+      setSafetyScore(safetyResponse);
+      setAnalytics(analyticsResponse);
+      setLastUpdate(new Date());
+
+    } catch (error) {
+      console.error('Dashboard load error:', error);
+      showNotification('Failed to load dashboard data', 'error');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [currentLocation, isLocationEnabled, requestLocationPermission, showNotification]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    loadDashboardData(false);
+  };
+
+  const handleIncidentPress = (incident: NearbyIncident) => {
+    Alert.alert(
+      'Incident Details',
+      `${incident.description}\n\nLocation: ${incident.location.address}\nSeverity: ${incident.severity}\nStatus: ${incident.status}`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const getIncidentIcon = (type: string) => {
+    switch (type) {
+      case INCIDENT_TYPES.ACCIDENT:
+        return 'car-sport';
+      case INCIDENT_TYPES.BREAKDOWN:
+        return 'construct';
+      case INCIDENT_TYPES.ROADWORK:
+        return 'hammer';
+      case INCIDENT_TYPES.DEBRIS:
+        return 'warning';
+      case INCIDENT_TYPES.WEATHER:
+        return 'rainy';
+      default:
+        return 'alert-circle';
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'high':
+      case 'critical':
+        return colors.severity.high;
+      case 'medium':
+        return colors.severity.medium;
+      case 'low':
+        return colors.severity.low;
+      default:
+        return colors.text.secondary;
+    }
+  };
+
+  const getSafetyScoreColor = (score: number) => {
+    if (score >= 90) return colors.success;
+    if (score >= 80) return colors.warning;
+    return colors.error;
+  };
+
+  const formatLastUpdate = () => {
+    const now = new Date();
+    const diff = now.getTime() - lastUpdate.getTime();
+    const minutes = Math.floor(diff / 60000);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours}h ago`;
+  };
+
+  if (isLoading) {
+    return (
+      <View style={globalStyles.loadingContainer}>
+        <LoadingSpinner size="large" text="Loading dashboard..." />
+      </View>
+    );
+  }
+
+  
+
       
