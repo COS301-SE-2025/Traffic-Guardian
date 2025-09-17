@@ -15,10 +15,10 @@ export default function Register() {
     if(!password.trim() || !email.trim()){
       throw new Error("All fields are required");
     }
-      const result = await loginUser(password, email);
+      const result = await loginUser(email, password);
       console.log("Success:", result);
 
-      router.push("/login");
+      router.push("/");
     } catch (error: any) {
       Alert.alert("Error", error.message || "Something went wrong");
     }
@@ -26,18 +26,32 @@ export default function Register() {
 
   return (
     <View style={styles.container}>
+
+              <Text>lonwabo@example.com</Text>
+              <Text>StrongPa$$20</Text>
+
+            <View style={styles.navbar}>
+              <TouchableOpacity onPress={() => router.push("/")}>
+                <Text style={styles.navText}>Home</Text>
+              </TouchableOpacity>
+      
+              <TouchableOpacity onPress={() => router.push("/register")}>
+                <Text style={styles.navText}>Register</Text>
+              </TouchableOpacity>
+            </View>
+
       <Text style={styles.title}>Login</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="lonwabo@example.com"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="StrongPa$$20"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -61,4 +75,22 @@ const styles = StyleSheet.create({
   button: { backgroundColor: "#007bff", padding: 15, borderRadius: 8, alignItems: "center" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   link: { marginTop: 15, color: "#007bff", textAlign: "center" },
+
+      navbar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#333",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  navText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

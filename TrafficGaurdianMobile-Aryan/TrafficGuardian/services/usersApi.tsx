@@ -1,8 +1,22 @@
-const API_URL = "http://localhost:5000/api/";
+import { Platform } from "react-native";
+
+const API_URL = "http://localhost:5000/api";
+
+const getBaseUrl = () => {
+  if (Platform.OS === "android") {
+    return "http://10.0.2.2:5000";
+
+  } else if (Platform.OS === "ios") {
+    return "http://localhost:5000";
+
+  } else {
+    return "http://localhost:5000";
+  }
+};
 
 export async function registerUser(username: string, email: string, password: string) {
   try{
-    const response = await fetch(`${API_URL}/auth/register`, {
+    const response = await fetch(`${getBaseUrl()}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
@@ -27,29 +41,28 @@ export async function registerUser(username: string, email: string, password: st
 }
 
 export async function loginUser(email: string, password: string) {
-  try{
-    const response = await fetch(`${API_URL}/auth/login`, {
+  try {
+    const payload = { User_Email: email, User_Password: password };
+
+    const response = await fetch(`${getBaseUrl()}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        User_Password: password,
-        User_Email: email,}),
+      body: JSON.stringify(payload),
     });
 
-    if(!response){
-        throw new Error("API not running");
+    const data = await response.json();
+
+    if (response.status !== 200) {
+      throw new Error(data.message || "Login failed");
     }
 
-    if (!response.ok) {
-      throw new Error("Registration failed");
-    }
-
-    return await response.json();
-  }catch(error){
-    console.error("Register error:", error);
+    return data;
+  } catch (error) {
+    console.error("Login error:", error);
     throw error;
   }
 }
+
 
 /**
  * {
