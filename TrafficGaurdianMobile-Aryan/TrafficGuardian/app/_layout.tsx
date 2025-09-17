@@ -1,15 +1,18 @@
 import { Stack } from "expo-router";
 import React from "react";
 import { SocketProvider } from "../services/socketProvider";
+import { LocationProvider } from "../services/location";
 
 export default function RootLayout() {
   return (
-  <SocketProvider>
-    <Stack
-    screenOptions={{
+    <LocationProvider>
+      <SocketProvider>
+      <Stack
+        screenOptions={{
           headerShown: false,
         }}
-    />
-  </SocketProvider>
+      />
+      </SocketProvider>
+    </LocationProvider>
   );
 }

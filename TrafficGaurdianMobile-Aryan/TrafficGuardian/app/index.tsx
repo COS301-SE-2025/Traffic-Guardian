@@ -1,36 +1,67 @@
-import React, { useEffect } from "react";
-import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Text, TouchableOpacity, View, StyleSheet, ScrollView, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSocket } from "../services/socketProvider";
+import * as Location from "expo-location";
 
 export default function Index() {
   const router = useRouter();
+  const { socket } = useSocket();
 
-const { socket } = useSocket();
+  const [traffic, setTraffic] = useState(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
-useEffect(() => {
-  if (!socket) return;
+  //get location
+  useEffect(() => {
+    const requestLocation = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission Denied", "Location access is required for full functionality.");
+          return;
+        }
 
-  const handleWelcome = (data: any) => {
-    console.log("New notification:", data);
-  };
+        const location = await Location.getCurrentPositionAsync({});
+        setCoords({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
 
-  socket.on("welcome", handleWelcome);
+        Alert.alert("Location Access Granted", `Lat: ${location.coords.latitude}, Lon: ${location.coords.longitude}`);
+      } catch (error) {
+        console.error(error);
+        Alert.alert("Error", "Failed to get location.");
+      }
+    };
 
-  return () => {
-    socket.off("welcome", handleWelcome);
-  };
-}, [socket]);
+    requestLocation();
+  }, []);
 
+  useEffect(() => {
+    if (!socket) return;
 
+    const handleTrafficUpdate = (data : any) => {
+      console.log("Traffic Update:", data);
+      setTraffic(data);
+    };
 
-/////////////////////
+    socket.on("trafficUpdate", handleTrafficUpdate);
+
+    return () => {
+      socket.off("trafficUpdate", handleTrafficUpdate);
+    };
+  }, [socket]);
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.navbar}>
         <TouchableOpacity onPress={() => router.push("/login")}>
           <Text style={styles.navText}>Login</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push("/report")}>
+          <Text style={styles.navText}>Report</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/register")}>
@@ -41,6 +72,31 @@ useEffect(() => {
       <View style={styles.content}>
         <Text style={{ fontSize: 18 }}>Welcome!</Text>
         <Text>Traffic and Incident Alerts</Text>
+
+        <ScrollView contentContainerStyle={{ padding: 20 }}>
+          {traffic &&
+            Object.entries(traffic).map(([key, value], index) => {
+              const location = value.location;
+
+              return (
+                <View key={index} style={{ marginBottom: 20 }}>
+                  <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
+                    Location: {location}
+                  </Text>
+
+                  {value.incidents?.map((incident, i) => {
+                    const description = incident?.properties?.iconCategory;
+                    return (
+                      <Text key={i} style={{ marginLeft: 10, marginBottom: 2 }}>
+                        - {description}
+                      </Text>
+                    );
+                  })}
+                </View>
+              );
+            })}
+        </ScrollView>
+
 
       </View>
     </SafeAreaView>
