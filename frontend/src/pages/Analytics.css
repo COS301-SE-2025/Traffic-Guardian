@@ -156,7 +156,7 @@
   flex-shrink: 0;
 }
 
-.date-input-group input[type="date"] {
+.date-input-group input[type='date'] {
   padding: 0.375rem 0.5rem;
   border-radius: 6px;
   border: 1px solid #e5e7eb;
@@ -171,7 +171,7 @@
   text-align: left;
 }
 
-.date-input-group input[type="date"]::-webkit-calendar-picker-indicator {
+.date-input-group input[type='date']::-webkit-calendar-picker-indicator {
   cursor: pointer;
   border-radius: 4px;
   padding: 4px;
@@ -179,46 +179,46 @@
   height: 20px;
 }
 
-.date-input-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+.date-input-group input[type='date']::-webkit-calendar-picker-indicator:hover {
   background-color: rgb(0 0 0 / 5%);
 }
 
-input[type="date"]::-webkit-datetime-edit {
+input[type='date']::-webkit-datetime-edit {
   font-size: 0.875rem;
   padding: 0;
 }
 
-input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+input[type='date']::-webkit-datetime-edit-fields-wrapper {
   padding: 0;
 }
 
-input[type="date"]::-webkit-datetime-edit-text {
+input[type='date']::-webkit-datetime-edit-text {
   padding: 0 0.2rem;
 }
 
-input[type="date"]::-webkit-datetime-edit-month-field,
-input[type="date"]::-webkit-datetime-edit-day-field,
-input[type="date"]::-webkit-datetime-edit-year-field {
+input[type='date']::-webkit-datetime-edit-month-field,
+input[type='date']::-webkit-datetime-edit-day-field,
+input[type='date']::-webkit-datetime-edit-year-field {
   padding: 0;
 }
 
-.light-mode .date-input-group input[type="date"] {
+.light-mode .date-input-group input[type='date'] {
   background: #fff;
   border-color: #e5e7eb;
   color: #374151;
 }
 
-.dark-mode .date-input-group input[type="date"] {
+.dark-mode .date-input-group input[type='date'] {
   background: rgb(255 255 255 / 5%);
   color: #e5e7eb;
   border-color: rgb(255 255 255 / 20%);
 }
 
-.date-input-group input[type="date"]:hover {
+.date-input-group input[type='date']:hover {
   border-color: #3b82f6;
 }
 
-.date-input-group input[type="date"]:focus {
+.date-input-group input[type='date']:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgb(59 130 246 / 10%);
@@ -345,7 +345,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   font-size: 1.1rem;
   font-weight: 700;
   margin-bottom: 0.15rem;
-  line-height: 1.0;
+  line-height: 1;
 }
 
 .card-trend {
@@ -821,15 +821,17 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 @keyframes archive-pulse {
   0% {
     transform: scale(1);
-    opacity: 1;
+    opacity: 100%;
   }
+
   50% {
     transform: scale(1.05);
-    opacity: 0.8;
+    opacity: 80%;
   }
+
   100% {
     transform: scale(1);
-    opacity: 1;
+    opacity: 100%;
   }
 }
 
@@ -869,7 +871,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   width: 48px;
   height: 48px;
   margin-bottom: 1rem;
-  opacity: 0.5;
+  opacity: 50%;
 }
 
 .archive-empty h3 {
@@ -919,7 +921,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
     width: 100%;
   }
 
-  .date-input-group input[type="date"] {
+  .date-input-group input[type='date'] {
     width: 100%;
   }
 
@@ -1026,7 +1028,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 @media screen and (min-device-pixel-ratio: 0) {
-  input[type="date"]::-webkit-calendar-picker-indicator {
+  input[type='date']::-webkit-calendar-picker-indicator {
     zoom: 1.5;
   }
 }

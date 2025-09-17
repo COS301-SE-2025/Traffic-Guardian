@@ -1,31 +1,36 @@
 {
   "extends": ["stylelint-config-standard"],
   "rules": {
+    "alpha-value-notation": "percentage",
+    "color-hex-length": "short",
+    "color-function-notation": "legacy",
+    "property-no-vendor-prefix": [true, {
+      "ignoreProperties": ["background-clip"]
+    }],
+    "keyframes-name-pattern": "^[a-z][a-zA-Z0-9]*$",
+    "rule-empty-line-before": ["always", {
+      "except": ["first-nested", "after-single-line-comment"],
+      "ignore": ["after-comment"]
+    }],
+    "comment-empty-line-before": ["always", {
+      "except": ["first-nested"],
+      "ignore": ["stylelint-commands"]
+    }],
+    "media-feature-range-notation": "prefix",
+    "media-feature-name-no-unknown": [true, {
+      "ignoreMediaFeatureNames": ["min-device-pixel-ratio"]
+    }],
+    "declaration-block-no-redundant-longhand-properties": [true, {
+      "ignoreShorthands": ["inset"]
+    }],
+    "no-descending-specificity": null,
+    "no-duplicate-selectors": true,
     "selector-class-pattern": null,
     "custom-property-pattern": null,
     "declaration-block-trailing-semicolon": "always",
     "indentation": 2,
     "max-line-length": 120,
-    "no-descending-specificity": null,
-    "no-duplicate-selectors": null,
-    "declaration-block-single-line-max-declarations": null,
-    "keyframes-name-pattern": null,
-    "media-feature-range-notation": null,
-    "font-family-no-missing-generic-family-keyword": null,
-    "max-empty-lines": null,
-    "alpha-value-notation": null,
-    "color-function-notation": null,
-    "declaration-colon-newline-after": null,
-    "function-parentheses-newline-inside": null,
-    "function-comma-newline-after": null,
-    "no-eol-whitespace": null,
-    "function-comma-space-after": null,
-    "block-closing-brace-newline-before": null,
-    "comment-empty-line-before": null,
-    "rule-empty-line-before": null,
-    "media-feature-name-no-unknown": null,
-    "no-missing-end-of-source-newline": null,
-    "indentation": null
+    "no-missing-end-of-source-newline": true
   },
   "ignoreFiles": [
     "node_modules/**/*",

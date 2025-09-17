@@ -97,65 +97,68 @@ const Archives: React.FC = () => {
   const itemsPerPage: number = 12;
 
   // Load archives from ArchivesV2 API with abort signal for cleanup
-  const loadArchives = useCallback(async (signal?: AbortSignal) => {
-    try {
-      setLoading(true);
-      setError('');
+  const loadArchives = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        setLoading(true);
+        setError('');
 
-      const apiKey = sessionStorage.getItem('apiKey');
-      if (!apiKey) {
-        setError('No API key found. Please log in.');
-        navigate('/account');
-        return;
-      }
-
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/archives`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': apiKey,
-          },
-          signal, // Add abort signal for cleanup
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setError('Unauthorized: Invalid or missing API key');
+        const apiKey = sessionStorage.getItem('apiKey');
+        if (!apiKey) {
+          setError('No API key found. Please log in.');
           navigate('/account');
           return;
         }
-        throw new Error(
-          `API request failed: ${response.status} ${response.statusText}`
+
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/archives`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Key': apiKey,
+            },
+            signal, // Add abort signal for cleanup
+          }
         );
-      }
 
-      const data = await response.json();
+        if (!response.ok) {
+          if (response.status === 401) {
+            setError('Unauthorized: Invalid or missing API key');
+            navigate('/account');
+            return;
+          }
+          throw new Error(
+            `API request failed: ${response.status} ${response.statusText}`
+          );
+        }
 
-      if (Array.isArray(data)) {
-        setArchives(data);
-      } else {
-        console.warn('API returned non-array data:', data);
-        setArchives([]);
-        setError('Invalid data format received from server');
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          setArchives(data);
+        } else {
+          console.warn('API returned non-array data:', data);
+          setArchives([]);
+          setError('Invalid data format received from server');
+        }
+      } catch (error: any) {
+        // Ignore aborted requests when navigating away
+        if (error.name === 'AbortError') {
+          return;
+        }
+        setError(`Failed to load archives: ${error.message}`);
+        console.error('Archives loading error:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error: any) {
-      // Ignore aborted requests when navigating away
-      if (error.name === 'AbortError') {
-        return;
-      }
-      setError(`Failed to load archives: ${error.message}`);
-      console.error('Archives loading error:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
+    },
+    [navigate]
+  );
 
   useEffect(() => {
     const controller = new AbortController();
     loadArchives(controller.signal);
-    
+
     // Cleanup function to abort request when component unmounts or navigates away
     return () => {
       controller.abort();

@@ -20,8 +20,20 @@ const Navbar = () => {
   const location = useLocation();
   return (
     <nav className="navbar" data-testid="navbar">
-      <div data-testid="mobile-nav" className="mobile-nav" style={{visibility: 'hidden', position: 'absolute'}}>Mobile Nav</div>
-      <button data-testid="hamburger-menu" className="hamburger-menu" style={{visibility: 'hidden', position: 'absolute'}}>Menu</button>
+      <div
+        data-testid="mobile-nav"
+        className="mobile-nav"
+        style={{ visibility: 'hidden', position: 'absolute' }}
+      >
+        Mobile Nav
+      </div>
+      <button
+        data-testid="hamburger-menu"
+        className="hamburger-menu"
+        style={{ visibility: 'hidden', position: 'absolute' }}
+      >
+        Menu
+      </button>
       <div className="navbar-content">
         <ul className="tg-nav-links">
           {navItems.slice(0, 4).map(item => (
@@ -33,7 +45,9 @@ const Navbar = () => {
             >
               <Link
                 to={item.path}
-                data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
+                data-testid={`nav-${item.label
+                  .toLowerCase()
+                  .replace(' ', '-')}`}
                 onMouseEnter={() => {
                   // Preload page data on hover for instant loading
                   const pageMap: Record<string, string> = {
@@ -41,7 +55,7 @@ const Navbar = () => {
                     '/analytics': 'analytics',
                     '/incidents': 'incidents',
                     '/map': 'map',
-                    '/live-feed': 'livefeed'
+                    '/live-feed': 'livefeed',
                   };
                   const pageName = pageMap[item.path];
                   if (pageName) {
@@ -67,7 +81,9 @@ const Navbar = () => {
             >
               <Link
                 to={item.path}
-                data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
+                data-testid={`nav-${item.label
+                  .toLowerCase()
+                  .replace(' ', '-')}`}
                 onMouseEnter={() => {
                   // Preload page data on hover for instant loading
                   const pageMap: Record<string, string> = {
@@ -75,7 +91,7 @@ const Navbar = () => {
                     '/analytics': 'analytics',
                     '/incidents': 'incidents',
                     '/map': 'map',
-                    '/live-feed': 'livefeed'
+                    '/live-feed': 'livefeed',
                   };
                   const pageName = pageMap[item.path];
                   if (pageName) {

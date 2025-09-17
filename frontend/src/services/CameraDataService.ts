@@ -265,7 +265,10 @@ class RobustCameraDataService {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }, // No auth required for internal endpoint
-        body: JSON.stringify({ cameras: queuedCameras, source: 'frontend-queue' }),
+        body: JSON.stringify({
+          cameras: queuedCameras,
+          source: 'frontend-queue',
+        }),
       }
     );
 

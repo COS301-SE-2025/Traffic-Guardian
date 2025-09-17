@@ -9,7 +9,7 @@
 }
 
 .btn-primary::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: -100%;
@@ -191,7 +191,7 @@
 }
 
 .hero::before {
-  content: "";
+  content: '';
   position: absolute;
   top: -50%;
   right: -50%;
@@ -207,6 +207,7 @@
     transform: scale(1);
     opacity: 50%;
   }
+
   50% {
     transform: scale(1.1);
     opacity: 30%;
@@ -268,7 +269,7 @@
 }
 
 .auth-section::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -321,7 +322,7 @@
 }
 
 .btn-primary::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: -100%;
@@ -402,6 +403,7 @@
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-20px);
   }
@@ -520,7 +522,7 @@
 }
 
 .solution-text li::before {
-  content: "✓ ";
+  content: '✓ ';
   color: var(--accent-orange);
   font-weight: bold;
   margin-right: 0.5rem;
@@ -546,7 +548,7 @@
 }
 
 .solution-visual::after {
-  content: "🚦 Live Detection Demo";
+  content: '🚦 Live Detection Demo';
   position: absolute;
   top: 20px;
   left: 20px;
@@ -591,7 +593,7 @@
 }
 
 .feature-card::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;

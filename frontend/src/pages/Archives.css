@@ -97,7 +97,7 @@
   background-color: var(--background-color);
   min-height: 100vh;
   color: var(--text-color);
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: 'Segoe UI', Arial, sans-serif;
   line-height: 1.6;
   padding: 2rem;
   transition: all 0.3s ease;
@@ -152,9 +152,11 @@
   0% {
     transform: rotate(0deg) scale(1);
   }
+
   50% {
     transform: rotate(180deg) scale(1.1);
   }
+
   100% {
     transform: rotate(360deg) scale(1);
   }
@@ -217,7 +219,7 @@
 }
 
 .header::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -502,7 +504,7 @@
 }
 
 .archive-card::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -537,7 +539,7 @@
 }
 
 .archive-id {
-  font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   font-weight: 700;
   color: var(--title-color);
   font-size: var(--text-lg);
@@ -616,7 +618,7 @@
 .archive-coordinates {
   color: var(--subtitle-color);
   font-size: var(--text-sm);
-  font-family: "SF Mono", monospace;
+  font-family: 'SF Mono', monospace;
   margin: var(--space-3) 0;
   padding: var(--space-2) var(--space-3);
   background: var(--filter-bg);
@@ -715,7 +717,7 @@
   border: 1px solid var(--json-view-border);
   border-radius: 12px;
   padding: var(--space-4);
-  font-family: "SF Mono", monospace;
+  font-family: 'SF Mono', monospace;
   font-size: var(--text-sm);
   color: var(--json-view-text);
   overflow-x: auto;
@@ -767,7 +769,7 @@
 }
 
 .table-cell.id {
-  font-family: "SF Mono", monospace;
+  font-family: 'SF Mono', monospace;
   font-weight: 700;
   color: var(--title-color);
 }

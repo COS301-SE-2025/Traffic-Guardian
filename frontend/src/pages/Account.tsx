@@ -205,7 +205,13 @@ const Account: React.FC = () => {
   };
 
   if (isChecking) {
-    return <LoadingSpinner size="large" text="Checking authentication..." className="fullscreen" />;
+    return (
+      <LoadingSpinner
+        size="large"
+        text="Checking authentication..."
+        className="fullscreen"
+      />
+    );
   }
 
   return (

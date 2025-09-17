@@ -285,7 +285,13 @@ const Profile: React.FC = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner size="large" text="Loading profile..." className="content" />;
+    return (
+      <LoadingSpinner
+        size="large"
+        text="Loading profile..."
+        className="content"
+      />
+    );
   }
   if (error) {
     return (
