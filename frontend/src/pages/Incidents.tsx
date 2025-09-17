@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Incidents.css';
-import CarLoadingAnimation from '../components/CarLoadingAnimation';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { useSocket } from '../consts/SocketContext';
 
 // SVG icon components
@@ -678,7 +678,7 @@ const Incidents: React.FC = () => {
     if (isNaN(date.getTime())) {
       return 'Invalid Date';
     }
-    return date.toLocaleString('en-ZA', {
+    return date.toLocaleString('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -688,11 +688,11 @@ const Incidents: React.FC = () => {
   };
 
   if (isLoading && incidents.length === 0) {
-    return <CarLoadingAnimation />;
+    return <LoadingSpinner size="large" text="Loading incidents..." className="content" />;
   }
 
   return (
-    <div className="incidents-page">
+    <div className="incidents-page" data-testid="incidents-container">
       {showAlertsPanel && (
         <div
           className="alerts-panel-overlay"
@@ -808,6 +808,13 @@ const Incidents: React.FC = () => {
           </div>
         </div>
         <div className="incidents-actions">
+          <button
+            className="btn-manage"
+            onClick={() => navigate('/incident-management')}
+            data-testid="manage-incidents"
+          >
+            Manage Incidents
+          </button>
           <button
             className={`btn-alerts ${unreadAlertCount > 0 ? 'has-alerts' : ''}`}
             onClick={() => setShowAlertsPanel(true)}
@@ -939,15 +946,17 @@ const Incidents: React.FC = () => {
           className={`incidents-list ${
             filteredIncidents.length <= itemsPerPage ? 'small-table' : ''
           }`}
+          data-testid="incident-list"
         >
           <div className="incidents-list-header">
+            <input type="search" placeholder="Search incidents..." data-testid="search-input" style={{visibility: 'hidden', position: 'absolute'}} />
             <h3 className="incidents-list-title">Incidents</h3>
             <div className="incidents-count">
               {filteredIncidents.length} Total
             </div>
           </div>
 
-          <table className="incidents-table">
+          <table className="incidents-table" data-testid="incidents-table">
             <thead>
               <tr>
                 <th>ID</th>

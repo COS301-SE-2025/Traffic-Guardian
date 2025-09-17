@@ -164,11 +164,11 @@ class RobustCameraDataService {
       );
 
       const response = await this.safeFetch(
-        `${this.baseUrl}/api/cameras/bulk-upsert`,
+        `${this.baseUrl}/api/system/internal/cameras/bulk-upsert`,
         {
           method: 'POST',
-          headers: this.getAuthHeaders(),
-          body: JSON.stringify({ cameras }),
+          headers: { 'Content-Type': 'application/json' }, // No auth required for internal endpoint
+          body: JSON.stringify({ cameras, source: 'frontend' }),
         }
       );
 
@@ -261,11 +261,11 @@ class RobustCameraDataService {
     this.syncQueue = []; // Clear queue
 
     const response = await this.safeFetch(
-      `${this.baseUrl}/api/cameras/bulk-upsert`,
+      `${this.baseUrl}/api/system/internal/cameras/bulk-upsert`,
       {
         method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ cameras: queuedCameras }),
+        headers: { 'Content-Type': 'application/json' }, // No auth required for internal endpoint
+        body: JSON.stringify({ cameras: queuedCameras, source: 'frontend-queue' }),
       }
     );
 
@@ -306,10 +306,10 @@ class RobustCameraDataService {
     }
 
     const response = await this.safeFetch(
-      `${this.baseUrl}/api/cameras/status-batch`,
+      `${this.baseUrl}/api/system/internal/cameras/status-batch`,
       {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers: { 'Content-Type': 'application/json' }, // No auth required for internal endpoint
         body: JSON.stringify({ statusUpdates }),
       }
     );

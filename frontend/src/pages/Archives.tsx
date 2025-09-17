@@ -285,7 +285,7 @@ const Archives: React.FC = () => {
 
   const formatDateTime = (dateString: string): string => {
     try {
-      return new Date(dateString).toLocaleString('en-ZA', {
+      return new Date(dateString).toLocaleString('en-US', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
