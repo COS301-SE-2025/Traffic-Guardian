@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './Account.css';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../consts/ThemeContext';
-import CarLoadingAnimation from '../components/CarLoadingAnimation';
+import LoadingSpinner from '../components/LoadingSpinner';
+import dataPrefetchService from '../services/DataPrefetchService';
 
 const Account: React.FC = () => {
   const navigate = useNavigate();
@@ -70,6 +71,8 @@ const Account: React.FC = () => {
               toggleDarkMode(savedTheme === 'dark');
             }
           }
+          // Start background data prefetching after successful login
+          dataPrefetchService.startPrefetching();
           navigate('/profile');
         } catch (err: any) {
           console.error('Account: Error fetching preferences:', err);
@@ -117,6 +120,8 @@ const Account: React.FC = () => {
       } else {
         const text = await response.text();
         if (response.ok) {
+          // Start background data prefetching after successful login
+          dataPrefetchService.startPrefetching();
           setTimeout(() => navigate('/profile'), 2000);
           return;
         }
@@ -200,7 +205,7 @@ const Account: React.FC = () => {
   };
 
   if (isChecking) {
-    return <CarLoadingAnimation />;
+    return <LoadingSpinner size="large" text="Checking authentication..." className="fullscreen" />;
   }
 
   return (
@@ -267,7 +272,7 @@ const Account: React.FC = () => {
             disabled={loading}
             data-testid="submit-button"
           >
-            {loading ? <CarLoadingAnimation /> : 'Login'}
+            {loading ? <LoadingSpinner size="small" text="" /> : 'Login'}
           </button>
         </form>
 

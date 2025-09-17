@@ -3,7 +3,7 @@ import './Profile.css';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../consts/ThemeContext';
-import CarLoadingAnimation from '../components/CarLoadingAnimation';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 interface User {
   name: string;
@@ -285,7 +285,7 @@ const Profile: React.FC = () => {
   };
 
   if (loading) {
-    return <CarLoadingAnimation />;
+    return <LoadingSpinner size="large" text="Loading profile..." className="content" />;
   }
   if (error) {
     return (

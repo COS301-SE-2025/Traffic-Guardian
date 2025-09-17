@@ -8,6 +8,7 @@ import GlobalAlertBadge from './components/GlobalAlertBadge';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LiveFeed from './pages/LiveFeed';
+import Map from './pages/Map';
 import Incidents from './pages/Incidents';
 import Account from './pages/Account';
 import SignUp from './pages/SignUp';
@@ -29,6 +30,7 @@ import {
 import { AnimatePresence } from 'framer-motion';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import dataPrefetchService from './services/DataPrefetchService';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -59,6 +61,14 @@ const AnimatedRoutes = () => {
             element={
               <PageWrapper>
                 <LiveFeed />
+              </PageWrapper>
+            }
+          />
+          <Route
+            path="/map"
+            element={
+              <PageWrapper>
+                <Map />
               </PageWrapper>
             }
           />
@@ -139,6 +149,20 @@ const AnimatedRoutes = () => {
 const App: React.FC = () => {
   const initialTheme = localStorage.getItem('theme');
   const isDarkMode = initialTheme ? initialTheme === 'dark' : true;
+
+  // Check if user is already logged in and start prefetching
+  React.useEffect(() => {
+    const apiKey = sessionStorage.getItem('apiKey');
+    if (apiKey) {
+      console.log('🔄 App startup: Starting background data prefetching...');
+      dataPrefetchService.startPrefetching();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      dataPrefetchService.stopPrefetching();
+    };
+  }, []);
 
   return (
     <ThemeProvider initialDarkMode={isDarkMode}>

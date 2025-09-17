@@ -35,10 +35,10 @@ const createSmartRateLimitHandler = (type) => (req, res, next) => {
 
 // Different rate limits for different endpoints
 const rateLimiters = {
-  // General API rate limit - 100 requests per 15 minutes
+  // General API rate limit - increased for dashboard usage
   general: rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 500, // limit each IP to 100 requests per windowMs
+    max: 300, // increased from 100 to 300 requests per windowMs
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     handler: createSmartRateLimitHandler('general'),
@@ -57,16 +57,29 @@ const rateLimiters = {
     handler: createSmartRateLimitHandler('camera'),
   }),
 
-  // Camera bulk operations - very restrictive (5 requests per 10 minutes)
+  // Camera bulk operations - less restrictive now that we have background processing
   cameraBulk: rateLimit({
     windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 5, // limit each IP to 5 requests per windowMs
+    max: 15, // increased from 5 to 15 requests per windowMs
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req, res) => {
       return req.user ? `${req.ip}-${req.user.User_ID}` : req.ip;
     },
     handler: createSmartRateLimitHandler('cameraBulk'),
+  }),
+
+  // Internal system operations - very lenient for background processing
+  internal: rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 200, // high limit for internal operations
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req, res) => {
+      // Use a fixed key for internal operations to prevent IP-based limiting
+      return 'internal-system';
+    },
+    handler: createSmartRateLimitHandler('internal'),
   }),
 
   // Camera status updates - moderate (50 requests per 10 minutes)
@@ -91,10 +104,10 @@ const rateLimiters = {
     handler: createSmartRateLimitHandler('auth'),
   }),
 
-  // Dashboard/Analytics - moderate (30 requests per 10 minutes)
+  // Dashboard/Analytics - increased for heavy usage
   dashboard: rateLimit({
     windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 30,
+    max: 100, // increased from 30 to 100
     standardHeaders: true,
     legacyHeaders: false,
     handler: createSmartRateLimitHandler('dashboard'),
