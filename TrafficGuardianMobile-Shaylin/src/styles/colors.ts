@@ -103,5 +103,102 @@ export const colors = {
     traffic: '#f59e0b',
     tow: '#6b7280',
   },
+  
+  role: {
+    admin: '#dc2626',
+    responder: '#3b82f6',
+    citizen: '#10b981',
+  },
+
+  notification: {
+    success: '#10b981',
+    warning: '#f59e0b',
+    error: '#ef4444',
+    info: '#3b82f6',
+    default: '#6b7280',
+  },
+
+  time: {
+    morning: '#fbbf24',
+    afternoon: '#f59e0b',
+    evening: '#dc2626',
+    night: '#1f2937',
+  },
+
+  transparent: {
+    primary: 'rgba(217, 119, 0, 0.1)',
+    secondary: 'rgba(59, 130, 246, 0.1)',
+    success: 'rgba(16, 185, 129, 0.1)',
+    warning: 'rgba(245, 158, 11, 0.1)',
+    error: 'rgba(239, 68, 68, 0.1)',
+    dark: 'rgba(0, 0, 0, 0.1)',
+    light: 'rgba(255, 255, 255, 0.1)',
+  },
+
+  gradients: {
+    primary: ['#d97700', '#fa3'],
+    secondary: ['#3b82f6', '#60a5fa'],
+    success: ['#10b981', '#34d399'],
+    warning: ['#f59e0b', '#fbbf24'],
+    error: ['#ef4444', '#f87171'],
+    sunset: ['#f59e0b', '#ef4444', '#dc2626'],
+    ocean: ['#3b82f6', '#1d4ed8', '#1e40af'],
+    forest: ['#10b981', '#059669', '#047857'],
+  },
+
+  shadow: {
+    light: 'rgba(0, 0, 0, 0.1)',
+    medium: 'rgba(0, 0, 0, 0.15)',
+    dark: 'rgba(0, 0, 0, 0.25)',
+    colored: 'rgba(217, 119, 0, 0.2)',
+  },
+
+  input: {
+    default: '#e5e7eb',
+    focused: '#d97700',
+    error: '#ef4444',
+    success: '#10b981',
+    disabled: '#d1d5db',
+  },
+
+  button: {
+    primary: '#d97700',
+    primaryHover: '#c06800',
+    primaryDisabled: 'rgba(217, 119, 0, 0.5)',
+    secondary: 'transparent',
+    secondaryBorder: '#d97700',
+    danger: '#ef4444',
+    dangerHover: '#dc2626',
+    success: '#10b981',
+    successHover: '#059669',
+    warning: '#f59e0b',
+    warningHover: '#d97706',
+  },
+
+  progress: {
+    background: '#e5e7eb',
+    fill: '#d97700',
+    success: '#10b981',
+    warning: '#f59e0b',
+    error: '#ef4444',
+  },
+
+  tab: {
+    active: '#d97700',
+    inactive: '#9ca3af',
+    background: '#fff',
+    border: '#e5e7eb',
+  },
+
+  dark: {
+    background: '#1e1e1e',
+    surface: '#3a3a3a',
+    text: '#fff',
+    textSecondary: '#ccc',
+    border: '#555',
+    primary: '#fa3',
+    overlay: 'rgba(255, 255, 255, 0.1)',
+  },
+};
 
   
