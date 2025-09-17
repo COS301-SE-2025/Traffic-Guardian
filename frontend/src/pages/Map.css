@@ -64,9 +64,9 @@
 
 /* Modern Map Controls */
 .map-controls {
-  background: rgba(30, 30, 30, 98%);
+  background: rgb(30 30 30 / 98%);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 174, 54, 20%);
+  border-bottom: 1px solid rgb(255 174 54 / 20%);
   padding: 1rem 1.5rem;
   animation: slideDown 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -128,14 +128,14 @@
 }
 
 .control-panel {
-  background: rgba(42, 42, 42, 95%);
+  background: rgb(42 42 42 / 95%);
   backdrop-filter: blur(15px);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 10%);
+  border: 1px solid rgb(255 255 255 / 10%);
   padding: 1rem;
   flex: 1;
   min-width: 240px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 30%);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 30%);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: panelSlideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   opacity: 0%;
@@ -162,9 +162,9 @@
 }
 
 .control-panel:hover {
-  border-color: rgba(255, 174, 54, 40%);
+  border-color: rgb(255 174 54 / 40%);
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 50%), 0 0 30px rgba(255, 174, 54, 10%);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 50%), 0 0 30px rgb(255 174 54 / 10%);
 }
 
 .panel-header {
@@ -193,9 +193,9 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.6rem 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 10%);
+  border: 1px solid rgb(255 255 255 / 10%);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 5%);
+  background: rgb(255 255 255 / 5%);
   color: #9ca3af;
   font-size: 0.8rem;
   font-weight: 500;
@@ -206,13 +206,13 @@
 }
 
 .filter-chip::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 10%));
+  background: linear-gradient(45deg, transparent, rgb(255 255 255 / 10%));
   opacity: 0%;
   transition: opacity 0.2s ease;
 }
@@ -222,32 +222,32 @@
 }
 
 .filter-chip:hover {
-  border-color: rgba(255, 174, 54, 40%);
+  border-color: rgb(255 174 54 / 40%);
   color: #f3f4f6;
   transform: translateY(-1px);
 }
 
 .filter-chip.active {
-  background: rgba(255, 174, 54, 15%);
+  background: rgb(255 174 54 / 15%);
   border-color: #ffae36;
   color: #ffae36;
   font-weight: 600;
 }
 
 .filter-chip.online.active {
-  background: rgba(52, 211, 153, 15%);
+  background: rgb(52 211 153 / 15%);
   border-color: #34d399;
   color: #34d399;
 }
 
 .filter-chip.loading.active {
-  background: rgba(245, 158, 11, 15%);
+  background: rgb(245 158 11 / 15%);
   border-color: #f59e0b;
   color: #f59e0b;
 }
 
 .filter-chip.offline.active {
-  background: rgba(239, 68, 68, 15%);
+  background: rgb(239 68 68 / 15%);
   border-color: #ef4444;
   color: #ef4444;
 }
@@ -260,18 +260,18 @@
 
 .online-indicator {
   background: #34d399;
-  box-shadow: 0 0 8px rgba(52, 211, 153, 40%);
+  box-shadow: 0 0 8px rgb(52 211 153 / 40%);
 }
 
 .loading-indicator {
   background: #f59e0b;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 40%);
+  box-shadow: 0 0 8px rgb(245 158 11 / 40%);
   animation: pulse 2s infinite;
 }
 
 .offline-indicator {
   background: #ef4444;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 40%);
+  box-shadow: 0 0 8px rgb(239 68 68 / 40%);
 }
 
 .chip-label {
@@ -284,8 +284,8 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.6rem 1rem;
-  background: rgba(255, 174, 54, 10%);
-  border: 1px solid rgba(255, 174, 54, 30%);
+  background: rgb(255 174 54 / 10%);
+  border: 1px solid rgb(255 174 54 / 30%);
   border-radius: 10px;
   color: #ffae36;
   font-size: 0.8rem;
@@ -296,10 +296,10 @@
 }
 
 .refresh-button:hover {
-  background: rgba(255, 174, 54, 20%);
+  background: rgb(255 174 54 / 20%);
   border-color: #ffae36;
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(255, 174, 54, 20%);
+  box-shadow: 0 4px 20px rgb(255 174 54 / 20%);
 }
 
 .refresh-button:active {
@@ -320,9 +320,9 @@
   align-items: center;
   gap: 0.625rem;
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 15%);
+  border: 1px solid rgb(255 255 255 / 15%);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 5%);
+  background: rgb(255 255 255 / 5%);
   color: #9ca3af;
   font-size: 0.875rem;
   font-weight: 500;
@@ -333,18 +333,19 @@
 }
 
 .toggle-button::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 10%),
-    transparent
-  );
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 10%),
+      transparent
+    );
   transition: left 0.5s ease;
 }
 
@@ -353,35 +354,35 @@
 }
 
 .toggle-button:hover {
-  border-color: rgba(255, 174, 54, 50%);
+  border-color: rgb(255 174 54 / 50%);
   color: #f3f4f6;
-  background: rgba(255, 255, 255, 10%);
+  background: rgb(255 255 255 / 10%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(255, 174, 54, 15%);
+  box-shadow: 0 4px 16px rgb(255 174 54 / 15%);
 }
 
 .toggle-button.active {
-  background: rgba(255, 174, 54, 20%);
+  background: rgb(255 174 54 / 20%);
   border-color: #ffae36;
   color: #ffae36;
   font-weight: 600;
-  box-shadow: 0 4px 20px rgba(255, 174, 54, 25%);
+  box-shadow: 0 4px 20px rgb(255 174 54 / 25%);
   transform: translateY(-2px);
 }
 
 .toggle-button.satellite.active {
-  background: rgba(59, 130, 246, 20%);
+  background: rgb(59 130 246 / 20%);
   border-color: #3b82f6;
   color: #60a5fa;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 25%);
+  box-shadow: 0 4px 20px rgb(59 130 246 / 25%);
   transform: translateY(-2px);
 }
 
 .toggle-button.heatmap.active {
-  background: rgba(52, 211, 153, 20%);
+  background: rgb(52 211 153 / 20%);
   border-color: #34d399;
   color: #34d399;
-  box-shadow: 0 4px 20px rgba(52, 211, 153, 25%);
+  box-shadow: 0 4px 20px rgb(52 211 153 / 25%);
   transform: translateY(-2px);
 }
 
@@ -430,7 +431,7 @@
   width: 100%;
   height: 6px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 10%);
+  background: rgb(255 255 255 / 10%);
   outline: none;
   appearance: none;
   cursor: pointer;
@@ -443,14 +444,14 @@
   border-radius: 50%;
   background: #34d399;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(52, 211, 153, 30%);
+  box-shadow: 0 4px 12px rgb(52 211 153 / 30%);
   transition: all 0.2s ease;
   border: 2px solid #1f2937;
 }
 
 .modern-slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
-  box-shadow: 0 8px 20px rgba(52, 211, 153, 50%);
+  box-shadow: 0 8px 20px rgb(52 211 153 / 50%);
   background: #10b981;
 }
 
@@ -465,7 +466,7 @@
   background: #34d399;
   cursor: pointer;
   border: 2px solid #1f2937;
-  box-shadow: 0 4px 12px rgba(52, 211, 153, 30%);
+  box-shadow: 0 4px 12px rgb(52 211 153 / 30%);
 }
 
 /* Traffic Metrics */
@@ -475,9 +476,9 @@
   gap: 1rem;
   margin-bottom: 1rem;
   padding: 1rem;
-  background: rgba(0, 0, 0, 20%);
+  background: rgb(0 0 0 / 20%);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 5%);
+  border: 1px solid rgb(255 255 255 / 5%);
 }
 
 .metric {
@@ -511,7 +512,7 @@
 
 .intensity-bar-modern {
   height: 8px;
-  background: rgba(255, 255, 255, 10%);
+  background: rgb(255 255 255 / 10%);
   border-radius: 4px;
   overflow: hidden;
   margin-top: 0.5rem;
@@ -527,13 +528,13 @@
 }
 
 .intensity-fill-modern::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 20%));
+  background: linear-gradient(45deg, transparent, rgb(255 255 255 / 20%));
   animation: shimmer 2s infinite;
 }
 
@@ -567,16 +568,17 @@
 
 .legend-bar {
   height: 16px;
-  background: linear-gradient(
-    90deg,
-    #34d399 0%,
-    #f59e0b 60%,
-    #ef4444 90%,
-    #dc2626 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      #34d399 0%,
+      #f59e0b 60%,
+      #ef4444 90%,
+      #dc2626 100%
+    );
   border-radius: 8px;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 10%);
+  border: 1px solid rgb(255 255 255 / 10%);
 }
 
 .legend-markers {
@@ -603,7 +605,7 @@
   border-radius: 50%;
   background: #ffae36;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 30%);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
   transition: all 0.2s ease;
 }
 
@@ -619,7 +621,7 @@
   background: #ffae36;
   cursor: pointer;
   border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 30%);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
 }
 
 /* Map Container */
@@ -656,7 +658,7 @@
   background: #2a2a2a;
   color: white;
   border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 30%);
+  box-shadow: 0 10px 25px rgb(0 0 0 / 30%);
 }
 
 .leaflet-popup-tip {
@@ -686,17 +688,17 @@
 }
 
 .status-text.online {
-  background: rgba(74, 222, 128, 20%);
+  background: rgb(74 222 128 / 20%);
   color: #4ade80;
 }
 
 .status-text.loading {
-  background: rgba(245, 158, 11, 20%);
+  background: rgb(245 158 11 / 20%);
   color: #f59e0b;
 }
 
 .status-text.offline {
-  background: rgba(239, 68, 68, 20%);
+  background: rgb(239 68 68 / 20%);
   color: #ef4444;
 }
 
@@ -712,7 +714,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 80%);
+  background: rgb(0 0 0 / 80%);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -728,7 +730,7 @@
   max-height: 90vh;
   width: 100%;
   overflow: hidden;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 50%);
+  box-shadow: 0 25px 50px rgb(0 0 0 / 50%);
   border: 1px solid #444;
 }
 
@@ -764,7 +766,7 @@
 
 .camera-modal-close:hover {
   color: white;
-  background: rgba(255, 255, 255, 10%);
+  background: rgb(255 255 255 / 10%);
 }
 
 .camera-modal-content {
@@ -899,12 +901,12 @@
   position: absolute;
   bottom: 2rem;
   left: 2rem;
-  background: rgba(30, 30, 30, 95%);
+  background: rgb(30 30 30 / 95%);
   backdrop-filter: blur(20px);
   padding: 1.25rem 1.75rem;
   border-radius: 16px;
-  border: 1px solid rgba(255, 174, 54, 20%);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 30%);
+  border: 1px solid rgb(255 174 54 / 20%);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 30%);
   z-index: 1000;
   transition: all 0.3s ease;
 }
@@ -946,7 +948,7 @@
   height: 18px;
   border-radius: 50%;
   border: 2px solid #1e1e1e;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 30%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
   transition: all 0.2s ease;
 }
 
@@ -1064,8 +1066,7 @@
   }
 
   .legend-items {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-flow: row wrap;
     justify-content: space-around;
   }
 }
@@ -1124,7 +1125,7 @@
 }
 
 .filter-button.loading::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   right: 8px;

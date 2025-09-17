@@ -97,14 +97,12 @@
   background-color: var(--background-color);
   min-height: 100vh;
   color: var(--text-color);
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   line-height: 1.6;
   padding: 2rem;
   transition: all 0.3s ease;
-}
 
-/* Typography & Spacing */
-.archives-page {
+  /* Typography & Spacing */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -145,10 +143,10 @@
   border: 3px solid var(--border-light);
   border-top: 3px solid var(--title-color);
   border-radius: 50%;
-  animation: archives-spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+  animation: archivesSpin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
 }
 
-@keyframes archives-spin {
+@keyframes archivesSpin {
   0% {
     transform: rotate(0deg) scale(1);
   }
@@ -219,18 +217,19 @@
 }
 
 .header::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--title-color) 50%,
-    transparent 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--title-color) 50%,
+      transparent 100%
+    );
   opacity: 80%;
 }
 
@@ -504,17 +503,18 @@
 }
 
 .archive-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    var(--title-color) 0%,
-    var(--button-primary-hover) 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      var(--title-color) 0%,
+      var(--button-primary-hover) 100%
+    );
 }
 
 .archive-card:hover {
@@ -539,7 +539,7 @@
 }
 
 .archive-id {
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
   font-weight: 700;
   color: var(--title-color);
   font-size: var(--text-lg);
@@ -618,7 +618,7 @@
 .archive-coordinates {
   color: var(--subtitle-color);
   font-size: var(--text-sm);
-  font-family: 'SF Mono', monospace;
+  font-family: "SF Mono", monospace;
   margin: var(--space-3) 0;
   padding: var(--space-2) var(--space-3);
   background: var(--filter-bg);
@@ -717,7 +717,7 @@
   border: 1px solid var(--json-view-border);
   border-radius: 12px;
   padding: var(--space-4);
-  font-family: 'SF Mono', monospace;
+  font-family: "SF Mono", monospace;
   font-size: var(--text-sm);
   color: var(--json-view-text);
   overflow-x: auto;
@@ -769,7 +769,7 @@
 }
 
 .table-cell.id {
-  font-family: 'SF Mono', monospace;
+  font-family: "SF Mono", monospace;
   font-weight: 700;
   color: var(--title-color);
 }

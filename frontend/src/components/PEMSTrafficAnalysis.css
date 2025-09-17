@@ -5,7 +5,7 @@
   padding: 24px;
   margin-bottom: 24px;
   border: 2px solid var(--stat-card-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 10%);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
 }
 
 .pems-analysis.loading {
@@ -173,7 +173,7 @@
 
 .metric-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 10%);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
 }
 
 .metric-card.risk-critical {
@@ -261,7 +261,7 @@
 .pems-tabs button.tab-active {
   background: var(--title-color);
   color: var(--button-primary-text);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 15%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
 }
 
 /* Content Sections */
@@ -473,7 +473,7 @@
 
 .alert-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 10%);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
 }
 
 .alert-card.priority-high {
@@ -574,7 +574,7 @@
 
 .detector-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 10%);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
 }
 
 .detector-card.risk-critical {
