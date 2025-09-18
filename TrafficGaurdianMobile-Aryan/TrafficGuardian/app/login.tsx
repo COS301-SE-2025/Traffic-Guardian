@@ -3,20 +3,25 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "reac
 import { useRouter } from "expo-router";
 import { loginUser } from "../services/usersApi";
 import React from "react";
+import { useSession } from "../services/sessionContext";
 
 export default function Register() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const { setUser } = useSession();
+  
   const handleLogin = async () => {
     try {
+
     if(!password.trim() || !email.trim()){
       throw new Error("All fields are required");
     }
       const result = await loginUser(email, password);
       console.log("Success:", result);
+
+      setUser(result);
 
       router.push("/");
     } catch (error: any) {

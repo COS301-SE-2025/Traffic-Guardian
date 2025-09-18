@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from "react-native";
 import { createIncident } from "../services/incidentsApi";
 import { useLocation } from "../services/location";
+import { Picker } from "@react-native-picker/picker";
 
 
 export default function Report() {
@@ -18,13 +19,12 @@ export default function Report() {
 
   const handleSubmit = async () => {
     try{
-        if (!incidentLocation || !incidentCarID || !incidentSeverity || !incidentStatus) {
+        if (!incidentCarID || !incidentSeverity) {
         Alert.alert("Error", "Please fill in all fields.");
         return;
         }
 
         const response = await createIncident(incidentDate, incidentLocation, incidentCarID, incidentSeverity, incidentDescription, coords);
-        console.log(coords);
         Alert.alert("Success:", response);
     }catch(error : any){
       Alert.alert("Error", error.message || "Something went wrong");
@@ -67,20 +67,15 @@ export default function Report() {
       />
 
       <Text style={styles.label}>Severity</Text>
-      <TextInput
+      <Picker
+        selectedValue={incidentSeverity}
         style={styles.input}
-        placeholder="low / medium / high"
-        value={incidentSeverity}
-        onChangeText={setIncidentSeverity}
-      />
-
-      <Text style={styles.label}>Status</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="open / closed"
-        value={incidentStatus}
-        onChangeText={setIncidentStatus}
-      />
+        onValueChange={(itemValue) => setIncidentSeverity(itemValue)}
+      >
+        <Picker.Item label="Low" value="low" />
+        <Picker.Item label="Medium" value="medium" />
+        <Picker.Item label="High" value="high" />
+      </Picker>
 
     <Text style={styles.label}>Description</Text>
       <TextInput
