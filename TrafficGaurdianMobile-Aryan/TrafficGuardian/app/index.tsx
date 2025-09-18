@@ -5,7 +5,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSocket } from "../services/socketProvider";
 import * as Location from "expo-location";
 import { useSession } from "../services/sessionContext";
-import { setSurfaceProps } from "react-native/types_generated/Libraries/ReactNative/AppRegistryImpl";
 
 
 export default function Index() {
