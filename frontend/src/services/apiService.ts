@@ -118,7 +118,7 @@ class ApiService {
         .json()
         .catch(() => ({ error: 'Network error' }));
       throw new Error(
-        errorData.error || `HTTP error! status: ${response.status}`
+        errorData.error || `HTTP error! status: ${response.status}`,
       );
     }
     return response.json();
@@ -147,7 +147,7 @@ class ApiService {
       });
 
       const todaysData = await this.handleResponse<TodaysIncidentsData>(
-        response
+        response,
       );
       return todaysData;
     } catch (error) {
@@ -183,7 +183,7 @@ class ApiService {
       date_to?: string;
       limit?: number;
       offset?: number;
-    } = {}
+    } = {},
   ): Promise<ArchiveData[]> {
     try {
       const queryParams = new URLSearchParams();
@@ -298,7 +298,7 @@ class ApiService {
       analytics.archivesByMonth = Array.from(monthMap.entries())
         .map(([month, count]) => ({ month, count }))
         .sort(
-          (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime()
+          (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime(),
         );
 
       analytics.archivesByLocation = Array.from(locationMap.entries())
@@ -310,10 +310,10 @@ class ApiService {
       if (archives.length > 0) {
         const dates = archives.map(a => new Date(a.Archive_DateTime));
         analytics.storageMetrics.oldestArchive = new Date(
-          Math.min(...dates.map(d => d.getTime()))
+          Math.min(...dates.map(d => d.getTime())),
         ).toISOString();
         analytics.storageMetrics.newestArchive = new Date(
-          Math.max(...dates.map(d => d.getTime()))
+          Math.max(...dates.map(d => d.getTime())),
         ).toISOString();
 
         // Estimate storage size (rough calculation)
@@ -332,7 +332,7 @@ class ApiService {
 
   // Helper to extract location from archive data
   private static extractLocationFromArchive(
-    archive: ArchiveData
+    archive: ArchiveData,
   ): string | null {
     try {
       // Try to extract from search text
@@ -365,8 +365,8 @@ class ApiService {
         typeof archive.Archive_Metadata === 'object'
       ) {
         const metadata = archive.Archive_Metadata;
-        if (metadata.location) return metadata.location;
-        if (metadata.camera_district) return metadata.camera_district;
+        if (metadata.location) {return metadata.location;}
+        if (metadata.camera_district) {return metadata.camera_district;}
       }
 
       return 'Unknown Location';
@@ -399,7 +399,7 @@ class ApiService {
         `${API_BASE_URL}/traffic/incidentLocations`,
         {
           headers: this.getAuthHeaders(),
-        }
+        },
       );
 
       const locations = await this.handleResponse<LocationData[]>(response);
@@ -417,11 +417,11 @@ class ApiService {
         `${API_BASE_URL}/traffic/criticalIncidents`,
         {
           headers: this.getAuthHeaders(),
-        }
+        },
       );
 
       const criticalData = await this.handleResponse<CriticalIncidentsData>(
-        response
+        response,
       );
       return criticalData;
     } catch (error) {
@@ -453,7 +453,7 @@ class ApiService {
       });
 
       const trafficData = await this.handleResponse<TrafficIncident[]>(
-        response
+        response,
       );
       return trafficData;
     } catch (error) {
@@ -557,7 +557,7 @@ class ApiService {
         `${API_BASE_URL}/pems/alerts${queryParams}`,
         {
           headers: this.getAuthHeaders(),
-        }
+        },
       );
 
       const alertsData = await this.handleResponse<any>(response);
@@ -575,7 +575,7 @@ class ApiService {
         `${API_BASE_URL}/pems/district/${district}`,
         {
           headers: this.getAuthHeaders(),
-        }
+        },
       );
 
       const districtData = await this.handleResponse<any>(response);

@@ -27,7 +27,7 @@ const Account: React.FC = () => {
                 'X-API-Key': apiKey,
                 'Content-Type': 'application/json',
               },
-            }
+            },
           );
 
           if (prefsResponse.ok) {
@@ -43,7 +43,7 @@ const Account: React.FC = () => {
             } catch (err) {
               console.warn(
                 'Account: Failed to parse preferences, using fallback',
-                err
+                err,
               );
               preferences = {};
             }
@@ -65,7 +65,7 @@ const Account: React.FC = () => {
           } else {
             console.warn(
               'Account: Failed to fetch preferences, using saved theme:',
-              savedTheme
+              savedTheme,
             );
             if (savedTheme) {
               toggleDarkMode(savedTheme === 'dark');
@@ -109,7 +109,7 @@ const Account: React.FC = () => {
             User_Email: loginData.email,
             User_Password: loginData.password,
           }),
-        }
+        },
       );
 
       const contentType = response.headers.get('content-type');
@@ -130,7 +130,7 @@ const Account: React.FC = () => {
 
       if (!response.ok) {
         throw new Error(
-          data.message || 'Login failed. Check your credentials.'
+          data.message || 'Login failed. Check your credentials.',
         );
       }
 
@@ -146,7 +146,7 @@ const Account: React.FC = () => {
             'X-API-Key': data.apiKey,
             'Content-Type': 'application/json',
           },
-        }
+        },
       );
 
       let preferences;
@@ -162,7 +162,7 @@ const Account: React.FC = () => {
         } catch (err) {
           console.warn(
             'Account login: Failed to parse preferences, using fallback',
-            err
+            err,
           );
           preferences = {};
         }
@@ -184,7 +184,7 @@ const Account: React.FC = () => {
         toggleDarkMode(preferences.theme === 'dark');
       } else {
         console.warn(
-          'Account login: Failed to fetch preferences, using saved theme'
+          'Account login: Failed to fetch preferences, using saved theme',
         );
         const savedTheme = localStorage.getItem('theme');
         preferences = {

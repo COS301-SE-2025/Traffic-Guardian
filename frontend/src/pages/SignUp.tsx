@@ -46,7 +46,7 @@ const SignUp: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    if (!validateForm()) return;
+    if (!validateForm()) {return;}
 
     setLoading(true);
 
@@ -65,17 +65,17 @@ const SignUp: React.FC = () => {
             User_Role: 'user',
             User_Preferences: '{}',
           }),
-        }
+        },
       );
 
       const contentType = response.headers.get('content-type');
       if (contentType?.includes('application/json')) {
         const data = await response.json();
         if (!response.ok)
-          throw new Error(data.message || 'Registration failed');
+        {throw new Error(data.message || 'Registration failed');}
       } else {
         const text = await response.text();
-        if (!response.ok) throw new Error(text || 'Registration failed');
+        if (!response.ok) {throw new Error(text || 'Registration failed');}
       }
 
       setSuccess(true);
@@ -189,7 +189,7 @@ const SignUp: React.FC = () => {
           >
             {loading ? (
               <>
-                <span className="loading loading-spinner"></span>
+                <span className="loading loading-spinner" />
                 Processing...
               </>
             ) : (

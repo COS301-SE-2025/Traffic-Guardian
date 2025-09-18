@@ -152,7 +152,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
   const [selectedTab, setSelectedTab] = useState<
     'overview' | 'alerts' | 'detectors' | 'recommendations'
   >('overview');
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [_lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   const API_BASE_URL =
     process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api';
@@ -174,7 +174,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
         `${API_BASE_URL}/pems/district/${district}`,
         {
           headers: getAuthHeaders(),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -187,7 +187,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
     } catch (err) {
       console.error('Error fetching PEMS data:', err);
       setError(
-        err instanceof Error ? err.message : 'Failed to fetch PEMS data'
+        err instanceof Error ? err.message : 'Failed to fetch PEMS data',
       );
     } finally {
       setLoading(false);
@@ -241,7 +241,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
   if (loading) {
     return (
       <div className="pems-analysis loading">
-        <div className="loading-spinner"></div>
+        <div className="loading-spinner" />
         <p>Loading PEMS Traffic Data...</p>
       </div>
     );
@@ -274,10 +274,10 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
         <div className="pems-status">
           <div
             className={`system-status ${getSystemHealthClass(
-              pemsData.summary.system_health
+              pemsData.summary.system_health,
             )}`}
           >
-            <div className="status-indicator"></div>
+            <div className="status-indicator" />
             <span>System: {pemsData.summary.system_health}</span>
           </div>
           <div className="last-update">
@@ -334,8 +334,8 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
             pemsData.summary.avg_risk_score > 7
               ? 'HIGH'
               : pemsData.summary.avg_risk_score > 5
-              ? 'MEDIUM'
-              : 'LOW'
+                ? 'MEDIUM'
+                : 'LOW',
           )}`}
         >
           <div className="metric-icon">
@@ -393,7 +393,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
                     <div
                       key={index}
                       className={`critical-area-card ${getRiskLevelClass(
-                        area.risk_level
+                        area.risk_level,
                       )}`}
                     >
                       <div className="area-header">
@@ -421,7 +421,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
               <div className="risk-bars">
                 {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(level => {
                   const count = pemsData.detectors.filter(
-                    d => d.risk_level === level
+                    d => d.risk_level === level,
                   ).length;
                   const percentage = (count / pemsData.detectors.length) * 100;
                   return (
@@ -434,7 +434,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
                         <div
                           className={`risk-fill ${getRiskLevelClass(level)}`}
                           style={{ width: `${percentage}%` }}
-                        ></div>
+                        />
                       </div>
                       <div className="risk-percentage">
                         {percentage.toFixed(1)}%
@@ -528,7 +528,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
                   <div
                     key={detector.detector_id}
                     className={`detector-card ${getRiskLevelClass(
-                      detector.risk_level
+                      detector.risk_level,
                     )}`}
                     onClick={() => onDetectorSelect?.(detector)}
                   >

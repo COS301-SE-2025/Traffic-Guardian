@@ -124,7 +124,7 @@ class DataPrefetchService {
   // Safe fetch with error handling
   private async safeFetch(
     url: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<any | null> {
     try {
       const response = await fetch(url, {
@@ -200,7 +200,7 @@ class DataPrefetchService {
 
   // Fetch and cache data for a specific endpoint
   private async fetchAndCache(config: PrefetchConfig) {
-    if (!this.isAuthenticated) return;
+    if (!this.isAuthenticated) {return;}
 
     const url = `${this.baseUrl}${config.endpoint}`;
     const data = await this.safeFetch(url, { headers: this.getAuthHeaders() });
@@ -219,7 +219,7 @@ class DataPrefetchService {
   // Get cached data (instant response)
   getCachedData(cacheKey: string): any | null {
     const cached = this.cache.get(cacheKey);
-    if (!cached) return null;
+    if (!cached) {return null;}
 
     // Mark as stale if older than half the refresh interval
     const config = this.prefetchConfigs.find(c => c.cacheKey === cacheKey);
@@ -298,7 +298,7 @@ class DataPrefetchService {
 
 // Create singleton instance
 const dataPrefetchService = new DataPrefetchService(
-  process.env.REACT_APP_API_URL || 'http://localhost:3001'
+  process.env.REACT_APP_API_URL || 'http://localhost:3001',
 );
 
 export default dataPrefetchService;

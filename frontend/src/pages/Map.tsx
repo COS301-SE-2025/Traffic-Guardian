@@ -29,8 +29,8 @@ const createCameraIcon = (status: 'Online' | 'Offline' | 'Loading'): any => {
     status === 'Online'
       ? '#4ade80'
       : status === 'Loading'
-      ? '#f59e0b'
-      : '#ef4444';
+        ? '#f59e0b'
+        : '#ef4444';
 
   return new (L as any).Icon({
     iconUrl: `data:image/svg+xml;base64,${btoa(`
@@ -62,7 +62,7 @@ const CameraModal: React.FC<CameraModalProps> = ({
   const [imageError, setImageError] = useState(false);
   const [streamError, setStreamError] = useState(false);
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   const handleImageError = () => {
     setImageError(true);
@@ -269,9 +269,9 @@ const MapControls: React.FC<MapControlsProps> = ({
           stroke="currentColor"
           strokeWidth="2"
         >
-          <polyline points="23 4 23 10 17 10"></polyline>
-          <polyline points="1 20 1 14 7 14"></polyline>
-          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+          <polyline points="23 4 23 10 17 10" />
+          <polyline points="1 20 1 14 7 14" />
+          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
         </svg>
         Refresh Data
       </button>
@@ -297,7 +297,7 @@ const MapControls: React.FC<MapControlsProps> = ({
             }`}
             onClick={() => onFilterChange('Online')}
           >
-            <div className="chip-indicator online-indicator"></div>
+            <div className="chip-indicator online-indicator" />
             <span className="chip-label">Online</span>
           </button>
           <button
@@ -306,7 +306,7 @@ const MapControls: React.FC<MapControlsProps> = ({
             }`}
             onClick={() => onFilterChange('Loading')}
           >
-            <div className="chip-indicator loading-indicator"></div>
+            <div className="chip-indicator loading-indicator" />
             <span className="chip-label">Loading</span>
           </button>
           <button
@@ -315,7 +315,7 @@ const MapControls: React.FC<MapControlsProps> = ({
             }`}
             onClick={() => onFilterChange('Offline')}
           >
-            <div className="chip-indicator offline-indicator"></div>
+            <div className="chip-indicator offline-indicator" />
             <span className="chip-label">Offline</span>
           </button>
         </div>
@@ -331,7 +331,7 @@ const MapControls: React.FC<MapControlsProps> = ({
             }`}
             onClick={() =>
               onWeatherToggle(
-                activeWeatherLayer === 'satellite' ? null : 'satellite'
+                activeWeatherLayer === 'satellite' ? null : 'satellite',
               )
             }
           >
@@ -343,8 +343,8 @@ const MapControls: React.FC<MapControlsProps> = ({
               stroke="currentColor"
               strokeWidth="2"
             >
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" />
             </svg>
             Satellite
           </button>
@@ -392,8 +392,8 @@ const MapControls: React.FC<MapControlsProps> = ({
               stroke="currentColor"
               strokeWidth="2"
             >
-              <path d="M2 20h20v2H2zm1.64-6.36c.9.9 2.15.9 3.05 0l2.83-2.83c.9-.9.9-2.15 0-3.05-.9-.9-2.15-.9-3.05 0l-2.83 2.83c-.9.9-.9 2.15 0 3.05z"></path>
-              <path d="m6.5 17.5-5-5c-.9-.9-.9-2.15 0-3.05L6.34 4.6c.9-.9 2.15-.9 3.05 0 .9.9.9 2.15 0 3.05l-4.84 4.85c-.9.9-2.15.9-3.05 0z"></path>
+              <path d="M2 20h20v2H2zm1.64-6.36c.9.9 2.15.9 3.05 0l2.83-2.83c.9-.9.9-2.15 0-3.05-.9-.9-2.15-.9-3.05 0l-2.83 2.83c-.9.9-.9 2.15 0 3.05z" />
+              <path d="m6.5 17.5-5-5c-.9-.9-.9-2.15 0-3.05L6.34 4.6c.9-.9 2.15-.9 3.05 0 .9.9.9 2.15 0 3.05l-4.84 4.85c-.9.9-2.15.9-3.05 0z" />
             </svg>
             Heatmap
           </button>
@@ -424,7 +424,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                   <div
                     className="intensity-fill-modern"
                     style={{ width: `${trafficAnalysis.peakIntensity * 100}%` }}
-                  ></div>
+                  />
                 </div>
               </div>
             </div>
@@ -444,7 +444,7 @@ const MapControls: React.FC<MapControlsProps> = ({
                   <div
                     className="intensity-fill-modern"
                     style={{ width: '0%' }}
-                  ></div>
+                  />
                 </div>
               </div>
             </div>
@@ -473,7 +473,7 @@ const MapControls: React.FC<MapControlsProps> = ({
 
               <div className="traffic-legend">
                 <div className="legend-label">Traffic Intensity</div>
-                <div className="legend-bar"></div>
+                <div className="legend-bar" />
                 <div className="legend-markers">
                   <span>Low</span>
                   <span>High</span>
@@ -492,7 +492,7 @@ const MapControls: React.FC<MapControlsProps> = ({
 const WeatherOverlay: React.FC<{
   layer: WeatherLayer | null;
   opacity: number;
-}> = ({ layer, opacity }) => {
+}> = ({ layer, opacity: _opacity }) => {
   const getWeatherTileUrl = (layer: WeatherLayer): string => {
     const layerMap: Record<WeatherLayer, string> = {
       satellite:
@@ -513,7 +513,7 @@ const WeatherOverlay: React.FC<{
     setTileUrl(getWeatherTileUrl(layer));
   }, [layer]);
 
-  if (!layer || !tileUrl) return null;
+  if (!layer || !tileUrl) {return null;}
 
   return (
     <TileLayer
@@ -530,13 +530,13 @@ const FitBounds: React.FC<{ cameras: CameraFeed[] }> = ({ cameras }) => {
   const map = useMap();
 
   React.useEffect(() => {
-    if (cameras.length === 0) return;
+    if (cameras.length === 0) {return;}
 
     const validCoords = cameras
       .filter(camera => camera.coordinates)
       .map(
         camera =>
-          [camera.coordinates!.lat, camera.coordinates!.lng] as [number, number]
+          [camera.coordinates!.lat, camera.coordinates!.lng] as [number, number],
       );
 
     if (validCoords.length > 0) {
@@ -614,7 +614,7 @@ const Map: React.FC = () => {
         });
         setHeatmapData(data);
         setTrafficAnalysis(trafficDensityService.getTrafficAnalysis());
-      }
+      },
     );
 
     // Get any existing data immediately
@@ -634,7 +634,7 @@ const Map: React.FC = () => {
   useEffect(() => {
     if (cameraFeeds.length > 0) {
       console.log(
-        `🎬 Starting traffic simulation with ${cameraFeeds.length} cameras`
+        `🎬 Starting traffic simulation with ${cameraFeeds.length} cameras`,
       );
 
       const interval = setInterval(() => {
@@ -783,15 +783,15 @@ const Map: React.FC = () => {
         <h4>Camera Status</h4>
         <div className="legend-items">
           <div className="legend-item">
-            <div className="legend-color online"></div>
+            <div className="legend-color online" />
             <span>Online</span>
           </div>
           <div className="legend-item">
-            <div className="legend-color loading"></div>
+            <div className="legend-color loading" />
             <span>Loading</span>
           </div>
           <div className="legend-item">
-            <div className="legend-color offline"></div>
+            <div className="legend-color offline" />
             <span>Offline</span>
           </div>
         </div>

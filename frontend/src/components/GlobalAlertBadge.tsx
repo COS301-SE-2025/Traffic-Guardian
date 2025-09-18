@@ -167,9 +167,15 @@ const GlobalAlertBadge: React.FC = () => {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffMins < 1) {
+      return 'Just now';
+    }
+    if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    }
+    if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    }
     return `${diffDays}d ago`;
   };
 
@@ -282,10 +288,10 @@ const GlobalAlertBadge: React.FC = () => {
                               className={`global-alert-severity ${alert.incident.Incident_Severity}`}
                             >
                               {getSeverityIcon(
-                                alert.incident.Incident_Severity
+                                alert.incident.Incident_Severity,
                               )}{' '}
                               {getSeverityDisplay(
-                                alert.incident.Incident_Severity
+                                alert.incident.Incident_Severity,
                               )}
                             </span>
                             <span className="global-alert-time">
@@ -300,17 +306,17 @@ const GlobalAlertBadge: React.FC = () => {
                             <div className="global-alert-location">
                               {alert.incident.Incidents_Latitude &&
                               alert.incident.Incidents_Longitude ? (
-                                <>
-                                  <LocationIcon />
+                                  <>
+                                    <LocationIcon />
                                   Lat: {alert.incident.Incidents_Latitude}, Lng:{' '}
-                                  {alert.incident.Incidents_Longitude}
-                                </>
-                              ) : (
-                                <>
-                                  <LocationIcon />
+                                    {alert.incident.Incidents_Longitude}
+                                  </>
+                                ) : (
+                                  <>
+                                    <LocationIcon />
                                   Location not specified
-                                </>
-                              )}
+                                  </>
+                                )}
                             </div>
                             <div className="global-alert-reporter">
                               <UserIcon />
