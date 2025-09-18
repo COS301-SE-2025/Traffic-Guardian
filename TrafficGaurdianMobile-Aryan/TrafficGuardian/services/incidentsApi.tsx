@@ -1,7 +1,5 @@
 import { Platform } from "react-native";
-import { useSession } from "../services/sessionContext";
 
-const { user } = useSession();
 
 const API_URL = "http://localhost:5000/api";
 
@@ -17,20 +15,20 @@ const getBaseUrl = () => {
   }
 };
 
-export async function createIncident(date : string,location : string, Incident_CarID : string, Incident_Severity : string, description : string, coords : any){
+export async function createIncident(date : string,location : string, Incident_Severity : string, description : string, coords : any, user : any){
     try{
-      console.log(user);
-
+      console.log(user.user.User_Username);
     const response = await fetch(`${getBaseUrl()}/api/incidents`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" ,
+        "X-API-KEY": user.apiKey 
+      },
       body: JSON.stringify(
         { 
-        Incident_Date: date.trim(),
-        Incident_Location: location.trim(),
-        Incident_CarID: Incident_CarID,
+        Incidents_DateTime: date.trim(),
+        Incident_Status : "open",
         Incident_Severity: Incident_Severity.trim(),
-        Incident_Reporter : "idk_for now",
+        Incident_Reporter : user.user.User_Username,
         Incident_Description : description.trim(),
         Incidents_Longitude : coords.longitude,
         Incidents_Latitude : coords.latitude
@@ -42,7 +40,7 @@ export async function createIncident(date : string,location : string, Incident_C
         throw new Error("API not running");
     }
 
-    if (!response.ok) {
+    if(!response.ok){
       throw new Error("Reporting failed");
     }
 
