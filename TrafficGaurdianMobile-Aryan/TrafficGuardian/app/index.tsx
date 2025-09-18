@@ -42,7 +42,6 @@ export default function Index() {
     if (!socket) return;
 
     const handleTrafficUpdate = (data : any) => {
-      console.log("Traffic Update:", data);
       setTraffic(data);
     };
 
