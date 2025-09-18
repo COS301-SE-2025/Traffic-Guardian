@@ -9,6 +9,7 @@ export default function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [CellPhone, setCellPhone] = useState("");
 
   const handleRegister = async () => {
     try {
@@ -16,7 +17,7 @@ export default function Register() {
       throw new Error("All fields are required");
     }
 
-      const result = await registerUser(username, password, email);
+      const result = await registerUser(username, password, email, CellPhone);
       console.log("Success:", result);
 
       Alert.alert("Success", "Account created!");
@@ -44,6 +45,13 @@ export default function Register() {
         placeholder="Username"
         value={username}
         onChangeText={setUsername}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Cell Phone"
+        value={CellPhone}
+        onChangeText={setCellPhone}
       />
       <TextInput
         style={styles.input}

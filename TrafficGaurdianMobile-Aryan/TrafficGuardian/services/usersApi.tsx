@@ -14,23 +14,25 @@ const getBaseUrl = () => {
   }
 };
 
-export async function registerUser(username: string, email: string, password: string) {
+export async function registerUser(username: string, email: string, password: string ,cellphone : string) {
   try{
-    const response = await fetch(`${getBaseUrl()}/auth/register`, {
+    const response = await fetch(`${getBaseUrl()}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
         User_Username: username,
         User_Password: password,
-        User_Email: email,}),
+        User_Email: email,
+        User_CellPhone : cellphone
+      }),
     });
 
     if(!response){
         throw new Error("API not running");
     }
 
-    if (!response.ok) {
-      throw new Error("Registration failed");
+    if(!response.ok){
+      throw new Error("Registration failed" + JSON.stringify(response));
     }
 
     return await response.json();
