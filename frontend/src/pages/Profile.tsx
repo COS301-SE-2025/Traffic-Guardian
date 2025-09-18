@@ -45,7 +45,7 @@ const Profile: React.FC = () => {
             'X-API-Key': apiKey,
             'Content-Type': 'application/json',
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -78,7 +78,7 @@ const Profile: React.FC = () => {
           'Profile useEffect: apiKey=',
           apiKey,
           'savedTheme=',
-          savedTheme
+          savedTheme,
         );
 
         if (!apiKey) {
@@ -92,7 +92,7 @@ const Profile: React.FC = () => {
               'X-API-Key': apiKey,
               'Content-Type': 'application/json',
             },
-          }
+          },
         );
 
         if (!userResponse.ok) {
@@ -113,7 +113,7 @@ const Profile: React.FC = () => {
               'X-API-Key': apiKey,
               'Content-Type': 'application/json',
             },
-          }
+          },
         );
 
         let currentPrefs = {
@@ -135,7 +135,7 @@ const Profile: React.FC = () => {
           } catch (err) {
             console.warn(
               'Profile: Failed to parse preferences, using fallback',
-              err
+              err,
             );
             fetchedPrefs = {};
           }
@@ -155,7 +155,7 @@ const Profile: React.FC = () => {
         } else {
           console.warn(
             'Profile: Failed to fetch preferences, using saved theme:',
-            savedTheme
+            savedTheme,
           );
           if (savedTheme) {
             currentPrefs = {
@@ -231,7 +231,7 @@ const Profile: React.FC = () => {
             User_Email: user.email,
             preferences: validatedPrefs,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -251,7 +251,7 @@ const Profile: React.FC = () => {
         } catch (err) {
           console.warn(
             'Profile: Failed to parse updated preferences, using temp',
-            err
+            err,
           );
           updatedPrefs = validatedPrefs;
         }

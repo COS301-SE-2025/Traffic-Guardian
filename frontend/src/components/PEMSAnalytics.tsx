@@ -148,7 +148,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
     } catch (err) {
       console.error('Error fetching PEMS analytics:', err);
       setError(
-        err instanceof Error ? err.message : 'Failed to fetch PEMS data'
+        err instanceof Error ? err.message : 'Failed to fetch PEMS data',
       );
     } finally {
       setLoading(false);
@@ -161,7 +161,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
 
   // Transform data for visualizations
   const getRegionalPerformanceData = () => {
-    if (!dashboardData?.regional_status) return [];
+    if (!dashboardData?.regional_status) {return [];}
 
     return dashboardData.regional_status.map((region: any) => ({
       name: region.region.split(' ').slice(0, 2).join(' '), // Shorten names
@@ -174,7 +174,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
   };
 
   const getRiskDistributionData = () => {
-    if (!dashboardData?.risk_analysis?.distribution) return [];
+    if (!dashboardData?.risk_analysis?.distribution) {return [];}
 
     const dist = dashboardData.risk_analysis.distribution;
     return [
@@ -201,7 +201,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
   };
 
   const getAlertsPriorityData = () => {
-    if (!alertsData?.priority_breakdown) return [];
+    if (!alertsData?.priority_breakdown) {return [];}
 
     const priorities = alertsData.priority_breakdown;
     return [
@@ -224,7 +224,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
   };
 
   const getSystemHealthRadarData = () => {
-    if (!districtData.length) return [];
+    if (!districtData.length) {return [];}
 
     // Transform data for RadarChart - each metric becomes a data point
     const metrics = ['Speed', 'Flow', 'Safety', 'Efficiency'];
@@ -240,7 +240,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
           case 'Flow':
             dataPoint[districtKey] = Math.min(
               ((district.summary?.total_flow || 0) / 5000) * 100,
-              100
+              100,
             );
             break;
           case 'Safety':

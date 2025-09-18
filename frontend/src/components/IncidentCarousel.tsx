@@ -12,7 +12,7 @@ const IncidentCarousel: React.FC = () => {
   return (
     <div className="incident-carousel">
       {images.map((src, index) => (
-        <div key={index} className="carousel-item">
+        <div key={`incident-${src}-${index}`} className="carousel-item">
           <img src={src} alt={`Incident ${index + 1}`} />
         </div>
       ))}

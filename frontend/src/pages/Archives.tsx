@@ -94,7 +94,7 @@ const Archives: React.FC = () => {
   const [showAdvancedFilters, setShowAdvancedFilters] =
     useState<boolean>(false);
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
-  const itemsPerPage: number = 12;
+  const itemsPerPage = 12;
 
   // Load archives from ArchivesV2 API with abort signal for cleanup
   const loadArchives = useCallback(
@@ -118,7 +118,7 @@ const Archives: React.FC = () => {
               'X-API-Key': apiKey,
             },
             signal, // Add abort signal for cleanup
-          }
+          },
         );
 
         if (!response.ok) {
@@ -128,7 +128,7 @@ const Archives: React.FC = () => {
             return;
           }
           throw new Error(
-            `API request failed: ${response.status} ${response.statusText}`
+            `API request failed: ${response.status} ${response.statusText}`,
           );
         }
 
@@ -152,7 +152,7 @@ const Archives: React.FC = () => {
         setLoading(false);
       }
     },
-    [navigate]
+    [navigate],
   );
 
   useEffect(() => {
@@ -187,7 +187,7 @@ const Archives: React.FC = () => {
       const matchesType =
         !filters.type ||
         archive.Archive_Type?.toLowerCase().includes(
-          filters.type.toLowerCase()
+          filters.type.toLowerCase(),
         );
       const matchesReporter =
         !filters.reporter ||
@@ -202,7 +202,7 @@ const Archives: React.FC = () => {
       const matchesTags =
         !filters.tags ||
         archive.Archive_Tags?.some(tag =>
-          tag.toLowerCase().includes(filters.tags.toLowerCase())
+          tag.toLowerCase().includes(filters.tags.toLowerCase()),
         );
 
       // Date filtering
@@ -240,7 +240,7 @@ const Archives: React.FC = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentArchives = filteredArchives.slice(
     startIndex,
-    startIndex + itemsPerPage
+    startIndex + itemsPerPage,
   );
 
   // Reset page when filters change
@@ -321,7 +321,7 @@ const Archives: React.FC = () => {
         className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}
       >
         <div className="loading-message">
-          <div className="loading-spinner"></div>
+          <div className="loading-spinner" />
           Loading archived data...
         </div>
       </div>
@@ -560,7 +560,7 @@ const Archives: React.FC = () => {
                   </div>
                   <div
                     className={`severity-badge ${getSeverityClass(
-                      archive.Archive_Severity
+                      archive.Archive_Severity,
                     )}`}
                   >
                     {archive.Archive_Severity}
@@ -672,7 +672,7 @@ const Archives: React.FC = () => {
                   <td className="table-cell">
                     <span
                       className={`severity-badge ${getSeverityClass(
-                        archive.Archive_Severity
+                        archive.Archive_Severity,
                       )}`}
                     >
                       {archive.Archive_Severity}
@@ -716,7 +716,7 @@ const Archives: React.FC = () => {
                   Archive #{archive.Archive_ID} - {archive.Archive_Type}
                   <span
                     className={`severity-badge ${getSeverityClass(
-                      archive.Archive_Severity
+                      archive.Archive_Severity,
                     )}`}
                   >
                     {archive.Archive_Severity}

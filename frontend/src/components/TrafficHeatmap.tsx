@@ -52,7 +52,7 @@ const TrafficHeatmap: React.FC<TrafficHeatmapProps> = ({
         opacity,
         visible,
         samplePoints: heatmapData.slice(0, 3),
-      }
+      },
     );
 
     // Remove existing layer
@@ -89,7 +89,7 @@ const TrafficHeatmap: React.FC<TrafficHeatmapProps> = ({
       (heatLayer as any).setOpacity(opacity);
       console.log(`🎭 Heatmap opacity set to: ${opacity}`);
     } else {
-      console.log(`⚠️ Heatmap layer does not support opacity control`);
+      console.log('⚠️ Heatmap layer does not support opacity control');
     }
 
     // Cleanup function

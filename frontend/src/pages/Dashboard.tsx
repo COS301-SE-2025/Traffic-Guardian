@@ -6,15 +6,16 @@ import ApiService, {
 } from '../services/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PEMSTrafficAnalysis from '../components/PEMSTrafficAnalysis';
-import {
-  useIncidents,
-  useArchiveStats,
-  usePemsDashboard,
-  useIncidentLocations,
-  useCriticalIncidents,
-  useIncidentCategory,
-} from '../hooks/useCachedData';
-import dataPrefetchService from '../services/DataPrefetchService';
+// Cached data hooks temporarily disabled for performance
+// import {
+//   useIncidents,
+//   useArchiveStats,
+//   usePemsDashboard,
+//   useIncidentLocations,
+//   useCriticalIncidents,
+//   useIncidentCategory,
+// } from '../hooks/useCachedData';
+// import dataPrefetchService from '../services/DataPrefetchService';
 import './Dashboard.css';
 
 interface CriticalIncidentsData {
@@ -61,7 +62,7 @@ const _CameraIcon = () => (
   </svg>
 );
 
-const ClockIcon = () => (
+const _ClockIcon = () => (
   <svg
     fill="none"
     stroke="currentColor"
@@ -194,7 +195,7 @@ const UsersIcon = () => (
 
 const WeatherIcon = ({
   condition,
-  isDay,
+  isDay: _isDay,
 }: {
   condition: string;
   isDay: boolean;
@@ -360,15 +361,15 @@ const Dashboard: React.FC = () => {
     regionCounts: [],
   });
 
-  const [incidentStats, setIncidentStats] = useState<IncidentStats | null>(
-    null
+  const [_incidentStats, setIncidentStats] = useState<IncidentStats | null>(
+    null,
   );
-  const [todaysIncidents, setTodaysIncidents] = useState<TodaysIncidents>({
+  const [_todaysIncidents, setTodaysIncidents] = useState<TodaysIncidents>({
     count: 0,
     date: '',
   });
   const [trafficData, setTrafficData] = useState<TrafficIncident[]>([]);
-  const [criticalIncidents, setCriticalIncidents] =
+  const [_criticalIncidents, setCriticalIncidents] =
     useState<CriticalIncidentsData | null>(null);
   const [_incidentLocations, _setIncidentLocations] = useState<any[]>([]);
 
@@ -383,7 +384,11 @@ const Dashboard: React.FC = () => {
 
   // PEMS dashboard data
   const [pemsDashboardData, setPemsDashboardData] = useState<any>(null);
-  const [pemsLoading, setPemsLoading] = useState(true);
+  const [_pemsLoading, setPemsLoading] = useState(true);
+
+  const removeNotification = useCallback((id: number) => {
+    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  }, []);
 
   const addNotification = useCallback(
     (notification: Omit<Notification, 'id' | 'timestamp'>) => {
@@ -399,7 +404,7 @@ const Dashboard: React.FC = () => {
         removeNotification(newNotification.id);
       }, 5000);
     },
-    []
+    [removeNotification],
   );
 
   const addEvent = useCallback((eventText: string) => {
@@ -408,9 +413,6 @@ const Dashboard: React.FC = () => {
     setRealtimeEvents(prev => [eventWithTime, ...prev.slice(0, 49)]); // Keep last 50 events
   }, []);
 
-  const removeNotification = (id: number) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
-  };
 
   // Fetch PEMS dashboard data
   const fetchPEMSData = useCallback(async () => {
@@ -425,7 +427,7 @@ const Dashboard: React.FC = () => {
             'Content-Type': 'application/json',
             'X-API-Key': apiKey || '',
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -540,13 +542,13 @@ const Dashboard: React.FC = () => {
             newSocket.emit('new-location', pos);
             addEvent(
               `Location shared: ${pos.latitude.toFixed(
-                4
-              )}, ${pos.longitude.toFixed(4)}`
+                4,
+              )}, ${pos.longitude.toFixed(4)}`,
             );
           },
-          error => {
+          _error => {
             addEvent('Location sharing: Permission denied or unavailable');
-          }
+          },
         );
       }
     });
@@ -689,15 +691,15 @@ const Dashboard: React.FC = () => {
       console.log('- Realtime Events Count:', realtimeEvents?.length || 0);
       console.log(
         '- Auth Token:',
-        sessionStorage.getItem('token') ? 'Present' : 'Missing'
+        sessionStorage.getItem('token') ? 'Present' : 'Missing',
       );
       console.log(
         '- User Info:',
-        sessionStorage.getItem('userInfo') ? 'Present' : 'Missing'
+        sessionStorage.getItem('userInfo') ? 'Present' : 'Missing',
       );
       console.log(
         '- SERVER_URL:',
-        process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'
+        process.env.REACT_APP_SERVER_URL || 'http://localhost:5000',
       );
     };
   }, [
@@ -816,7 +818,7 @@ const Dashboard: React.FC = () => {
               <div
                 className={`status-dot ${getSystemHealthStatus().class}`}
                 data-cy="status-dot"
-              ></div>
+              />
               {getSystemHealthStatus().text}
             </div>
           </div>
@@ -831,7 +833,7 @@ const Dashboard: React.FC = () => {
                 <div
                   className="loading-spinner small"
                   data-cy="weather-loading-spinner"
-                ></div>
+                />
                 <span>Loading weather...</span>
               </div>
             ) : getPrimaryWeather() ? (
@@ -950,18 +952,18 @@ const Dashboard: React.FC = () => {
                   width: `${Math.min(
                     ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) *
                       100,
-                    100
+                    100,
                   )}%`,
                 }}
                 data-cy="progress-fill"
-              ></div>
+              />
             </div>
           </div>
 
           {/* System Status */}
           <div
             className={`stat-card system-status-card ${getSystemStatusClass(
-              pemsDashboardData?.overview?.system_status
+              pemsDashboardData?.overview?.system_status,
             )}`}
             data-cy="stat-card-system-status"
           >
@@ -1006,7 +1008,7 @@ const Dashboard: React.FC = () => {
               <div
                 className="loading-spinner"
                 data-cy="weather-section-spinner"
-              ></div>
+              />
               <div
                 className="loading-text"
                 data-cy="weather-section-loading-text"
@@ -1018,7 +1020,7 @@ const Dashboard: React.FC = () => {
             <div className="weather-grid" data-cy="weather-grid">
               {weatherData.slice(0, 6).map((weather, index) => (
                 <div
-                  key={index}
+                  key={`weather-${weather.location}-${index}`}
                   className="weather-card"
                   data-cy={`weather-card-${index}`}
                 >
@@ -1158,7 +1160,7 @@ const Dashboard: React.FC = () => {
             <div className="incidents-list" data-cy="incidents-list">
               {trafficData.map((location, index) => (
                 <div
-                  key={index}
+                  key={`incident-${index}`}
                   className="incident-item"
                   data-cy={`incident-item-${index}`}
                 >
@@ -1180,7 +1182,7 @@ const Dashboard: React.FC = () => {
                       .slice(0, 3)
                       .map((incident, incIndex) => (
                         <div
-                          key={incIndex}
+                          key={`incident-detail-${incIndex}`}
                           className="incident-detail"
                           data-cy="incident-detail-item"
                         >
@@ -1227,7 +1229,7 @@ const Dashboard: React.FC = () => {
               <div
                 className="update-indicator"
                 data-cy="update-indicator"
-              ></div>
+              />
               Last updated: {formatTime(lastUpdate)}
             </div>
           </div>
@@ -1246,7 +1248,7 @@ const Dashboard: React.FC = () => {
                 .sort((a, b) => b.userCount - a.userCount)
                 .map((region, index) => (
                   <div
-                    key={index}
+                    key={`region-${region.region}-${index}`}
                     className="regional-item"
                     data-cy={`regional-item-${region.region}`}
                   >
@@ -1273,11 +1275,11 @@ const Dashboard: React.FC = () => {
                               (region.userCount /
                                 Math.max(userStats.totalOnline, 1)) *
                                 100,
-                              100
+                              100,
                             )}%`,
                           }}
                           data-cy="progress-fill-regional"
-                        ></div>
+                        />
                       </div>
                     </div>
                   </div>
@@ -1298,7 +1300,7 @@ const Dashboard: React.FC = () => {
               <div
                 className="update-indicator"
                 data-cy="update-indicator"
-              ></div>
+              />
               Real-time updates
             </div>
           </div>
@@ -1341,7 +1343,7 @@ const Dashboard: React.FC = () => {
               {realtimeEvents.length > 0 ? (
                 realtimeEvents.map((event, index) => (
                   <div
-                    key={index}
+                    key={`event-${index}-${event.slice(0, 20)}`}
                     className="event-item"
                     data-cy={`event-item-${index}`}
                   >

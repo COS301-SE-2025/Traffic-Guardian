@@ -43,7 +43,7 @@ const LandingPage: React.FC = () => {
     }, observerOptions);
 
     const elementsToObserve = document.querySelectorAll(
-      '.problem-card, .feature-card, .team-member, .process-step, .impact-card, .detail-card'
+      '.problem-card, .feature-card, .team-member, .process-step, .impact-card, .detail-card',
     );
 
     elementsToObserve.forEach(el => {
@@ -82,9 +82,9 @@ const LandingPage: React.FC = () => {
             className="hamburger"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            <span></span>
-            <span></span>
-            <span></span>
+            <span />
+            <span />
+            <span />
           </button>
           <ul className={`nav-links ${isMobileMenuOpen ? 'active' : ''}`}>
             <li>
@@ -226,7 +226,7 @@ const LandingPage: React.FC = () => {
                 <source src="/aidetectionvid.MP4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
-              <div className="video-overlay"></div>
+              <div className="video-overlay" />
             </div>
           </div>
         </div>

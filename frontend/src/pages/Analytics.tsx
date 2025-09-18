@@ -136,7 +136,7 @@ const Analytics: React.FC = () => {
     CategoryBreakdown[]
   >([]);
   const [locationHotspots, setLocationHotspots] = useState<LocationHotspot[]>(
-    []
+    [],
   );
 
   // Archive analytics state
@@ -212,7 +212,7 @@ const Analytics: React.FC = () => {
       const dbCritical = dbData.filter(
         (incident: DatabaseIncident) =>
           incident.Incident_Severity === 'high' ||
-          incident.Incident_Severity === 'critical'
+          incident.Incident_Severity === 'critical',
       ).length;
 
       // Process category breakdown for charts
@@ -220,7 +220,7 @@ const Analytics: React.FC = () => {
       if (categoriesData) {
         const totalTrafficIncidents = categoriesData.percentages.reduce(
           (sum: number, percentage: number) => sum + percentage,
-          0
+          0,
         );
 
         processedCategories = categoriesData.categories
@@ -230,15 +230,15 @@ const Analytics: React.FC = () => {
             percentage:
               totalTrafficIncidents > 0
                 ? Math.round(
-                    (categoriesData.percentages[index] /
+                  (categoriesData.percentages[index] /
                       totalTrafficIncidents) *
-                      100
-                  )
+                      100,
+                )
                 : 0,
           }))
           .filter((cat: CategoryBreakdown) => cat.count > 0)
           .sort(
-            (a: CategoryBreakdown, b: CategoryBreakdown) => b.count - a.count
+            (a: CategoryBreakdown, b: CategoryBreakdown) => b.count - a.count,
           );
       }
       setCategoryBreakdown(processedCategories);
@@ -252,7 +252,7 @@ const Analytics: React.FC = () => {
         }))
         .filter((location: LocationHotspot) => location.incidents > 0)
         .sort(
-          (a: LocationHotspot, b: LocationHotspot) => b.incidents - a.incidents
+          (a: LocationHotspot, b: LocationHotspot) => b.incidents - a.incidents,
         );
 
       setLocationHotspots(processedLocations);
@@ -266,7 +266,7 @@ const Analytics: React.FC = () => {
       // Calculate traffic totals
       const trafficTotal = locationsData.reduce(
         (sum: number, location: LocationData) => sum + location.amount,
-        0
+        0,
       );
       const trafficCritical = criticalIncidents?.Amount || 0;
 
@@ -295,7 +295,7 @@ const Analytics: React.FC = () => {
     } catch (error) {
       console.error('Error loading analytics data:', error);
       setError(
-        error instanceof Error ? error.message : 'Failed to load analytics data'
+        error instanceof Error ? error.message : 'Failed to load analytics data',
       );
     } finally {
       setIsLoading(false);
@@ -334,12 +334,12 @@ const Analytics: React.FC = () => {
   useEffect(() => {
     // Initialise socket connection
     const socketConnection = io(
-      process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'
+      process.env.REACT_APP_SERVER_URL || 'http://localhost:5000',
     );
     _setSocket(socketConnection);
 
     // Socket event listeners for real-time updates
-    socketConnection.on('archiveCreated', (archiveData: ArchiveData) => {
+    socketConnection.on('archiveCreated', (_archiveData: ArchiveData) => {
       // Refresh archive analytics with debounce
       setTimeout(() => loadArchiveAnalytics(), 1000);
     });
@@ -349,7 +349,7 @@ const Analytics: React.FC = () => {
       setArchiveAnalytics(prev => (prev ? { ...prev, ...stats } : prev));
     });
 
-    socketConnection.on('newAlert', (incident: any) => {
+    socketConnection.on('newAlert', (_incident: any) => {
       // This might lead to new archives being created
       setTimeout(() => loadArchiveAnalytics(), 2000); // Delay to allow archiving process
     });
@@ -363,7 +363,7 @@ const Analytics: React.FC = () => {
 
   // Helper function to format bytes
   const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) {return '0 Bytes';}
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -372,8 +372,8 @@ const Analytics: React.FC = () => {
 
   // Helper function to format archive time
   const _formatArchiveTime = (days: number): string => {
-    if (days < 1) return 'Less than 1 day';
-    if (days === 1) return '1 day';
+    if (days < 1) {return 'Less than 1 day';}
+    if (days === 1) {return '1 day';}
     return `${Math.round(days)} days`;
   };
 
@@ -386,7 +386,7 @@ const Analytics: React.FC = () => {
         }`}
       >
         <div className="analytics-loading">
-          <div className="loading-spinner"></div>
+          <div className="loading-spinner" />
           <p>Loading analytics data...</p>
           <p
             style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '0.5rem' }}
@@ -711,60 +711,60 @@ const Analytics: React.FC = () => {
                     <h2>Archive Status Distribution</h2>
                     {Object.keys(archiveAnalytics.archivesByStatus).length >
                     0 ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={Object.entries(
-                              archiveAnalytics.archivesByStatus
-                            ).map(([status, count]) => ({
-                              status,
-                              count,
-                            }))}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ status, count }) => `${status}: ${count}`}
-                            outerRadius={100}
-                            fill="#8884d8"
-                            dataKey="count"
-                          >
-                            {Object.entries(
-                              archiveAnalytics.archivesByStatus
-                            ).map((entry, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={
-                                  categoryColors[index % categoryColors.length]
-                                }
-                              />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: isDarkMode
-                                ? '#1f2937'
-                                : '#ffffff',
-                              border: `1px solid ${
-                                isDarkMode ? '#374151' : '#e5e7eb'
-                              }`,
-                              borderRadius: '8px',
-                            }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div
-                        style={{
-                          height: '300px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: isDarkMode ? '#9ca3af' : '#6b7280',
-                        }}
-                      >
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={Object.entries(
+                                archiveAnalytics.archivesByStatus,
+                              ).map(([status, count]) => ({
+                                status,
+                                count,
+                              }))}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={({ status, count }) => `${status}: ${count}`}
+                              outerRadius={100}
+                              fill="#8884d8"
+                              dataKey="count"
+                            >
+                              {Object.entries(
+                                archiveAnalytics.archivesByStatus,
+                              ).map((entry, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={
+                                    categoryColors[index % categoryColors.length]
+                                  }
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: isDarkMode
+                                  ? '#1f2937'
+                                  : '#ffffff',
+                                border: `1px solid ${
+                                  isDarkMode ? '#374151' : '#e5e7eb'
+                                }`,
+                                borderRadius: '8px',
+                              }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div
+                          style={{
+                            height: '300px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: isDarkMode ? '#9ca3af' : '#6b7280',
+                          }}
+                        >
                         No archive status data available
-                      </div>
-                    )}
+                        </div>
+                      )}
                   </div>
 
                   {/* Archive Severity Distribution */}
@@ -772,56 +772,56 @@ const Analytics: React.FC = () => {
                     <h2>Archive Severity Distribution</h2>
                     {Object.keys(archiveAnalytics.archivesBySeverity).length >
                     0 ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart
-                          data={Object.entries(
-                            archiveAnalytics.archivesBySeverity
-                          ).map(([severity, count]) => ({
-                            severity,
-                            count,
-                          }))}
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart
+                            data={Object.entries(
+                              archiveAnalytics.archivesBySeverity,
+                            ).map(([severity, count]) => ({
+                              severity,
+                              count,
+                            }))}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke={isDarkMode ? '#374151' : '#e5e7eb'}
+                            />
+                            <XAxis
+                              dataKey="severity"
+                              stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
+                              tick={{ fontSize: 12 }}
+                            />
+                            <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: isDarkMode
+                                  ? '#1f2937'
+                                  : '#ffffff',
+                                border: `1px solid ${
+                                  isDarkMode ? '#374151' : '#e5e7eb'
+                                }`,
+                                borderRadius: '8px',
+                              }}
+                            />
+                            <Bar
+                              dataKey="count"
+                              fill={chartColors.warning}
+                              radius={[4, 4, 0, 0]}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div
+                          style={{
+                            height: '300px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: isDarkMode ? '#9ca3af' : '#6b7280',
+                          }}
                         >
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke={isDarkMode ? '#374151' : '#e5e7eb'}
-                          />
-                          <XAxis
-                            dataKey="severity"
-                            stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
-                            tick={{ fontSize: 12 }}
-                          />
-                          <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: isDarkMode
-                                ? '#1f2937'
-                                : '#ffffff',
-                              border: `1px solid ${
-                                isDarkMode ? '#374151' : '#e5e7eb'
-                              }`,
-                              borderRadius: '8px',
-                            }}
-                          />
-                          <Bar
-                            dataKey="count"
-                            fill={chartColors.warning}
-                            radius={[4, 4, 0, 0]}
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div
-                        style={{
-                          height: '300px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: isDarkMode ? '#9ca3af' : '#6b7280',
-                        }}
-                      >
                         No archive severity data available
-                      </div>
-                    )}
+                        </div>
+                      )}
                   </div>
                 </>
               )}
@@ -849,8 +849,8 @@ const Analytics: React.FC = () => {
                             location.avgSeverity >= 3
                               ? 'high'
                               : location.avgSeverity >= 2
-                              ? 'medium'
-                              : 'low'
+                                ? 'medium'
+                                : 'low'
                           }`}
                         >
                           Avg Severity: {location.avgSeverity.toFixed(1)}
@@ -877,7 +877,7 @@ const Analytics: React.FC = () => {
               <div className="chart-container full-width">
                 <h2>Recent Archives</h2>
                 <div className="archive-list">
-                  {recentArchives.map((archive, index) => (
+                  {recentArchives.map((archive, _index) => (
                     <div key={archive.Archive_ID} className="archive-item">
                       <div className="archive-info">
                         <span className="archive-id">
@@ -888,7 +888,7 @@ const Analytics: React.FC = () => {
                         </span>
                         <span className="archive-date">
                           {new Date(
-                            archive.Archive_DateTime
+                            archive.Archive_DateTime,
                           ).toLocaleDateString()}
                         </span>
                       </div>
@@ -913,32 +913,32 @@ const Analytics: React.FC = () => {
             {/* Archive Locations Analysis */}
             {archiveAnalytics &&
               archiveAnalytics.archivesByLocation.length > 0 && (
-                <div className="chart-container full-width">
-                  <h2>Top Archive Locations</h2>
-                  <div className="location-list">
-                    {archiveAnalytics.archivesByLocation.map(
-                      (location, index) => (
-                        <div key={index} className="location-item">
-                          <div className="location-info">
-                            <span className="location-rank">#{index + 1}</span>
-                            <span className="location-name">
-                              {location.location}
-                            </span>
-                          </div>
-                          <div className="location-stats">
-                            <span className="incident-count">
-                              {location.count} archives
-                            </span>
-                            <span className="archive-indicator">
-                              <ArchiveIcon />
-                            </span>
-                          </div>
+              <div className="chart-container full-width">
+                <h2>Top Archive Locations</h2>
+                <div className="location-list">
+                  {archiveAnalytics.archivesByLocation.map(
+                    (location, index) => (
+                      <div key={index} className="location-item">
+                        <div className="location-info">
+                          <span className="location-rank">#{index + 1}</span>
+                          <span className="location-name">
+                            {location.location}
+                          </span>
                         </div>
-                      )
-                    )}
-                  </div>
+                        <div className="location-stats">
+                          <span className="incident-count">
+                            {location.count} archives
+                          </span>
+                          <span className="archive-indicator">
+                            <ArchiveIcon />
+                          </span>
+                        </div>
+                      </div>
+                    ),
+                  )}
                 </div>
-              )}
+              </div>
+            )}
           </>
         )}
 

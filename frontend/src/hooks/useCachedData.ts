@@ -5,7 +5,7 @@ import dataPrefetchService from '../services/DataPrefetchService';
 export function useCachedData<T>(
   endpoint: string,
   cacheKey: string,
-  dependencies: any[] = []
+  dependencies: any[] = [],
 ) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,6 +107,6 @@ export function usePemsDistrict(districtId: number) {
   return useCachedData(
     `/api/pems/district/${districtId}`,
     `pems-district-${districtId}`,
-    [districtId]
+    [districtId],
   );
 }

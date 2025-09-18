@@ -77,7 +77,7 @@ const LiveFeed: React.FC = () => {
     const fetchUserRole = async () => {
       try {
         const apiKey = sessionStorage.getItem('apiKey');
-        if (!apiKey) return;
+        if (!apiKey) {return;}
 
         const response = await fetch(
           `${process.env.REACT_APP_API_URL}/api/auth/profile`,
@@ -86,7 +86,7 @@ const LiveFeed: React.FC = () => {
               'Content-Type': 'application/json',
               'X-API-Key': apiKey,
             },
-          }
+          },
         );
 
         if (response.ok) {
@@ -110,21 +110,21 @@ const LiveFeed: React.FC = () => {
     (feedId: string) => {
       setCameraStatus(feedId, 'Offline');
     },
-    [setCameraStatus]
+    [setCameraStatus],
   );
 
   const handleImageLoad = useCallback(
     (feedId: string) => {
       setCameraStatus(feedId, 'Online');
     },
-    [setCameraStatus]
+    [setCameraStatus],
   );
 
   const handleVideoError = useCallback(
     (feedId: string) => {
       setCameraStatus(feedId, 'Offline');
     },
-    [setCameraStatus]
+    [setCameraStatus],
   );
 
   const handleVideoLoadStart = useCallback(
@@ -134,7 +134,7 @@ const LiveFeed: React.FC = () => {
         setCameraStatus(feedId, 'Online');
       }, 3000);
     },
-    [setCameraStatus]
+    [setCameraStatus],
   );
 
   const handleCameraClick = useCallback((camera: CameraFeed) => {
@@ -176,12 +176,12 @@ const LiveFeed: React.FC = () => {
   }, [timelapseInterval]);
 
   const startTimelapse = useCallback(() => {
-    if (timelapseImages.length <= 1) return;
+    if (timelapseImages.length <= 1) {return;}
 
     setIsPlayingTimelapse(true);
     const interval = setInterval(() => {
       setCurrentTimelapseIndex(prev =>
-        prev >= timelapseImages.length - 1 ? 0 : prev + 1
+        prev >= timelapseImages.length - 1 ? 0 : prev + 1,
       );
     }, 1500);
     setTimelapseInterval(interval);
@@ -196,14 +196,14 @@ const LiveFeed: React.FC = () => {
   }, [timelapseInterval]);
 
   const toggleTimelapse = useCallback(() => {
-    if (isPlayingTimelapse) stopTimelapse();
-    else startTimelapse();
+    if (isPlayingTimelapse) {stopTimelapse();}
+    else {startTimelapse();}
   }, [isPlayingTimelapse, stopTimelapse, startTimelapse]);
 
   const goToPreviousFrame = useCallback(() => {
     if (!isPlayingTimelapse) {
       setCurrentTimelapseIndex(prev =>
-        prev <= 0 ? timelapseImages.length - 1 : prev - 1
+        prev <= 0 ? timelapseImages.length - 1 : prev - 1,
       );
     }
   }, [isPlayingTimelapse, timelapseImages.length]);
@@ -211,14 +211,14 @@ const LiveFeed: React.FC = () => {
   const goToNextFrame = useCallback(() => {
     if (!isPlayingTimelapse) {
       setCurrentTimelapseIndex(prev =>
-        prev >= timelapseImages.length - 1 ? 0 : prev + 1
+        prev >= timelapseImages.length - 1 ? 0 : prev + 1,
       );
     }
   }, [isPlayingTimelapse, timelapseImages.length]);
 
   const getStatusClass = useCallback(
     (status: string) => status.toLowerCase(),
-    []
+    [],
   );
 
   const memoizedCameraFeeds = useMemo(() => cameraFeeds, [cameraFeeds]);
@@ -246,7 +246,7 @@ const LiveFeed: React.FC = () => {
         iconAnchor: [12, 12],
         popupAnchor: [0, -12],
       }),
-    []
+    [],
   );
 
   // API request helper
@@ -271,7 +271,7 @@ const LiveFeed: React.FC = () => {
             throw new Error('Unauthorized: Invalid or missing API key');
           }
           throw new Error(
-            `API request failed: ${response.status} ${response.statusText}`
+            `API request failed: ${response.status} ${response.statusText}`,
           );
         }
         return await response.json();
@@ -285,7 +285,7 @@ const LiveFeed: React.FC = () => {
         throw error;
       }
     },
-    [navigate]
+    [navigate],
   );
 
   // Handle incident reporting
@@ -304,29 +304,29 @@ const LiveFeed: React.FC = () => {
       const currentUser = JSON.parse(sessionStorage.getItem('user') || '{}');
       const reporterName = currentUser.User_FirstName
         ? `${currentUser.User_FirstName} ${
-            currentUser.User_LastName || ''
-          }`.trim()
+          currentUser.User_LastName || ''
+        }`.trim()
         : currentUser.User_Email || 'Admin User';
 
       // Look up the database Camera_ID using the external ID
       let databaseCameraID = null;
       try {
         const cameraResponse = await apiRequest(
-          `/api/cameras/external/${encodeURIComponent(selectedCamera.id)}`
+          `/api/cameras/external/${encodeURIComponent(selectedCamera.id)}`,
         );
         console.log('Full camera response:', cameraResponse);
         databaseCameraID = cameraResponse.Camera_ID;
         console.log(
-          `Mapped external ID ${selectedCamera.id} to database Camera_ID ${databaseCameraID}`
+          `Mapped external ID ${selectedCamera.id} to database Camera_ID ${databaseCameraID}`,
         );
       } catch (cameraError) {
         console.warn(
           'Could not find camera in database:',
           selectedCamera.id,
-          cameraError
+          cameraError,
         );
         toast.warning(
-          'Camera not found in database, but incident will still be reported'
+          'Camera not found in database, but incident will still be reported',
         );
       }
 
@@ -352,7 +352,7 @@ const LiveFeed: React.FC = () => {
         'Incident reported successfully! All users have been alerted.',
         {
           autoClose: 5000,
-        }
+        },
       );
 
       // Reset form and close modal
@@ -672,150 +672,150 @@ const LiveFeed: React.FC = () => {
               {viewMode === 'video' &&
               selectedCamera.hasLiveStream &&
               selectedCamera.videoUrl ? (
-                <div className="video-container">
-                  <HlsPlayer
-                    src={selectedCamera.videoUrl}
-                    autoPlay={true}
-                    controls={true}
-                    width="100%"
-                    height="auto"
-                    className="camera-video"
-                    playerRef={modalPlayerRef}
-                    onError={() => handleVideoError(selectedCamera.id)}
-                    poster={selectedCamera.image} // Show still image while video loads
-                  />
-                </div>
-              ) : viewMode === 'map' && selectedCamera.coordinates ? (
-                <div className="map-container">
-                  <MapContainer
-                    {...({
-                      center: [
-                        selectedCamera.coordinates.lat,
-                        selectedCamera.coordinates.lng,
-                      ],
-                      zoom: 15,
-                      style: { height: '400px', width: '100%' },
-                      className: 'camera-map',
-                    } as any)}
-                  >
-                    <MapUpdater
-                      center={[
-                        selectedCamera.coordinates.lat,
-                        selectedCamera.coordinates.lng,
-                      ]}
+                  <div className="video-container">
+                    <HlsPlayer
+                      src={selectedCamera.videoUrl}
+                      autoPlay={true}
+                      controls={true}
+                      width="100%"
+                      height="auto"
+                      className="camera-video"
+                      playerRef={modalPlayerRef}
+                      onError={() => handleVideoError(selectedCamera.id)}
+                      poster={selectedCamera.image} // Show still image while video loads
                     />
-                    <TileLayer
+                  </div>
+                ) : viewMode === 'map' && selectedCamera.coordinates ? (
+                  <div className="map-container">
+                    <MapContainer
                       {...({
-                        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        attribution:
-                          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                      } as any)}
-                    />
-                    <Marker
-                      {...({
-                        position: [
+                        center: [
                           selectedCamera.coordinates.lat,
                           selectedCamera.coordinates.lng,
                         ],
-                        icon: cameraIcon,
+                        zoom: 15,
+                        style: { height: '400px', width: '100%' },
+                        className: 'camera-map',
                       } as any)}
                     >
-                      <Popup>
-                        <div className="map-popup">
-                          <h4>{selectedCamera.location}</h4>
-                          <p>
-                            <strong>Route:</strong> {selectedCamera.route}
-                          </p>
-                          {selectedCamera.direction && (
+                      <MapUpdater
+                        center={[
+                          selectedCamera.coordinates.lat,
+                          selectedCamera.coordinates.lng,
+                        ]}
+                      />
+                      <TileLayer
+                        {...({
+                          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          attribution:
+                          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                        } as any)}
+                      />
+                      <Marker
+                        {...({
+                          position: [
+                            selectedCamera.coordinates.lat,
+                            selectedCamera.coordinates.lng,
+                          ],
+                          icon: cameraIcon,
+                        } as any)}
+                      >
+                        <Popup>
+                          <div className="map-popup">
+                            <h4>{selectedCamera.location}</h4>
                             <p>
-                              <strong>Direction:</strong>{' '}
-                              {selectedCamera.direction}
+                              <strong>Route:</strong> {selectedCamera.route}
                             </p>
-                          )}
-                          {selectedCamera.county && (
+                            {selectedCamera.direction && (
+                              <p>
+                                <strong>Direction:</strong>{' '}
+                                {selectedCamera.direction}
+                              </p>
+                            )}
+                            {selectedCamera.county && (
+                              <p>
+                                <strong>County:</strong> {selectedCamera.county}
+                              </p>
+                            )}
+                            {selectedCamera.milepost && (
+                              <p>
+                                <strong>Milepost:</strong>{' '}
+                                {selectedCamera.milepost}
+                              </p>
+                            )}
                             <p>
-                              <strong>County:</strong> {selectedCamera.county}
+                              <strong>Coordinates:</strong>{' '}
+                              {selectedCamera.coordinates.lat.toFixed(6)},{' '}
+                              {selectedCamera.coordinates.lng.toFixed(6)}
                             </p>
-                          )}
-                          {selectedCamera.milepost && (
-                            <p>
-                              <strong>Milepost:</strong>{' '}
-                              {selectedCamera.milepost}
-                            </p>
-                          )}
-                          <p>
-                            <strong>Coordinates:</strong>{' '}
-                            {selectedCamera.coordinates.lat.toFixed(6)},{' '}
-                            {selectedCamera.coordinates.lng.toFixed(6)}
-                          </p>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  </MapContainer>
-                  <div className="map-info">
-                    <p>
-                      <strong>Camera Location:</strong>{' '}
-                      {selectedCamera.coordinates.lat.toFixed(6)},{' '}
-                      {selectedCamera.coordinates.lng.toFixed(6)}
-                    </p>
-                    <p>
-                      <strong>Viewing:</strong>{' '}
-                      {selectedCamera.imageDescription || 'Highway conditions'}
-                    </p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    </MapContainer>
+                    <div className="map-info">
+                      <p>
+                        <strong>Camera Location:</strong>{' '}
+                        {selectedCamera.coordinates.lat.toFixed(6)},{' '}
+                        {selectedCamera.coordinates.lng.toFixed(6)}
+                      </p>
+                      <p>
+                        <strong>Viewing:</strong>{' '}
+                        {selectedCamera.imageDescription || 'Highway conditions'}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="timelapse-container">
-                  <div className="timelapse-viewer">
-                    <img
-                      src={timelapseImages[currentTimelapseIndex]}
-                      alt={`${selectedCamera.location} - Frame ${
-                        currentTimelapseIndex + 1
-                      }`}
-                      className="timelapse-image"
-                    />
-                    <div className="timelapse-info">
+                ) : (
+                  <div className="timelapse-container">
+                    <div className="timelapse-viewer">
+                      <img
+                        src={timelapseImages[currentTimelapseIndex]}
+                        alt={`${selectedCamera.location} - Frame ${
+                          currentTimelapseIndex + 1
+                        }`}
+                        className="timelapse-image"
+                      />
+                      <div className="timelapse-info">
                       Frame {currentTimelapseIndex + 1} of{' '}
-                      {timelapseImages.length}
-                      {currentTimelapseIndex === 0
-                        ? ' (Current)'
-                        : ` (${currentTimelapseIndex} updates ago)`}
+                        {timelapseImages.length}
+                        {currentTimelapseIndex === 0
+                          ? ' (Current)'
+                          : ` (${currentTimelapseIndex} updates ago)`}
+                      </div>
                     </div>
-                  </div>
 
-                  {timelapseImages.length > 1 && (
-                    <div className="timelapse-controls">
-                      <button
-                        className="timelapse-btn"
-                        onClick={goToPreviousFrame}
-                        disabled={isPlayingTimelapse}
-                        title="Previous frame"
-                      >
+                    {timelapseImages.length > 1 && (
+                      <div className="timelapse-controls">
+                        <button
+                          className="timelapse-btn"
+                          onClick={goToPreviousFrame}
+                          disabled={isPlayingTimelapse}
+                          title="Previous frame"
+                        >
                         ◀
-                      </button>
-                      <button
-                        className="timelapse-btn primary"
-                        onClick={toggleTimelapse}
-                        title={
-                          isPlayingTimelapse
-                            ? 'Pause timelapse'
-                            : 'Play timelapse'
-                        }
-                      >
-                        {isPlayingTimelapse ? '⏸' : '▶'}
-                      </button>
-                      <button
-                        className="timelapse-btn"
-                        onClick={goToNextFrame}
-                        disabled={isPlayingTimelapse}
-                        title="Next frame"
-                      >
+                        </button>
+                        <button
+                          className="timelapse-btn primary"
+                          onClick={toggleTimelapse}
+                          title={
+                            isPlayingTimelapse
+                              ? 'Pause timelapse'
+                              : 'Play timelapse'
+                          }
+                        >
+                          {isPlayingTimelapse ? '⏸' : '▶'}
+                        </button>
+                        <button
+                          className="timelapse-btn"
+                          onClick={goToNextFrame}
+                          disabled={isPlayingTimelapse}
+                          title="Next frame"
+                        >
                         ▶
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
             </div>
 
             <div className="video-modal-info">
