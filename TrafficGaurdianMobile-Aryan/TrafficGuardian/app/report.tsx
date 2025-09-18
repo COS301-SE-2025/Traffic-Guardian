@@ -1,16 +1,75 @@
 import { router, useRouter } from "expo-router";
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Button } from "react-native";
 import { createIncident } from "../services/incidentsApi";
 import { useLocation } from "../services/location";
 import { Picker } from "@react-native-picker/picker";
 import { useSession } from "../services/sessionContext";
-
+import { Audio } from "expo-av";
 
 export default function Report() {
     const router = useRouter();
     const { coords } = useLocation();
     const { user } = useSession();
+  
+    const [recording, setRecording] = useState<Audio.Recording | null>(null);
+    const [sound, setSound] = useState<Audio.Sound | null>(null);
+    const [uri, setUri] = useState<string | null>(null);
+
+    //Recording stuff
+  useEffect(() => {
+    return sound
+      ? () => {
+          sound.unloadAsync();
+        }
+      : undefined;
+  }, [sound]);
+
+  async function startRecording() {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== "granted") {
+        alert("Microphone permission is required!");
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+
+      setRecording(recording);
+    }catch(err){
+      console.error("Failed to start recording", err);
+    }
+  }
+
+  async function stopRecording(){
+    if (!recording) return;
+
+    try {
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      setUri(uri);
+      setRecording(null);
+      console.log("Recording stored at", uri);
+    } catch (err) {
+      console.error("Failed to stop recording", err);
+    }
+  }
+
+  async function playSound() {
+    if (!uri) return;
+    console.log("Loading sound from", uri);
+
+    const { sound } = await Audio.Sound.createAsync({ uri });
+    setSound(sound);
+    await sound.playAsync();
+  }
     
   const [incidentDate, setIncidentDate] = useState(new Date().toISOString().split("T")[0]);
   const [incidentLocation, setIncidentLocation] = useState("");
@@ -73,6 +132,19 @@ export default function Report() {
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Report</Text>
       </TouchableOpacity>
+
+      <View style={{ padding: 20 }}>
+      <Button
+        title={recording ? "Stop Recording" : "Start Recording"}
+        onPress={recording ? stopRecording : startRecording}
+      />
+      {uri && (
+        <>
+          {/* <Text>Recorded file: {uri}</Text> */}
+          <Button title="Play Recording" onPress={playSound} />
+        </>
+      )}
+    </View>
     </ScrollView>
   );
 }
