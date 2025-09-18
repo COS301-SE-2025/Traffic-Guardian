@@ -4,11 +4,13 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView 
 import { createIncident } from "../services/incidentsApi";
 import { useLocation } from "../services/location";
 import { Picker } from "@react-native-picker/picker";
+import { useSession } from "../services/sessionContext";
 
 
 export default function Report() {
     const router = useRouter();
     const { coords } = useLocation();
+    const { user } = useSession();
     
   const [incidentDate, setIncidentDate] = useState(new Date().toISOString().split("T")[0]);
   const [incidentLocation, setIncidentLocation] = useState("");
@@ -19,20 +21,20 @@ export default function Report() {
 
   const handleSubmit = async () => {
     try{
-        if (!incidentCarID || !incidentSeverity) {
+        if (!incidentSeverity) {
         Alert.alert("Error", "Please fill in all fields.");
         return;
         }
 
-        const response = await createIncident(incidentDate, incidentLocation, incidentCarID, incidentSeverity, incidentDescription, coords);
-        Alert.alert("Success:", response);
+        const response = await createIncident(incidentDate, incidentLocation, incidentSeverity, incidentDescription, coords, user);
+        Alert.alert("Success:", response.message + " ID : " + JSON.stringify(response.incident.Incidents_ID));
     }catch(error : any){
       Alert.alert("Error", error.message || "Something went wrong");
     }
   };
 
   /////////////////////////////
-  return (
+  return(
     <ScrollView contentContainerStyle={styles.container}>
               <View style={styles.navbar}>
                 <TouchableOpacity onPress={() => router.push("/login")}>
@@ -48,23 +50,6 @@ export default function Report() {
                 </TouchableOpacity>
               </View>
       <Text style={styles.title}>Report an Incident</Text>
-
-      <Text style={styles.label}>Incident Location</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter location (nearest address)"
-        value={incidentLocation}
-        onChangeText={setIncidentLocation}
-      />
-
-      <Text style={styles.label}>Car ID</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Car ID"
-        keyboardType="numeric"
-        value={incidentCarID}
-        onChangeText={setIncidentCarID}
-      />
 
       <Text style={styles.label}>Severity</Text>
       <Picker
