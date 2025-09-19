@@ -18,6 +18,7 @@ const trafficRoutes = require('./routes/traffic'); // NEW LINE ADDED
 const archivesRoutes = require('./routes/archives');
 const adminRoutes = require('./routes/admin');
 const cameraRoutes = require('./routes/cameras');
+const uploadRoutes = require('./routes/voice');
 
 // Create Express application
 const app = express();
@@ -50,6 +51,7 @@ app.use('/api/traffic', trafficRoutes); // NEW LINE ADDED
 app.use('/api/archives', archivesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cameras', cameraRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 // Health check endpoint (includes optimization status)
 app.get('/api/health', (req, res) => {
