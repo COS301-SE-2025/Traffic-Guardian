@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-
+import * as FileSystem from "expo-file-system";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -49,4 +49,26 @@ export async function createIncident(date : string,location : string, Incident_S
     console.error("Reporting error:", error);
     throw error;
   }
+}
+
+export async function sendVoice(voiceURI: string, user : any){
+  const formData = new FormData();
+  formData.append("voice", {
+    uri: voiceURI,
+    name: "recording.m4a",
+    type: "audio/m4a",
+  } as any);
+
+  const response = await fetch(`${getBaseUrl()}/api/uploads/voice`, {
+    method: "POST",
+    headers : {"X-API-KEY" : user.apiKey},
+    body: formData,
+  });
+
+  if (!response.ok){
+    console.log(response);
+    throw new Error("Voice upload failed");
+  }
+
+  return await response.json();
 }
