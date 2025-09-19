@@ -31,7 +31,7 @@ export default function Index() {
           longitude: location.coords.longitude,
         });
 
-        Alert.alert("Location Access Granted", `Lat: ${location.coords.latitude}, Lon: ${location.coords.longitude}`);
+        //Alert.alert("Location Access Granted", `Lat: ${location.coords.latitude}, Lon: ${location.coords.longitude}`);
       } catch (error) {
         console.error(error);
         Alert.alert("Error", "Failed to get location.");
@@ -52,6 +52,38 @@ export default function Index() {
 
     return () => {
       socket.off("trafficUpdate", handleTrafficUpdate);
+    };
+  }, [socket]);
+
+  //emit user location
+  useEffect(()=>{
+    if (!socket || !coords) return;
+    socket.emit("new-location", {
+      latitude : coords.latitude,
+      longitude : coords.longitude
+    });
+
+      const interval = setInterval(() => {
+    socket.emit("new-location", {
+      latitude: coords.latitude + 0.01,
+      longitude: coords.longitude,
+    });
+    console.log("Emitted new-location:", coords);
+  }, 5000);
+
+  },[socket, coords, user]);
+
+  useEffect(()=>{
+    if(!socket) return;
+    
+    const handlenewTraffic = (data : any) => {
+      setTraffic(data);
+    };
+
+    socket.on("new-traffic", handlenewTraffic);
+
+    return () => {
+      socket.off("new-traffic", handlenewTraffic);
     };
   }, [socket]);
 

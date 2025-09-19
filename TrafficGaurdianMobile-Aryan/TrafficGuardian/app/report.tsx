@@ -114,8 +114,8 @@ export default function Report() {
                   <Text style={styles.navText}>Login</Text>
                 </TouchableOpacity>
         
-                <TouchableOpacity onPress={() => router.push("/report")}>
-                  <Text style={styles.navText}>Report</Text>
+                <TouchableOpacity onPress={() => router.push("/")}>
+                  <Text style={styles.navText}>Home</Text>
                 </TouchableOpacity>
         
                 <TouchableOpacity onPress={() => router.push("/register")}>
