@@ -1,7 +1,7 @@
 import { router, useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Button } from "react-native";
-import { createIncident } from "../services/incidentsApi";
+import { createIncident, sendVoice } from "../services/incidentsApi";
 import { useLocation } from "../services/location";
 import { Picker } from "@react-native-picker/picker";
 import { useSession } from "../services/sessionContext";
@@ -69,6 +69,20 @@ export default function Report() {
     const { sound } = await Audio.Sound.createAsync({ uri });
     setSound(sound);
     await sound.playAsync();
+  }
+
+  async function sendVoiceRecording(){
+    try{
+      if(!uri){
+        Alert.alert("No recording found");
+        return;
+      }
+
+      const response = await sendVoice(uri, user);
+      Alert.alert(response.message);
+    }catch(error : any){
+      Alert.alert("Error : " + error);
+    }
   }
     
   const [incidentDate, setIncidentDate] = useState(new Date().toISOString().split("T")[0]);
@@ -142,7 +156,9 @@ export default function Report() {
         <>
           {/* <Text>Recorded file: {uri}</Text> */}
           <Button title="Play Recording" onPress={playSound} />
+          <Button title="Send" onPress={sendVoiceRecording} />
         </>
+
       )}
     </View>
     </ScrollView>
