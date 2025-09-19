@@ -3,9 +3,9 @@ import { io, Socket } from "socket.io-client";
 import { Platform } from "react-native";
 
 const getBaseUrl = () => {
-  if (Platform.OS === "android") return "http://10.0.2.2:5000"; // Android emulator
-  if (Platform.OS === "ios") return "http://localhost:5000";   // iOS simulator
-  return "http://localhost:5000"; // fallback (web/desktop)
+  if (Platform.OS === "android") return "http://10.0.2.2:5000";
+  if (Platform.OS === "ios") return "http://localhost:5000";
+  return "http://localhost:5000";
 };
 
 const SOCKET_URL = getBaseUrl();
