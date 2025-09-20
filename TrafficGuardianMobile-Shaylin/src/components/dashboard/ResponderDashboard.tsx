@@ -110,4 +110,94 @@ const ResponderDashboard: React.FC = () => {
     loadDashboardData();
   }, [loadDashboardData]);
 
+  useEffect(() => {
+    let locationInterval: NodeJS.Timeout;
+    
+    if (isOnDuty && currentLocation) {
+      locationInterval = setInterval(() => {
+        updateLocation();
+      }, 30000);
+    }
+
+    return () => {
+      if (locationInterval) {
+        clearInterval(locationInterval);
+      }
+    };
+  }, [isOnDuty, currentLocation, updateLocation]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    loadDashboardData(false);
+  };
+
+  const toggleDutyStatus = async () => {
+    try {
+      const newStatus = !isOnDuty;
+      setIsOnDuty(newStatus);
+      
+      if (newStatus && currentLocation) {
+        await apiService.updateLocation(
+          currentLocation.latitude,
+          currentLocation.longitude,
+          undefined,
+          undefined,
+          undefined
+        );
+      }
+
+      showNotification(
+        `You are now ${newStatus ? 'on duty' : 'off duty'}`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Duty status update error:', error);
+      showNotification('Failed to update duty status', 'error');
+      setIsOnDuty(!isOnDuty); 
+    }
+  };
+
+  const handleIncidentAction = (incident: AssignedIncident, action: string) => {
+    Alert.alert(
+      'Incident Action',
+      `${action} incident: ${incident.description}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm',
+          onPress: async () => {
+            try {
+              let updateData: any = {};
+              
+              switch (action) {
+                case 'Accept':
+                  updateData = { status: INCIDENT_STATUS.ACTIVE };
+                  break;
+                case 'En Route':
+                  updateData = { 
+                    status: INCIDENT_STATUS.RESPONDING,
+                    estimatedArrival: '10 minutes'
+                  };
+                  break;
+                case 'On Scene':
+                  updateData = { status: INCIDENT_STATUS.MONITORING };
+                  break;
+                case 'Resolve':
+                  updateData = { status: INCIDENT_STATUS.RESOLVED };
+                  break;
+              }
+
+              await apiService.updateIncident(incident.id, updateData);
+              await loadDashboardData(false);
+              showNotification(`Incident ${action.toLowerCase()}ed successfully`, 'success');
+            } catch (error) {
+              console.error('Incident action error:', error);
+              showNotification(`Failed to ${action.toLowerCase()} incident`, 'error');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   
