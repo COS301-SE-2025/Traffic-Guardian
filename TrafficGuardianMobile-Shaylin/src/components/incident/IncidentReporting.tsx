@@ -752,4 +752,167 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: '500',
   },
-  
+  servicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  serviceButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    backgroundColor: colors.surface.light,
+  },
+  serviceSelected: {
+    borderColor: colors.secondary.main,
+    backgroundColor: colors.secondary.main + '20',
+  },
+  serviceText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontSize: 11,
+  },
+  serviceTextSelected: {
+    color: colors.secondary.main,
+    fontWeight: '500',
+  },
+  photoActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  photoButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary.main,
+    backgroundColor: colors.surface.light,
+  },
+  photoButtonText: {
+    ...typography.body,
+    color: colors.primary.main,
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  imagePreviewContainer: {
+    marginTop: 12,
+  },
+  imagePreview: {
+    marginRight: 12,
+    position: 'relative',
+  },
+  previewImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: colors.surface.light,
+    borderRadius: 10,
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary.main,
+    paddingVertical: 16,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    ...typography.button,
+    color: colors.text.light,
+    marginLeft: 8,
+  },
+  errorText: {
+    ...typography.caption,
+    color: colors.error,
+    marginTop: 4,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.background.light,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+  },
+  modalContent: {
+    padding: 20,
+  },
+  locationOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 8,
+    backgroundColor: colors.surface.light,
+  },
+  locationOptionText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  locationOptionTitle: {
+    ...typography.body,
+    color: colors.text.primary,
+    fontWeight: '500',
+  },
+  locationOptionSubtitle: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border.light,
+    marginVertical: 20,
+  },
+  manualLocationContainer: {
+    gap: 12,
+  },
+  manualLocationTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+  },
+  addressInput: {
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: colors.surface.light,
+    ...typography.body,
+    color: colors.text.primary,
+  },
+  setLocationButton: {
+    backgroundColor: colors.primary.main,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  setLocationButtonText: {
+    ...typography.button,
+    color: colors.text.light,
+  },
+});
+
+export default IncidentReporting;
