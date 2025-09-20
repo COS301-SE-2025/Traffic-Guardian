@@ -435,4 +435,110 @@ const IncidentReporting: React.FC = () => {
           {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
         </View>
 
-        
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Location *</Text>
+          {form.location ? (
+            <View style={styles.locationDisplay}>
+              <View style={styles.locationInfo}>
+                <Ionicons name="location" size={16} color={colors.success} />
+                <Text style={styles.locationText} numberOfLines={2}>
+                  {form.location.address}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.changeLocationButton}
+                onPress={() => setShowLocationModal(true)}
+              >
+                <Text style={styles.changeLocationText}>Change</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.addLocationButton}
+              onPress={() => setShowLocationModal(true)}
+            >
+              <Ionicons name="add-circle" size={20} color={colors.primary.main} />
+              <Text style={styles.addLocationText}>Add Location</Text>
+            </TouchableOpacity>
+          )}
+          {errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Emergency Services Needed</Text>
+          <Text style={styles.sectionSubtitle}>
+            Select services that should be notified (optional)
+          </Text>
+          <View style={styles.servicesGrid}>
+            {Object.values(EMERGENCY_SERVICES).map((service) => (
+              <TouchableOpacity
+                key={service}
+                style={[
+                  styles.serviceButton,
+                  form.emergencyServices.includes(service) && styles.serviceSelected
+                ]}
+                onPress={() => toggleEmergencyService(service)}
+              >
+                <Text style={[
+                  styles.serviceText,
+                  form.emergencyServices.includes(service) && styles.serviceTextSelected
+                ]}>
+                  {service.replace('_', ' ').toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Photos (Optional)</Text>
+          <Text style={styles.sectionSubtitle}>
+            Add up to {FILE_UPLOAD.MAX_IMAGES_PER_INCIDENT} photos to help responders
+          </Text>
+          
+          <View style={styles.photoActions}>
+            <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
+              <Ionicons name="camera" size={20} color={colors.primary.main} />
+              <Text style={styles.photoButtonText}>Take Photo</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.photoButton} onPress={handleSelectFromGallery}>
+              <Ionicons name="images" size={20} color={colors.primary.main} />
+              <Text style={styles.photoButtonText}>From Gallery</Text>
+            </TouchableOpacity>
+          </View>
+
+          {form.images.length > 0 && (
+            <ScrollView horizontal style={styles.imagePreviewContainer}>
+              {form.images.map((imageUri, index) => (
+                <View key={index} style={styles.imagePreview}>
+                  <Image source={{ uri: imageUri }} style={styles.previewImage} />
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() => handleRemoveImage(index)}
+                  >
+                    <Ionicons name="close-circle" size={20} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <LoadingSpinner size="small" color={colors.text.light} showText={false} />
+          ) : (
+            <>
+              <Ionicons name="send" size={20} color={colors.text.light} />
+              <Text style={styles.submitButtonText}>Report Incident</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+
+      
