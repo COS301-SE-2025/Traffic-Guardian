@@ -541,4 +541,107 @@ const IncidentReporting: React.FC = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      
+      <Modal
+        visible={showLocationModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Set Incident Location</Text>
+            <TouchableOpacity onPress={() => setShowLocationModal(false)}>
+              <Ionicons name="close" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.locationOption}
+              onPress={handleUseCurrentLocation}
+              disabled={isLoadingLocation}
+            >
+              <Ionicons name="locate" size={24} color={colors.primary.main} />
+              <View style={styles.locationOptionText}>
+                <Text style={styles.locationOptionTitle}>Use Current Location</Text>
+                <Text style={styles.locationOptionSubtitle}>
+                  Automatically detect your location
+                </Text>
+              </View>
+              {isLoadingLocation && <LoadingSpinner size="small" />}
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <View style={styles.manualLocationContainer}>
+              <Text style={styles.manualLocationTitle}>Enter Address Manually</Text>
+              <TextInput
+                style={styles.addressInput}
+                placeholder="Enter address or landmark"
+                value={manualAddress}
+                onChangeText={setManualAddress}
+              />
+              <TouchableOpacity
+                style={styles.setLocationButton}
+                onPress={handleManualLocation}
+                disabled={isLoadingLocation || !manualAddress.trim()}
+              >
+                <Text style={styles.setLocationButtonText}>Set Location</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.light,
+  },
+  contentContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  userInfo: {
+    backgroundColor: colors.primary.background,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 24,
+  },
+  userText: {
+    ...typography.caption,
+    color: colors.primary.main,
+    fontWeight: '500',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    marginBottom: 8,
+  },
+  sectionSubtitle: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginBottom: 12,
+  },
+  optionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  optionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    backgroundColor: colors.surface.light,
+    marginBottom: 8,
+  },
+  
