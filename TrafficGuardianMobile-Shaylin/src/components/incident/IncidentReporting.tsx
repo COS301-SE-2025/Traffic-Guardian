@@ -94,4 +94,132 @@ const IncidentReporting: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleUseCurrentLocation = async () => {
+    try {
+      setIsLoadingLocation(true);
+
+      let location = currentLocation;
+      if (!location) {
+        const permissionGranted = await requestLocationPermission();
+        if (!permissionGranted) {
+          Alert.alert(
+            'Location Permission Required',
+            'Please enable location permission to auto-detect your location.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+
+        const locationResult = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+          timeout: 15000,
+        });
+        
+        location = {
+          latitude: locationResult.coords.latitude,
+          longitude: locationResult.coords.longitude,
+        };
+      }
+
+      const addressResult = await apiService.reverseGeocode(
+        location.latitude,
+        location.longitude
+      );
+
+      setForm(prev => ({
+        ...prev,
+        location: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          address: addressResult.address?.formatted_address || 'Address not found',
+        }
+      }));
+
+      setShowLocationModal(false);
+      showNotification('Location detected successfully', 'success');
+
+    } catch (error) {
+      console.error('Location detection error:', error);
+      showNotification('Failed to detect location', 'error');
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
+
+  const handleManualLocation = async () => {
+    if (!manualAddress.trim()) {
+      Alert.alert('Error', 'Please enter an address');
+      return;
+    }
+
+    try {
+      setIsLoadingLocation(true);
+
+      const geocodeResult = await apiService.geocodeAddress(manualAddress);
+      
+      setForm(prev => ({
+        ...prev,
+        location: {
+          latitude: geocodeResult.location.latitude,
+          longitude: geocodeResult.location.longitude,
+          address: manualAddress,
+        }
+      }));
+
+      setShowLocationModal(false);
+      setManualAddress('');
+      showNotification('Location set successfully', 'success');
+
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      Alert.alert('Error', 'Could not find the specified address. Please try again.');
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (!permissionResult.granted) {
+        Alert.alert(
+          'Camera Permission Required',
+          'Please enable camera permission to take photos.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: FILE_UPLOAD.IMAGE_QUALITY,
+        maxWidth: FILE_UPLOAD.IMAGE_MAX_WIDTH,
+        maxHeight: FILE_UPLOAD.IMAGE_MAX_HEIGHT,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        
+        if (form.images.length >= FILE_UPLOAD.MAX_IMAGES_PER_INCIDENT) {
+          Alert.alert(
+            'Limit Reached',
+            `You can only attach up to ${FILE_UPLOAD.MAX_IMAGES_PER_INCIDENT} images.`
+          );
+          return;
+        }
+
+        setForm(prev => ({
+          ...prev,
+          images: [...prev.images, imageUri]
+        }));
+      }
+    } catch (error) {
+      console.error('Camera error:', error);
+      showNotification('Failed to take photo', 'error');
+    }
+  };
+
   
