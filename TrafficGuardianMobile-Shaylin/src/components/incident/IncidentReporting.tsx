@@ -222,4 +222,111 @@ const IncidentReporting: React.FC = () => {
     }
   };
 
+  const handleSelectFromGallery = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (!permissionResult.granted) {
+        Alert.alert(
+          'Gallery Permission Required',
+          'Please enable gallery permission to select photos.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: FILE_UPLOAD.IMAGE_QUALITY,
+        maxWidth: FILE_UPLOAD.IMAGE_MAX_WIDTH,
+        maxHeight: FILE_UPLOAD.IMAGE_MAX_HEIGHT,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        
+        if (form.images.length >= FILE_UPLOAD.MAX_IMAGES_PER_INCIDENT) {
+          Alert.alert(
+            'Limit Reached',
+            `You can only attach up to ${FILE_UPLOAD.MAX_IMAGES_PER_INCIDENT} images.`
+          );
+          return;
+        }
+
+        setForm(prev => ({
+          ...prev,
+          images: [...prev.images, imageUri]
+        }));
+      }
+    } catch (error) {
+      console.error('Gallery error:', error);
+      showNotification('Failed to select photo', 'error');
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const toggleEmergencyService = (service: string) => {
+    setForm(prev => ({
+      ...prev,
+      emergencyServices: prev.emergencyServices.includes(service)
+        ? prev.emergencyServices.filter(s => s !== service)
+        : [...prev.emergencyServices, service]
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      setIsSubmitting(true);
+
+      const incidentData = {
+        type: form.type,
+        severity: form.severity,
+        description: form.description.trim(),
+        location: form.location,
+        emergencyServices: form.emergencyServices,
+        images: form.images, // In production, upload images first and get URLs
+      };
+
+      await apiService.reportIncident(incidentData);
+
+      // Reset form
+      setForm({
+        type: '',
+        severity: '',
+        description: '',
+        location: null,
+        emergencyServices: [],
+        images: [],
+      });
+
+      Alert.alert(
+        'Success',
+        SUCCESS_MESSAGES.INCIDENT_REPORTED,
+        [{ text: 'OK' }]
+      );
+
+      showNotification('Incident reported successfully', 'success');
+
+    } catch (error: any) {
+      console.error('Submit error:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to report incident. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   
