@@ -160,3 +160,131 @@ const StatCard: React.FC<StatCardProps> = ({
   );
 };
 
+const getCardWidth = (size: 'small' | 'medium' | 'large') => {
+  const screenWidth = width - 40; 
+  
+  switch (size) {
+    case 'small':
+      return (screenWidth - 12) / 3; // 3 cards per row with gaps
+    case 'medium':
+      return (screenWidth - 12) / 2; // 2 cards per row with gaps
+    case 'large':
+      return screenWidth; // Full width
+    default:
+      return (screenWidth - 12) / 2;
+  }
+};
+
+const getIconSize = (size: 'small' | 'medium' | 'large') => {
+  switch (size) {
+    case 'small':
+      return 16;
+    case 'medium':
+      return 20;
+    case 'large':
+      return 24;
+    default:
+      return 20;
+  }
+};
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    padding: 16,
+    ...globalStyles.shadow,
+  },
+  largeContainer: {
+    padding: 20,
+  },
+  pressable: {
+    transform: [{ scale: 1 }],
+  },
+  loading: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingShimmer: {
+    width: '100%',
+    height: 60,
+    backgroundColor: colors.surface.disabled,
+    borderRadius: 8,
+    opacity: 0.6,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  iconContainer: {
+    padding: 8,
+    borderRadius: 8,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
+  },
+  title: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  titleSmall: {
+    fontSize: 10,
+  },
+  trendContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  trendText: {
+    ...typography.caption,
+    marginLeft: 4,
+    fontWeight: '600',
+  },
+  valueContainer: {
+    marginBottom: 8,
+  },
+  value: {
+    ...typography.statValue,
+    fontWeight: '700',
+    lineHeight: 32,
+  },
+  valueSmall: {
+    fontSize: 20,
+    lineHeight: 24,
+  },
+  valueLarge: {
+    fontSize: 48,
+    lineHeight: 56,
+  },
+  subtitle: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    lineHeight: 16,
+  },
+  subtitleSmall: {
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  progressContainer: {
+    marginTop: 8,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: colors.border.light,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+});
+
+export default StatCard;
