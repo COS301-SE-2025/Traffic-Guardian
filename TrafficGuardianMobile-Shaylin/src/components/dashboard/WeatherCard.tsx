@@ -218,3 +218,140 @@ const WeatherCard: React.FC = () => {
   );
 };
 
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  weatherCard: {
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    padding: 16,
+    ...globalStyles.shadow,
+  },
+  weatherHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginLeft: 4,
+  },
+  weatherMain: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  temperatureContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  temperature: {
+    ...typography.h2,
+    marginLeft: 12,
+    fontWeight: '700',
+  },
+  conditionContainer: {
+    alignItems: 'flex-end',
+  },
+  condition: {
+    ...typography.body,
+    color: colors.text.primary,
+    fontWeight: '500',
+  },
+  feelsLike: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  weatherDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
+  },
+  detailItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  detailText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  drivingImpact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary.background,
+    padding: 8,
+    borderRadius: 6,
+  },
+  drivingText: {
+    ...typography.caption,
+    color: colors.primary.main,
+    marginLeft: 6,
+    fontWeight: '500',
+  },
+  noLocationContainer: {
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    ...globalStyles.shadow,
+  },
+  noLocationText: {
+    ...typography.body,
+    color: colors.text.secondary,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    ...globalStyles.shadow,
+  },
+  loadingText: {
+    ...typography.body,
+    color: colors.text.secondary,
+    marginTop: 8,
+  },
+  errorContainer: {
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    ...globalStyles.shadow,
+  },
+  errorText: {
+    ...typography.body,
+    color: colors.error,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: colors.primary.main,
+    borderRadius: 6,
+  },
+  retryText: {
+    ...typography.button,
+    color: colors.text.light,
+  },
+});
+
+export default WeatherCard;
