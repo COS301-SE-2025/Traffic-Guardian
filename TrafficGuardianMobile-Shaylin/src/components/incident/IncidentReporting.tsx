@@ -329,4 +329,110 @@ const IncidentReporting: React.FC = () => {
     }
   };
 
-  
+  const getIncidentTypeIcon = (type: string) => {
+    switch (type) {
+      case INCIDENT_TYPES.ACCIDENT: return 'car-sport';
+      case INCIDENT_TYPES.BREAKDOWN: return 'construct';
+      case INCIDENT_TYPES.ROADWORK: return 'hammer';
+      case INCIDENT_TYPES.DEBRIS: return 'warning';
+      case INCIDENT_TYPES.WEATHER: return 'rainy';
+      case INCIDENT_TYPES.CONGESTION: return 'car-multiple';
+      case INCIDENT_TYPES.EMERGENCY: return 'medical';
+      default: return 'alert-circle';
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case INCIDENT_SEVERITY.CRITICAL: return colors.severity.critical;
+      case INCIDENT_SEVERITY.HIGH: return colors.severity.high;
+      case INCIDENT_SEVERITY.MEDIUM: return colors.severity.medium;
+      case INCIDENT_SEVERITY.LOW: return colors.severity.low;
+      default: return colors.text.secondary;
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <View style={styles.userInfo}>
+          <Text style={styles.userText}>
+            Reporting as: {user?.name} ({user?.role?.replace('_', ' ')})
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Incident Type *</Text>
+          <View style={styles.optionsGrid}>
+            {Object.values(INCIDENT_TYPES).map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.optionButton,
+                  form.type === type && styles.optionSelected
+                ]}
+                onPress={() => setForm(prev => ({ ...prev, type }))}
+              >
+                <Ionicons
+                  name={getIncidentTypeIcon(type)}
+                  size={20}
+                  color={form.type === type ? colors.primary.main : colors.text.secondary}
+                />
+                <Text style={[
+                  styles.optionText,
+                  form.type === type && styles.optionTextSelected
+                ]}>
+                  {type.replace('_', ' ').toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {errors.type && <Text style={styles.errorText}>{errors.type}</Text>}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Severity Level *</Text>
+          <View style={styles.severityContainer}>
+            {Object.values(INCIDENT_SEVERITY).map((severity) => (
+              <TouchableOpacity
+                key={severity}
+                style={[
+                  styles.severityButton,
+                  form.severity === severity && styles.severitySelected,
+                  { borderColor: getSeverityColor(severity) }
+                ]}
+                onPress={() => setForm(prev => ({ ...prev, severity }))}
+              >
+                <Text style={[
+                  styles.severityText,
+                  form.severity === severity && { color: getSeverityColor(severity) }
+                ]}>
+                  {severity.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {errors.severity && <Text style={styles.errorText}>{errors.severity}</Text>}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Description *</Text>
+          <TextInput
+            style={[styles.textInput, styles.textArea, errors.description && styles.inputError]}
+            placeholder="Describe what you see... (minimum 10 characters)"
+            value={form.description}
+            onChangeText={(text) => setForm(prev => ({ ...prev, description: text }))}
+            multiline
+            numberOfLines={4}
+            maxLength={500}
+          />
+          <Text style={styles.characterCount}>
+            {form.description.length}/500 characters
+          </Text>
+          {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
+        </View>
+
+        
