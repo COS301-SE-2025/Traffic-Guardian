@@ -200,4 +200,136 @@ const ResponderDashboard: React.FC = () => {
     );
   };
 
+  const getIncidentIcon = (type: string) => {
+    switch (type) {
+      case 'accident': return 'car-sport';
+      case 'breakdown': return 'construct';
+      case 'roadwork': return 'hammer';
+      case 'debris': return 'warning';
+      case 'weather': return 'rainy';
+      default: return 'alert-circle';
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'critical': return colors.severity.critical;
+      case 'high': return colors.severity.high;
+      case 'medium': return colors.severity.medium;
+      case 'low': return colors.severity.low;
+      default: return colors.text.secondary;
+    }
+  };
+
+  const getPriorityColor = (priority: number) => {
+    if (priority === 1) return colors.error;
+    if (priority === 2) return colors.warning;
+    return colors.success;
+  };
+
+  const renderIncidentCard = ({ item: incident }: { item: AssignedIncident }) => (
+    <View style={[
+      styles.incidentCard,
+      { borderLeftColor: getSeverityColor(incident.severity) }
+    ]}>
+      <View style={styles.incidentHeader}>
+        <View style={styles.incidentTypeContainer}>
+          <Ionicons
+            name={getIncidentIcon(incident.type)}
+            size={20}
+            color={getSeverityColor(incident.severity)}
+          />
+          <Text style={styles.incidentType}>
+            {incident.type.toUpperCase()}
+          </Text>
+          <View style={[
+            styles.priorityBadge,
+            { backgroundColor: getPriorityColor(incident.priority) }
+          ]}>
+            <Text style={styles.priorityText}>P{incident.priority}</Text>
+          </View>
+        </View>
+        <Text style={styles.incidentTime}>
+          {new Date(incident.createdAt).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </Text>
+      </View>
+
+      <Text style={styles.incidentDescription} numberOfLines={2}>
+        {incident.description}
+      </Text>
+
+      <View style={styles.incidentLocation}>
+        <Ionicons name="location" size={14} color={colors.text.secondary} />
+        <Text style={styles.locationText} numberOfLines={1}>
+          {incident.location.address}
+        </Text>
+      </View>
+
+      <View style={styles.incidentMetadata}>
+        <View style={styles.metadataItem}>
+          <Text style={styles.metadataLabel}>Status:</Text>
+          <Text style={styles.metadataValue}>{incident.status}</Text>
+        </View>
+        <View style={styles.metadataItem}>
+          <Text style={styles.metadataLabel}>Impact:</Text>
+          <Text style={styles.metadataValue}>{incident.trafficImpact}</Text>
+        </View>
+        {incident.affectedLanes > 0 && (
+          <View style={styles.metadataItem}>
+            <Text style={styles.metadataLabel}>Lanes:</Text>
+            <Text style={styles.metadataValue}>{incident.affectedLanes} affected</Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.incidentActions}>
+        {incident.status === INCIDENT_STATUS.REPORTED && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.acceptButton]}
+            onPress={() => handleIncidentAction(incident, 'Accept')}
+          >
+            <Text style={styles.actionButtonText}>Accept</Text>
+          </TouchableOpacity>
+        )}
+        
+        {incident.status === INCIDENT_STATUS.ACTIVE && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.routeButton]}
+            onPress={() => handleIncidentAction(incident, 'En Route')}
+          >
+            <Text style={styles.actionButtonText}>En Route</Text>
+          </TouchableOpacity>
+        )}
+        
+        {incident.status === INCIDENT_STATUS.RESPONDING && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.sceneButton]}
+            onPress={() => handleIncidentAction(incident, 'On Scene')}
+          >
+            <Text style={styles.actionButtonText}>On Scene</Text>
+          </TouchableOpacity>
+        )}
+        
+        {incident.status === INCIDENT_STATUS.MONITORING && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.resolveButton]}
+            onPress={() => handleIncidentAction(incident, 'Resolve')}
+          >
+            <Text style={styles.actionButtonText}>Resolve</Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={[styles.actionButton, styles.detailsButton]}
+          onPress={() => {/* Navigate to incident details */}}
+        >
+          <Ionicons name="eye" size={16} color={colors.primary.main} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   
