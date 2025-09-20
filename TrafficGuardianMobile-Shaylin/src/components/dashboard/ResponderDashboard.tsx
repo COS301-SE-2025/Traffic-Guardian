@@ -332,4 +332,145 @@ const ResponderDashboard: React.FC = () => {
     </View>
   );
 
-  
+  if (isLoading) {
+    return (
+      <View style={globalStyles.loadingContainer}>
+        <LoadingSpinner size="large" text="Loading responder dashboard..." />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          colors={[colors.primary.main]}
+          tintColor={colors.primary.main}
+        />
+      }
+    >
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.welcomeText}>
+            Field Responder Dashboard
+          </Text>
+          <Text style={styles.userInfo}>
+            {user?.name} • {user?.role.replace('_', ' ').toUpperCase()}
+          </Text>
+        </View>
+        
+        <TouchableOpacity
+          style={[
+            styles.dutyToggle,
+            isOnDuty ? styles.onDuty : styles.offDuty
+          ]}
+          onPress={toggleDutyStatus}
+        >
+          <Ionicons 
+            name={isOnDuty ? "radio-button-on" : "radio-button-off"} 
+            size={20} 
+            color={isOnDuty ? colors.success : colors.text.secondary} 
+          />
+          <Text style={[
+            styles.dutyText,
+            { color: isOnDuty ? colors.success : colors.text.secondary }
+          ]}>
+            {isOnDuty ? 'ON DUTY' : 'OFF DUTY'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {analytics && (
+        <View style={styles.statsContainer}>
+          <Text style={styles.sectionTitle}>Performance (30 days)</Text>
+          <View style={styles.statsGrid}>
+            <StatCard
+              title="Incidents Handled"
+              value={analytics.incidentsHandled.toString()}
+              icon="checkmark-circle"
+              color={colors.success}
+              size="medium"
+            />
+            <StatCard
+              title="Avg Response"
+              value={`${analytics.avgResponseTime}m`}
+              icon="time"
+              color={colors.warning}
+              size="medium"
+            />
+            <StatCard
+              title="Success Rate"
+              value={`${analytics.successRate}%`}
+              icon="trending-up"
+              color={colors.primary.main}
+              size="medium"
+            />
+            <StatCard
+              title="Rating"
+              value={analytics.performanceMetrics.rating.toFixed(1)}
+              icon="star"
+              color={colors.secondary.main}
+              size="medium"
+            />
+          </View>
+        </View>
+      )}
+
+      <View style={styles.incidentsContainer}>
+        <Text style={styles.sectionTitle}>
+          Assigned Incidents ({assignedIncidents.length})
+        </Text>
+        
+        {assignedIncidents.length === 0 ? (
+          <View style={styles.noIncidentsContainer}>
+            <Ionicons name="checkmark-circle" size={48} color={colors.success} />
+            <Text style={styles.noIncidentsText}>
+              No incidents assigned
+            </Text>
+            <Text style={styles.noIncidentsSubtext}>
+              You're all caught up!
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={assignedIncidents}
+            renderItem={renderIncidentCard}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={false}
+          />
+        )}
+      </View>
+
+      <View style={styles.quickActionsContainer}>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.quickActionsGrid}>
+          <TouchableOpacity style={styles.quickActionButton}>
+            <Ionicons name="map" size={24} color={colors.primary.main} />
+            <Text style={styles.quickActionText}>View Map</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.quickActionButton}>
+            <Ionicons name="call" size={24} color={colors.error} />
+            <Text style={styles.quickActionText}>Emergency</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.quickActionButton}>
+            <Ionicons name="document-text" size={24} color={colors.secondary.main} />
+            <Text style={styles.quickActionText}>Report</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.quickActionButton}>
+            <Ionicons name="settings" size={24} color={colors.warning} />
+            <Text style={styles.quickActionText}>Settings</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
+
