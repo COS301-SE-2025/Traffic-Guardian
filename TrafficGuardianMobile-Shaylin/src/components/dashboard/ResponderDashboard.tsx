@@ -474,3 +474,220 @@ const ResponderDashboard: React.FC = () => {
   );
 };
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.light,
+  },
+  contentContainer: {
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  welcomeText: {
+    ...typography.h3,
+    color: colors.text.primary,
+  },
+  userInfo: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 4,
+  },
+  dutyToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 2,
+  },
+  onDuty: {
+    borderColor: colors.success,
+    backgroundColor: colors.success + '10',
+  },
+  offDuty: {
+    borderColor: colors.text.secondary,
+    backgroundColor: colors.surface.light,
+  },
+  dutyText: {
+    ...typography.caption,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  sectionTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    marginBottom: 16,
+  },
+  statsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  incidentsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  noIncidentsContainer: {
+    alignItems: 'center',
+    padding: 40,
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    ...globalStyles.shadow,
+  },
+  noIncidentsText: {
+    ...typography.h4,
+    color: colors.success,
+    marginTop: 16,
+  },
+  noIncidentsSubtext: {
+    ...typography.body,
+    color: colors.text.secondary,
+    marginTop: 8,
+  },
+  incidentCard: {
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    ...globalStyles.shadow,
+  },
+  incidentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  incidentTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  incidentType: {
+    ...typography.label,
+    color: colors.text.primary,
+    marginLeft: 8,
+    marginRight: 8,
+  },
+  priorityBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  priorityText: {
+    ...typography.caption,
+    color: colors.text.light,
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  incidentTime: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  incidentDescription: {
+    ...typography.body,
+    color: colors.text.primary,
+    marginBottom: 8,
+  },
+  incidentLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  locationText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginLeft: 4,
+    flex: 1,
+  },
+  incidentMetadata: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
+  },
+  metadataItem: {
+    flex: 1,
+  },
+  metadataLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontSize: 10,
+  },
+  metadataValue: {
+    ...typography.caption,
+    color: colors.text.primary,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  incidentActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  actionButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  acceptButton: {
+    backgroundColor: colors.success,
+  },
+  routeButton: {
+    backgroundColor: colors.warning,
+  },
+  sceneButton: {
+    backgroundColor: colors.secondary.main,
+  },
+  resolveButton: {
+    backgroundColor: colors.primary.main,
+  },
+  detailsButton: {
+    backgroundColor: colors.surface.light,
+    borderWidth: 1,
+    borderColor: colors.primary.main,
+  },
+  actionButtonText: {
+    ...typography.buttonSmall,
+    color: colors.text.light,
+  },
+  quickActionsContainer: {
+    paddingHorizontal: 20,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  quickActionButton: {
+    width: '48%',
+    backgroundColor: colors.surface.light,
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    ...globalStyles.shadow,
+  },
+  quickActionText: {
+    ...typography.label,
+    color: colors.text.primary,
+    marginTop: 8,
+  },
+});
+
+export default ResponderDashboard;
