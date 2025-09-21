@@ -189,4 +189,264 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
     }
   };
 
-  
+  const startLocationTracking = async (): Promise<void> => {
+    try {
+      if (!isLocationPermissionGranted()) {
+        const granted = await requestLocationPermission();
+        if (!granted) throw new Error('Location permission not granted');
+      }
+
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+
+      const subscription = await Location.watchPositionAsync(
+        {
+          accuracy,
+          timeInterval: LOCATION_CONFIG.UPDATE_INTERVAL,
+          distanceInterval: LOCATION_CONFIG.LOCATION_UPDATE_DISTANCE,
+        },
+        (locationResult) => {
+          const coords: LocationCoords = {
+            latitude: locationResult.coords.latitude,
+            longitude: locationResult.coords.longitude,
+            accuracy: locationResult.coords.accuracy || undefined,
+            altitude: locationResult.coords.altitude || undefined,
+            altitudeAccuracy: locationResult.coords.altitudeAccuracy || undefined,
+            heading: locationResult.coords.heading || undefined,
+            speed: locationResult.coords.speed || undefined,
+          };
+
+          // Filter out inaccurate locations
+          if (coords.accuracy && coords.accuracy > LOCATION_CONFIG.MIN_ACCURACY) {
+            return;
+          }
+
+          setCurrentLocation(coords);
+          saveLocation(coords);
+
+          // Update server with new location (for responders)
+          updateServerLocation(coords);
+        }
+      );
+
+      setLocationSubscription(subscription);
+      setIsTrackingLocation(true);
+    } catch (error) {
+      console.error('Start location tracking error:', error);
+      throw error;
+    }
+  };
+
+  const stopLocationTracking = (): void => {
+    if (locationSubscription) {
+      locationSubscription.remove();
+      setLocationSubscription(null);
+    }
+    setIsTrackingLocation(false);
+  };
+
+  const updateLocation = async (): Promise<void> => {
+    await getCurrentLocation();
+  };
+
+  const updateServerLocation = async (coords: LocationCoords) => {
+    try {
+      await apiService.updateLocation(
+        coords.latitude,
+        coords.longitude,
+        coords.accuracy,
+        coords.heading,
+        coords.speed
+      );
+    } catch (error) {
+      console.error('Server location update error:', error);
+      // Don't throw error as this is not critical for app functionality
+    }
+  };
+
+  const geocodeAddress = async (address: string): Promise<LocationCoords | null> => {
+    try {
+      const result = await apiService.geocodeAddress(address);
+      return {
+        latitude: result.location.latitude,
+        longitude: result.location.longitude,
+      };
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return null;
+    }
+  };
+
+  const reverseGeocode = async (coords: LocationCoords): Promise<string | null> => {
+    try {
+      const result = await apiService.reverseGeocode(coords.latitude, coords.longitude);
+      return result.address?.formatted_address || null;
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+      return null;
+    }
+  };
+
+  const calculateDistance = (from: LocationCoords, to: LocationCoords): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = toRadians(to.latitude - from.latitude);
+    const dLon = toRadians(to.longitude - from.longitude);
+    
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRadians(from.latitude)) * Math.cos(toRadians(to.latitude)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in kilometers
+  };
+
+  const toRadians = (degrees: number): number => {
+    return degrees * (Math.PI / 180);
+  };
+
+  const isLocationPermissionGranted = (): boolean => {
+    return locationPermissionStatus === Location.PermissionStatus.GRANTED;
+  };
+
+  const contextValue: LocationContextType = {
+    currentLocation,
+    lastKnownLocation,
+    isLocationEnabled,
+    isTrackingLocation,
+    locationPermissionStatus,
+    accuracy,
+    requestLocationPermission,
+    getCurrentLocation,
+    startLocationTracking,
+    stopLocationTracking,
+    updateLocation,
+    geocodeAddress,
+    reverseGeocode,
+    calculateDistance,
+    isLocationPermissionGranted,
+  };
+
+  return (
+    <LocationContext.Provider value={contextValue}>
+      {children}
+    </LocationContext.Provider>
+  );
+};
+
+export const useLocation = (): LocationContextType => {
+  const context = useContext(LocationContext);
+  if (!context) {
+    throw new Error('useLocation must be used within a LocationProvider');
+  }
+  return context;
+};
+
+// Location utilities
+export const locationUtils = {
+  // Format coordinates for display
+  formatCoordinates: (coords: LocationCoords, precision = 4): string => {
+    return `${coords.latitude.toFixed(precision)}, ${coords.longitude.toFixed(precision)}`;
+  },
+
+  // Check if location is within bounds
+  isWithinBounds: (
+    location: LocationCoords,
+    bounds: {
+      north: number;
+      south: number;
+      east: number;
+      west: number;
+    }
+  ): boolean => {
+    return (
+      location.latitude <= bounds.north &&
+      location.latitude >= bounds.south &&
+      location.longitude <= bounds.east &&
+      location.longitude >= bounds.west
+    );
+  },
+
+  // Get center point between multiple locations
+  getCenterPoint: (locations: LocationCoords[]): LocationCoords => {
+    if (locations.length === 0) {
+      throw new Error('Cannot calculate center of empty locations array');
+    }
+
+    const sum = locations.reduce(
+      (acc, location) => ({
+        latitude: acc.latitude + location.latitude,
+        longitude: acc.longitude + location.longitude,
+      }),
+      { latitude: 0, longitude: 0 }
+    );
+
+    return {
+      latitude: sum.latitude / locations.length,
+      longitude: sum.longitude / locations.length,
+    };
+  },
+
+  // Calculate bearing between two points
+  calculateBearing: (from: LocationCoords, to: LocationCoords): number => {
+    const dLon = (to.longitude - from.longitude) * Math.PI / 180;
+    const lat1 = from.latitude * Math.PI / 180;
+    const lat2 = to.latitude * Math.PI / 180;
+
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+    let bearing = Math.atan2(y, x) * 180 / Math.PI;
+    bearing = (bearing + 360) % 360; // Normalise to 0-360 degrees
+
+    return bearing;
+  },
+
+  // Get compass direction from bearing
+  getBearingDirection: (bearing: number): string => {
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const index = Math.round(bearing / 45) % 8;
+    return directions[index];
+  },
+
+  // Check if location is accurate enough
+  isLocationAccurate: (location: LocationCoords): boolean => {
+    return !location.accuracy || location.accuracy <= LOCATION_CONFIG.MIN_ACCURACY;
+  },
+
+  // Get location age in minutes
+  getLocationAge: (timestamp: number): number => {
+    return Math.floor((Date.now() - timestamp) / (1000 * 60));
+  },
+
+  // Check if location is recent
+  isLocationRecent: (timestamp: number, maxAgeMinutes = 5): boolean => {
+    return locationUtils.getLocationAge(timestamp) <= maxAgeMinutes;
+  },
+
+  // Generate a region for map display
+  getMapRegion: (location: LocationCoords, radiusKm = 1) => {
+    const latitudeDelta = radiusKm / 111; // Approximate km per degree latitude
+    const longitudeDelta = radiusKm / (111 * Math.cos(location.latitude * Math.PI / 180));
+
+    return {
+      latitude: location.latitude,
+      longitude: location.longitude,
+      latitudeDelta: latitudeDelta * 2,
+      longitudeDelta: longitudeDelta * 2,
+    };
+  },
+
+  // Validate location coordinates
+  isValidLocation: (location: Partial<LocationCoords>): location is LocationCoords => {
+    return (
+      typeof location.latitude === 'number' &&
+      typeof location.longitude === 'number' &&
+      location.latitude >= -90 &&
+      location.latitude <= 90 &&
+      location.longitude >= -180 &&
+      location.longitude <= 180
+    );
+  },
+};
