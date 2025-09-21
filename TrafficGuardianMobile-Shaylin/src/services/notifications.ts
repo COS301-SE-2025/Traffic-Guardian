@@ -403,3 +403,113 @@ export const useNotification = (): NotificationContextType => {
   return context;
 };
 
+// Notification utilities
+export const notificationUtils = {
+  // Create incident notification
+  createIncidentNotification: (incident: any): NotificationData => ({
+    id: `incident_${incident.id}`,
+    title: 'New Incident Assigned',
+    body: `${incident.type} reported at ${incident.location.address}`,
+    data: {
+      type: NOTIFICATION_TYPES.INCIDENT_ASSIGNED,
+      incidentId: incident.id,
+      screen: 'IncidentDetails',
+      showInApp: true,
+    },
+    categoryId: 'incident',
+    priority: 'high',
+    sound: true,
+    vibrate: true,
+  }),
+
+  // Create emergency notification
+  createEmergencyNotification: (emergency: any): NotificationData => ({
+    id: `emergency_${emergency.id}`,
+    title: 'Emergency Alert',
+    body: emergency.message,
+    data: {
+      type: NOTIFICATION_TYPES.EMERGENCY_ALERT,
+      emergencyId: emergency.id,
+      showInApp: true,
+    },
+    categoryId: 'emergency',
+    priority: 'max',
+    sound: true,
+    vibrate: true,
+  }),
+
+  // Create traffic alert notification
+  createTrafficAlertNotification: (alert: any): NotificationData => ({
+    id: `traffic_alert_${alert.id}`,
+    title: 'Traffic Alert',
+    body: `${alert.severity} traffic incident on ${alert.route}`,
+    data: {
+      type: NOTIFICATION_TYPES.TRAFFIC_ALERT,
+      alertId: alert.id,
+      showInApp: true,
+    },
+    priority: 'default',
+    sound: false,
+    vibrate: false,
+  }),
+
+  // Format notification for display
+  formatNotificationTime: (timestamp: number): string => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / (1000 * 60));
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  },
+
+  // Check if notification should be shown based on user preferences
+  shouldShowNotification: (type: string, userPreferences: any): boolean => {
+    // Implement user preference logic
+    switch (type) {
+      case NOTIFICATION_TYPES.INCIDENT_ASSIGNED:
+        return userPreferences?.incidentNotifications !== false;
+      case NOTIFICATION_TYPES.EMERGENCY_ALERT:
+        return true; // Always show emergency alerts
+      case NOTIFICATION_TYPES.TRAFFIC_ALERT:
+        return userPreferences?.trafficAlerts !== false;
+      default:
+        return true;
+    }
+  },
+
+  // Get notification icon based on type
+  getNotificationIcon: (type: string): string => {
+    switch (type) {
+      case NOTIFICATION_TYPES.INCIDENT_ASSIGNED:
+      case NOTIFICATION_TYPES.INCIDENT_UPDATED:
+        return 'alert-circle';
+      case NOTIFICATION_TYPES.EMERGENCY_ALERT:
+        return 'warning';
+      case NOTIFICATION_TYPES.TRAFFIC_ALERT:
+        return 'car';
+      case NOTIFICATION_TYPES.WEATHER_ALERT:
+        return 'cloud-rain';
+      default:
+        return 'information-circle';
+    }
+  },
+
+  // Batch notifications to avoid spam
+  batchNotifications: (notifications: NotificationData[], maxBatch = 5): NotificationData[] => {
+    if (notifications.length <= maxBatch) {
+      return notifications;
+    }
+
+    // Keep only the most recent notifications
+    return notifications
+      .sort((a, b) => (b.data?.timestamp || 0) - (a.data?.timestamp || 0))
+      .slice(0, maxBatch);
+  },
+};
