@@ -444,3 +444,230 @@ const IncidentList: React.FC<{ navigation: any }> = ({ navigation }) => {
   );
 };
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.light,
+  },
+  filterContainer: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  filterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.surface.light,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    marginRight: 8,
+  },
+  filterButtonActive: {
+    backgroundColor: colors.primary.main,
+    borderColor: colors.primary.main,
+  },
+  filterButtonText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontWeight: '500',
+  },
+  filterButtonTextActive: {
+    color: colors.text.light,
+  },
+  list: {
+    padding: 16,
+  },
+  emptyList: {
+    flex: 1,
+  },
+  incidentCard: {
+    backgroundColor: colors.surface.light,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    ...globalStyles.shadow,
+  },
+  incidentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  incidentTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  incidentType: {
+    ...typography.label,
+    color: colors.text.primary,
+    marginLeft: 8,
+    marginRight: 8,
+  },
+  priorityBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  priorityText: {
+    ...typography.caption,
+    color: colors.text.light,
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  incidentMeta: {
+    alignItems: 'flex-end',
+  },
+  timeAgo: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginBottom: 4,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    ...typography.caption,
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  incidentDescription: {
+    ...typography.body,
+    color: colors.text.primary,
+    marginBottom: 8,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  locationText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginLeft: 4,
+    flex: 1,
+  },
+  incidentDetails: {
+    marginBottom: 12,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  detailLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    width: 80,
+  },
+  detailValue: {
+    ...typography.caption,
+    color: colors.text.primary,
+    flex: 1,
+    fontWeight: '500',
+  },
+  servicesContainer: {
+    marginBottom: 12,
+  },
+  servicesLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginBottom: 4,
+  },
+  servicesList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  serviceTag: {
+    backgroundColor: colors.secondary.main + '20',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  serviceText: {
+    ...typography.caption,
+    color: colors.secondary.main,
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'flex-end',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 4,
+  },
+  acceptButton: {
+    backgroundColor: colors.success,
+  },
+  respondButton: {
+    backgroundColor: colors.warning,
+  },
+  resolveButton: {
+    backgroundColor: colors.primary.main,
+  },
+  actionButtonText: {
+    ...typography.buttonSmall,
+    color: colors.text.light,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    ...typography.body,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  refreshButton: {
+    backgroundColor: colors.primary.main,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  refreshButtonText: {
+    ...typography.button,
+    color: colors.text.light,
+  },
+  loadingMore: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  addButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary.main,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...globalStyles.shadow,
+  },
+});
+
+export default IncidentList; 
