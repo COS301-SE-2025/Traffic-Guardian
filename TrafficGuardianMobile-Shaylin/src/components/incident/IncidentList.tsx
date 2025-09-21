@@ -245,4 +245,202 @@ const IncidentList: React.FC<{ navigation: any }> = ({ navigation }) => {
     const priorityConfig = getPriorityBadge(incident.priority);
     const canUpdate = hasPermission('update_incidents');
 
-    
+   return (
+      <TouchableOpacity
+        style={[styles.incidentCard, { borderLeftColor: severityColor }]}
+        onPress={() => handleIncidentPress(incident)}
+      >
+        <View style={styles.incidentHeader}>
+          <View style={styles.incidentTypeContainer}>
+            <Ionicons
+              name={getIncidentIcon(incident.type)}
+              size={20}
+              color={severityColor}
+            />
+            <Text style={styles.incidentType}>
+              {incident.type.replace('_', ' ').toUpperCase()}
+            </Text>
+            <View style={[styles.priorityBadge, { backgroundColor: priorityConfig.color }]}>
+              <Text style={styles.priorityText}>{priorityConfig.label}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.incidentMeta}>
+            <Text style={styles.timeAgo}>{formatTimeAgo(incident.createdAt)}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+              <Text style={[styles.statusText, { color: statusColor }]}>
+                {incident.status.toUpperCase()}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.incidentDescription} numberOfLines={2}>
+          {incident.description}
+        </Text>
+
+        <View style={styles.locationContainer}>
+          <Ionicons name="location" size={14} color={colors.text.secondary} />
+          <Text style={styles.locationText} numberOfLines={1}>
+            {incident.location.address}
+          </Text>
+        </View>
+
+        <View style={styles.incidentDetails}>
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>Impact:</Text>
+            <Text style={styles.detailValue}>{incident.trafficImpact}</Text>
+          </View>
+          
+          <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>Reported by:</Text>
+            <Text style={styles.detailValue}>{incident.reportedBy.name}</Text>
+          </View>
+
+          {incident.assignedTo && (
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Assigned to:</Text>
+              <Text style={styles.detailValue}>{incident.assignedTo.name}</Text>
+            </View>
+          )}
+        </View>
+
+        {incident.emergencyServices.length > 0 && (
+          <View style={styles.servicesContainer}>
+            <Text style={styles.servicesLabel}>Services:</Text>
+            <View style={styles.servicesList}>
+              {incident.emergencyServices.map((service, index) => (
+                <View key={index} style={styles.serviceTag}>
+                  <Text style={styles.serviceText}>
+                    {service.replace('_', ' ').toUpperCase()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {canUpdate && (
+          <View style={styles.quickActions}>
+            {incident.status === INCIDENT_STATUS.REPORTED && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.acceptButton]}
+                onPress={() => handleQuickAction(incident, 'accept')}
+              >
+                <Ionicons name="checkmark" size={16} color={colors.text.light} />
+                <Text style={styles.actionButtonText}>Accept</Text>
+              </TouchableOpacity>
+            )}
+            
+            {(incident.status === INCIDENT_STATUS.ACTIVE || incident.status === INCIDENT_STATUS.REPORTED) && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.respondButton]}
+                onPress={() => handleQuickAction(incident, 'respond')}
+              >
+                <Ionicons name="car" size={16} color={colors.text.light} />
+                <Text style={styles.actionButtonText}>Respond</Text>
+              </TouchableOpacity>
+            )}
+            
+            {(incident.status === INCIDENT_STATUS.RESPONDING || incident.status === INCIDENT_STATUS.MONITORING) && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.resolveButton]}
+                onPress={() => handleQuickAction(incident, 'resolve')}
+              >
+                <Ionicons name="checkmark-circle" size={16} color={colors.text.light} />
+                <Text style={styles.actionButtonText}>Resolve</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Ionicons name="document-text-outline" size={64} color={colors.text.secondary} />
+      <Text style={styles.emptyTitle}>No Incidents Found</Text>
+      <Text style={styles.emptySubtitle}>
+        {selectedStatus === 'all' 
+          ? 'No incidents in your area at the moment'
+          : `No ${selectedStatus} incidents found`
+        }
+      </Text>
+      <TouchableOpacity style={styles.refreshButton} onPress={() => loadIncidents()}>
+        <Text style={styles.refreshButtonText}>Refresh</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (isLoading) {
+    return (
+      <View style={globalStyles.loadingContainer}>
+        <LoadingSpinner size="large" text="Loading incidents..." />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.filterContainer}>
+        <FlatList
+          horizontal
+          data={statusOptions}
+          keyExtractor={(item) => item.value}
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                selectedStatus === item.value && styles.filterButtonActive
+              ]}
+              onPress={() => handleStatusFilter(item.value)}
+            >
+              <Text style={[
+                styles.filterButtonText,
+                selectedStatus === item.value && styles.filterButtonTextActive
+              ]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+
+      <FlatList
+        data={incidents}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderIncidentCard}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.primary.main]}
+            tintColor={colors.primary.main}
+          />
+        }
+        ListEmptyComponent={renderEmptyState}
+        contentContainerStyle={incidents.length === 0 ? styles.emptyList : styles.list}
+        onEndReached={() => {
+        }}
+        onEndReachedThreshold={0.1}
+        ListFooterComponent={() => loadingMore ? (
+          <View style={styles.loadingMore}>
+            <ActivityIndicator size="small" color={colors.primary.main} />
+          </View>
+        ) : null}
+      />
+
+      {hasPermission('report_incidents') && (
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate('IncidentReporting')}
+        >
+          <Ionicons name="add" size={24} color={colors.text.light} />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+};
+
