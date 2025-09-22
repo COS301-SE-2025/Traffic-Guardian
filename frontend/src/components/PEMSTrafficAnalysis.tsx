@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useUser } from '../contexts/UserContext';
 import './PEMSTrafficAnalysis.css';
 
 interface PEMSDetector {
@@ -49,6 +50,7 @@ interface PEMSData {
   district: number;
   region_name: string;
   timestamp: string;
+  source?: string;
   summary: {
     total_detectors: number;
     active_detectors: number;
@@ -146,6 +148,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
   onAlertSelect,
   onDetectorSelect,
 }) => {
+  const { isAuthenticated } = useUser();
   const [pemsData, setPemsData] = useState<PEMSData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -248,6 +251,11 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
   }
 
   if (error || !pemsData) {
+    // Hide PEMS errors for non-authenticated users
+    if (!isAuthenticated) {
+      return null;
+    }
+
     return (
       <div className="pems-analysis error">
         <AlertTriangleIcon />
@@ -623,7 +631,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
           Refresh Data
         </button>
         <span className="data-source">
-          Data Source: Caltrans PEMS District {pemsData.district}
+          Data Source: {pemsData.source || `PEMS District ${pemsData.district}`}
         </span>
       </div>
     </div>

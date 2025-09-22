@@ -43,7 +43,7 @@ svg {
   --subtitle-color: #ccc;
   --button-primary-bg: #fa3;
   --button-primary-text: #000;
-  --button-primary-hover: #e89c2f;
+  --button-primary-hover: #F79400;
   --admin-badge-bg: #fa3;
   --admin-badge-text: #000;
   --section-border: #555;
@@ -64,10 +64,23 @@ svg {
 
 .profile-page {
   padding: 1rem;
+  padding-top: calc(160px + 1rem);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: var(--text-color);
-  background-color: var(--background-color);
+  color: #f1f1f1;
+  background-color: #0f0f0f;
   min-height: calc(100vh - 2rem);
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    padding-top: calc(140px + 1rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-page {
+    padding-top: calc(130px + 1rem);
+  }
 }
 
 .profile-container {
@@ -81,9 +94,11 @@ svg {
 }
 
 .profile-header {
-  color: #000;
+  color: #feac34;
   text-align: center;
   margin-bottom: 1.5rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .profile-header h2 {

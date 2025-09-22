@@ -1,4 +1,4 @@
-.account-page {
+.signup-page {
   position: fixed;
   top: 160px;
   left: 0;
@@ -13,26 +13,26 @@
   z-index: 1000;
 }
 
-.auth-container {
+.signup-auth-container {
   display: flex;
-  max-width: 1100px;
+  max-width: 1200px;
   width: 90vw;
-  height: 80%;
-  min-height: 500px;
-  max-height: 600px;
+  height: 85%;
+  min-height: 650px;
+  max-height: 750px;
   background-color: #1e1e1e;
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   overflow: hidden;
 }
 
-.image-container {
+.signup-image-container {
   flex: 1;
   position: relative;
   overflow: hidden;
 }
 
-.auth-image {
+.signup-auth-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -40,11 +40,11 @@
   transition: transform 0.3s ease;
 }
 
-.auth-image:hover {
+.signup-auth-image:hover {
   transform: scale(1.05);
 }
 
-.image-overlay {
+.signup-image-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -64,7 +64,7 @@
   text-align: center;
 }
 
-.image-overlay h3 {
+.signup-image-overlay h3 {
   color: white;
   font-size: 2.5rem;
   font-weight: bold;
@@ -72,7 +72,7 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
 
-.image-overlay p {
+.signup-image-overlay p {
   color: #f0f0f0;
   font-size: 1.2rem;
   font-weight: 300;
@@ -81,10 +81,10 @@
   line-height: 1.4;
 }
 
-.login-container {
+.signup-form-container {
   flex: 1;
   background-color: #1e1e1e;
-  padding: 3rem;
+  padding: 2.5rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -92,53 +92,45 @@
   border-radius: 0;
   width: auto;
   height: auto;
+  overflow-y: auto;
 }
 
-.showcase-container {
-  background-color: #1e1e1e;
-  border-radius: 15px;
-  padding: 2rem;
-  width: 500px;
-  height: auto;
-  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
-}
-
-.login-container h2 {
+.signup-form-container h2 {
   font-size: 2rem;
   color: white;
   margin-bottom: 0.5rem;
 }
 
-.login-container p {
+.signup-form-container p {
   color: #aaa;
-  margin-bottom: 2rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
   margin-bottom: 1.5rem;
 }
 
-label {
+.signup-form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.2rem;
+}
+
+.signup-form-group label {
   color: #ddd;
   margin-bottom: 0.5rem;
 }
 
-input {
+.signup-form-group input {
   padding: 0.75rem;
   border: none;
   border-radius: 8px;
   background-color: #2a2a2a;
   color: white;
   font-size: 1rem;
-  width: 100%; /* Ensure inputs take full container width minus padding */
-  box-sizing: border-box; /* Prevent padding from affecting width */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .signup-btn {
-  width: 100%; /* Match input width */
-  height: 55px;
+  width: 100%;
+  height: 50px;
   border: none;
   border-radius: 10px;
   background: #feac34;
@@ -146,35 +138,12 @@ input {
   font-weight: bold;
   font-size: 1.1rem;
   cursor: pointer;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   transition: background 0.3s ease;
 }
 
 .signup-btn:hover {
   background: #F79400;
-}
-
-.showcase-container {
-  width: 500px;
-  height: 100%;
-  border-radius: 15px;
-  background-color: #1e1e1e;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.password-row {
-  position: relative;
-}
-
-.forgot-link {
-  position: absolute;
-  right: 0;
-  top: 0;
-  color: #feac34;
-  font-size: 0.9rem;
-  cursor: pointer;
 }
 
 .signup-text {
@@ -190,129 +159,127 @@ input {
   cursor: pointer;
 }
 
-.divider {
+.signup-divider {
   width: 100%;
   height: 1px;
   background-color: #feac34;
   margin: 1rem 0;
 }
 
-/* Account page styles */
-
-.account-card {
-  background: rgb(255 255 255 / 30%);
-  border-radius: 15px;
-  padding: 2rem;
-  width: 500px;
-  height: auto;
-  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
+.success-message {
+  text-align: center;
 }
 
-.account-card h2 {
-  font-size: 2rem;
-  color: white;
-  margin-bottom: 0.5rem;
+.success-message h2 {
+  color: #feac34;
+  margin-bottom: 1rem;
 }
 
-.account-card p {
+.success-message p {
   color: #aaa;
-  margin-bottom: 2rem;
 }
 
-.account-info {
-  color: #ddd;
-  margin-bottom: 1.5rem;
-}
-
-.account-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 1rem;
-}
-
-.edit-btn,
-.delete-btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
+/* Alert styles for signup */
+.alert {
+  padding: 1rem;
   border-radius: 8px;
-  background-color: #feac34;
-  color: black;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.3s ease;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.edit-btn:hover,
-.delete-btn:hover {
-  background-color: #F79400;
+.alert-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.alert svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .account-page {
+  .signup-page {
     top: 140px;
     height: calc(100vh - 140px);
   }
 
-  .auth-container {
+  .signup-auth-container {
     flex-direction: column;
     width: 95vw;
-    height: 90%;
-    min-height: 450px;
-    max-height: 550px;
+    height: 95%;
+    min-height: 600px;
+    max-height: none;
   }
 
-  .image-container {
-    height: 30%;
-    min-height: 150px;
+  .signup-image-container {
+    height: 25%;
+    min-height: 180px;
   }
 
-  .image-overlay h3 {
+  .signup-image-overlay h3 {
     font-size: 1.8rem;
   }
 
-  .image-overlay p {
+  .signup-image-overlay p {
     font-size: 0.9rem;
   }
 
-  .login-container {
+  .signup-form-container {
     padding: 2rem;
+    height: 75%;
+  }
+
+  .signup-form-group {
+    margin-bottom: 1rem;
   }
 }
 
 @media (max-width: 480px) {
-  .account-page {
+  .signup-page {
     top: 130px;
     height: calc(100vh - 130px);
   }
 
-  .auth-container {
+  .signup-auth-container {
     border-radius: 15px;
     width: 98vw;
-    height: 95%;
-    min-height: 400px;
-    max-height: 500px;
+    height: 98%;
+    min-height: 550px;
   }
 
-  .image-container {
-    height: 25%;
-    min-height: 120px;
+  .signup-image-container {
+    height: 20%;
+    min-height: 140px;
   }
 
-  .image-overlay h3 {
+  .signup-image-overlay h3 {
     font-size: 1.5rem;
   }
 
-  .image-overlay p {
+  .signup-image-overlay p {
     font-size: 0.8rem;
     max-width: 200px;
   }
 
-  .login-container {
+  .signup-form-container {
     padding: 1.5rem;
+    height: 80%;
   }
 
-  .login-container h2 {
+  .signup-form-container h2 {
     font-size: 1.6rem;
+  }
+
+  .signup-form-group {
+    margin-bottom: 0.8rem;
+  }
+
+  .signup-btn {
+    height: 45px;
   }
 }
