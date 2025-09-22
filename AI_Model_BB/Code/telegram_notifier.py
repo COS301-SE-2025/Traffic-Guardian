@@ -397,3 +397,24 @@ class TelegramNotifier:
         print("   TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz")
         print("   TELEGRAM_CHAT_ID=123456789")
         print("=" * 50)
+
+if __name__ == "__main__":
+    # Test the notification system
+    setup_telegram_env_example()
+    print()
+    
+    # Initialize notifier
+    notifier = TelegramNotifier()
+    
+    if notifier.enabled:
+        print("✅ Telegram notifier configured")
+        print("🧪 Running test notification...")
+        
+        result = notifier.test_notification()
+        if result['success']:
+            print(f"✅ Test successful via {result['method']} message")
+        else:
+            print(f"❌ Test failed: {result['error']}")
+    else:
+        print("❌ Telegram notifier not configured")
+        print("   Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID environment variables")
