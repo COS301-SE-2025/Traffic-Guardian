@@ -1,6 +1,8 @@
 """
 Telegram Notification System for TrafficGuardian AI
 Sends voice messages to Telegram when incidents are detected and submitted to API.
+requires pip install pyttsx3 gtts requests python-dotenv
+
 """
 
 import os
