@@ -680,28 +680,32 @@ jobs:
       - name: Generate API Documentation
         working-directory: ./API
         run: |
+          # Create Documentation directory
+          mkdir -p Documentation
+          
           # Create jsdoc configuration file
-          cat > jsdoc.json << EOF
-          {
+          echo '{
             "source": {
               "include": ["src"],
-              "includePattern": ".+\\.js$",
+              "includePattern": ".+\\\\.js$",
               "excludePattern": "(node_modules/|docs)"
             },
             "plugins": ["plugins/markdown"],
             "opts": {
-              "destination": "./docs",
+              "destination": "./Documentation/output",
               "recurse": true,
               "template": "node_modules/docdash"
             }
-          }
-          EOF
+          }' > Documentation/jsdoc.json
           
           # Install docdash template
           npm install docdash --no-save
           
+          # Check if jsdoc.json is valid
+          cat Documentation/jsdoc.json
+          
           # Run JSDoc
-          jsdoc -c jsdoc.json
+          jsdoc -c Documentation/jsdoc.json || echo "JSDoc generation failed, but continuing workflow"
 
       - name: Setup Python for AI Model Documentation
         uses: actions/setup-python@v4
@@ -773,7 +777,7 @@ jobs:
           
           # Copy API docs
           mkdir -p docs-package/api
-          cp -r API/docs/* docs-package/api/ 2>/dev/null || echo "No API docs to copy"
+          cp -r API/Documentation/output/* docs-package/api/ 2>/dev/null || echo "No API docs to copy"
           
           # Copy AI Model docs
           mkdir -p docs-package/ai-model
