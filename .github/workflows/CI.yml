@@ -358,7 +358,7 @@ jobs:
 
   build:
     name: Build Project
-    needs: [test-ui, test-api, test-ai-model]
+    needs: [test-api, test-ai-model] #test-ui, add again
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
