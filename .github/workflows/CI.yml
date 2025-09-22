@@ -990,7 +990,7 @@ jobs:
           # Check dependencies with safety if requirements.txt exists
           if [ -f "requirements.txt" ]; then
             echo "Checking Python dependencies with safety..."
-            safety check -r requirements.txt || echo "Vulnerabilities found in Python dependencies"
+            safety scan -r requirements.txt || echo "Vulnerabilities found in Python dependencies"
           else
             echo "No requirements.txt found, skipping dependency check"
           fi
