@@ -18,9 +18,10 @@ svg {
   --button-secondary-bg: transparent;
   --button-secondary-text: #333;
   --button-secondary-border: #999;
-  --button-secondary-hover-bg: rgb(
-    217 119 0 / 10%
-  ); /* Adjusted for darker accent */
+  --button-secondary-hover-bg:
+    rgb(
+      217 119 0 / 10%
+    ); /* Adjusted for darker accent */
 
   --button-secondary-hover-border: #d97700; /* Darker accent */
   --content-bg: #f9f9f9;
@@ -64,9 +65,10 @@ svg {
   --form-help-text: #666;
   --file-upload-border: #ccc;
   --file-upload-hover-border: #d97700; /* Darker accent */
-  --file-upload-dragover-bg: rgb(
-    217 119 0 / 5%
-  ); /* Adjusted for darker accent */
+  --file-upload-dragover-bg:
+    rgb(
+      217 119 0 / 5%
+    ); /* Adjusted for darker accent */
 
   --file-upload-text: #666;
   --file-upload-btn-bg: transparent;
@@ -344,9 +346,10 @@ svg {
   max-width: 100%;
   min-width: 100%;
   box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
-  min-height: calc(
-    100vh - 300px
-  ); /* Increased to ensure pagination visibility */
+  min-height:
+    calc(
+      100vh - 300px
+    ); /* Increased to ensure pagination visibility */
 
   height: auto;
   overflow: visible; /* Ensure content is not clipped */
@@ -967,7 +970,7 @@ svg {
 }
 
 /* Responsive Design */
-@media (width <= 1024px) {
+@media (max-width: 1024px) {
   .incidents-header {
     flex-direction: column;
     align-items: flex-start;
@@ -988,7 +991,7 @@ svg {
   }
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .incidents-content {
     padding: 1rem;
   }

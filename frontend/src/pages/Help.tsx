@@ -327,8 +327,8 @@ const Help: React.FC = () => {
       section.content.some(
         item =>
           item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.answer.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+          item.answer.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
   );
 
   return (

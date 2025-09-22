@@ -78,7 +78,6 @@
 }
 
 .navbar .icon-group {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -109,7 +108,7 @@
   color: #ffae36;
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .navbar .tg-nav-links {
     gap: 1rem;
     justify-content: center;

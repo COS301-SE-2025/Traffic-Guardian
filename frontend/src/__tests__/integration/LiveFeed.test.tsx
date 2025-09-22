@@ -4,13 +4,12 @@ import {
   screen,
   waitFor,
   fireEvent,
-  act,
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Simple mock for HLS Player
 jest.mock('react-hls-player', () => {
-  return function MockHlsPlayer({ src, ...props }: any) {
+  return function MockHlsPlayer({ src, ..._props }: any) {
     return (
       <div data-testid="hls-player" data-src={src}>
         HLS Player
@@ -219,9 +218,7 @@ describe('LiveFeed Integration Tests', () => {
 
     const refreshButton = screen.getByTestId('refresh-btn');
 
-    act(() => {
-      fireEvent.click(refreshButton);
-    });
+    fireEvent.click(refreshButton);
 
     // Should show loading state briefly
     expect(screen.getByTestId('loading-state')).toBeInTheDocument();
@@ -243,9 +240,7 @@ describe('LiveFeed Integration Tests', () => {
 
     const errorButton = screen.getByTestId('error-trigger');
 
-    act(() => {
-      fireEvent.click(errorButton);
-    });
+    fireEvent.click(errorButton);
 
     expect(screen.getByTestId('error-state')).toBeInTheDocument();
     expect(screen.getByText('Failed to load camera feeds')).toBeInTheDocument();
@@ -261,17 +256,13 @@ describe('LiveFeed Integration Tests', () => {
 
     // Trigger error
     const errorButton = screen.getByTestId('error-trigger');
-    act(() => {
-      fireEvent.click(errorButton);
-    });
+    fireEvent.click(errorButton);
 
     expect(screen.getByTestId('error-state')).toBeInTheDocument();
 
     // Click retry
     const retryButton = screen.getByText('Try Again');
-    act(() => {
-      fireEvent.click(retryButton);
-    });
+    fireEvent.click(retryButton);
 
     // Should show loading then success
     expect(screen.getByTestId('loading-state')).toBeInTheDocument();
@@ -299,7 +290,7 @@ describe('LiveFeed Integration Tests', () => {
       expect(screen.getByTestId('livefeed-page')).toBeInTheDocument();
     });
 
-    const cameraTiles = document.querySelectorAll('.feed-tile');
+    const cameraTiles = screen.getAllByTestId(/camera-TEST-/);
     expect(cameraTiles).toHaveLength(2);
   });
 

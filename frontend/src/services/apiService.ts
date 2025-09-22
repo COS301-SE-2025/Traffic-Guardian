@@ -118,7 +118,7 @@ class ApiService {
         .json()
         .catch(() => ({ error: 'Network error' }));
       throw new Error(
-        errorData.error || `HTTP error! status: ${response.status}`
+        errorData.error || `HTTP error! status: ${response.status}`,
       );
     }
     return response.json();
@@ -147,7 +147,7 @@ class ApiService {
       });
 
       const todaysData = await this.handleResponse<TodaysIncidentsData>(
-        response
+        response,
       );
       return todaysData;
     } catch (error) {
@@ -183,7 +183,7 @@ class ApiService {
       date_to?: string;
       limit?: number;
       offset?: number;
-    } = {}
+    } = {},
   ): Promise<ArchiveData[]> {
     try {
       const queryParams = new URLSearchParams();
@@ -298,7 +298,7 @@ class ApiService {
       analytics.archivesByMonth = Array.from(monthMap.entries())
         .map(([month, count]) => ({ month, count }))
         .sort(
-          (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime()
+          (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime(),
         );
 
       analytics.archivesByLocation = Array.from(locationMap.entries())
@@ -310,10 +310,10 @@ class ApiService {
       if (archives.length > 0) {
         const dates = archives.map(a => new Date(a.Archive_DateTime));
         analytics.storageMetrics.oldestArchive = new Date(
-          Math.min(...dates.map(d => d.getTime()))
+          Math.min(...dates.map(d => d.getTime())),
         ).toISOString();
         analytics.storageMetrics.newestArchive = new Date(
-          Math.max(...dates.map(d => d.getTime()))
+          Math.max(...dates.map(d => d.getTime())),
         ).toISOString();
 
         // Estimate storage size (rough calculation)
@@ -332,24 +332,24 @@ class ApiService {
 
   // Helper to extract location from archive data
   private static extractLocationFromArchive(
-    archive: ArchiveData
+    archive: ArchiveData,
   ): string | null {
     try {
       // Try to extract from search text
       if (archive.Archive_SearchText) {
         const searchText = archive.Archive_SearchText.toLowerCase();
         const locations = [
-          'rosebank',
-          'sandton',
-          'midrand',
-          'centurion',
-          'pretoria',
-          'soweto',
-          'randburg',
-          'boksburg',
-          'vereeniging',
-          'alberton',
-          'hatfield',
+          'san francisco',
+          'san jose',
+          'los angeles',
+          'san diego',
+          'sacramento',
+          'oakland',
+          'palo alto',
+          'pasadena',
+          'long beach',
+          'thousand oaks',
+          'torrance',
         ];
 
         for (const location of locations) {
@@ -365,8 +365,8 @@ class ApiService {
         typeof archive.Archive_Metadata === 'object'
       ) {
         const metadata = archive.Archive_Metadata;
-        if (metadata.location) return metadata.location;
-        if (metadata.camera_district) return metadata.camera_district;
+        if (metadata.location) {return metadata.location;}
+        if (metadata.camera_district) {return metadata.camera_district;}
       }
 
       return 'Unknown Location';
@@ -399,7 +399,7 @@ class ApiService {
         `${API_BASE_URL}/traffic/incidentLocations`,
         {
           headers: this.getAuthHeaders(),
-        }
+        },
       );
 
       const locations = await this.handleResponse<LocationData[]>(response);
@@ -417,11 +417,11 @@ class ApiService {
         `${API_BASE_URL}/traffic/criticalIncidents`,
         {
           headers: this.getAuthHeaders(),
-        }
+        },
       );
 
       const criticalData = await this.handleResponse<CriticalIncidentsData>(
-        response
+        response,
       );
       return criticalData;
     } catch (error) {
@@ -453,7 +453,7 @@ class ApiService {
       });
 
       const trafficData = await this.handleResponse<TrafficIncident[]>(
-        response
+        response,
       );
       return trafficData;
     } catch (error) {
@@ -470,7 +470,7 @@ class ApiService {
 
   // Get current user info
   static getCurrentUser(): any {
-    const userStr = localStorage.getItem('user');
+    const userStr = sessionStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   }
 
@@ -503,8 +503,8 @@ class ApiService {
 
       // Store authentication data
       if (result.apiKey) {
-        localStorage.setItem('apiKey', result.apiKey);
-        localStorage.setItem('user', JSON.stringify(result.user));
+        sessionStorage.setItem('apiKey', result.apiKey);
+        sessionStorage.setItem('user', JSON.stringify(result.user));
       }
 
       return result;
@@ -516,8 +516,74 @@ class ApiService {
 
   // Logout function
   static logout(): void {
-    localStorage.removeItem('apiKey');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('apiKey');
+    sessionStorage.removeItem('user');
+  }
+
+  static async fetchPEMSDashboardSummary(): Promise<any | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/pems/dashboard-summary`, {
+        headers: this.getAuthHeaders(),
+      });
+
+      const pemsData = await this.handleResponse<any>(response);
+      return pemsData;
+    } catch (error) {
+      console.error('Error fetching PEMS dashboard summary:', error);
+      return null;
+    }
+  }
+
+  // Get high-risk areas across all districts
+  static async fetchPEMSHighRiskAreas(): Promise<any | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/pems/high-risk-areas`, {
+        headers: this.getAuthHeaders(),
+      });
+
+      const highRiskData = await this.handleResponse<any>(response);
+      return highRiskData;
+    } catch (error) {
+      console.error('Error fetching PEMS high-risk areas:', error);
+      return null;
+    }
+  }
+
+  // Get PEMS alerts for analytics
+  static async fetchPEMSAlerts(priority?: string): Promise<any | null> {
+    try {
+      const queryParams = priority ? `?priority=${priority}` : '';
+      const response = await fetch(
+        `${API_BASE_URL}/pems/alerts${queryParams}`,
+        {
+          headers: this.getAuthHeaders(),
+        },
+      );
+
+      const alertsData = await this.handleResponse<any>(response);
+      return alertsData;
+    } catch (error) {
+      console.error('Error fetching PEMS alerts:', error);
+      return null;
+    }
+  }
+
+  // Get PEMS data for specific district (for detailed analytics)
+  static async fetchPEMSDistrictData(district: number): Promise<any | null> {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/pems/district/${district}`,
+        {
+          headers: this.getAuthHeaders(),
+        },
+      );
+
+      const districtData = await this.handleResponse<any>(response);
+      return districtData;
+    } catch (error) {
+      console.error(`Error fetching PEMS district ${district} data:`, error);
+      return null;
+    }
   }
 }
 

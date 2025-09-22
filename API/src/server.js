@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const axios = require('axios');
 const FormData = require('form-data');
 const traffic = require('../src/Traffic/traffic');
+const caltransTraffic = require('../src/Traffic/caltransTraffic');
 const archivesModel = require('./models/archives');
 const ILM = require('../src/IncidentLocationMapping/ilmInstance');
 const weather = require('./Weather/weather');
@@ -24,16 +25,54 @@ const io = new Server(server, {
 const PORT = 5000;
 const HOST = process.env.HOST || 'localhost';
 
+// Global socket connection tracking
+let activeConnections = new Set();
+let connectedUsers = new Map(); // socket.id -> user info
+
+// Helper function to broadcast active user count
+const broadcastActiveUsers = () => {
+  const activeUsersCount = activeConnections.size;
+  io.emit('activeUsersUpdate', {
+    count: activeUsersCount,
+    timestamp: new Date()
+  });
+  console.log(`Broadcasting active users: ${activeUsersCount}`);
+};
+
 var welcomeMsg;
 
 io.on('connection',(socket)=>{
+  // Track new connection
+  activeConnections.add(socket.id);
+  connectedUsers.set(socket.id, {
+    socketId: socket.id,
+    connectedAt: new Date(),
+    userAgent: socket.handshake.headers['user-agent'] || 'Unknown',
+    ip: socket.handshake.address || 'Unknown'
+  });
+  
   ILM.addUser(socket.id, {});
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
+  
+  // Broadcast updated user count
+  broadcastActiveUsers();
+  
+  console.log(`New user connected: ${socket.id} (Total: ${activeConnections.size})`);
     
-    //traffic prt
-    traffic.getTraffic().then((data)=>{
+    //traffic prt - try enhanced California traffic first
+    const getTrafficData = async () => {
+      if (process.env.USE_CALIFORNIA_TRAFFIC === 'true') {
+        console.log('🌴 Initial fetch: Using enhanced California traffic data...');
+        return await caltransTraffic.getEnhancedCaliforniaTraffic();
+      } else {
+        console.log('🗺️  Initial fetch: Using TomTom traffic data...');
+        return await traffic.getTraffic();
+      }
+    };
+    
+    getTrafficData().then((data)=>{
       if (data && Array.isArray(data)) {
         socket.emit('trafficUpdate', data);
 
@@ -52,7 +91,7 @@ io.on('connection',(socket)=>{
         const res_incidentLocations =  traffic.incidentLocations(data);
         socket.emit('incidentLocations', res_incidentLocations);
       } else {
-        console.log('⚠️  Traffic API unavailable on connection - using empty data');
+        console.log('Traffic API unavailable on connection - using empty data');
         socket.emit('trafficUpdate', []);
         socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0 });
         socket.emit('incidentCategory', { categories: [], percentages: [] });
@@ -76,7 +115,15 @@ io.on('connection',(socket)=>{
     
     setInterval(async()=>{
       try {
-        const data = await traffic.getTraffic();
+        let data;
+        
+        if (process.env.USE_CALIFORNIA_TRAFFIC === 'true') {
+          console.log('🌴 Using enhanced California traffic data...');
+          data = await caltransTraffic.getEnhancedCaliforniaTraffic();
+        } else {
+          console.log('🗺️  Using TomTom traffic data...');
+          data = await traffic.getTraffic();
+        }
         
         if (data && Array.isArray(data)) {
           socket.emit('trafficUpdate', data);
@@ -96,7 +143,7 @@ io.on('connection',(socket)=>{
           const res_incidentLocations =  traffic.incidentLocations(data);
           socket.emit('incidentLocations', res_incidentLocations);
         } else {
-          console.log('⚠️  Traffic API unavailable in interval update - skipping');
+          console.log('Traffic API unavailable in interval update - skipping');
         }
       } catch (error) {
         console.error('Traffic API error in interval update:', error.message);
@@ -258,8 +305,11 @@ io.on('connection',(socket)=>{
       }
     }, 30 * 60 * 1000); // 30 minutes
 
-    // Clean up intervals and remove user on disconnect
-    socket.on('disconnect', () => {
+    // Handle socket disconnection - Add user tracking cleanup
+    socket.on('disconnect', (reason) => {
+      // Remove from tracking
+      activeConnections.delete(socket.id);
+      connectedUsers.delete(socket.id);
       
       // Clean up archive intervals
       clearInterval(archiveStatsInterval);
@@ -267,11 +317,31 @@ io.on('connection',(socket)=>{
       
       // Remove user from ILM system
       ILM.removeUser(socket.id);
+      
+      // Broadcast updated user count
+      broadcastActiveUsers();
+      
+      console.log(`User disconnected: ${socket.id} (Reason: ${reason}) (Total: ${activeConnections.size})`);
+    });
+    
+    // Handle request for current stats
+    socket.on('request-stats', () => {
+      socket.emit('activeUsersUpdate', {
+        count: activeConnections.size,
+        timestamp: new Date()
+      });
     });
 });
 
 // Set io instance in app for use in controllers
 app.set('io', io);
+
+// Periodic broadcast of active users count (every 30 seconds)
+setInterval(() => {
+  if (activeConnections.size > 0) {
+    broadcastActiveUsers();
+  }
+}, 30000);
 
 // ==================== ARCHIVE EVENT EMITTERS ====================
 
