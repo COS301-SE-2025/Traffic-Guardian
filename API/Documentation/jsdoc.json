@@ -4,10 +4,53 @@
     "includePattern": ".+\\.js$",
     "excludePattern": "(node_modules/|docs)"
   },
-  "plugins": ["plugins/markdown"],
+  "plugins": [
+    "plugins/markdown",
+    "plugins/summarize"
+  ],
   "opts": {
     "destination": "./output",
     "recurse": true,
-    "template": "node_modules/docdash"
+    "template": "node_modules/docdash",
+    "readme": "../README.md"
+  },
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": false,
+    "default": {
+      "outputSourceFiles": true,
+      "includeDate": false
+    }
+  },
+  "docdash": {
+    "static": false,
+    "sort": true,
+    "sectionOrder": [
+      "Classes",
+      "Modules",
+      "Externals",
+      "Events",
+      "Namespaces",
+      "Mixins",
+      "Tutorials",
+      "Interfaces"
+    ],
+    "meta": {
+      "title": "Traffic Guardian API Documentation",
+      "description": "API documentation for Traffic Guardian project",
+      "keyword": "traffic, api, documentation"
+    },
+    "search": true,
+    "collapse": true,
+    "wrap": true,
+    "typedefs": true,
+    "navLevel": 3,
+    "private": false,
+    "menu": {
+      "Project Website": {
+        "href": "https://github.com/COS301-SE-2025/Traffic-Guardian",
+        "target": "_blank"
+      }
+    }
   }
 }

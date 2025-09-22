@@ -683,18 +683,39 @@ jobs:
           # Create Documentation directory
           mkdir -p Documentation
           
-          # Create jsdoc configuration file
+          # Create jsdoc configuration file with enhanced options
           echo '{
             "source": {
               "include": ["src"],
               "includePattern": ".+\\\\.js$",
               "excludePattern": "(node_modules/|docs)"
             },
-            "plugins": ["plugins/markdown"],
+            "plugins": [
+              "plugins/markdown"
+            ],
             "opts": {
               "destination": "./Documentation/output",
               "recurse": true,
               "template": "node_modules/docdash"
+            },
+            "templates": {
+              "cleverLinks": true,
+              "monospaceLinks": false,
+              "default": {
+                "outputSourceFiles": true,
+                "includeDate": false
+              }
+            },
+            "docdash": {
+              "static": false,
+              "sort": true,
+              "search": true,
+              "collapse": true,
+              "typedefs": true,
+              "meta": {
+                "title": "Traffic Guardian API Documentation",
+                "description": "API documentation for Traffic Guardian project"
+              }
             }
           }' > Documentation/jsdoc.json
           
@@ -706,6 +727,11 @@ jobs:
           
           # Run JSDoc
           jsdoc -c Documentation/jsdoc.json || echo "JSDoc generation failed, but continuing workflow"
+          
+          # Create index.html redirect in output root if needed
+          if [ -d "Documentation/output" ] && [ ! -f "Documentation/output/index.html" ]; then
+            echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=./index.html"></head><body></body></html>' > Documentation/output/index.html
+          fi
 
       - name: Setup Python for AI Model Documentation
         uses: actions/setup-python@v4
@@ -775,9 +801,21 @@ jobs:
         run: |
           mkdir -p docs-package
           
-          # Copy API docs
-          mkdir -p docs-package/api
-          cp -r API/Documentation/output/* docs-package/api/ 2>/dev/null || echo "No API docs to copy"
+          # Copy API docs - make sure all contents are copied including index files
+          if [ -d "API/Documentation/output" ]; then
+            mkdir -p docs-package/api
+            cp -r API/Documentation/output/* docs-package/api/ 2>/dev/null
+            
+            # Create proper index.html in api root if it doesn't exist
+            if [ ! -f "docs-package/api/index.html" ]; then
+              echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=./index.html"></head><body><p>Redirecting to documentation...</p></body></html>' > docs-package/api/index.html
+            fi
+            echo "API documentation copied successfully"
+          else
+            echo "No API docs found to copy"
+            mkdir -p docs-package/api
+            echo '<html><body><h1>API Documentation</h1><p>Documentation not available.</p></body></html>' > docs-package/api/index.html
+          fi
           
           # Copy AI Model docs
           mkdir -p docs-package/ai-model
