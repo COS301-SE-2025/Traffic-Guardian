@@ -28,7 +28,7 @@ describe('ProtectedRoute Component Logic', () => {
     render(
       <TestProtectedRoute>
         <TestComponent />
-      </TestProtectedRoute>
+      </TestProtectedRoute>,
     );
 
     expect(screen.getByTestId('protected-content')).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe('ProtectedRoute Component Logic', () => {
     render(
       <TestProtectedRoute>
         <TestComponent />
-      </TestProtectedRoute>
+      </TestProtectedRoute>,
     );
 
     expect(screen.getByTestId('redirect-to-account')).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe('ProtectedRoute Component Logic', () => {
     render(
       <TestProtectedRoute>
         <TestComponent />
-      </TestProtectedRoute>
+      </TestProtectedRoute>,
     );
 
     expect(screen.getByTestId('redirect-to-account')).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('ProtectedRoute Component Logic', () => {
     render(
       <TestProtectedRoute>
         <TestComponent />
-      </TestProtectedRoute>
+      </TestProtectedRoute>,
     );
 
     expect(screen.getByTestId('protected-content')).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('ProtectedRoute Component Logic', () => {
         <div data-testid="child-1">Child 1</div>
         <div data-testid="child-2">Child 2</div>
         <TestComponent />
-      </TestProtectedRoute>
+      </TestProtectedRoute>,
     );
 
     expect(screen.getByTestId('child-1')).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe('ProtectedRoute Component Logic', () => {
     render(
       <TestProtectedRoute>
         <TestComponent />
-      </TestProtectedRoute>
+      </TestProtectedRoute>,
     );
 
     // Since we're checking truthy value, whitespace should be considered valid
@@ -103,7 +103,7 @@ describe('ProtectedRoute Component Logic', () => {
     const { rerender } = render(
       <TestProtectedRoute>
         <TestComponent />
-      </TestProtectedRoute>
+      </TestProtectedRoute>,
     );
 
     // Initially not authenticated
@@ -115,7 +115,7 @@ describe('ProtectedRoute Component Logic', () => {
     rerender(
       <TestProtectedRoute>
         <TestComponent />
-      </TestProtectedRoute>
+      </TestProtectedRoute>,
     );
 
     // Should now be authenticated

@@ -73,11 +73,12 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
   <img src="assets/Documentation.PNG" alt="Documentation" width="250"/>
 </p>
 
-* [Software Requirement Documentation](https://drive.google.com/file/d/1DLnfNNsQ5gW5W8A7Y8U0GbnLHNtqUMW6/view?usp=sharing)
-* [Architectural Requirement Documentation](https://drive.google.com/file/d/1M8Gfe7hTD7GH74EnywdbmFqc2SXd9krV/view?usp=share_link)
-* [Coding Standard Documentation](https://drive.google.com/file/d/167JNGIuZ6FbsBXpDFfCgWVZMV9ZqegtD/view?usp=sharing)
-* [User Manaul](https://drive.google.com/file/d/1ILHenkZOudll7z5_iJFJk1fqVv5hTMaD/view?usp=sharing)
-* [Capstone Presentation](https://docs.google.com/presentation/d/1qaRceIcur0-cymXms_QSTGdCS1B1AYdmLawzUHncWrk/edit?usp=drive_link)
+* [Software Requirement Documentation](https://drive.google.com/file/d/1hkBRzbX2wm5XwBROypuMJ6FeXS6gCBm5/view?usp=sharing)
+* [Architectural Requirement Documentation](https://drive.google.com/file/d/1t3d05zVsZ80R72SqMn34iz7kjhOc-mgr/view?usp=sharing)
+* [Coding Standard Documentation](https://drive.google.com/file/d/1teXHJyPp4jKgON5HmZhXn0P81D0IKfjO/view?usp=sharing)
+* [User Manaul](https://drive.google.com/file/d/1GEE0P0W5nevqtP0LXVxJ6DffCbn-OFmx/view?usp=sharing)
+* [Technical Installation Manual](https://drive.google.com/file/d/1Eu0HLLlJIIllEf-WXH6Mx0izDAWJ5SoX/view?usp=sharing)
+* [Capstone Presentation](https://docs.google.com/presentation/d/1qaRceIcur0-cymXms_QSTGdCS1B1AYdmLawzUHncWrk/edit?usp=sharing)
 
 <a id="demo--presentation"></a>
 
@@ -87,7 +88,7 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
 | ------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Demo 1 | [Slides 1](https://docs.google.com/presentation/d/1T2n6cvEM1R53_EVtz3X3i9e1gyPBak5JNixFbSFJEyE/edit?usp=sharing) | [Video 1](https://drive.google.com/file/d/1-gnaUe_Jy0LXcrNsWPk36aLiBa5n_IT7/view?usp=drive_link) |
 | Demo 2 | [Slides 2](https://docs.google.com/presentation/d/1qaRceIcur0-cymXms_QSTGdCS1B1AYdmLawzUHncWrk/edit?usp=drive_link) | [Video 2](https://drive.google.com/file/d/1OuhU-tSk04TX6k6eyZbWYnsVWCS-lXfG/view?usp=drive_link) |
-| Demo 3 | Slides 3 *(TBA)*                                                                                                 | Video 3 *(TBA)*                                                                                  |
+| Demo 3 | [Slides 3](https://docs.google.com/presentation/d/1qaRceIcur0-cymXms_QSTGdCS1B1AYdmLawzUHncWrk/edit?slide=id.g104f1bc08d3_2_74#slide=id.g104f1bc08d3_2_74)                                                                                                 | [Video 3](https://drive.google.com/file/d/1D7IlMsPSYlQyg4kwBEtBPe79QMvb637U/view?usp=share_link)                                                                                  |
 | Demo 4 | Slides 4 *(TBA)*                                                                                                 | Video 4 *(TBA)*                                                                                  |
 <p align="right">
    <a href="#table-of-contents">Back to top</a>
