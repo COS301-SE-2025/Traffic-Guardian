@@ -29,7 +29,7 @@ export const ThemeProvider: React.FC<{
       'toggleDarkMode called with value:',
       value,
       'at',
-      new Date().toISOString()
+      new Date().toISOString(),
     );
     setIsDarkMode(value);
   }, []); // Stable reference with no dependencies

@@ -9,7 +9,7 @@ interface StatsCardProps {
 
 const StatsCard: React.FC<StatsCardProps> = ({ title, value }) => {
   return (
-    <div className="stats-card">
+    <div className="stats-card" data-testid="stats-card">
       <h4>{title}</h4>
       <p>{value}</p>
     </div>

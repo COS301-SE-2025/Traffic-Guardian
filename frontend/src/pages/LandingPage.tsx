@@ -43,7 +43,7 @@ const LandingPage: React.FC = () => {
     }, observerOptions);
 
     const elementsToObserve = document.querySelectorAll(
-      '.problem-card, .feature-card, .team-member, .process-step, .impact-card, .detail-card'
+      '.problem-card, .feature-card, .team-member, .process-step, .impact-card, .detail-card',
     );
 
     elementsToObserve.forEach(el => {
@@ -82,9 +82,9 @@ const LandingPage: React.FC = () => {
             className="hamburger"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            <span></span>
-            <span></span>
-            <span></span>
+            <span />
+            <span />
+            <span />
           </button>
           <ul className={`nav-links ${isMobileMenuOpen ? 'active' : ''}`}>
             <li>
@@ -118,7 +118,9 @@ const LandingPage: React.FC = () => {
 
       <section className="hero" id="home">
         <div className="hero-content">
-          <h1 className="floating">AI-Powered Traffic Safety for Gauteng</h1>
+          <h1 className="floating" data-testid="hero-title">
+            Traffic Guardian - AI-Powered Traffic Safety for Gauteng
+          </h1>
           <p className="hero-subtitle">
             Transforming highway monitoring with real-time computer vision to
             detect incidents instantly and save lives
@@ -134,10 +136,18 @@ const LandingPage: React.FC = () => {
           <div className="auth-section">
             <h3>Get Started Today</h3>
             <div className="auth-buttons">
-              <button className="btn btn-login" onClick={handleLogin}>
+              <button
+                className="btn btn-login"
+                onClick={handleLogin}
+                data-testid="get-started-button"
+              >
                 Login
               </button>
-              <button className="btn btn-signup" onClick={handleSignUp}>
+              <button
+                className="btn btn-signup"
+                onClick={handleSignUp}
+                data-testid="signup-link"
+              >
                 Sign Up
               </button>
             </div>
@@ -216,7 +226,7 @@ const LandingPage: React.FC = () => {
                 <source src="/aidetectionvid.MP4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
-              <div className="video-overlay"></div>
+              <div className="video-overlay" />
             </div>
           </div>
         </div>

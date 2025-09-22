@@ -50,7 +50,7 @@ describe('Button Component', () => {
         label="Custom Class"
         onClick={mockOnClick}
         className="extra-class"
-      />
+      />,
     );
     const button = screen.getByRole('button', { name: /custom class/i });
     expect(button).toHaveClass('custom-button');

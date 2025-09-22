@@ -55,6 +55,57 @@
   font-size: 1rem;
   opacity: 70%;
   margin: 0;
+  margin-bottom: 1.5rem;
+}
+
+.analytics-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgb(0 0 0 / 5%);
+  border-radius: 8px;
+  padding: 4px;
+  margin-top: 1rem;
+}
+
+.dark-mode .analytics-tabs {
+  background: rgb(255 255 255 / 5%);
+}
+
+.analytics-tabs button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  color: rgb(0 0 0 / 60%);
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.dark-mode .analytics-tabs button {
+  color: rgb(255 255 255 / 60%);
+}
+
+.analytics-tabs button:hover {
+  background: rgb(0 0 0 / 5%);
+  color: rgb(0 0 0 / 80%);
+}
+
+.dark-mode .analytics-tabs button:hover {
+  background: rgb(255 255 255 / 10%);
+  color: rgb(255 255 255 / 80%);
+}
+
+.analytics-tabs button.active {
+  background: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 4px rgb(59 130 246 / 25%);
+}
+
+.pems-analytics-section {
+  margin-top: 2rem;
 }
 
 .date-range-selector {
@@ -175,21 +226,29 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 .summary-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
   margin-bottom: 2rem;
+}
+
+/* Fallback for smaller screens */
+@media (max-width: 1200px) {
+  .summary-cards {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
 }
 
 .summary-card {
   background: rgb(255 255 255 / 90%);
-  border-radius: 16px;
-  padding: 1.5rem;
+  border-radius: 6px;
+  padding: 0.6rem;
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.5rem;
   box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
   transition: all 0.3s ease;
   border: 1px solid rgb(0 0 0 / 5%);
+  overflow: hidden;
 }
 
 .dark-mode .summary-card {
@@ -202,19 +261,32 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
 
-/* Archive-specific summary cards */
+/* Ensure archive cards have same hover behavior */
+.summary-card.archive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  background: rgb(255 255 255 / 90%);
+}
+
+/* Archive-specific summary cards - ensure no special styling */
 .summary-card.archive-card {
-  border-left: 4px solid #f59e0b;
+  border: 1px solid rgb(0 0 0 / 5%) !important;
+  border-left: 1px solid rgb(0 0 0 / 5%) !important;
+  border-top: 1px solid rgb(0 0 0 / 5%) !important;
+  background: rgb(255 255 255 / 90%) !important;
 }
 
 .dark-mode .summary-card.archive-card {
-  border-left-color: #fbbf24;
+  border: 1px solid rgb(255 255 255 / 5%) !important;
+  border-left: 1px solid rgb(255 255 255 / 5%) !important;
+  border-top: 1px solid rgb(255 255 255 / 5%) !important;
+  background: rgb(31 41 55 / 80%) !important;
 }
 
 .card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -222,8 +294,8 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .card-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 12px;
+  height: 12px;
   color: white;
 }
 
@@ -261,17 +333,19 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .card-content h3 {
-  font-size: 0.875rem;
+  font-size: 0.6rem;
   font-weight: 500;
   margin: 0;
   opacity: 70%;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.15rem;
+  line-height: 1.1;
 }
 
 .card-value {
-  font-size: 2rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.15rem;
+  line-height: 1;
 }
 
 .card-trend {
@@ -295,8 +369,9 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .card-subtitle {
-  font-size: 0.875rem;
+  font-size: 0.55rem;
   opacity: 70%;
+  line-height: 1.1;
 }
 
 .charts-grid {
@@ -343,19 +418,21 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .chart-container.archive-analytics {
-  background: linear-gradient(
-    145deg,
-    rgb(255 255 255 / 95%) 0%,
-    rgb(249 250 251 / 90%) 100%
-  );
+  background:
+    linear-gradient(
+      145deg,
+      rgb(255 255 255 / 95%) 0%,
+      rgb(249 250 251 / 90%) 100%
+    );
 }
 
 .dark-mode .chart-container.archive-analytics {
-  background: linear-gradient(
-    145deg,
-    rgb(31 41 55 / 85%) 0%,
-    rgb(17 24 39 / 90%) 100%
-  );
+  background:
+    linear-gradient(
+      145deg,
+      rgb(31 41 55 / 85%) 0%,
+      rgb(17 24 39 / 90%) 100%
+    );
 }
 
 .radar-chart-wrapper {
@@ -743,23 +820,25 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 /* Archive-specific animations */
-@keyframes archive-pulse {
+@keyframes archivePulse {
   0% {
     transform: scale(1);
-    opacity: 1;
+    opacity: 100%;
   }
+
   50% {
     transform: scale(1.05);
-    opacity: 0.8;
+    opacity: 80%;
   }
+
   100% {
     transform: scale(1);
-    opacity: 1;
+    opacity: 100%;
   }
 }
 
 .archive-new-indicator {
-  animation: archive-pulse 2s ease-in-out infinite;
+  animation: archivePulse 2s ease-in-out infinite;
 }
 
 /* Archive loading states */
@@ -794,7 +873,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   width: 48px;
   height: 48px;
   margin-bottom: 1rem;
-  opacity: 0.5;
+  opacity: 50%;
 }
 
 .archive-empty h3 {
@@ -820,7 +899,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   }
 
   .summary-cards {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 }
 
@@ -849,7 +928,8 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   }
 
   .summary-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
   }
 
   .analytics-title h1 {
@@ -857,7 +937,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   }
 
   .card-value {
-    font-size: 1.5rem;
+    font-size: 0.9rem;
   }
 
   .trends-table {
@@ -941,13 +1021,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   font-size: 11px !important;
 }
 
-.chart-container.half-width {
-  overflow: visible;
-}
-
-.chart-container.half-width .recharts-wrapper {
-  margin: 0 auto;
-}
+/* Duplicate selector removed - exists earlier in file */
 
 @media screen and (min-device-pixel-ratio: 0) {
   input[type="date"]::-webkit-calendar-picker-indicator {

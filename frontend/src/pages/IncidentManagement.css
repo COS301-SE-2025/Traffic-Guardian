@@ -147,7 +147,7 @@
   max-width: 500px;
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .incident-table {
     font-size: 0.9rem;
   }

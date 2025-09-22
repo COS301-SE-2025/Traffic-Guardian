@@ -87,6 +87,7 @@ svg {
   --weather-detail-label: #666;
   --weather-detail-value: #333;
   --weather-icon-color: #d97700;
+
   /* User section variables */
   --user-section-bg: #fff;
   --user-card-bg: #f8f9fa;
@@ -187,6 +188,7 @@ svg {
   --weather-detail-label: #999;
   --weather-detail-value: #ccc;
   --weather-icon-color: #fa3;
+
   /* User section dark mode variables */
   --user-section-bg: #3a3a3a;
   --user-card-bg: #2a2a2a;
@@ -1253,7 +1255,7 @@ body {
 }
 
 .notification-close:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgb(0 0 0 / 8%);
 }
 
 .notification-content {
@@ -1329,7 +1331,7 @@ body {
   background: var(--scrollbar-thumb-hover);
 }
 
-@media (width <= 1024px) {
+@media (max-width: 1024px) {
   .dashboard-main-grid {
     grid-template-columns: 1fr;
   }
@@ -1355,7 +1357,7 @@ body {
   }
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .dashboard-content {
     padding: 1rem;
   }
@@ -1393,7 +1395,7 @@ body {
   }
 }
 
-@media (width <= 480px) {
+@media (max-width: 480px) {
   .actions-grid {
     grid-template-columns: 1fr;
   }
@@ -1430,7 +1432,7 @@ body {
   padding: 20px;
   margin-bottom: 20px;
   border: 2px solid var(--stat-card-border);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 10%);
 }
 
 .realtime-header {
@@ -1547,6 +1549,23 @@ body {
 
 .events-empty span {
   font-size: 1.1em;
+}
+
+/* PEMS Status Indicators - minimal styling to maintain original look */
+.stat-card.system-status-card.status-healthy {
+  border-left-color: var(--severity-low-text);
+}
+
+.stat-card.system-status-card.status-warning {
+  border-left-color: var(--severity-medium-text);
+}
+
+.stat-card.system-status-card.status-critical {
+  border-left-color: var(--severity-critical-text);
+}
+
+.stat-card.risk-indicator {
+  border-left: 4px solid var(--severity-critical-text);
 }
 
 /* Responsive adjustments for real-time events */

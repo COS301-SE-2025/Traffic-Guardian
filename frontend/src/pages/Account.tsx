@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './Account.css';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../consts/ThemeContext';
-import CarLoadingAnimation from '../components/CarLoadingAnimation';
+import LoadingSpinner from '../components/LoadingSpinner';
+import dataPrefetchService from '../services/DataPrefetchService';
 
 const Account: React.FC = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const Account: React.FC = () => {
                 'X-API-Key': apiKey,
                 'Content-Type': 'application/json',
               },
-            }
+            },
           );
 
           if (prefsResponse.ok) {
@@ -42,7 +43,7 @@ const Account: React.FC = () => {
             } catch (err) {
               console.warn(
                 'Account: Failed to parse preferences, using fallback',
-                err
+                err,
               );
               preferences = {};
             }
@@ -64,12 +65,14 @@ const Account: React.FC = () => {
           } else {
             console.warn(
               'Account: Failed to fetch preferences, using saved theme:',
-              savedTheme
+              savedTheme,
             );
             if (savedTheme) {
               toggleDarkMode(savedTheme === 'dark');
             }
           }
+          // Start background data prefetching after successful login
+          dataPrefetchService.startPrefetching();
           navigate('/profile');
         } catch (err: any) {
           console.error('Account: Error fetching preferences:', err);
@@ -106,7 +109,7 @@ const Account: React.FC = () => {
             User_Email: loginData.email,
             User_Password: loginData.password,
           }),
-        }
+        },
       );
 
       const contentType = response.headers.get('content-type');
@@ -117,6 +120,8 @@ const Account: React.FC = () => {
       } else {
         const text = await response.text();
         if (response.ok) {
+          // Start background data prefetching after successful login
+          dataPrefetchService.startPrefetching();
           setTimeout(() => navigate('/profile'), 2000);
           return;
         }
@@ -125,7 +130,7 @@ const Account: React.FC = () => {
 
       if (!response.ok) {
         throw new Error(
-          data.message || 'Login failed. Check your credentials.'
+          data.message || 'Login failed. Check your credentials.',
         );
       }
 
@@ -141,7 +146,7 @@ const Account: React.FC = () => {
             'X-API-Key': data.apiKey,
             'Content-Type': 'application/json',
           },
-        }
+        },
       );
 
       let preferences;
@@ -157,7 +162,7 @@ const Account: React.FC = () => {
         } catch (err) {
           console.warn(
             'Account login: Failed to parse preferences, using fallback',
-            err
+            err,
           );
           preferences = {};
         }
@@ -179,7 +184,7 @@ const Account: React.FC = () => {
         toggleDarkMode(preferences.theme === 'dark');
       } else {
         console.warn(
-          'Account login: Failed to fetch preferences, using saved theme'
+          'Account login: Failed to fetch preferences, using saved theme',
         );
         const savedTheme = localStorage.getItem('theme');
         preferences = {
@@ -200,7 +205,13 @@ const Account: React.FC = () => {
   };
 
   if (isChecking) {
-    return <CarLoadingAnimation />;
+    return (
+      <LoadingSpinner
+        size="large"
+        text="Checking authentication..."
+        className="fullscreen"
+      />
+    );
   }
 
   return (
@@ -267,7 +278,7 @@ const Account: React.FC = () => {
             disabled={loading}
             data-testid="submit-button"
           >
-            {loading ? <CarLoadingAnimation /> : 'Login'}
+            {loading ? <LoadingSpinner size="small" text="" /> : 'Login'}
           </button>
         </form>
 

@@ -98,6 +98,8 @@ interface SocketContextType {
   weatherData: WeatherData[];
   weatherLoading: boolean;
   weatherLastUpdate: Date | null;
+  // ADDED FOR ACTIVE USERS TRACKING
+  activeUsersCount: number;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -125,6 +127,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherLastUpdate, setWeatherLastUpdate] = useState<Date | null>(null);
+
+  // ADDED FOR ACTIVE USERS TRACKING
+  const [activeUsersCount, setActiveUsersCount] = useState<number>(0);
 
   // Function to play notification sound
   const playNotificationSound = (severity: string) => {
@@ -155,7 +160,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       gainNode.gain.setValueAtTime(0.2, context.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(
         0.01,
-        context.currentTime + 0.3
+        context.currentTime + 0.3,
       );
 
       oscillator.start();
@@ -212,7 +217,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const apiKey = sessionStorage.getItem('apiKey');
-    if (!apiKey) return;
+    if (!apiKey) {return;}
 
     // Request notification permission when component mounts
     requestNotificationPermission();
@@ -335,15 +340,15 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
               incidentData.Incident_Severity === 'high'
                 ? '#dc2626'
                 : incidentData.Incident_Severity === 'medium'
-                ? '#ea580c'
-                : '#059669',
+                  ? '#ea580c'
+                  : '#059669',
             color: 'white',
             cursor: currentPage !== '/incidents' ? 'pointer' : 'default',
             border: '2px solid rgba(255,255,255,0.3)',
             borderRadius: '8px',
             fontFamily: 'inherit',
           },
-        }
+        },
       );
 
       // Play notification sound
@@ -393,7 +398,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
-        }
+        },
       );
     });
 
@@ -414,6 +419,15 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       console.log('Incident locations update:', data);
     });
 
+    // ACTIVE USERS TRACKING EVENT HANDLER
+    newSocket.on(
+      'activeUsersUpdate',
+      (data: { count: number; timestamp: Date }) => {
+        console.log('Active users update:', data);
+        setActiveUsersCount(data.count);
+      },
+    );
+
     // Cleanup on unmount
     return () => {
       console.log('Cleaning up socket connection');
@@ -426,8 +440,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const acknowledgeAlert = (alertId: string) => {
     setRealtimeAlerts(prev =>
       prev.map((alert: RealTimeAlert) =>
-        alert.id === alertId ? { ...alert, acknowledged: true } : alert
-      )
+        alert.id === alertId ? { ...alert, acknowledged: true } : alert,
+      ),
     );
     setUnreadAlertCount(prev => Math.max(0, prev - 1));
   };
@@ -441,7 +455,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   // Mark all as read
   const markAllAsRead = () => {
     setRealtimeAlerts(prev =>
-      prev.map((alert: RealTimeAlert) => ({ ...alert, acknowledged: true }))
+      prev.map((alert: RealTimeAlert) => ({ ...alert, acknowledged: true })),
     );
     setUnreadAlertCount(0);
   };
@@ -450,7 +464,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     console.log('New incident added locally:', incident);
   };
 
-  // Enhanced context value with weather data
+  // Enhanced context value with weather data and active users
   const value: SocketContextType = {
     socket,
     isConnected,
@@ -464,6 +478,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     weatherData,
     weatherLoading,
     weatherLastUpdate,
+    // ADDED FOR ACTIVE USERS TRACKING
+    activeUsersCount,
   };
 
   return (

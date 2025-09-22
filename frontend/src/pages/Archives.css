@@ -101,10 +101,8 @@
   line-height: 1.6;
   padding: 2rem;
   transition: all 0.3s ease;
-}
 
-/* Typography & Spacing */
-.archives-page {
+  /* Typography & Spacing */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -145,16 +143,18 @@
   border: 3px solid var(--border-light);
   border-top: 3px solid var(--title-color);
   border-radius: 50%;
-  animation: archives-spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+  animation: archivesSpin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
 }
 
-@keyframes archives-spin {
+@keyframes archivesSpin {
   0% {
     transform: rotate(0deg) scale(1);
   }
+
   50% {
     transform: rotate(180deg) scale(1.1);
   }
+
   100% {
     transform: rotate(360deg) scale(1);
   }
@@ -223,12 +223,13 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--title-color) 50%,
-    transparent 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--title-color) 50%,
+      transparent 100%
+    );
   opacity: 80%;
 }
 
@@ -508,11 +509,12 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    var(--title-color) 0%,
-    var(--button-primary-hover) 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      var(--title-color) 0%,
+      var(--button-primary-hover) 100%
+    );
 }
 
 .archive-card:hover {
