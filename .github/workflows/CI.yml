@@ -358,7 +358,7 @@ jobs:
 
   build:
     name: Build Project
-    needs: [test-api, test-ai-model] #test-ui, add again
+    needs: [test-ui, test-api, test-ai-model]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -376,14 +376,12 @@ jobs:
         run: |
           npm install
           npm run build
-
       - name: Setup Python for AI Model
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           cache: 'pip'
-      # Add caching for dependencies to speed up workflow
-      - name: Prepare AI Model for deployment
+      - name: Prepare AI Model for local deployment
         working-directory: ./AI_Model_BB/Code
         run: |
           # Install dependencies for model packaging
@@ -391,13 +389,49 @@ jobs:
           if [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
           else
-            # Install basic dependencies directly (SHOULDN'T REACH HERE)
+            # Install basic dependencies directly
             pip install opencv-python==4.8.0.76 numpy==1.24.3
           fi
           
-          # Create deployment package
+          # Create deployment package for local use
           mkdir -p deployment_package
           cp *.py deployment_package/ 2>/dev/null || echo "No Python files to copy"
+          
+          # Create a basic configuration file for local deployment
+          cat > deployment_package/config.json << EOF
+          {
+            "local_deployment": true,
+            "api_endpoint": "http://localhost:5000/api",
+            "model_settings": {
+              "confidence_threshold": 0.6,
+              "process_interval": 5
+            }
+          }
+          EOF
+          
+          echo "AI Model prepared for local deployment"
+          
+      - name: Verify build artifacts
+        run: |
+          echo "===== VERIFYING BUILD ARTIFACTS ====="
+          
+          # Check frontend build
+          if [ -d "frontend/build" ]; then
+            echo "Frontend build successful"
+          else
+            echo "Frontend build failed"
+            exit 1
+          fi
+          
+          # Check AI Model deployment package
+          if [ -d "AI_Model_BB/Code/deployment_package" ]; then
+            echo "AI Model deployment package created"
+          else
+            echo "AI Model deployment package failed"
+            exit 1
+          fi
+          
+          echo "All build artifacts verified successfully!"
 
   aws-prepare-deployment:
     name: Prepare AWS Deployment
