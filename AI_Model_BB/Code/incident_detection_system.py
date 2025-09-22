@@ -50,6 +50,12 @@ class AdvancedIncidentDetectionSystem:
         self.recent_incidents = []  # Store recent incidents to prevent duplicates
         self.incident_cooldown = {}  # Cooldown periods for different incident types
         
+        # Car count transmission settings
+        self.api_endpoint = config.get('api_endpoint') if config else None
+        self.transmission_interval = config.get('transmission_interval', 30) if config else 30  # seconds
+        self.last_transmission_time = time.time()
+        self.car_count_buffer = []  # Buffer to store recent car counts
+        
         # ENHANCED COLLISION DETECTION COMPONENTS
         self.previous_frame = None
         self.collision_verification_layers = {
@@ -1719,6 +1725,9 @@ class AdvancedIncidentDetectionSystem:
         # Store in history
         self.traffic_density_history.append(vehicle_count)
         
+        # Send car count to API if configured
+        self._send_car_count_to_api(vehicle_count)
+        
         # Calculate average density over recent frames
         if len(self.traffic_density_history) >= 10:
             avg_density = sum(self.traffic_density_history) / len(self.traffic_density_history)
@@ -1738,6 +1747,72 @@ class AdvancedIncidentDetectionSystem:
             # Log density changes
             if previous_level != self.current_density_level:
                 print(f"    Traffic density changed: {previous_level} → {self.current_density_level} (avg: {avg_density:.1f} vehicles)")
+    
+    def _send_car_count_to_api(self, vehicle_count):
+        """Send current car count to API endpoint if configured and interval has passed."""
+        if not self.api_endpoint:
+            return
+        
+        current_time = time.time()
+        
+        # Add current count to buffer
+        self.car_count_buffer.append({
+            'count': vehicle_count,
+            'timestamp': datetime.now().isoformat(),
+            'camera_id': self.camera_config.get('camera_id', 'unknown') if self.camera_config else 'unknown'
+        })
+        
+        # Check if it's time to send data
+        if current_time - self.last_transmission_time >= self.transmission_interval:
+            self._transmit_car_count_data()
+            self.last_transmission_time = current_time
+    
+    def _transmit_car_count_data(self):
+        """Transmit buffered car count data to the API endpoint."""
+        if not self.car_count_buffer or not self.api_endpoint:
+            return
+        
+        try:
+            # Calculate average car count for the interval
+            avg_count = sum(item['count'] for item in self.car_count_buffer) / len(self.car_count_buffer)
+            max_count = max(item['count'] for item in self.car_count_buffer)
+            min_count = min(item['count'] for item in self.car_count_buffer)
+            
+            # Prepare payload
+            payload = {
+                'camera_id': self.camera_config.get('camera_id', 'unknown') if self.camera_config else 'unknown',
+                'location': self.camera_config.get('location', 'unknown') if self.camera_config else 'unknown',
+                'timestamp': datetime.now().isoformat(),
+                'interval_seconds': self.transmission_interval,
+                'car_count': {
+                    'average': round(avg_count, 2),
+                    'maximum': max_count,
+                    'minimum': min_count,
+                    'samples': len(self.car_count_buffer)
+                },
+                'traffic_density_level': getattr(self, 'current_density_level', 'unknown')
+            }
+            
+            # Send to API
+            response = requests.post(
+                self.api_endpoint,
+                json=payload,
+                timeout=10,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 200:
+                print(f"✅ Car count data sent to API: {avg_count:.1f} avg vehicles")
+            else:
+                print(f"⚠️ API transmission failed: {response.status_code}")
+                
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error sending car count to API: {e}")
+        except Exception as e:
+            print(f"❌ Unexpected error in car count transmission: {e}")
+        finally:
+            # Clear buffer after transmission attempt
+            self.car_count_buffer.clear()
     
     # =============================================================================
     # VALIDATION LAYER METHODS
