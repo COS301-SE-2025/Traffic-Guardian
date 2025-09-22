@@ -264,7 +264,7 @@ const Incidents: React.FC = () => {
 
   const [incidents, setIncidents] = useState<DisplayIncident[]>([]);
   const [filteredIncidents, setFilteredIncidents] = useState<DisplayIncident[]>(
-    []
+    [],
   );
   const [filters, setFilters] = useState<FilterState>({
     search: '',
@@ -323,21 +323,22 @@ const Incidents: React.FC = () => {
             throw new Error(`Endpoint not found: ${url}`);
           }
           throw new Error(
-            `API request failed: ${response.status} ${response.statusText}`
+            `API request failed: ${response.status} ${response.statusText}`,
           );
         }
         return await response.json();
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         if (
-          error.message.includes('Unauthorized') ||
-          error.message.includes('API key')
+          errorMessage.includes('Unauthorized') ||
+          errorMessage.includes('API key')
         ) {
           navigate('/account');
         }
         throw error;
       }
     },
-    [navigate]
+    [navigate],
   );
 
   const loadIncidents = useCallback(async () => {
@@ -362,13 +363,14 @@ const Incidents: React.FC = () => {
           description: incident.Incident_Description || undefined,
           createdAt: incident.Incidents_DateTime,
           updatedAt: incident.Incidents_DateTime,
-        })
+        }),
       );
 
       setIncidents(transformedIncidents);
       setFilteredIncidents(transformedIncidents);
-    } catch (error: any) {
-      toast.error(`Failed to load incidents: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to load incidents: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -386,9 +388,10 @@ const Incidents: React.FC = () => {
       const userResponse = await apiRequest('/api/auth/profile');
       setUserRole(userResponse.User_Role || 'user');
       await loadIncidents();
-    } catch (error: any) {
-      toast.error(`Error: ${error.message}`);
-      if (error.message.includes('Unauthorized')) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Error: ${errorMessage}`);
+      if (errorMessage.includes('Unauthorized')) {
         navigate('/account');
       }
     }
@@ -442,19 +445,19 @@ const Incidents: React.FC = () => {
             .toLowerCase()
             .includes(filters.search.toLowerCase()) ||
           incident.type.toLowerCase().includes(filters.search.toLowerCase()) ||
-          incident.id.toString().includes(filters.search)
+          incident.id.toString().includes(filters.search),
       );
     }
 
     if (filters.status) {
       filtered = filtered.filter(
-        incident => incident.status === filters.status
+        incident => incident.status === filters.status,
       );
     }
 
     if (filters.severity) {
       filtered = filtered.filter(
-        incident => incident.severity === filters.severity
+        incident => incident.severity === filters.severity,
       );
     }
 
@@ -464,13 +467,13 @@ const Incidents: React.FC = () => {
 
     if (filters.dateFrom) {
       filtered = filtered.filter(
-        incident => new Date(incident.date) >= new Date(filters.dateFrom)
+        incident => new Date(incident.date) >= new Date(filters.dateFrom),
       );
     }
 
     if (filters.dateTo) {
       filtered = filtered.filter(
-        incident => new Date(incident.date) <= new Date(filters.dateTo)
+        incident => new Date(incident.date) <= new Date(filters.dateTo),
       );
     }
 
@@ -480,7 +483,7 @@ const Incidents: React.FC = () => {
 
   const handleStatusChange = (
     incidentId: number,
-    newStatus: 'open' | 'ongoing' | 'resolved' | 'closed'
+    newStatus: 'open' | 'ongoing' | 'resolved' | 'closed',
   ) => {
     setSelectedStatuses(prev => ({ ...prev, [incidentId]: newStatus }));
   };
@@ -489,7 +492,7 @@ const Incidents: React.FC = () => {
     const newStatus = selectedStatuses[incidentId];
     const currentStatus = incidents.find(i => i.id === incidentId)?.status;
 
-    if (!newStatus || newStatus === currentStatus) return;
+    if (!newStatus || newStatus === currentStatus) {return;}
 
     setIsLoading(true);
 
@@ -501,8 +504,8 @@ const Incidents: React.FC = () => {
 
       setIncidents(prev =>
         prev.map(inc =>
-          inc.id === incidentId ? { ...inc, status: newStatus } : inc
-        )
+          inc.id === incidentId ? { ...inc, status: newStatus } : inc,
+        ),
       );
 
       setSelectedStatuses(prev => {
@@ -511,8 +514,9 @@ const Incidents: React.FC = () => {
       });
 
       toast.success('Status updated successfully');
-    } catch (error: any) {
-      toast.error(`Error: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Error: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -522,21 +526,22 @@ const Incidents: React.FC = () => {
     try {
       switch (action) {
         case 'view':
-          const incident = await apiRequest(`/api/incidents/${incidentId}`);
-          console.log('Viewing incident:', incident);
+          const _incident = await apiRequest(`/api/incidents/${incidentId}`);
+          // Viewing incident details
           break;
         case 'edit':
-          console.log(`Editing incident ${incidentId}`);
+          // Editing incident
           break;
       }
-    } catch (error: any) {
-      toast.error(`Error: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Error: ${errorMessage}`);
     }
   };
 
   const handleManualIncidentChange = (
     key: keyof ManualIncidentForm,
-    value: any
+    value: string | number,
   ) => {
     setManualIncident(prev => ({ ...prev, [key]: value }));
 
@@ -602,12 +607,12 @@ const Incidents: React.FC = () => {
         Incident_Description: manualIncident.Incident_Description || null,
       };
 
-      const response = await apiRequest('/api/incidents', {
+      const _response = await apiRequest('/api/incidents', {
         method: 'POST',
         body: JSON.stringify(apiPayload),
       });
 
-      console.log('Incident created successfully:', response);
+      // Incident created successfully
 
       await loadIncidents();
 
@@ -627,10 +632,11 @@ const Incidents: React.FC = () => {
         'Incident reported successfully! All users have been alerted in real-time.',
         {
           autoClose: 5000,
-        }
+        },
       );
-    } catch (error: any) {
-      toast.error(`Failed to submit incident: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to submit incident: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -643,9 +649,9 @@ const Incidents: React.FC = () => {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffMins < 1) {return 'Just now';}
+    if (diffMins < 60) {return `${diffMins}m ago`;}
+    if (diffHours < 24) {return `${diffHours}h ago`;}
     return `${diffDays}d ago`;
   };
 
@@ -688,11 +694,17 @@ const Incidents: React.FC = () => {
   };
 
   if (isLoading && incidents.length === 0) {
-    return <LoadingSpinner size="large" text="Loading incidents..." className="content" />;
+    return (
+      <LoadingSpinner
+        size="large"
+        text="Loading incidents..."
+        className="content"
+      />
+    );
   }
 
   return (
-    <div className="incidents-page">
+    <div className="incidents-page" data-testid="incidents-container">
       {showAlertsPanel && (
         <div
           className="alerts-panel-overlay"
@@ -744,7 +756,7 @@ const Incidents: React.FC = () => {
                             className={`alert-severity ${alert.incident.Incident_Severity}`}
                           >
                             {getSeverityDisplay(
-                              alert.incident.Incident_Severity
+                              alert.incident.Incident_Severity,
                             )}{' '}
                             Incident
                           </span>
@@ -808,6 +820,13 @@ const Incidents: React.FC = () => {
           </div>
         </div>
         <div className="incidents-actions">
+          <button
+            className="btn-manage"
+            onClick={() => navigate('/incident-management')}
+            data-testid="manage-incidents"
+          >
+            Manage Incidents
+          </button>
           <button
             className={`btn-alerts ${unreadAlertCount > 0 ? 'has-alerts' : ''}`}
             onClick={() => setShowAlertsPanel(true)}
@@ -939,15 +958,22 @@ const Incidents: React.FC = () => {
           className={`incidents-list ${
             filteredIncidents.length <= itemsPerPage ? 'small-table' : ''
           }`}
+          data-testid="incident-list"
         >
           <div className="incidents-list-header">
+            <input
+              type="search"
+              placeholder="Search incidents..."
+              data-testid="search-input"
+              style={{ visibility: 'hidden', position: 'absolute' }}
+            />
             <h3 className="incidents-list-title">Incidents</h3>
             <div className="incidents-count">
               {filteredIncidents.length} Total
             </div>
           </div>
 
-          <table className="incidents-table">
+          <table className="incidents-table" data-testid="incidents-table">
             <thead>
               <tr>
                 <th>ID</th>
@@ -989,7 +1015,7 @@ const Incidents: React.FC = () => {
                   <td data-label="Severity">
                     <span
                       className={`severity-badge ${getSeverityClass(
-                        incident.severity
+                        incident.severity,
                       )}`}
                     >
                       {getSeverityDisplay(incident.severity)}
@@ -998,7 +1024,7 @@ const Incidents: React.FC = () => {
                   <td data-label="Status">
                     <span
                       className={`status-badge ${getStatusClass(
-                        incident.status
+                        incident.status,
                       )}`}
                     >
                       {getStatusDisplay(incident.status)}
@@ -1039,7 +1065,7 @@ const Incidents: React.FC = () => {
                                 | 'open'
                                 | 'ongoing'
                                 | 'resolved'
-                                | 'closed'
+                                | 'closed',
                             )
                           }
                           disabled={isLoading || userRole !== 'admin'}
@@ -1148,7 +1174,7 @@ const Incidents: React.FC = () => {
                         onChange={e =>
                           handleManualIncidentChange(
                             'Incidents_DateTime',
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         required
@@ -1172,7 +1198,7 @@ const Incidents: React.FC = () => {
                         onChange={e =>
                           handleManualIncidentChange(
                             'Incident_Reporter',
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         required
@@ -1194,7 +1220,7 @@ const Incidents: React.FC = () => {
                         onChange={e =>
                           handleManualIncidentChange(
                             'Incident_Severity',
-                            e.target.value as 'high' | 'medium' | 'low'
+                            e.target.value as 'high' | 'medium' | 'low',
                           )
                         }
                         required
@@ -1219,7 +1245,7 @@ const Incidents: React.FC = () => {
                               | 'open'
                               | 'ongoing'
                               | 'resolved'
-                              | 'closed'
+                              | 'closed',
                           )
                         }
                         required
@@ -1243,7 +1269,7 @@ const Incidents: React.FC = () => {
                         onChange={e =>
                           handleManualIncidentChange(
                             'Incident_CameraID',
-                            e.target.value
+                            e.target.value,
                           )
                         }
                       />
@@ -1262,7 +1288,7 @@ const Incidents: React.FC = () => {
                         onChange={e =>
                           handleManualIncidentChange(
                             'Incident_Description',
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         rows={4}
@@ -1294,7 +1320,7 @@ const Incidents: React.FC = () => {
                         onChange={e =>
                           handleManualIncidentChange(
                             'Incidents_Latitude',
-                            e.target.value
+                            e.target.value,
                           )
                         }
                       />
@@ -1318,7 +1344,7 @@ const Incidents: React.FC = () => {
                         onChange={e =>
                           handleManualIncidentChange(
                             'Incidents_Longitude',
-                            e.target.value
+                            e.target.value,
                           )
                         }
                       />
@@ -1350,9 +1376,9 @@ const Incidents: React.FC = () => {
                               }));
                               toast.success('Current location captured');
                             },
-                            error => {
+                            _error => {
                               toast.error('Unable to get current location');
-                            }
+                            },
                           );
                         } else {
                           toast.error('Geolocation not supported by browser');

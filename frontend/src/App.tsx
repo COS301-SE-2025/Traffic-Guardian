@@ -3,6 +3,7 @@ import './App.css';
 import { ThemeProvider } from './consts/ThemeContext';
 import { SocketProvider } from './consts/SocketContext';
 import { LiveFeedProvider } from './contexts/LiveFeedContext';
+import { UserProvider } from './contexts/UserContext';
 import NavBar from './components/NavBar';
 import GlobalAlertBadge from './components/GlobalAlertBadge';
 import LandingPage from './pages/LandingPage';
@@ -30,6 +31,7 @@ import {
 import { AnimatePresence } from 'framer-motion';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import dataPrefetchService from './services/DataPrefetchService';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -149,11 +151,26 @@ const App: React.FC = () => {
   const initialTheme = localStorage.getItem('theme');
   const isDarkMode = initialTheme ? initialTheme === 'dark' : true;
 
+  // Check if user is already logged in and start prefetching
+  React.useEffect(() => {
+    const apiKey = sessionStorage.getItem('apiKey');
+    if (apiKey) {
+      console.log('🔄 App startup: Starting background data prefetching...');
+      dataPrefetchService.startPrefetching();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      dataPrefetchService.stopPrefetching();
+    };
+  }, []);
+
   return (
     <ThemeProvider initialDarkMode={isDarkMode}>
-      <Router>
-        <SocketProvider>
-          <LiveFeedProvider>
+      <UserProvider>
+        <Router>
+          <SocketProvider>
+            <LiveFeedProvider>
             <div className="App">
               <AnimatedRoutes />
 
@@ -175,6 +192,7 @@ const App: React.FC = () => {
           </LiveFeedProvider>
         </SocketProvider>
       </Router>
+    </UserProvider>
     </ThemeProvider>
   );
 };

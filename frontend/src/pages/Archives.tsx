@@ -94,68 +94,71 @@ const Archives: React.FC = () => {
   const [showAdvancedFilters, setShowAdvancedFilters] =
     useState<boolean>(false);
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
-  const itemsPerPage: number = 12;
+  const itemsPerPage = 12;
 
   // Load archives from ArchivesV2 API with abort signal for cleanup
-  const loadArchives = useCallback(async (signal?: AbortSignal) => {
-    try {
-      setLoading(true);
-      setError('');
+  const loadArchives = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        setLoading(true);
+        setError('');
 
-      const apiKey = sessionStorage.getItem('apiKey');
-      if (!apiKey) {
-        setError('No API key found. Please log in.');
-        navigate('/account');
-        return;
-      }
-
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/archives`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': apiKey,
-          },
-          signal, // Add abort signal for cleanup
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setError('Unauthorized: Invalid or missing API key');
+        const apiKey = sessionStorage.getItem('apiKey');
+        if (!apiKey) {
+          setError('No API key found. Please log in.');
           navigate('/account');
           return;
         }
-        throw new Error(
-          `API request failed: ${response.status} ${response.statusText}`
+
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/archives`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Key': apiKey,
+            },
+            signal, // Add abort signal for cleanup
+          },
         );
-      }
 
-      const data = await response.json();
+        if (!response.ok) {
+          if (response.status === 401) {
+            setError('Unauthorized: Invalid or missing API key');
+            navigate('/account');
+            return;
+          }
+          throw new Error(
+            `API request failed: ${response.status} ${response.statusText}`,
+          );
+        }
 
-      if (Array.isArray(data)) {
-        setArchives(data);
-      } else {
-        console.warn('API returned non-array data:', data);
-        setArchives([]);
-        setError('Invalid data format received from server');
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          setArchives(data);
+        } else {
+          console.warn('API returned non-array data:', data);
+          setArchives([]);
+          setError('Invalid data format received from server');
+        }
+      } catch (error: any) {
+        // Ignore aborted requests when navigating away
+        if (error.name === 'AbortError') {
+          return;
+        }
+        setError(`Failed to load archives: ${error.message}`);
+        console.error('Archives loading error:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error: any) {
-      // Ignore aborted requests when navigating away
-      if (error.name === 'AbortError') {
-        return;
-      }
-      setError(`Failed to load archives: ${error.message}`);
-      console.error('Archives loading error:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
+    },
+    [navigate],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
     loadArchives(controller.signal);
-    
+
     // Cleanup function to abort request when component unmounts or navigates away
     return () => {
       controller.abort();
@@ -184,7 +187,7 @@ const Archives: React.FC = () => {
       const matchesType =
         !filters.type ||
         archive.Archive_Type?.toLowerCase().includes(
-          filters.type.toLowerCase()
+          filters.type.toLowerCase(),
         );
       const matchesReporter =
         !filters.reporter ||
@@ -199,7 +202,7 @@ const Archives: React.FC = () => {
       const matchesTags =
         !filters.tags ||
         archive.Archive_Tags?.some(tag =>
-          tag.toLowerCase().includes(filters.tags.toLowerCase())
+          tag.toLowerCase().includes(filters.tags.toLowerCase()),
         );
 
       // Date filtering
@@ -237,7 +240,7 @@ const Archives: React.FC = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentArchives = filteredArchives.slice(
     startIndex,
-    startIndex + itemsPerPage
+    startIndex + itemsPerPage,
   );
 
   // Reset page when filters change
@@ -318,7 +321,7 @@ const Archives: React.FC = () => {
         className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}
       >
         <div className="loading-message">
-          <div className="loading-spinner"></div>
+          <div className="loading-spinner" />
           Loading archived data...
         </div>
       </div>
@@ -557,7 +560,7 @@ const Archives: React.FC = () => {
                   </div>
                   <div
                     className={`severity-badge ${getSeverityClass(
-                      archive.Archive_Severity
+                      archive.Archive_Severity,
                     )}`}
                   >
                     {archive.Archive_Severity}
@@ -669,7 +672,7 @@ const Archives: React.FC = () => {
                   <td className="table-cell">
                     <span
                       className={`severity-badge ${getSeverityClass(
-                        archive.Archive_Severity
+                        archive.Archive_Severity,
                       )}`}
                     >
                       {archive.Archive_Severity}
@@ -713,7 +716,7 @@ const Archives: React.FC = () => {
                   Archive #{archive.Archive_ID} - {archive.Archive_Type}
                   <span
                     className={`severity-badge ${getSeverityClass(
-                      archive.Archive_Severity
+                      archive.Archive_Severity,
                     )}`}
                   >
                     {archive.Archive_Severity}

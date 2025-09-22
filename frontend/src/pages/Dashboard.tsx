@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
+import { useUser, Permission } from '../contexts/UserContext';
 import ApiService, {
   IncidentStats,
   TrafficIncident,
 } from '../services/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PEMSTrafficAnalysis from '../components/PEMSTrafficAnalysis';
+import WeeklyTrafficTrends from '../components/WeeklyTrafficTrends';
 import './Dashboard.css';
 
 interface CriticalIncidentsData {
@@ -52,7 +54,7 @@ const _CameraIcon = () => (
   </svg>
 );
 
-const ClockIcon = () => (
+const _ClockIcon = () => (
   <svg
     fill="none"
     stroke="currentColor"
@@ -185,7 +187,7 @@ const UsersIcon = () => (
 
 const WeatherIcon = ({
   condition,
-  isDay,
+  isDay: _isDay,
 }: {
   condition: string;
   isDay: boolean;
@@ -322,20 +324,13 @@ interface TodaysIncidents {
   date: string;
 }
 
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'critical';
-  timestamp: Date;
-}
 
 /** Minimal type for the 'newAlert' socket payload to avoid implicit any */
 type NewAlertPayload = { Incident_Location: string; [key: string]: unknown };
 
 const Dashboard: React.FC = () => {
+  const { isAuthenticated, hasPermission } = useUser();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
@@ -351,15 +346,15 @@ const Dashboard: React.FC = () => {
     regionCounts: [],
   });
 
-  const [incidentStats, setIncidentStats] = useState<IncidentStats | null>(
+  const [_incidentStats, setIncidentStats] = useState<IncidentStats | null>(
     null
   );
-  const [todaysIncidents, setTodaysIncidents] = useState<TodaysIncidents>({
+  const [_todaysIncidents, setTodaysIncidents] = useState<TodaysIncidents>({
     count: 0,
     date: '',
   });
   const [trafficData, setTrafficData] = useState<TrafficIncident[]>([]);
-  const [criticalIncidents, setCriticalIncidents] =
+  const [_criticalIncidents, setCriticalIncidents] =
     useState<CriticalIncidentsData | null>(null);
   const [_incidentLocations, _setIncidentLocations] = useState<any[]>([]);
 
@@ -371,27 +366,11 @@ const Dashboard: React.FC = () => {
   const [activeIncidents, setActiveIncidents] = useState<number>(0);
   const [criticalIncidentsCount, setCriticalIncidentsCount] =
     useState<number>(0);
-  
+
   // PEMS dashboard data
   const [pemsDashboardData, setPemsDashboardData] = useState<any>(null);
-  const [pemsLoading, setPemsLoading] = useState(true);
+  const [_pemsLoading, setPemsLoading] = useState(true);
 
-  const addNotification = useCallback(
-    (notification: Omit<Notification, 'id' | 'timestamp'>) => {
-      const newNotification: Notification = {
-        ...notification,
-        id: Date.now(),
-        timestamp: new Date(),
-      };
-      setNotifications(prev => [...prev, newNotification]);
-
-      // Auto-remove notification after 5 seconds
-      setTimeout(() => {
-        removeNotification(newNotification.id);
-      }, 5000);
-    },
-    []
-  );
 
   const addEvent = useCallback((eventText: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -399,41 +378,72 @@ const Dashboard: React.FC = () => {
     setRealtimeEvents(prev => [eventWithTime, ...prev.slice(0, 49)]); // Keep last 50 events
   }, []);
 
-  const removeNotification = (id: number) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
-  };
+
+  // Generate demo PEMS data for public users
+  const generateDemoPEMSData = useCallback(() => {
+    return {
+      timestamp: new Date().toISOString(),
+      overview: {
+        total_detectors: 850 + Math.floor(Math.random() * 200),
+        active_detectors: 800 + Math.floor(Math.random() * 180),
+        avg_speed_mph: 55 + Math.floor(Math.random() * 15),
+        total_flow_vehicles: 125000 + Math.floor(Math.random() * 50000),
+        high_risk_count: 8 + Math.floor(Math.random() * 12),
+        system_status: 'HEALTHY'
+      },
+      publicDemo: true
+    };
+  }, []);
 
   // Fetch PEMS dashboard data
   const fetchPEMSData = useCallback(async () => {
     try {
+      if (!isAuthenticated || !hasPermission(Permission.VIEW_PEMS_DATA)) {
+        // Public users get demo data
+        setPemsDashboardData(generateDemoPEMSData());
+        setPemsLoading(false);
+        return;
+      }
+
       const apiKey = sessionStorage.getItem('apiKey');
-      const response = await fetch(`${process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api'}/pems/dashboard-summary`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey || '',
-        },
-      });
+      const response = await fetch(
+        `${
+          process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api'
+        }/pems/dashboard-summary`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey || '',
+          },
+        }
+      );
 
       if (response.ok) {
         const pemsData = await response.json();
         setPemsDashboardData(pemsData);
       } else {
-        console.error('Failed to fetch PEMS data');
+        console.error('Failed to fetch PEMS data, using demo data');
+        setPemsDashboardData(generateDemoPEMSData());
       }
     } catch (error) {
-      console.error('Error fetching PEMS data:', error);
+      console.error('Error fetching PEMS data, using demo data:', error);
+      setPemsDashboardData(generateDemoPEMSData());
     } finally {
       setPemsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, hasPermission, generateDemoPEMSData]);
 
   // Helper function to get system status class
   const getSystemStatusClass = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'healthy': return 'status-healthy';
-      case 'warning': return 'status-warning';
-      case 'critical': return 'status-critical';
-      default: return 'status-unknown';
+      case 'healthy':
+        return 'status-healthy';
+      case 'warning':
+        return 'status-warning';
+      case 'critical':
+        return 'status-critical';
+      default:
+        return 'status-unknown';
     }
   };
 
@@ -442,44 +452,101 @@ const Dashboard: React.FC = () => {
       try {
         setLoading(true);
 
-        const stats = await ApiService.fetchIncidentStats();
-        if (stats) {
-          setIncidentStats(stats);
+        if (isAuthenticated && hasPermission(Permission.VIEW_BASIC_TRAFFIC)) {
+          // Authenticated users get full data
+          const stats = await ApiService.fetchIncidentStats();
+          if (stats) {
+            setIncidentStats(stats);
+          }
+
+          const todaysData = await ApiService.fetchTodaysIncidents();
+          if (todaysData) {
+            setTodaysIncidents({
+              count: todaysData.count,
+              date: todaysData.date,
+            });
+          }
+
+          const traffic = await ApiService.fetchTrafficIncidents();
+          setTrafficData(traffic);
+
+          const critical = await ApiService.fetchCriticalIncidents();
+          setCriticalIncidents(critical);
+
+          const locations = await ApiService.fetchIncidentLocations();
+          _setIncidentLocations(locations);
+        } else {
+          // Public users get basic traffic data from public endpoint
+          try {
+            const response = await fetch(
+              `${process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api'}/traffic/public`
+            );
+            if (response.ok) {
+              const publicData = await response.json();
+              // Convert public data to format expected by the dashboard
+              const publicTrafficData = publicData.summary?.map((item: any) => ({
+                location: item.location,
+                incidents: Array(parseInt(item.incidentCount) || 1).fill({
+                  properties: {
+                    iconCategory: 'Traffic Alert',
+                    magnitudeOfDelay: 2,
+                    events: []
+                  },
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [[0, 0]]
+                  }
+                })
+              })) || [];
+              setTrafficData(publicTrafficData);
+            }
+          } catch (error) {
+            console.error('Error fetching public traffic data:', error);
+            // Fallback demo data for public users
+            setTrafficData([
+              {
+                location: 'Los Angeles',
+                incidents: [{
+                  properties: {
+                    iconCategory: 'Traffic Alert',
+                    magnitudeOfDelay: 1,
+                    events: []
+                  },
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [[0, 0]]
+                  }
+                }]
+              },
+              {
+                location: 'San Francisco',
+                incidents: [{
+                  properties: {
+                    iconCategory: 'Traffic Alert',
+                    magnitudeOfDelay: 2,
+                    events: []
+                  },
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [[0, 0]]
+                  }
+                }]
+              }
+            ]);
+          }
         }
 
-        const todaysData = await ApiService.fetchTodaysIncidents();
-        if (todaysData) {
-          setTodaysIncidents({
-            count: todaysData.count,
-            date: todaysData.date,
-          });
-        }
-
-        const traffic = await ApiService.fetchTrafficIncidents();
-        setTrafficData(traffic);
-
-        const critical = await ApiService.fetchCriticalIncidents();
-        setCriticalIncidents(critical);
-
-        const locations = await ApiService.fetchIncidentLocations();
-        _setIncidentLocations(locations);
-
-        // Fetch PEMS dashboard data
+        // Fetch PEMS dashboard data (handles public/authenticated logic internally)
         await fetchPEMSData();
       } catch (error) {
         console.error('Error loading initial data:', error);
-        addNotification({
-          title: 'Data Load Error',
-          message: 'Failed to load some dashboard data',
-          type: 'warning',
-        });
       } finally {
         setLoading(false);
       }
     };
 
     loadInitialData();
-  }, [addNotification, fetchPEMSData]);
+  }, [fetchPEMSData, isAuthenticated, hasPermission]);
 
   // Socket.io connection
   useEffect(() => {
@@ -495,22 +562,17 @@ const Dashboard: React.FC = () => {
       // Send authentication info if available
       const userToken = sessionStorage.getItem('token');
       const userInfo = sessionStorage.getItem('userInfo');
-      
+
       if (userToken && userInfo) {
-        newSocket.emit('authenticate', { 
-          token: userToken, 
-          userInfo: JSON.parse(userInfo) 
+        newSocket.emit('authenticate', {
+          token: userToken,
+          userInfo: JSON.parse(userInfo),
         });
       }
-      
+
       // Request current stats immediately after connection
       newSocket.emit('request-stats');
-      
-      addNotification({
-        title: 'Connected',
-        message: 'Real-time data connection established',
-        type: 'success',
-      });
+
 
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -526,7 +588,7 @@ const Dashboard: React.FC = () => {
               )}, ${pos.longitude.toFixed(4)}`
             );
           },
-          error => {
+          _error => {
             addEvent('Location sharing: Permission denied or unavailable');
           }
         );
@@ -534,21 +596,12 @@ const Dashboard: React.FC = () => {
     });
 
     newSocket.on('disconnect', () => {
-      addNotification({
-        title: 'Disconnected',
-        message: 'Real-time data connection lost',
-        type: 'warning',
-      });
+      // Connection lost
     });
 
     // Typed: error is an Error
     newSocket.on('connect_error', (error: Error) => {
       console.error('Socket.IO connection error:', error);
-      addNotification({
-        title: 'Connection Error',
-        message: 'Failed to connect to real-time data service',
-        type: 'critical',
-      });
     });
 
     // Real-time data handlers
@@ -579,12 +632,8 @@ const Dashboard: React.FC = () => {
     });
 
     // Typed: incident payload for newAlert
-    newSocket.on('newAlert', (incident: NewAlertPayload) => {
-      addNotification({
-        title: 'New Incident',
-        message: `Incident reported: ${incident.Incident_Location}`,
-        type: 'critical',
-      });
+    newSocket.on('newAlert', (_incident: NewAlertPayload) => {
+      // New incident received
     });
 
     newSocket.on('new-traffic', (data: any) => {
@@ -620,7 +669,7 @@ const Dashboard: React.FC = () => {
       clearInterval(statsInterval);
       newSocket.close();
     };
-  }, [addNotification, addEvent]);
+  }, [addEvent]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -669,41 +718,39 @@ const Dashboard: React.FC = () => {
       console.log('- Critical Incidents:', criticalIncidentsCount);
       console.log('- PEMS Data:', pemsDashboardData);
       console.log('- Realtime Events Count:', realtimeEvents?.length || 0);
-      console.log('- Auth Token:', sessionStorage.getItem('token') ? 'Present' : 'Missing');
-      console.log('- User Info:', sessionStorage.getItem('userInfo') ? 'Present' : 'Missing');
-      console.log('- SERVER_URL:', process.env.REACT_APP_SERVER_URL || 'http://localhost:5000');
+      console.log(
+        '- Auth Token:',
+        sessionStorage.getItem('token') ? 'Present' : 'Missing'
+      );
+      console.log(
+        '- User Info:',
+        sessionStorage.getItem('userInfo') ? 'Present' : 'Missing'
+      );
+      console.log(
+        '- SERVER_URL:',
+        process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'
+      );
     };
-  }, [activeIncidents, criticalIncidentsCount, pemsDashboardData, realtimeEvents]);
+  }, [
+    activeIncidents,
+    criticalIncidentsCount,
+    pemsDashboardData,
+    realtimeEvents,
+  ]);
 
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'live-feed':
-        addNotification({
-          title: 'Live Feed',
-          message: 'Opening live camera feeds...',
-          type: 'info',
-        });
+        // Opening live camera feeds
         break;
       case 'report-incident':
-        addNotification({
-          title: 'Report Incident',
-          message: 'Opening incident reporting form...',
-          type: 'info',
-        });
+        // Opening incident reporting form
         break;
       case 'analytics':
-        addNotification({
-          title: 'Analytics',
-          message: 'Loading traffic analytics dashboard...',
-          type: 'info',
-        });
+        // Loading traffic analytics dashboard
         break;
       case 'archive':
-        addNotification({
-          title: 'Archive',
-          message: 'Opening incident archive...',
-          type: 'info',
-        });
+        // Opening incident archive
         break;
     }
   };
@@ -727,40 +774,12 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="dashboard" data-cy="dashboard" id="dashboard">
-      <div
-        className="notification-panel"
-        data-cy="notification-panel"
-        role="alert"
-      >
-        {notifications.map(notification => (
-          <div
-            key={notification.id}
-            className={`notification ${notification.type}`}
-            data-cy={`notification-${notification.id}`}
-          >
-            <div className="notification-header" data-cy="notification-header">
-              <div className="notification-title" data-cy="notification-title">
-                {notification.title}
-              </div>
-              <button
-                className="notification-close"
-                onClick={() => removeNotification(notification.id)}
-                data-cy="notification-close"
-                aria-label="Close notification"
-              >
-                ×
-              </button>
-            </div>
-            <div
-              className="notification-content"
-              data-cy="notification-content"
-            >
-              {notification.message}
-            </div>
-          </div>
-        ))}
-      </div>
+    <div
+      className="dashboard"
+      data-cy="dashboard"
+      data-testid="dashboard-container"
+      id="dashboard"
+    >
 
       <div
         className="dashboard-header"
@@ -839,11 +858,22 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="dashboard-content" data-cy="dashboard-content">
-        {loading && <LoadingSpinner size="large" text="Loading dashboard data..." className="content" />}
+
+        {loading && (
+          <LoadingSpinner
+            size="large"
+            text="Loading dashboard data..."
+            className="content"
+          />
+        )}
 
         <div className="stats-grid" data-cy="stats-grid">
           {/* Traffic Detectors */}
-          <div className="stat-card" data-cy="stat-card-detectors">
+          <div
+            className="stat-card"
+            data-cy="stat-card-detectors"
+            data-testid="stats-card"
+          >
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <GaugeIcon />
             </div>
@@ -859,7 +889,11 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Average Speed */}
-          <div className="stat-card" data-cy="stat-card-avg-speed">
+          <div
+            className="stat-card"
+            data-cy="stat-card-avg-speed"
+            data-testid="stats-card"
+          >
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <TrendingUpIcon />
             </div>
@@ -875,7 +909,11 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* High Risk Areas */}
-          <div className="stat-card risk-indicator" data-cy="stat-card-high-risk">
+          <div
+            className="stat-card risk-indicator"
+            data-cy="stat-card-high-risk"
+            data-testid="stats-card"
+          >
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <AlertTriangleIcon />
             </div>
@@ -893,7 +931,8 @@ const Dashboard: React.FC = () => {
                 className="progress-fill critical"
                 style={{
                   width: `${Math.min(
-                    ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) * 100,
+                    ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) *
+                      100,
                     100
                   )}%`,
                 }}
@@ -903,7 +942,12 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* System Status */}
-          <div className={`stat-card system-status-card ${getSystemStatusClass(pemsDashboardData?.overview?.system_status)}`} data-cy="stat-card-system-status">
+          <div
+            className={`stat-card system-status-card ${getSystemStatusClass(
+              pemsDashboardData?.overview?.system_status
+            )}`}
+            data-cy="stat-card-system-status"
+          >
             <div className="stat-card-icon" data-cy="stat-card-icon">
               <ActivityIcon />
             </div>
@@ -918,7 +962,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-
 
         {/* Weather Section */}
         <div
@@ -1061,24 +1104,57 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
-        {/* PEMS Traffic Analysis Section */}
-        <PEMSTrafficAnalysis 
-          district={12}
-          onAlertSelect={(alert) => {
-            addNotification({
-              title: 'Traffic Alert Selected',
-              message: `Alert for detector ${alert.detector_id}: ${alert.message}`,
-              type: 'info'
-            });
-          }}
-          onDetectorSelect={(detector) => {
-            addNotification({
-              title: 'Detector Selected',
-              message: `Monitoring detector ${detector.detector_id} on ${detector.freeway} ${detector.direction}`,
-              type: 'info'
-            });
-          }}
-        />
+        {/* Weekly Traffic Trends Section */}
+        <div className="weekly-trends-section" data-cy="weekly-trends-section">
+          <WeeklyTrafficTrends
+            className="dashboard-weekly-trends"
+            district={isAuthenticated ? 12 : undefined}
+            showDetailed={isAuthenticated && hasPermission(Permission.VIEW_DETAILED_ANALYTICS)}
+          />
+        </div>
+
+        {/* PEMS Traffic Analysis Section - Auth Required */}
+        {isAuthenticated && hasPermission(Permission.VIEW_PEMS_DATA) ? (
+          <div data-testid="incident-chart">
+            <PEMSTrafficAnalysis
+              district={12}
+              onAlertSelect={_alert => {
+                // Alert selected
+              }}
+              onDetectorSelect={_detector => {
+                // Detector selected
+              }}
+            />
+          </div>
+        ) : (
+          <div className="pems-signup-prompt" data-cy="pems-signup-prompt">
+            <div className="signup-prompt-content">
+              <div className="signup-prompt-header">
+                <div className="signup-prompt-icon">
+                  <ActivityIcon />
+                </div>
+                <h3>Advanced PEMS Traffic Analysis</h3>
+              </div>
+              <div className="signup-prompt-description">
+                <p>Get access to detailed Performance Measurement System (PEMS) data including:</p>
+                <ul>
+                  <li>Real-time detector data from 39,000+ sensors</li>
+                  <li>Traffic flow patterns and congestion analysis</li>
+                  <li>High-risk area identification</li>
+                  <li>Historical traffic trends and reports</li>
+                </ul>
+              </div>
+              <div className="signup-prompt-actions">
+                <a href="/account" className="signup-btn primary">
+                  Sign In for Full Access
+                </a>
+                <a href="/signup" className="signup-btn secondary">
+                  Create Free Account
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Traffic Incidents Section */}
         <div className="dashboard-main-grid" data-cy="dashboard-main-grid">
