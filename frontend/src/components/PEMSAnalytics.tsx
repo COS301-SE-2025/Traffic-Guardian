@@ -21,26 +21,28 @@ import {
   Radar,
   Legend,
 } from 'recharts';
+import { useUser, Permission } from '../contexts/UserContext';
 import ApiService from '../services/apiService';
 import LoadingSpinner from './LoadingSpinner';
+import WeeklyTrafficTrends from './WeeklyTrafficTrends';
 import './PEMSAnalytics.css';
 
 // PEMS Color scheme for consistent visualizations
 const PEMS_COLORS = {
-  primary: '#d97700',
+  primary: '#F79400',
   secondary: '#0056b3',
   critical: '#f44336',
-  warning: '#ff9800',
+  warning: '#feac34',
   success: '#4caf50',
   info: '#2196f3',
   light: '#f5f5f5',
-  gradient: ['#d97700', '#ff9800', '#ffb74d', '#ffcc80'],
+  gradient: ['#F79400', '#feac34', '#ff8a5b', '#ffad80'],
 };
 
 const RISK_COLORS = {
   CRITICAL: '#f44336',
-  HIGH: '#ff6b35',
-  MEDIUM: '#ff9800',
+  HIGH: '#feac34',
+  MEDIUM: '#feac34',
   LOW: '#4caf50',
 };
 
@@ -113,6 +115,7 @@ interface PEMSAnalyticsProps {
 }
 
 const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
+  const { hasPermission, isAuthenticated, userRole, user } = useUser();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -120,31 +123,72 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
   const [alertsData, setAlertsData] = useState<any>(null);
   const [districtData, setDistrictData] = useState<any[]>([]);
   const [selectedView, setSelectedView] = useState<
-    'overview' | 'districts' | 'alerts' | 'performance'
+    'overview' | 'districts' | 'alerts' | 'performance' | 'weekly'
   >('overview');
+
+  // Permission checks
+  const canViewPEMS = hasPermission(Permission.VIEW_PEMS_DATA);
+  const canViewDetailed = hasPermission(Permission.VIEW_DETAILED_ANALYTICS);
+  const canViewDistricts = hasPermission(Permission.VIEW_DISTRICT_SPECIFIC);
+  const canExportData = hasPermission(Permission.EXPORT_DATA);
 
   const fetchPEMSAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch all PEMS data in parallel
-      const [dashboard, highRisk, alerts, ...districts] = await Promise.all([
-        ApiService.fetchPEMSDashboardSummary(),
-        ApiService.fetchPEMSHighRiskAreas(),
-        ApiService.fetchPEMSAlerts(),
-        // Fetch major districts: SF Bay Area, LA, San Diego, Sacramento, Orange County
-        ApiService.fetchPEMSDistrictData(4),
-        ApiService.fetchPEMSDistrictData(7),
-        ApiService.fetchPEMSDistrictData(11),
-        ApiService.fetchPEMSDistrictData(3),
-        ApiService.fetchPEMSDistrictData(12),
-      ]);
+      // Fetch data based on permissions
+      const promises: Promise<any>[] = [];
 
-      setDashboardData(dashboard);
-      setHighRiskData(highRisk);
-      setAlertsData(alerts);
-      setDistrictData(districts.filter(d => d !== null));
+      if (isAuthenticated && canViewPEMS) {
+        // Authenticated users with PEMS permissions
+        promises.push(
+          ApiService.fetchPEMSAnalyticsData(userRole, user?.districts),
+          canViewDetailed ? ApiService.fetchPEMSDashboardSummary() : Promise.resolve(null),
+          canViewDetailed ? ApiService.fetchPEMSHighRiskAreas() : Promise.resolve(null),
+          canViewDetailed ? ApiService.fetchPEMSAlerts() : Promise.resolve(null),
+        );
+
+        // Add district data if user has district permissions
+        if (canViewDistricts && user?.districts) {
+          user.districts.forEach(district => {
+            promises.push(ApiService.fetchPEMSDistrictData(district));
+          });
+        } else if (canViewDetailed) {
+          // Admin users get major districts
+          promises.push(
+            ApiService.fetchPEMSDistrictData(4),
+            ApiService.fetchPEMSDistrictData(7),
+            ApiService.fetchPEMSDistrictData(11),
+            ApiService.fetchPEMSDistrictData(3),
+            ApiService.fetchPEMSDistrictData(12),
+          );
+        }
+      } else {
+        // Public users get basic data
+        promises.push(
+          ApiService.fetchPublicPEMSBasicData(),
+          Promise.resolve(null),
+          Promise.resolve(null),
+          Promise.resolve(null),
+        );
+      }
+
+      const results = await Promise.all(promises);
+
+      if (isAuthenticated && canViewPEMS) {
+        const [analyticsData, dashboard, highRisk, alerts, ...districts] = results;
+        setDashboardData(analyticsData || dashboard);
+        setHighRiskData(highRisk);
+        setAlertsData(alerts);
+        setDistrictData(districts.filter(d => d !== null));
+      } else {
+        const [basicData] = results;
+        setDashboardData(basicData);
+        setHighRiskData(null);
+        setAlertsData(null);
+        setDistrictData([]);
+      }
     } catch (err) {
       console.error('Error fetching PEMS analytics:', err);
       setError(
@@ -153,7 +197,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [canViewPEMS, canViewDetailed, canViewDistricts, isAuthenticated, userRole, user?.districts]);
 
   useEffect(() => {
     fetchPEMSAnalytics();
@@ -288,6 +332,8 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         <h2>
           <ActivityIcon />
           PEMS Traffic Analytics
+          {!isAuthenticated && <span className="public-badge">Public View</span>}
+          {isAuthenticated && <span className="user-role-badge">{userRole.toUpperCase()}</span>}
         </h2>
         <div className="analytics-tabs">
           <button
@@ -297,24 +343,41 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
             Overview
           </button>
           <button
-            className={selectedView === 'districts' ? 'active' : ''}
-            onClick={() => setSelectedView('districts')}
+            className={selectedView === 'weekly' ? 'active' : ''}
+            onClick={() => setSelectedView('weekly')}
           >
-            Regional Analysis
+            Weekly Trends
           </button>
-          <button
-            className={selectedView === 'alerts' ? 'active' : ''}
-            onClick={() => setSelectedView('alerts')}
-          >
-            Alerts & Risk
-          </button>
-          <button
-            className={selectedView === 'performance' ? 'active' : ''}
-            onClick={() => setSelectedView('performance')}
-          >
-            Performance Metrics
-          </button>
+          {canViewDistricts && (
+            <button
+              className={selectedView === 'districts' ? 'active' : ''}
+              onClick={() => setSelectedView('districts')}
+            >
+              Regional Analysis
+            </button>
+          )}
+          {canViewDetailed && (
+            <button
+              className={selectedView === 'alerts' ? 'active' : ''}
+              onClick={() => setSelectedView('alerts')}
+            >
+              Alerts & Risk
+            </button>
+          )}
+          {canViewDetailed && (
+            <button
+              className={selectedView === 'performance' ? 'active' : ''}
+              onClick={() => setSelectedView('performance')}
+            >
+              Performance Metrics
+            </button>
+          )}
         </div>
+        {canExportData && (
+          <button className="export-button">
+            Export Data
+          </button>
+        )}
       </div>
 
       <div className="analytics-content">
@@ -721,6 +784,43 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {selectedView === 'weekly' && (
+          <div className="weekly-section">
+            <div className="section-description">
+              <h3>Weekly Traffic Volume Trends</h3>
+              <p>
+                {isAuthenticated && canViewDetailed
+                  ? 'Comprehensive weekly traffic analysis with detailed volume patterns, speed data, and incident correlation across Monday through Sunday.'
+                  : 'Basic weekly traffic volume trends showing general patterns from Monday through Sunday. Sign in for detailed analytics and historical data.'
+                }
+              </p>
+            </div>
+
+            <WeeklyTrafficTrends
+              className="embedded-weekly-trends"
+              district={user?.districts?.[0]}
+              showDetailed={canViewDetailed}
+            />
+
+            {!isAuthenticated && (
+              <div className="upgrade-prompt">
+                <h4>📈 Unlock Advanced Weekly Analytics</h4>
+                <p>Sign in to access:</p>
+                <ul>
+                  <li>✓ Historical trend comparison</li>
+                  <li>✓ Speed and incident correlation</li>
+                  <li>✓ District-specific analysis</li>
+                  <li>✓ Peak hour identification</li>
+                  <li>✓ Data export capabilities</li>
+                </ul>
+                <a href="/account" className="upgrade-cta">
+                  Sign In for Full Access
+                </a>
+              </div>
+            )}
           </div>
         )}
       </div>

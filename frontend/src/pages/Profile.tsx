@@ -3,7 +3,9 @@ import './Profile.css';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../consts/ThemeContext';
+import { useUser } from '../contexts/UserContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import dataPrefetchService from '../services/DataPrefetchService';
 
 interface User {
   name: string;
@@ -20,6 +22,7 @@ interface Preferences {
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { toggleDarkMode } = useTheme();
+  const { logout } = useUser();
   const hasInitialized = useRef(false);
   const [user, setUser] = useState<User>({ name: '', email: '' });
   const [preferences, setPreferences] = useState<Preferences>({
@@ -279,9 +282,9 @@ const Profile: React.FC = () => {
   };
 
   const handleSignOut = () => {
-    sessionStorage.removeItem('apiKey');
-    sessionStorage.removeItem('userEmail');
-    navigate('/account');
+    logout();
+    dataPrefetchService.stopPrefetching();
+    navigate('/');
   };
 
   if (loading) {

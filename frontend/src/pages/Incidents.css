@@ -39,8 +39,8 @@ svg {
   --severity-critical-text: #dc2626;
   --severity-high-bg: rgb(220 38 38 / 15%);
   --severity-high-text: #dc2626;
-  --severity-medium-bg: rgb(245 158 11 / 15%);
-  --severity-medium-text: #f59e0b;
+  --severity-medium-bg: rgb(254 172 52 / 15%);
+  --severity-medium-text: #feac34;
   --severity-low-bg: rgb(34 197 94 / 15%);
   --severity-low-text: #22c55e;
   --status-active-bg: rgb(255 68 68 / 20%);
@@ -123,7 +123,7 @@ svg {
   --severity-high-bg: rgb(248 113 113 / 20%);
   --severity-high-text: #f87171;
   --severity-medium-bg: rgb(251 191 36 / 20%);
-  --severity-medium-text: #fbbf24;
+  --severity-medium-text: #ff8a5b;
   --severity-low-bg: rgb(74 222 128 / 20%);
   --severity-low-text: #4ade80;
   --status-active-bg: rgb(255 68 68 / 20%);
@@ -173,10 +173,23 @@ svg {
 
 /* Apply variables to styles */
 .incidents-page {
-  background-color: var(--background-color);
+  background-color: #0f0f0f;
   min-height: 100vh;
-  color: var(--text-color);
+  color: #f1f1f1;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding-top: 160px;
+}
+
+@media (max-width: 768px) {
+  .incidents-page {
+    padding-top: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .incidents-page {
+    padding-top: 130px;
+  }
 }
 
 .incidents-header {
