@@ -960,27 +960,92 @@ jobs:
 
       - name: Run npm audit for API
         working-directory: ./API
+        timeout-minutes: 3
         run: |
-          npm install
+          echo "Running npm audit for API..."
+          npm install --no-fund --no-audit
           npm audit --audit-level=moderate || echo "Security vulnerabilities found in API dependencies"
 
       - name: Run npm audit for Frontend
         working-directory: ./frontend
+        timeout-minutes: 3
         run: |
-          npm install
+          echo "Running npm audit for Frontend..."
+          npm install --no-fund --no-audit
           npm audit --audit-level=moderate || echo "Security vulnerabilities found in Frontend dependencies"
-
-      - name: Run npm audit for AI
-        working-directory: ./AI_Model_BB
+          
+      - name: Set up Python for AI security scan
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Run Python security scan for AI Model
+        working-directory: ./AI_Model_BB/Code
+        timeout-minutes: 3
         run: |
-          npm install
-          npm audit --audit-level=moderate || echo "Security vulnerabilities found in Frontend dependencies"
+          echo "Running Python security checks for AI model..."
+          # Install security scanning tools
+          pip install safety bandit
+          
+          # Check dependencies with safety if requirements.txt exists
+          if [ -f "requirements.txt" ]; then
+            echo "Checking Python dependencies with safety..."
+            safety check -r requirements.txt || echo "Vulnerabilities found in Python dependencies"
+          else
+            echo "No requirements.txt found, skipping dependency check"
+          fi
+          
+          # Scan code with bandit (Python security scanner)
+          echo "Scanning Python code with bandit..."
+          bandit -r . || echo "Potential security issues found in Python code"
 
-      - name: Check for secrets in code
+      - name: Enhanced secret detection
+        timeout-minutes: 2
         run: |
-          # Simple secret detection
-          echo "Checking for potential secrets..."
-          grep -r -i "password\|secret\|key\|token" --include="*.js" --include="*.ts" --include="*.py" . | grep -v node_modules | grep -v ".git" | head -10 || echo "No obvious secrets found"
+          echo "Running enhanced secret detection..."
+          
+          # Check for secrets in JavaScript/TypeScript files
+          echo "Checking JS/TS files for potential secrets..."
+          grep -r -i -l "password\|secret\|key\|token\|auth" --include="*.js" --include="*.ts" --exclude-dir="node_modules" --exclude-dir=".git" . | \
+            grep -v "PASSWORD_PLACEHOLDER\|SECRET_PLACEHOLDER\|process.env\|.test.js\|.test.ts" || echo "No obvious JS/TS secrets found"
+          
+          # Check for secrets in Python files
+          echo "Checking Python files for potential secrets..."
+          grep -r -i -l "password\|secret\|key\|token\|auth" --include="*.py" --exclude-dir="__pycache__" --exclude-dir=".git" . | \
+            grep -v "PASSWORD\|SECRET\|os.environ\|os.getenv\|test" || echo "No obvious Python secrets found"
+          
+          # Check for secrets in configuration files
+          echo "Checking configuration files for potential secrets..."
+          grep -r -i -l "password\|secret\|key\|token\|auth" --include="*.json" --include="*.yml" --include="*.yaml" --include="*.xml" --exclude-dir="node_modules" --exclude-dir=".git" . | \
+            grep -v "PASSWORD\|SECRET\|\${\|node_modules" || echo "No obvious secrets found in config files"
+      
+      - name: Check for vulnerable dependencies
+        run: |
+          echo "Checking for commonly known vulnerable dependencies..."
+          
+          # Check for specific vulnerable packages in package.json files
+          echo "Checking JavaScript dependencies..."
+          find . -name "package.json" -not -path "*/node_modules/*" -exec grep -l "minimist\|lodash\|jquery\|socket.io\|ws\|express\|axios" {} \; || echo "No commonly scrutinized JS packages found"
+          
+          # Check for specific vulnerable packages in requirements.txt
+          echo "Checking Python dependencies..."
+          find . -name "requirements.txt" -exec grep -l "django\|flask\|numpy\|tensorflow\|torch\|cryptography\|requests" {} \; || echo "No commonly scrutinized Python packages found"
+      
+      - name: Code quality security scan
+        run: |
+          echo "Checking for potential security anti-patterns in code..."
+          
+          # Check for eval in JS files (potential security risk)
+          echo "Checking for eval() usage in JS/TS files..."
+          grep -r -i "eval(" --include="*.js" --include="*.ts" --exclude-dir="node_modules" --exclude-dir=".git" . || echo "No eval() found in JS/TS files"
+          
+          # Check for exec in Python (potential security risk)
+          echo "Checking for exec() usage in Python files..."
+          grep -r -i "exec(" --include="*.py" --exclude-dir="__pycache__" --exclude-dir=".git" . || echo "No exec() found in Python files"
+          
+          # Check for SQL injection vulnerabilities
+          echo "Checking for potential SQL injection patterns..."
+          grep -r -i "db.query\|connection.query\|execute(" --include="*.js" --include="*.py" --exclude-dir="node_modules" --exclude-dir="__pycache__" --exclude-dir=".git" . || echo "No obvious SQL query patterns found"
 
   # performance-test:
   #   name: Performance Test
