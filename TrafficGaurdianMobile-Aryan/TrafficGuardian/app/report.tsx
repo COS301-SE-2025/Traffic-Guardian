@@ -1,16 +1,18 @@
 import { router, useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Button } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { createIncident, sendVoice } from "../services/incidentsApi";
 import { useLocation } from "../services/location";
 import { Picker } from "@react-native-picker/picker";
 import { useSession } from "../services/sessionContext";
 import * as Audio from "expo-audio";
+import { globalStyles } from "../styles/globalStyles";
 
 export default function Report() {
     const router = useRouter();
     const { coords } = useLocation();
-    const { user } = useSession();
+    const { user, setUser } = useSession();
   
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -108,115 +110,141 @@ export default function Report() {
 
   /////////////////////////////
   return(
-    <ScrollView contentContainerStyle={styles.container}>
-              <View style={styles.navbar}>
-                <TouchableOpacity onPress={() => router.push("/login")}>
-                  <Text style={styles.navText}>Login</Text>
-                </TouchableOpacity>
-        
-                <TouchableOpacity onPress={() => router.push("/")}>
-                  <Text style={styles.navText}>Home</Text>
-                </TouchableOpacity>
-        
-                <TouchableOpacity onPress={() => router.push("/register")}>
-                  <Text style={styles.navText}>Register</Text>
-                </TouchableOpacity>
-              </View>
-      <Text style={styles.title}>Report an Incident</Text>
 
-      <Text style={styles.label}>Severity</Text>
-      <Picker
-        selectedValue={incidentSeverity}
-        style={styles.input}
-        onValueChange={(itemValue) => setIncidentSeverity(itemValue)}
-      >
-        <Picker.Item label="Low" value="low" />
-        <Picker.Item label="Medium" value="medium" />
-        <Picker.Item label="High" value="high" />
-      </Picker>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "rgb(41,41,41)" }}>
+  <ScrollView
+    contentContainerStyle={{
+      flexGrow: 1,               
+      justifyContent: "center",  
+      alignItems: "center",      
+      padding: 20,
+    }}
+    showsVerticalScrollIndicator={false}
+  >
+    <View
+      style={{
+        width: "100%",
+        maxWidth: 400,
+        backgroundColor: "#545454ff",
+        borderRadius: 16,
+        padding: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        elevation: 5,
+      }}
+    >
+      <Text style={{ fontSize: 24, fontWeight: "bold", textAlign: "center", color: "orange", marginBottom: 20 }}>
+        Report an Incident
+      </Text>
 
-    <Text style={styles.label}>Description</Text>
+      {/* Severity Picker */}
+      <Text style={{ color: "white", fontWeight: "600", marginBottom: 5 }}>Severity</Text>
+      <View style={{ backgroundColor: "#f5f5f5", borderRadius: 12, marginBottom: 15 }}>
+        <Picker
+          selectedValue={incidentSeverity}
+          onValueChange={(item) => setIncidentSeverity(item)}
+          style={{ color: "#292929" }}
+        >
+          <Picker.Item label="Select severity" value="" />
+          <Picker.Item label="Low" value="low" />
+          <Picker.Item label="Medium" value="medium" />
+          <Picker.Item label="High" value="high" />
+        </Picker>
+      </View>
+
+      {/* Description */}
+      <Text style={{ color: "white", fontWeight: "600", marginBottom: 5 }}>Description</Text>
       <TextInput
-        style={styles.input}
-        placeholder="Details"
+        style={{
+          backgroundColor: "#f5f5f5",
+          borderRadius: 12,
+          padding: 12,
+          marginBottom: 15,
+          color: "#292929",
+        }}
+        placeholder="Details of incident"
+        placeholderTextColor="#888"
         value={incidentDescription}
         onChangeText={setDescription}
+        multiline
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Report</Text>
+      {/* Submit Button */}
+      <TouchableOpacity
+        style={{ backgroundColor: "orange", paddingVertical: 14, borderRadius: 12, alignItems: "center", marginBottom: 10 }}
+        onPress={handleSubmit}
+      >
+        <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>Report</Text>
       </TouchableOpacity>
 
-      <View style={{ padding: 20 }}>
-      <Button
-        title={recording ? "Stop Recording" : "Start Recording"}
-        onPress={recording ? stopRecording : startRecording}
-      />
-      {uri && (
-        <>
-          {/* <Text>Recorded file: {uri}</Text> */}
-          <Button title="Play Recording" onPress={playSound} />
-          <Button title="Send" onPress={sendVoiceRecording} />
-        </>
+      {/* Voice Recording */}
+      <View style={{ marginTop: 10 }}>
+        <TouchableOpacity
+          style={{
+            backgroundColor: recording ? "#d9534f" : "#5cb85c",
+            paddingVertical: 12,
+            borderRadius: 12,
+            alignItems: "center",
+            marginBottom: 10,
+          }}
+          onPress={recording ? stopRecording : startRecording}
+        >
+          <Text style={{ color: "white", fontWeight: "600" }}>{recording ? "Stop Recording" : "Start Recording"}</Text>
+        </TouchableOpacity>
 
-      )}
+        {uri && (
+          <>
+            <TouchableOpacity
+              style={{ backgroundColor: "#0275d8", paddingVertical: 12, borderRadius: 12, alignItems: "center", marginBottom: 10 }}
+              onPress={playSound}
+            >
+              <Text style={{ color: "white", fontWeight: "600" }}>Play Recording</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{ backgroundColor: "orange", paddingVertical: 12, borderRadius: 12, alignItems: "center" }}
+              onPress={sendVoiceRecording}
+            >
+              <Text style={{ color: "white", fontWeight: "600" }}>Send Recording</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
     </View>
-    </ScrollView>
+  </ScrollView>
+
+  {/* Navbar at bottom */}
+  <View style={globalStyles.navbar}>
+    <TouchableOpacity onPress={() => router.push("/")}>
+      <Text style={globalStyles.navText}>Home</Text>
+    </TouchableOpacity>
+
+    {!user && (
+      <TouchableOpacity onPress={() => router.push("/login")}>
+        <Text style={globalStyles.navText}>Login</Text>
+      </TouchableOpacity>
+    )}
+
+    {user && (
+      <TouchableOpacity
+        onPress={() => {
+          setUser(null);
+          router.push("/");
+        }}
+      >
+        <Text style={globalStyles.navText}>Logout</Text>
+      </TouchableOpacity>
+    )}
+
+    {!user && (
+      <TouchableOpacity onPress={() => router.push("/register")}>
+        <Text style={globalStyles.navText}>Register</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+</SafeAreaView>
+
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  label: {
-    marginTop: 15,
-    marginBottom: 5,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    fontSize: 16,
-  },
-  button: {
-    marginTop: 30,
-    backgroundColor: "#007bff",
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-    navbar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#333",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-  },
-  navText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
