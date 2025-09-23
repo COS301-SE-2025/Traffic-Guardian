@@ -596,7 +596,7 @@ const cameraModel = {
         const result = await client.query(`
           UPDATE public."Camera"
           SET last_traffic_count = $1
-          WHERE camera_id = $2
+          WHERE "Camera_ID" = $2
           RETURNING "Camera_ID", "Camera_ExternalID", last_traffic_count
         `, [count, cameraId]);
 
