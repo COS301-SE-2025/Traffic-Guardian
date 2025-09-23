@@ -5,29 +5,25 @@ import { typography } from './typography';
 const { width, height } = Dimensions.get('window');
 
 export const globalStyles = StyleSheet.create({
-  navbar: {
+navbar: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    backgroundColor: 'grey',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
+    backgroundColor: "rgba(41,41,41,1)",
+    paddingVertical: 25,
+    borderBottomWidth: 2,
+    borderBottomColor: "grey",
   },
   navText: {
-    color: colors.text.light,
+    color: "white",
     fontSize: 16,
     fontWeight: "600",
   },
-  navButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
+  navTextActive: {
+    color: "orange", // active page highlight
+    fontWeight: "700",
   },
-  navButtonHover: {
-    backgroundColor: colors.primary.dark,
-  },
+
   //
   container: {
     flex: 1,
@@ -123,11 +119,13 @@ export const globalStyles = StyleSheet.create({
   cardTitle: {
     ...typography.h3,
     color: colors.text.primary,
+    color : 'orange',
     fontWeight: '600',
   },
   cardSubtitle: {
     ...typography.caption,
     color: colors.text.secondary,
+    color : 'white',
     marginTop: 4,
   },
 

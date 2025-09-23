@@ -6,6 +6,7 @@ import { useSocket } from "../services/socketProvider";
 import * as Location from "expo-location";
 import { useSession } from "../services/sessionContext";
 import { globalStyles }from "../styles/globalStyles"
+import { useTraffic } from "../services/trafficContext";
 
 
 export default function Index() {
@@ -13,7 +14,7 @@ export default function Index() {
   const { socket } = useSocket();
   const { user, setUser } = useSession();
 
-  const [traffic, setTraffic] = useState(null);
+  const { traffic, setTraffic } = useTraffic();
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
   //get location
@@ -88,18 +89,62 @@ export default function Index() {
     };
   }, [socket]);
 
+/*   //ask for new traffic
+   useEffect(()=>{
+    if (!socket) return;
+
+    socket.emit("get-traffic");
+  }, [socket]); */
+
   return (
     <SafeAreaView style={{flex : 1, backgroundColor : 'rgba(41, 41, 41)'}}>
+
+      <View style={{flex : 1}}>
+        <View style={globalStyles.header}>
+          <Text style={globalStyles.headerTitle}>Welcome!</Text>
+          <Text style={globalStyles.headerSubtitle}>Traffic and Incident Alerts</Text>
+        </View>
+
+<ScrollView contentContainerStyle={{ padding: 20 }}>
+  {traffic &&
+    Object.entries(traffic).map(([key, value], index) => {
+      const location = value.location;
+
+      return (
+        <View key={index} style={[globalStyles.card, globalStyles.darkCard]}>
+          {/* Card Header */}
+          <View style={globalStyles.cardHeader}>
+            <Text style={globalStyles.cardTitle}>{location}</Text>
+          </View>
+
+          {/* Incidents */}
+          {value.incidents?.map((incident, i) => {
+            const description = incident?.properties?.iconCategory;
+            return (
+              <Text key={i} style={globalStyles.cardSubtitle}>
+                - {description}
+              </Text>
+            );
+          })}
+        </View>
+      );
+    })}
+</ScrollView>
+
+      </View>
+
       <View style={globalStyles.navbar}>
+        {!user && (
         <TouchableOpacity onPress={() => router.push("/login")}>
           <Text style={globalStyles.navText}>Login</Text>
         </TouchableOpacity>
+        )}
 
-        {user && (
+        {//user && (
           <TouchableOpacity onPress={() => router.push("/report")}>
             <Text style={globalStyles.navText}>Report</Text>
           </TouchableOpacity>
-        )}
+        /* ) */}
 
         {user && (
           <TouchableOpacity
@@ -111,43 +156,11 @@ export default function Index() {
             <Text style={globalStyles.navText}>Logout</Text>
           </TouchableOpacity>
         )}
-
+        {!user && (
         <TouchableOpacity onPress={() => router.push("/register")}>
           <Text style={globalStyles.navText}>Register</Text>
         </TouchableOpacity>
-      </View>
-
-      <View>
-        <View style={globalStyles.header}>
-          <Text style={globalStyles.headerTitle}>Welcome!</Text>
-          <Text style={globalStyles.headerSubtitle}>Traffic and Incident Alerts</Text>
-        </View>
-
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
-          {traffic &&
-            Object.entries(traffic).map(([key, value], index) => {
-              const location = value.location;
-
-              return (
-                <View key={index} style={{ marginBottom: 20 }}>
-                  <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
-                    Location: {location}
-                  </Text>
-
-                  {value.incidents?.map((incident, i) => {
-                    const description = incident?.properties?.iconCategory;
-                    return (
-                      <Text key={i} style={{ marginLeft: 10, marginBottom: 2 }}>
-                        - {description}
-                      </Text>
-                    );
-                  })}
-                </View>
-              );
-            })}
-        </ScrollView>
-
-
+        )}
       </View>
     </SafeAreaView>
   );
