@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { motion } from 'framer-motion';
@@ -225,6 +225,7 @@ interface MapControlsProps {
   heatmapOpacity: number;
   onHeatmapOpacityChange: (opacity: number) => void;
   trafficAnalysis: TrafficDensityAnalysis | null;
+  dynamicVehicleCount: number;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -242,6 +243,7 @@ const MapControls: React.FC<MapControlsProps> = ({
   heatmapOpacity,
   onHeatmapOpacityChange,
   trafficAnalysis,
+  dynamicVehicleCount,
 }) => (
   <div className="map-controls" data-testid="map-controls">
     <div
@@ -404,9 +406,9 @@ const MapControls: React.FC<MapControlsProps> = ({
             <div className="traffic-metrics">
               <div className="metric">
                 <div className="metric-value">
-                  {trafficAnalysis.totalVehicles}
+                  {dynamicVehicleCount}
                 </div>
-                <div className="metric-label">Vehicles</div>
+                <div className="metric-label">Vehicles in View</div>
               </div>
               <div className="metric">
                 <div
@@ -431,8 +433,8 @@ const MapControls: React.FC<MapControlsProps> = ({
           ) : (
             <div className="traffic-metrics">
               <div className="metric">
-                <div className="metric-value">-</div>
-                <div className="metric-label">Vehicles</div>
+                <div className="metric-value">{dynamicVehicleCount}</div>
+                <div className="metric-label">Vehicles in View</div>
               </div>
               <div className="metric">
                 <div className="metric-value">-</div>
@@ -547,6 +549,60 @@ const FitBounds: React.FC<{ cameras: CameraFeed[] }> = ({ cameras }) => {
   return null;
 };
 
+// Component to track viewport changes and visible cameras
+const ViewportTracker: React.FC<{
+  cameras: CameraFeed[];
+  onViewportChange: (visibleCameras: CameraFeed[]) => void;
+}> = ({ cameras, onViewportChange }) => {
+  const map = useMap();
+
+  const checkVisibleCameras = useCallback(() => {
+    if (!map || cameras.length === 0) {
+      onViewportChange([]);
+      return;
+    }
+
+    const bounds = map.getBounds();
+    const visibleCameras = cameras.filter(camera => {
+      if (!camera.coordinates) {
+        return false;
+      }
+
+      const { lat, lng } = camera.coordinates;
+      return bounds.contains([lat, lng]);
+    });
+
+    onViewportChange(visibleCameras);
+  }, [map, cameras, onViewportChange]);
+
+  React.useEffect(() => {
+    if (!map) {
+      return;
+    }
+
+    // Check visible cameras on initial load
+    checkVisibleCameras();
+
+    // Listen to map events that change viewport
+    map.on('moveend', checkVisibleCameras);
+    map.on('zoomend', checkVisibleCameras);
+    map.on('resize', checkVisibleCameras);
+
+    return () => {
+      map.off('moveend', checkVisibleCameras);
+      map.off('zoomend', checkVisibleCameras);
+      map.off('resize', checkVisibleCameras);
+    };
+  }, [map, checkVisibleCameras]);
+
+  // Also check when cameras list changes
+  React.useEffect(() => {
+    checkVisibleCameras();
+  }, [cameras, checkVisibleCameras]);
+
+  return null;
+};
+
 const Map: React.FC = () => {
   const { cameraFeeds, loading, error, refreshFeeds } = useLiveFeed();
   const [selectedCamera, setSelectedCamera] = useState<CameraFeed | null>(null);
@@ -562,6 +618,10 @@ const Map: React.FC = () => {
   const [trafficAnalysis, setTrafficAnalysis] =
     useState<TrafficDensityAnalysis | null>(null);
 
+  // Dynamic vehicle count state
+  const [visibleCamerasInViewport, setVisibleCamerasInViewport] = useState<CameraFeed[]>([]);
+  const [dynamicVehicleCount, setDynamicVehicleCount] = useState<number>(0);
+
   // Filter cameras based on status and coordinates
   const filteredCameras = useMemo(() => {
     return cameraFeeds.filter(camera => {
@@ -571,6 +631,47 @@ const Map: React.FC = () => {
       return hasCoords && matchesFilter;
     });
   }, [cameraFeeds, statusFilter]);
+
+  // Calculate dynamic vehicle count from visible cameras in viewport
+  const calculateDynamicVehicleCount = useCallback((visibleCameras: CameraFeed[]) => {
+    let totalVehicles = 0;
+
+    // Get the current heatmap data
+    const currentHeatmapData = trafficDensityService.getCurrentHeatmapData();
+
+    visibleCameras.forEach(camera => {
+      if (!camera.coordinates) {
+        return;
+      }
+
+      // Find corresponding heatmap point for this camera location
+      const heatmapPoint = currentHeatmapData.find(point => {
+        const distance = Math.sqrt(
+          Math.pow(point.lat - camera.coordinates!.lat, 2) +
+          Math.pow(point.lng - camera.coordinates!.lng, 2)
+        );
+        // Match points within ~100m (0.001 degrees roughly)
+        return distance < 0.001;
+      });
+
+      if (heatmapPoint) {
+        totalVehicles += heatmapPoint.vehicleCount;
+      }
+    });
+
+    setDynamicVehicleCount(totalVehicles);
+  }, []);
+
+  // Handle viewport changes
+  const handleViewportChange = useCallback((visibleCameras: CameraFeed[]) => {
+    setVisibleCamerasInViewport(visibleCameras);
+    calculateDynamicVehicleCount(visibleCameras);
+  }, [calculateDynamicVehicleCount]);
+
+  // Recalculate vehicle count when heatmap data changes
+  useEffect(() => {
+    calculateDynamicVehicleCount(visibleCamerasInViewport);
+  }, [heatmapData, visibleCamerasInViewport, calculateDynamicVehicleCount]);
 
   const handleMarkerClick = (camera: CameraFeed) => {
     setSelectedCamera(camera);
@@ -698,6 +799,7 @@ const Map: React.FC = () => {
         heatmapOpacity={heatmapOpacity}
         onHeatmapOpacityChange={handleHeatmapOpacityChange}
         trafficAnalysis={trafficAnalysis}
+        dynamicVehicleCount={dynamicVehicleCount}
       />
 
       <div className="map-container" data-testid="map-container">
@@ -732,6 +834,10 @@ const Map: React.FC = () => {
           />
 
           <FitBounds cameras={filteredCameras} />
+          <ViewportTracker
+            cameras={filteredCameras}
+            onViewportChange={handleViewportChange}
+          />
 
           {filteredCameras.map(camera => (
             <Marker
