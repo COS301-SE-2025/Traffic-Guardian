@@ -684,7 +684,7 @@ const LiveFeed: React.FC = () => {
                           selectedCamera.coordinates.lng,
                         ],
                         zoom: 15,
-                        style: { height: '400px', width: '100%' },
+                        style: { width: '100%' },
                         className: 'camera-map',
                       } as any)}
                     >
@@ -745,12 +745,11 @@ const LiveFeed: React.FC = () => {
                     <div className="map-info">
                       <p>
                         <strong>Camera Location:</strong>{' '}
-                        {selectedCamera.coordinates.lat.toFixed(6)},{' '}
-                        {selectedCamera.coordinates.lng.toFixed(6)}
+                        {selectedCamera.location}
                       </p>
                       <p>
-                        <strong>Viewing:</strong>{' '}
-                        {selectedCamera.imageDescription || 'Highway conditions'}
+                        <strong>Location Details:</strong>{' '}
+                        {selectedCamera.locationName || selectedCamera.location}
                       </p>
                     </div>
                   </div>
