@@ -142,6 +142,17 @@ const cameraController = {
       console.error('Error updating traffic count:', error);
       res.status(500).json({ error: 'Failed to update traffic count' });
     }
+  },
+
+  // Public endpoint for traffic data (no authentication required)
+  getPublicTrafficData: async (req, res) => {
+    try {
+      const result = await cameraModel.getPublicTrafficData();
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching public traffic data:', error);
+      res.status(500).json({ error: 'Failed to fetch public traffic data' });
+    }
   }
 };
 
