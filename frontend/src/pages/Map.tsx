@@ -29,7 +29,7 @@ const createCameraIcon = (status: 'Online' | 'Offline' | 'Loading'): any => {
     status === 'Online'
       ? '#4ade80'
       : status === 'Loading'
-        ? '#f59e0b'
+        ? '#feac34'
         : '#ef4444';
 
   return new (L as any).Icon({

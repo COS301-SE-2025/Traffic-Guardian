@@ -1,10 +1,23 @@
 /* Map Page Styles */
 .map-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
-  color: white;
+  background-color: #0f0f0f;
+  color: #f1f1f1;
   position: relative;
   animation: fadeIn 0.6s ease-out;
+  padding-top: 160px;
+}
+
+@media (max-width: 768px) {
+  .map-page {
+    padding-top: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .map-page {
+    padding-top: 130px;
+  }
 }
 
 @keyframes fadeIn {
@@ -47,7 +60,7 @@
 }
 
 .retry-button {
-  background: #ffae36;
+  background: #feac34;
   color: #1e1e1e;
   border: none;
   padding: 0.75rem 2rem;
@@ -58,15 +71,15 @@
 }
 
 .retry-button:hover {
-  background: #e89a2e;
+  background: #F79400;
   transform: translateY(-2px);
 }
 
 /* Modern Map Controls */
 .map-controls {
-  background: rgb(30 30 30 / 98%);
+  background: #0f0f0f;
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgb(255 174 54 / 20%);
+  border-bottom: 1px solid rgb(254 172 52 / 20%);
   padding: 1rem 1.5rem;
   animation: slideDown 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -95,7 +108,7 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #ffae36, #ffc670);
+  background: linear-gradient(135deg, #feac34, #ff8a5b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -162,9 +175,9 @@
 }
 
 .control-panel:hover {
-  border-color: rgb(255 174 54 / 40%);
+  border-color: rgb(254 172 52 / 40%);
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 16px 48px rgb(0 0 0 / 50%), 0 0 30px rgb(255 174 54 / 10%);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 50%), 0 0 30px rgb(254 172 52 / 10%);
 }
 
 .panel-header {
@@ -222,15 +235,15 @@
 }
 
 .filter-chip:hover {
-  border-color: rgb(255 174 54 / 40%);
+  border-color: rgb(254 172 52 / 40%);
   color: #f3f4f6;
   transform: translateY(-1px);
 }
 
 .filter-chip.active {
-  background: rgb(255 174 54 / 15%);
-  border-color: #ffae36;
-  color: #ffae36;
+  background: rgb(254 172 52 / 15%);
+  border-color: #feac34;
+  color: #feac34;
   font-weight: 600;
 }
 
@@ -241,9 +254,9 @@
 }
 
 .filter-chip.loading.active {
-  background: rgb(245 158 11 / 15%);
-  border-color: #f59e0b;
-  color: #f59e0b;
+  background: rgb(254 172 52 / 15%);
+  border-color: #feac34;
+  color: #feac34;
 }
 
 .filter-chip.offline.active {
@@ -264,8 +277,8 @@
 }
 
 .loading-indicator {
-  background: #f59e0b;
-  box-shadow: 0 0 8px rgb(245 158 11 / 40%);
+  background: #feac34;
+  box-shadow: 0 0 8px rgb(254 172 52 / 40%);
   animation: pulse 2s infinite;
 }
 
@@ -284,10 +297,10 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.6rem 1rem;
-  background: rgb(255 174 54 / 10%);
-  border: 1px solid rgb(255 174 54 / 30%);
+  background: rgb(254 172 52 / 10%);
+  border: 1px solid rgb(254 172 52 / 30%);
   border-radius: 10px;
-  color: #ffae36;
+  color: #feac34;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -296,10 +309,10 @@
 }
 
 .refresh-button:hover {
-  background: rgb(255 174 54 / 20%);
-  border-color: #ffae36;
+  background: rgb(254 172 52 / 20%);
+  border-color: #feac34;
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgb(255 174 54 / 20%);
+  box-shadow: 0 4px 20px rgb(254 172 52 / 20%);
 }
 
 .refresh-button:active {
@@ -354,19 +367,19 @@
 }
 
 .toggle-button:hover {
-  border-color: rgb(255 174 54 / 50%);
+  border-color: rgb(254 172 52 / 50%);
   color: #f3f4f6;
   background: rgb(255 255 255 / 10%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgb(255 174 54 / 15%);
+  box-shadow: 0 4px 16px rgb(254 172 52 / 15%);
 }
 
 .toggle-button.active {
-  background: rgb(255 174 54 / 20%);
-  border-color: #ffae36;
-  color: #ffae36;
+  background: rgb(254 172 52 / 20%);
+  border-color: #feac34;
+  color: #feac34;
   font-weight: 600;
-  box-shadow: 0 4px 20px rgb(255 174 54 / 25%);
+  box-shadow: 0 4px 20px rgb(254 172 52 / 25%);
   transform: translateY(-2px);
 }
 
@@ -494,7 +507,7 @@
 }
 
 .metric-value.warning {
-  color: #f59e0b;
+  color: #feac34;
   animation: pulse 2s infinite;
 }
 
@@ -521,7 +534,7 @@
 
 .intensity-fill-modern {
   height: 100%;
-  background: linear-gradient(90deg, #34d399 0%, #f59e0b 60%, #ef4444 100%);
+  background: linear-gradient(90deg, #34d399 0%, #feac34 60%, #ef4444 100%);
   border-radius: 4px;
   transition: width 0.5s ease;
   position: relative;
@@ -572,7 +585,7 @@
     linear-gradient(
       90deg,
       #34d399 0%,
-      #f59e0b 60%,
+      #feac34 60%,
       #ef4444 90%,
       #dc2626 100%
     );
@@ -603,14 +616,14 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #ffae36;
+  background: #feac34;
   cursor: pointer;
   box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
   transition: all 0.2s ease;
 }
 
 .opacity-slider::-webkit-slider-thumb:hover {
-  background: #e89a2e;
+  background: #F79400;
   transform: scale(1.1);
 }
 
@@ -618,7 +631,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #ffae36;
+  background: #feac34;
   cursor: pointer;
   border: none;
   box-shadow: 0 2px 4px rgb(0 0 0 / 30%);
@@ -675,7 +688,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-size: 1rem;
-  color: #ffae36;
+  color: #feac34;
 }
 
 .status-text {
@@ -693,8 +706,8 @@
 }
 
 .status-text.loading {
-  background: rgb(245 158 11 / 20%);
-  color: #f59e0b;
+  background: rgb(254 172 52 / 20%);
+  color: #feac34;
 }
 
 .status-text.offline {
@@ -746,7 +759,7 @@
 .camera-modal-header h3 {
   margin: 0;
   font-size: 1.5rem;
-  color: #ffae36;
+  color: #feac34;
 }
 
 .camera-modal-close {
@@ -784,7 +797,7 @@
 .camera-stream-section h4,
 .camera-image-section h4 {
   margin: 0 0 1rem;
-  color: #ffae36;
+  color: #feac34;
   font-size: 1.2rem;
 }
 
@@ -809,7 +822,7 @@
 /* Camera Details */
 .camera-details h4 {
   margin: 0 0 1rem;
-  color: #ffae36;
+  color: #feac34;
   font-size: 1.2rem;
 }
 
@@ -857,7 +870,7 @@
 }
 
 .camera-status-badge.loading {
-  background: #f59e0b;
+  background: #feac34;
   color: #1e1e1e;
 }
 
@@ -873,7 +886,7 @@
 
 .historical-images h4 {
   margin: 0 0 1rem;
-  color: #ffae36;
+  color: #feac34;
 }
 
 .historical-images-grid {
@@ -905,7 +918,7 @@
   backdrop-filter: blur(20px);
   padding: 1.25rem 1.75rem;
   border-radius: 16px;
-  border: 1px solid rgb(255 174 54 / 20%);
+  border: 1px solid rgb(254 172 52 / 20%);
   box-shadow: 0 8px 32px rgb(0 0 0 / 30%);
   z-index: 1000;
   transition: all 0.3s ease;
@@ -915,7 +928,7 @@
   margin: 0 0 1.25rem;
   font-size: 1.1rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #ffae36, #ffc670);
+  background: linear-gradient(135deg, #feac34, #ff8a5b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -939,7 +952,7 @@
 }
 
 .legend-item:hover {
-  color: #ffae36;
+  color: #feac34;
   transform: translateX(4px);
 }
 
@@ -954,7 +967,7 @@
 
 .legend-item:hover .legend-color {
   transform: scale(1.1);
-  border-color: #ffae36;
+  border-color: #feac34;
 }
 
 .legend-color.online {
@@ -962,7 +975,7 @@
 }
 
 .legend-color.loading {
-  background: #f59e0b;
+  background: #feac34;
 }
 
 .legend-color.offline {

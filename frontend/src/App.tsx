@@ -3,6 +3,7 @@ import './App.css';
 import { ThemeProvider } from './consts/ThemeContext';
 import { SocketProvider } from './consts/SocketContext';
 import { LiveFeedProvider } from './contexts/LiveFeedContext';
+import { UserProvider } from './contexts/UserContext';
 import NavBar from './components/NavBar';
 import GlobalAlertBadge from './components/GlobalAlertBadge';
 import LandingPage from './pages/LandingPage';
@@ -166,9 +167,10 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider initialDarkMode={isDarkMode}>
-      <Router>
-        <SocketProvider>
-          <LiveFeedProvider>
+      <UserProvider>
+        <Router>
+          <SocketProvider>
+            <LiveFeedProvider>
             <div className="App">
               <AnimatedRoutes />
 
@@ -190,6 +192,7 @@ const App: React.FC = () => {
           </LiveFeedProvider>
         </SocketProvider>
       </Router>
+    </UserProvider>
     </ThemeProvider>
   );
 };

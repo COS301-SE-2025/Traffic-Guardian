@@ -57,9 +57,6 @@ const LiveFeed: React.FC = () => {
   const [viewMode, setViewMode] = useState<'video' | 'images' | 'map'>('video');
   const [showIncidentForm, setShowIncidentForm] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [incidentFilter, setIncidentFilter] = useState<
-    'all' | 'accident' | 'construction' | 'weather'
-  >('all');
   const navigate = useNavigate();
 
   // Add refs for HLS players
@@ -338,7 +335,9 @@ const LiveFeed: React.FC = () => {
         Incident_Status: 'open',
         Incident_Reporter: reporterName,
         Incident_CameraID: databaseCameraID,
-        Incident_Description: `${incidentForm.description}\n\nCamera: ${selectedCamera.location} (${selectedCamera.id})\nImage: ${selectedCamera.image}`,
+        Incident_Description: `${incidentForm.description}\n\n` +
+          `Camera: ${selectedCamera.location} (${selectedCamera.id})\n` +
+          `Image: ${selectedCamera.image}`,
       };
 
       console.log('Incident API payload:', apiPayload);
@@ -437,37 +436,6 @@ const LiveFeed: React.FC = () => {
           >
             {loading ? 'Refreshing...' : 'Refresh Feeds'}
           </button>
-          <div className="incident-filters" data-testid="incident-filter">
-            <label>Filter by incident type:</label>
-            <div className="filter-buttons">
-              <button
-                data-testid="filter-accident"
-                className={`filter-btn ${
-                  incidentFilter === 'accident' ? 'active' : ''
-                }`}
-                onClick={() => setIncidentFilter('accident')}
-              >
-                Accidents
-              </button>
-              <button
-                data-testid="filter-construction"
-                className={`filter-btn ${
-                  incidentFilter === 'construction' ? 'active' : ''
-                }`}
-                onClick={() => setIncidentFilter('construction')}
-              >
-                Construction
-              </button>
-              <button
-                className={`filter-btn ${
-                  incidentFilter === 'all' ? 'active' : ''
-                }`}
-                onClick={() => setIncidentFilter('all')}
-              >
-                All
-              </button>
-            </div>
-          </div>
           <div className="feed-info">
             Showing {cameraFeeds.length} cameras from District 12
           </div>
@@ -638,33 +606,55 @@ const LiveFeed: React.FC = () => {
         <div className="video-modal-overlay" onClick={closeVideoModal}>
           <div className="video-modal" onClick={e => e.stopPropagation()}>
             <div className="video-modal-header">
-              <h3>{selectedCamera.location}</h3>
+              <div className="modal-title-section">
+                <h3 className="modal-title">{selectedCamera.location}</h3>
+                <div className="modal-subtitle">
+                  {selectedCamera.route} • {selectedCamera.district}
+                  {selectedCamera.direction && ` • ${selectedCamera.direction}`}
+                </div>
+              </div>
               <div className="view-mode-selector">
                 {selectedCamera.hasLiveStream && selectedCamera.videoUrl && (
                   <button
-                    className={viewMode === 'video' ? 'active' : ''}
+                    className={`view-mode-btn ${viewMode === 'video' ? 'active' : ''}`}
                     onClick={() => setViewMode('video')}
                   >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="23 7 16 12 23 17 23 7" />
+                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                    </svg>
                     Live Video
                   </button>
                 )}
                 <button
-                  className={viewMode === 'images' ? 'active' : ''}
+                  className={`view-mode-btn ${viewMode === 'images' ? 'active' : ''}`}
                   onClick={() => setViewMode('images')}
                 >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21,15 16,10 5,21" />
+                  </svg>
                   Images
                 </button>
                 {selectedCamera.coordinates && (
                   <button
-                    className={viewMode === 'map' ? 'active' : ''}
+                    className={`view-mode-btn ${viewMode === 'map' ? 'active' : ''}`}
                     onClick={() => setViewMode('map')}
                   >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
                     Location
                   </button>
                 )}
               </div>
               <button className="close-modal" onClick={closeVideoModal}>
-                ×
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
               </button>
             </div>
 
@@ -866,44 +856,15 @@ const LiveFeed: React.FC = () => {
                       <button
                         className="report-incident-btn"
                         onClick={handleShowIncidentForm}
-                        style={{
-                          backgroundColor: '#ff4444',
-                          color: 'white',
-                          border: 'none',
-                          padding: '10px 20px',
-                          borderRadius: '5px',
-                          cursor: 'pointer',
-                          marginTop: '10px',
-                          fontWeight: 'bold',
-                        }}
                       >
                         Report Incident
                       </button>
                     ) : (
-                      <div
-                        className="incident-form"
-                        style={{
-                          marginTop: '15px',
-                          padding: '15px',
-                          border: '2px solid #ff4444',
-                          borderRadius: '8px',
-                          backgroundColor: 'rgba(255, 68, 68, 0.05)',
-                        }}
-                      >
-                        <h4 style={{ color: '#ff4444', marginBottom: '10px' }}>
-                          Report Incident
-                        </h4>
+                      <div className="incident-form">
+                        <h4>Report Incident</h4>
 
                         <div style={{ marginBottom: '10px' }}>
-                          <label
-                            style={{
-                              display: 'block',
-                              marginBottom: '5px',
-                              fontWeight: 'bold',
-                            }}
-                          >
-                            Severity:
-                          </label>
+                          <label>Severity:</label>
                           <select
                             value={incidentForm.severity}
                             onChange={e =>
@@ -915,12 +876,6 @@ const LiveFeed: React.FC = () => {
                                   | 'low',
                               }))
                             }
-                            style={{
-                              width: '100%',
-                              padding: '8px',
-                              borderRadius: '4px',
-                              border: '1px solid #ccc',
-                            }}
                           >
                             <option value="low">Low - Minor disruption</option>
                             <option value="medium">
@@ -933,15 +888,7 @@ const LiveFeed: React.FC = () => {
                         </div>
 
                         <div style={{ marginBottom: '15px' }}>
-                          <label
-                            style={{
-                              display: 'block',
-                              marginBottom: '5px',
-                              fontWeight: 'bold',
-                            }}
-                          >
-                            Description:
-                          </label>
+                          <label>Description:</label>
                           <textarea
                             value={incidentForm.description}
                             onChange={e =>
@@ -952,41 +899,15 @@ const LiveFeed: React.FC = () => {
                             }
                             placeholder="Describe what you see in the camera feed..."
                             rows={3}
-                            style={{
-                              width: '100%',
-                              padding: '8px',
-                              borderRadius: '4px',
-                              border: '1px solid #ccc',
-                              resize: 'vertical',
-                              minHeight: '60px',
-                            }}
                             required
                           />
                         </div>
 
-                        <div
-                          className="incident-form-actions"
-                          style={{
-                            display: 'flex',
-                            gap: '10px',
-                          }}
-                        >
+                        <div className="incident-form-actions">
                           <button
                             onClick={handleReportIncident}
                             disabled={!incidentForm.description.trim()}
-                            style={{
-                              backgroundColor: '#ff4444',
-                              color: 'white',
-                              border: 'none',
-                              padding: '8px 16px',
-                              borderRadius: '4px',
-                              cursor: incidentForm.description.trim()
-                                ? 'pointer'
-                                : 'not-allowed',
-                              opacity: incidentForm.description.trim()
-                                ? 1
-                                : 0.5,
-                            }}
+                            className="incident-submit-btn"
                           >
                             Submit Report
                           </button>
@@ -998,14 +919,7 @@ const LiveFeed: React.FC = () => {
                                 description: '',
                               });
                             }}
-                            style={{
-                              backgroundColor: '#666',
-                              color: 'white',
-                              border: 'none',
-                              padding: '8px 16px',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                            }}
+                            className="incident-cancel-btn"
                           >
                             Cancel
                           </button>

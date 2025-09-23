@@ -181,7 +181,7 @@
 }
 
 .metric-card.risk-high {
-  border-left: 4px solid #ff6b35;
+  border-left: 4px solid #feac34;
 }
 
 .metric-card.risk-medium {
@@ -303,7 +303,7 @@
 }
 
 .critical-area-card.risk-high {
-  border-left-color: #ff6b35;
+  border-left-color: #feac34;
 }
 
 .area-header {
@@ -393,7 +393,7 @@
 }
 
 .risk-fill.risk-high {
-  background: #ff6b35;
+  background: #feac34;
 }
 
 .risk-fill.risk-medium {
@@ -582,7 +582,7 @@
 }
 
 .detector-card.risk-high {
-  border-left: 4px solid #ff6b35;
+  border-left: 4px solid #feac34;
 }
 
 .detector-card.risk-medium {

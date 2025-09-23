@@ -160,10 +160,10 @@ const Analytics: React.FC = () => {
     primary: isDarkMode ? '#3b82f6' : '#2563eb',
     secondary: isDarkMode ? '#8b5cf6' : '#7c3aed',
     success: isDarkMode ? '#10b981' : '#059669',
-    warning: isDarkMode ? '#f59e0b' : '#d97706',
+    warning: isDarkMode ? '#feac34' : '#F79400',
     danger: isDarkMode ? '#ef4444' : '#dc2626',
     info: isDarkMode ? '#06b6d4' : '#0891b2',
-    archive: isDarkMode ? '#f59e0b' : '#d97706',
+    archive: isDarkMode ? '#feac34' : '#F79400',
   };
 
   const categoryColors = [
@@ -175,11 +175,11 @@ const Analytics: React.FC = () => {
     chartColors.info,
     chartColors.archive,
     '#ec4899',
-    '#f97316',
+    '#feac34',
     '#84cc16',
     '#06b6d4',
     '#8b5cf6',
-    '#f59e0b',
+    '#feac34',
     '#10b981',
   ];
 
