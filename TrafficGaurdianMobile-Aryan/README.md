@@ -1,6 +1,6 @@
 # To run
 ```bash
-npm install
 cd TrafficGuardian
+npm install
 npx expo start
 ```
