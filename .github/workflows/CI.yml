@@ -513,6 +513,7 @@ jobs:
           echo "API, Frontend, and AI Model components are ready for local deployment."
           echo "Frontend and AI Model components are ready for local deployment."
 
+# MOVED TO CD.yml
   # aws-prepare-deployment: 
   # This job has been moved to CD.yml for better separation of concerns
   # CI should focus on testing and building, not deployment preparation
