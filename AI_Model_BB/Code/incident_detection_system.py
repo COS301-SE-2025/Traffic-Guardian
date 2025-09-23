@@ -2929,10 +2929,21 @@ def main():
         'stopped_vehicle_time': 10,
         'speed_change_threshold': 0.8,
         'pedestrian_road_threshold': 50,
+
+        # API settings for traffic count transmission
+        'api_endpoint': os.getenv('CAR_COUNT_API_ENDPOINT'),
+        'transmission_interval': int(os.getenv('CAR_COUNT_INTERVAL', '30'))
     }
     
     print(" Initializing ENHANCED Multi-Camera Incident Detection System...")
     print("="*70)
+
+    # Display API configuration
+    if config.get('api_endpoint'):
+        print(f" 🌐 API Endpoint: {config['api_endpoint']}")
+        print(f" ⏱️  Transmission Interval: {config['transmission_interval']} seconds")
+    else:
+        print(" ℹ️  No API endpoint configured for traffic count transmission")
     
     # Load camera configurations
     cameras = load_camera_configurations()
