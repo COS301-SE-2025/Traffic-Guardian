@@ -4,7 +4,10 @@ const cameraController = require('../controllers/cameraController');
 const authMiddleware = require('../middleware/auth');
 const rateLimiters = require('../middleware/rateLimiter');
 
-// All routes in this file require authentication
+// Public route for traffic data (no authentication required)
+router.get('/public/traffic-data', rateLimiters.camera, cameraController.getPublicTrafficData);
+
+// All other routes in this file require authentication
 router.use(authMiddleware.authenticate);
 
 // Apply general camera rate limiting to all routes
