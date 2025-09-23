@@ -1785,11 +1785,18 @@ class AdvancedIncidentDetectionSystem:
             }
             
             # Send to API
+            headers = {'Content-Type': 'application/json'}
+
+            # Add API key if available
+            api_key = os.getenv('AIAPIKEY')
+            if api_key:
+                headers['X-API-Key'] = api_key
+
             response = requests.post(
                 self.api_endpoint,
                 json=payload,
                 timeout=10,
-                headers={'Content-Type': 'application/json'}
+                headers=headers
             )
             
             if response.status_code == 200:
