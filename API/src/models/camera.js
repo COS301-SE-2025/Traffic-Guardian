@@ -587,6 +587,37 @@ const cameraModel = {
       limit: parseInt(limit),
       offset: parseInt(offset)
     };
+  },
+
+  async updateTrafficCount(cameraId, count) {
+    try {
+      const client = await db.getPool().connect();
+      try {
+        const result = await client.query(`
+          UPDATE public."Camera"
+          SET last_traffic_count = $1
+          WHERE "Camera_ID" = $2
+          RETURNING "Camera_ID", "Camera_ExternalID", last_traffic_count
+        `, [count, cameraId]);
+
+        if (result.rows.length === 0) {
+          return { success: false, error: 'Camera not found' };
+        }
+
+        return {
+          success: true,
+          message: 'Traffic count updated successfully',
+          camera: result.rows[0]
+        };
+      } catch (error) {
+        throw error;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Error in updateTrafficCount:', error);
+      throw error;
+    }
   }
 };
 

@@ -37,4 +37,7 @@ router.get('/archives/search', cameraController.searchArchivedIncidents);
 // Perform maintenance (restrictive)
 router.post('/maintenance', rateLimiters.cameraBulk, cameraController.performMaintenance);
 
+// Update traffic count for a camera
+router.post('/traffic-count', rateLimiters.cameraStatus, cameraController.updateTrafficCount);
+
 module.exports = router;
