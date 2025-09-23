@@ -238,6 +238,7 @@ jobs:
           folder: dist/frontend
           delete-removed: true
 
+      # API deployment to a EC2 (staging) was removed as we are restricted to free tier
       # Deploy API to EC2 (Production) - FREE TIER: Use t2.micro instance only
       - name: Deploy API to EC2 Production
         run: |
