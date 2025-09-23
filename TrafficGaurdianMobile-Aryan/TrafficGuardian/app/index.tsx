@@ -14,7 +14,13 @@ export default function Index() {
   const { socket } = useSocket();
   const { user, setUser } = useSession();
 
-  const { traffic, setTraffic } = useTraffic();
+const { 
+  traffic, setTraffic, 
+  criticalIncidents, setCriticalIncidents,
+  incidentCategory, setIncidentCategory,
+  incidentLocations, setIncidentLocations
+} = useTraffic();
+
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
   //get location
@@ -43,19 +49,37 @@ export default function Index() {
     requestLocation();
   }, []);
 
-  useEffect(() => {
-    if (!socket) return;
+/*   useEffect(() => {
+  if (!socket) return;
 
-    const handleTrafficUpdate = (data : any) => {
-      setTraffic(data);
-    };
+  const handleTrafficUpdate = (data: any) => {
+    setTraffic(data);
+  };
 
-    socket.on("trafficUpdate", handleTrafficUpdate);
+  const handleCriticalIncidentsUpdate = (data: any) => {
+    setCriticalIncidents(data);
+  };
 
-    return () => {
-      socket.off("trafficUpdate", handleTrafficUpdate);
-    };
-  }, [socket]);
+  const handleIncidentCategoryUpdate = (data: any) => {
+    setIncidentCategory(data);
+  };
+
+  const handleIncidentLocationsUpdate = (data: any) => {
+    setIncidentLocations(data);
+  };
+
+  socket.on("trafficUpdate", handleTrafficUpdate);
+  socket.on("criticalIncidents", handleCriticalIncidentsUpdate);
+  socket.on("incidentCategory", handleIncidentCategoryUpdate);
+  socket.on("incidentLocations", handleIncidentLocationsUpdate);
+
+  return () => {
+    socket.off("trafficUpdate", handleTrafficUpdate);
+    socket.off("criticalIncidents", handleCriticalIncidentsUpdate);
+    socket.off("incidentCategory", handleIncidentCategoryUpdate);
+    socket.off("incidentLocations", handleIncidentLocationsUpdate);
+  };
+}, [socket, setTraffic, setCriticalIncidents, setIncidentCategory, setIncidentLocations]); */
 
   //emit user location
   useEffect(()=>{
@@ -72,7 +96,7 @@ export default function Index() {
     });
     //console.log("Emitted new-location:", coords); works
   }, 5000);
-
+  return ()=>clearInterval(interval);
   },[socket, coords, user]);
 
   useEffect(()=>{
@@ -161,6 +185,11 @@ export default function Index() {
           <Text style={globalStyles.navText}>Register</Text>
         </TouchableOpacity>
         )}
+
+        <TouchableOpacity onPress={() => router.push("/analytics")}>
+          <Text style={globalStyles.navText}>Analytics</Text>
+        </TouchableOpacity>
+
       </View>
     </SafeAreaView>
   );
