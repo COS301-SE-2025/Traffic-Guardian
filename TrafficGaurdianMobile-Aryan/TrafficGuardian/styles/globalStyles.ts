@@ -5,6 +5,30 @@ import { typography } from './typography';
 const { width, height } = Dimensions.get('window');
 
 export const globalStyles = StyleSheet.create({
+  navbar: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    backgroundColor: 'grey',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  navText: {
+    color: colors.text.light,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  navButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  navButtonHover: {
+    backgroundColor: colors.primary.dark,
+  },
+  //
   container: {
     flex: 1,
     backgroundColor: colors.background.light,
