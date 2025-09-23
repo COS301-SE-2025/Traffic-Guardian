@@ -557,7 +557,7 @@ const Map: React.FC = () => {
 
   // Heatmap state - Enable by default for testing
   const [heatmapVisible, setHeatmapVisible] = useState<boolean>(true);
-  const [heatmapOpacity, setHeatmapOpacity] = useState<number>(0.7);
+  const [heatmapOpacity, setHeatmapOpacity] = useState<number>(1.0);
   const [heatmapData, setHeatmapData] = useState<HeatmapPoint[]>([]);
   const [trafficAnalysis, setTrafficAnalysis] =
     useState<TrafficDensityAnalysis | null>(null);
@@ -607,11 +607,7 @@ const Map: React.FC = () => {
     console.log('🔗 Subscribing to traffic density service...');
     const unsubscribe = trafficDensityService.subscribe(
       (data: HeatmapPoint[]) => {
-        console.log(`📊 Received heatmap update: ${data.length} points`, {
-          sampleData: data.slice(0, 2),
-          heatmapVisible,
-          heatmapOpacity,
-        });
+        console.log(`📊 Map received ${data.length} heatmap points`);
         setHeatmapData(data);
         setTrafficAnalysis(trafficDensityService.getTrafficAnalysis());
       },
@@ -630,36 +626,31 @@ const Map: React.FC = () => {
     return unsubscribe;
   }, [heatmapVisible, heatmapOpacity]);
 
-  // Generate simulated traffic data when cameras are available
+  // Fetch real traffic data from database
   useEffect(() => {
-    if (cameraFeeds.length > 0) {
-      console.log(
-        `🎬 Starting traffic simulation with ${cameraFeeds.length} cameras`,
-      );
+    console.log('🚗 Setting up real traffic data fetching...');
 
-      const interval = setInterval(() => {
-        console.log('🔄 Generating new traffic data...');
-        trafficDensityService.generateSimulatedData(cameraFeeds);
-      }, 3000); // Update every 3 seconds for better visibility
+    const fetchTrafficData = async () => {
+      try {
+        console.log('🔄 Fetching real traffic data from database...');
+        await trafficDensityService.fetchRealTrafficData();
+      } catch (error) {
+        console.error('❌ Failed to fetch real traffic data:', error);
+        // No fallback - only show real data when authenticated
+      }
+    };
 
-      // Initial generation with multiple rounds for immediate visibility
-      console.log('🏁 Initial traffic data generation...');
-      trafficDensityService.generateSimulatedData(cameraFeeds);
+    // Initial fetch
+    fetchTrafficData();
 
-      // Generate additional data immediately to ensure heatmap visibility
-      setTimeout(() => {
-        console.log('🔁 Secondary traffic data generation...');
-        trafficDensityService.generateSimulatedData(cameraFeeds);
-      }, 500);
+    // Set up periodic updates every 30 seconds for real traffic data
+    const interval = setInterval(() => {
+      console.log('🔄 Updating real traffic data...');
+      fetchTrafficData();
+    }, 30000); // Update every 30 seconds
 
-      setTimeout(() => {
-        console.log('🔁 Tertiary traffic data generation...');
-        trafficDensityService.generateSimulatedData(cameraFeeds);
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [cameraFeeds]);
+    return () => clearInterval(interval);
+  }, []); // Run once on mount, independent of camera feeds
 
   if (loading) {
     return (
@@ -712,8 +703,8 @@ const Map: React.FC = () => {
       <div className="map-container" data-testid="map-container">
         <MapContainer
           {...({
-            center: [33.6846, -117.8265] as [number, number], // Orange County center
-            zoom: 10,
+            center: [33.85631, -117.99698] as [number, number], // SR-91 Beach Boulevard camera location
+            zoom: 12,
             className: 'leaflet-map',
           } as any)}
         >
@@ -733,6 +724,11 @@ const Map: React.FC = () => {
             data={heatmapData}
             visible={heatmapVisible}
             opacity={heatmapOpacity}
+            options={{
+              radius: 100,
+              blur: 20,
+              intensityMultiplier: 1.0
+            }}
           />
 
           <FitBounds cameras={filteredCameras} />
