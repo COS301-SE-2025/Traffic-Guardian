@@ -1778,19 +1778,10 @@ class AdvancedIncidentDetectionSystem:
             max_count = max(item['count'] for item in self.car_count_buffer)
             min_count = min(item['count'] for item in self.car_count_buffer)
             
-            # Prepare payload
+            # Prepare payload for the traffic count API endpoint
             payload = {
-                'camera_id': self.camera_config.get('camera_id', 'unknown') if self.camera_config else 'unknown',
-                'location': self.camera_config.get('location', 'unknown') if self.camera_config else 'unknown',
-                'timestamp': datetime.now().isoformat(),
-                'interval_seconds': self.transmission_interval,
-                'car_count': {
-                    'average': round(avg_count, 2),
-                    'maximum': max_count,
-                    'minimum': min_count,
-                    'samples': len(self.car_count_buffer)
-                },
-                'traffic_density_level': getattr(self, 'current_density_level', 'unknown')
+                'cameraId': self.camera_config.get('camera_id', 'unknown') if self.camera_config else 'unknown',
+                'count': round(avg_count)  # Round to nearest integer
             }
             
             # Send to API
