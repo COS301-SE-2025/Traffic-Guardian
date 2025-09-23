@@ -43,16 +43,6 @@ export default function Register() {
               <Text>lonwabo@example.com</Text>
               <Text>StrongPa$$20</Text>
 
-            <View style={globalStyles.navbar}>
-              <TouchableOpacity onPress={() => router.push("/")}>
-                <Text style={globalStyles.navText}>Home</Text>
-              </TouchableOpacity>
-      
-              <TouchableOpacity onPress={() => router.push("/register")}>
-                <Text style={globalStyles.navText}>Register</Text>
-              </TouchableOpacity>
-            </View>
-
       {/* <View style={globalStyles.header}>
         <Text style={globalStyles.headerTitle}>Login</Text>  
       </View> */}
@@ -159,6 +149,17 @@ export default function Register() {
 </View>
 
     </SafeAreaView>
+
+<View style={globalStyles.navbar}>
+  <TouchableOpacity onPress={() => router.push("/")}>
+    <Text style={globalStyles.navText}>Home</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity onPress={() => router.push("/register")}>
+    <Text style={globalStyles.navText}>Register</Text>
+  </TouchableOpacity>
+</View>
+
     </ImageBackground>
   );
 }

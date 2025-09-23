@@ -36,20 +36,7 @@ export default function Register() {
           style={{ flex: 1 }}
           resizeMode="cover"
           >
-    <SafeAreaView style={{flex : 1}}>
-            <View style={globalStyles.navbar}>
-              <TouchableOpacity onPress={() => router.push("/")}>
-                <Text style={globalStyles.navText}>Home</Text>
-              </TouchableOpacity>
-      
-              <TouchableOpacity onPress={() => router.push("/login")}>
-                <Text style={globalStyles.navText}>Login</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={globalStyles.header}>
-              <Text style={globalStyles.headerTitle}>Register</Text>  
-            </View>
-
+    <SafeAreaView style={{flex : 1, backgroundColor: "rgba(41,41,41,0.6)"}}>
 <SafeAreaView style={{ flex : 1}}>
   <ScrollView
     contentContainerStyle={{
@@ -59,7 +46,7 @@ export default function Register() {
       padding: 20,
     }}
     keyboardShouldPersistTaps="handled"
-  >
+    >
     <View
       style={{
         width: "100%",
@@ -165,18 +152,20 @@ export default function Register() {
         }}
         onPress={handleRegister}
       >
-        <Text style={{ color: "#fff", fontSize: 16, fontWeight: "bold" }}>
+        <Text style={{ color: "#ffffffff", fontSize: 16, fontWeight: "bold" }}>
           Register
         </Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push("/login")}>
+      <TouchableOpacity
+      style={{borderWidth: 1,
+        borderColor: "orange",
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: "center"}} 
+      onPress={() => router.push("/login")}>
         <Text
           style={{
-            color: "orange",
-            textAlign: "center",
-            fontSize: 16,
-            fontWeight: "600",
-            marginTop: 10,
+            color: "orange", fontSize: 16, fontWeight: "600" 
           }}
         >
           Login
@@ -186,6 +175,15 @@ export default function Register() {
   </ScrollView>
 </SafeAreaView>
 
+<View style={globalStyles.navbar}>
+  <TouchableOpacity onPress={() => router.push("/")}>
+    <Text style={globalStyles.navText}>Home</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity onPress={() => router.push("/login")}>
+    <Text style={globalStyles.navText}>Login</Text>
+  </TouchableOpacity>
+</View>
 
     </SafeAreaView>
     </ImageBackground>
