@@ -3,10 +3,14 @@
 }
 
 .navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   background: #1e1e1e;
   padding: 1rem 2rem;
   z-index: 2000;
+  box-sizing: border-box;
 }
 
 .navbar .navbar-content {
@@ -22,7 +26,7 @@
   list-style: none;
   display: flex;
   align-items: center;
-  gap: clamp(1.5rem, 3vw, 4.5rem);
+  gap: 2.5rem;
   padding: 0;
   margin: 0;
   flex-wrap: wrap;
@@ -40,14 +44,15 @@
 .navbar .nav-item a {
   text-decoration: none;
   color: white;
-  transition: color 0.2s ease-in;
+  transition: color 0.15s ease;
   position: relative;
   display: inline-block;
+  white-space: nowrap;
 }
 
 .navbar .nav-item:hover a,
 .navbar .nav-item.active a {
-  color: #ffae36;
+  color: #feac34;
 }
 
 .navbar .nav-item a::after {
@@ -58,8 +63,8 @@
   transform: translateX(-50%);
   width: 0;
   height: 0.5px;
-  background-color: #ffae36;
-  transition: width 0.3s ease-in-out;
+  background-color: #feac34;
+  transition: width 0.2s ease;
 }
 
 .navbar .nav-item:hover a::after,
@@ -68,13 +73,14 @@
 }
 
 .navbar .logo-container {
-  padding: clamp(1rem, 3vw, 2rem);
+  padding: 1.5rem;
 }
 
 .navbar .navbar-logo {
   height: 80px;
   width: auto;
   max-width: 100%;
+  display: block;
 }
 
 .navbar .icon-group {
@@ -96,16 +102,16 @@
   font-size: 20px;
   color: white;
   cursor: pointer;
-  transition: color 0.2s ease-in;
+  transition: color 0.15s ease;
 }
 
 .navbar .search-icon:hover,
 .navbar .help-icon:hover {
-  color: #ffae36;
+  color: #feac34;
 }
 
 .navbar .help-link.active .help-icon {
-  color: #ffae36;
+  color: #feac34;
 }
 
 @media (max-width: 768px) {

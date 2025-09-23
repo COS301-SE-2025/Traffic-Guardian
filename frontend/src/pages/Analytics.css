@@ -2,7 +2,22 @@
   min-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
+  background-color: #0f0f0f;
+  color: #f1f1f1;
   transition: background-color 0.3s ease;
+  padding-top: 160px;
+}
+
+@media (max-width: 768px) {
+  .analytics-container {
+    padding-top: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-container {
+    padding-top: 130px;
+  }
 }
 
 .analytics-content {
@@ -317,7 +332,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 /* Archive-specific card icons */
 .card-icon.archive {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, #feac34 0%, #F79400 100%);
 }
 
 .card-icon.archive-time {
@@ -410,11 +425,11 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 /* Archive-specific chart containers */
 .chart-container.archive-trends {
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid #feac34;
 }
 
 .dark-mode .chart-container.archive-trends {
-  border-left-color: #fbbf24;
+  border-left-color: #ff8a5b;
 }
 
 .chart-container.archive-analytics {
@@ -506,8 +521,8 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .severity-indicator.severity-medium {
-  background: rgb(245 158 11 / 10%);
-  color: #f59e0b;
+  background: rgb(254 172 52 / 10%);
+  color: #feac34;
 }
 
 .severity-indicator.severity-low {
@@ -530,16 +545,16 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   background: rgb(0 0 0 / 2%);
   border-radius: 8px;
   transition: all 0.3s ease;
-  border-left: 3px solid #f59e0b;
+  border-left: 3px solid #feac34;
 }
 
 .dark-mode .archive-item {
   background: rgb(255 255 255 / 2%);
-  border-left-color: #fbbf24;
+  border-left-color: #ff8a5b;
 }
 
 .archive-item:hover {
-  background: rgb(245 158 11 / 5%);
+  background: rgb(254 172 52 / 5%);
   transform: translateX(4px);
 }
 
@@ -551,15 +566,15 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 .archive-id {
   font-weight: 700;
-  color: #f59e0b;
+  color: #feac34;
   font-size: 0.875rem;
 }
 
 .archive-type {
   font-weight: 500;
   text-transform: capitalize;
-  background: rgb(245 158 11 / 10%);
-  color: #f59e0b;
+  background: rgb(254 172 52 / 10%);
+  color: #feac34;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -590,8 +605,8 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .status-indicator.status-ongoing {
-  background: rgb(245 158 11 / 10%);
-  color: #f59e0b;
+  background: rgb(254 172 52 / 10%);
+  color: #feac34;
 }
 
 .status-indicator.status-resolved {
@@ -608,7 +623,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  color: #f59e0b;
+  color: #feac34;
 }
 
 .archive-indicator svg {
@@ -625,28 +640,28 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .archive-metric-card {
-  background: rgb(245 158 11 / 5%);
+  background: rgb(254 172 52 / 5%);
   border-radius: 12px;
   padding: 1.25rem;
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid #feac34;
   transition: all 0.3s ease;
 }
 
 .dark-mode .archive-metric-card {
-  background: rgb(245 158 11 / 10%);
-  border-left-color: #fbbf24;
+  background: rgb(254 172 52 / 10%);
+  border-left-color: #ff8a5b;
 }
 
 .archive-metric-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgb(245 158 11 / 20%);
+  box-shadow: 0 4px 12px rgb(254 172 52 / 20%);
 }
 
 .archive-metric-card h4 {
   font-size: 0.875rem;
   font-weight: 600;
   margin: 0 0 0.5rem;
-  color: #f59e0b;
+  color: #feac34;
 }
 
 .archive-metric-card .metric-value {
@@ -671,9 +686,9 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 .archive-filter-button {
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  border: 1px solid #f59e0b;
+  border: 1px solid #feac34;
   background: transparent;
-  color: #f59e0b;
+  color: #feac34;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -682,18 +697,18 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 .archive-filter-button:hover,
 .archive-filter-button.active {
-  background: #f59e0b;
+  background: #feac34;
   color: white;
 }
 
 .dark-mode .archive-filter-button {
-  border-color: #fbbf24;
-  color: #fbbf24;
+  border-color: #ff8a5b;
+  color: #ff8a5b;
 }
 
 .dark-mode .archive-filter-button:hover,
 .dark-mode .archive-filter-button.active {
-  background: #fbbf24;
+  background: #ff8a5b;
   color: #111827;
 }
 
@@ -847,7 +862,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: #f59e0b;
+  color: #feac34;
   font-size: 0.875rem;
 }
 

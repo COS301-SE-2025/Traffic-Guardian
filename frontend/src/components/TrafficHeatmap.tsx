@@ -70,8 +70,8 @@ const TrafficHeatmap: React.FC<TrafficHeatmapProps> = ({
       gradient: {
         0.0: 'rgba(0,255,0,0.9)', // Green - low traffic (more opaque)
         0.2: 'rgba(255,255,0,0.9)', // Yellow - moderate traffic
-        0.4: 'rgba(255,165,0,1.0)', // Orange - high traffic
-        0.6: 'rgba(255,69,0,1.0)', // Orange-red - very high traffic
+        0.4: 'rgba(255,107,53,1.0)', // Orange - high traffic
+        0.6: 'rgba(229,90,46,1.0)', // Dark orange - very high traffic
         0.8: 'rgba(255,0,0,1.0)', // Red - critical traffic
         1.0: 'rgba(139,0,0,1.0)', // Dark red - extreme risk
       },
