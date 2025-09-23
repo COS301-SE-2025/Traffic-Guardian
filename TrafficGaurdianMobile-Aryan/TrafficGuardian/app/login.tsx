@@ -47,9 +47,11 @@ export default function Register() {
               </TouchableOpacity>
             </View>
 
-      <Text style={globalStyles.headerTitle}>Login</Text>
+      <View style={globalStyles.header}>
+        <Text style={globalStyles.headerTitle}>Login</Text>  
+      </View>
 
-{/*       <TextInput
+      <TextInput
         style={globalStyles.input}
         placeholder="lonwabo@example.com"
         value={email}
@@ -62,7 +64,7 @@ export default function Register() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-      /> */}
+      />
 
       <TouchableOpacity style={globalStyles.primaryButton} onPress={handleLogin}>
         <Text style={globalStyles.primaryButtonText}>Login</Text>
