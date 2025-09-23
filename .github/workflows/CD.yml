@@ -45,6 +45,12 @@ jobs:
 
       - name: Build Frontend for deployment
         working-directory: ./frontend
+        env:
+          # Frontend environment variables for build process
+          REACT_APP_API_URL: http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}
+          REACT_APP_API_BASE_URL: http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api
+          REACT_APP_ENVIRONMENT: staging
+          # Add other frontend environment variables as needed
         run: |
           echo "Building frontend for deployment..."
           npm install --no-fund --no-audit
@@ -81,7 +87,7 @@ jobs:
           cp -r API/* dist/api/
           echo "API artifacts created"
 
-      # Deploy Frontend to S3 (Staging) - Using official AWS action
+      # Deploy Frontend to S3 (Staging) - Using dedicated staging bucket
       - name: Deploy Frontend to S3 Staging
         uses: aws-actions/amazon-s3-deploy-action@v1
         with:
@@ -89,47 +95,41 @@ jobs:
           folder: dist/frontend
           delete-removed: true
           
-      # Old CLI approach (replaced with aws-actions above):
-      # - name: Deploy Frontend to S3 Staging
+      # Deploy API to EC2 (Staging) - COMMENTED OUT to stay within free tier
+      # Only frontend goes to staging, API only deploys to production EC2
+      # - name: Deploy API to EC2 Staging
       #   run: |
-      #     echo "===== DEPLOYING FRONTEND TO S3 STAGING BUCKET ====="
-      #     aws s3 sync dist/frontend s3://${{ secrets.AWS_S3_STAGING_BUCKET }} --delete
-      #     echo " Frontend deployed to S3 staging bucket"
+      #     echo "===== DEPLOYING API TO EC2 STAGING INSTANCE ====="
+      #     echo " WARNING: Ensure EC2 instance is t2.micro to stay within free tier"
+      #     
+      #     # Create deployment package
+      #     cd dist/api
+      #     tar -czf ../api-deployment.tar.gz .
+      #     cd ../..
+      #     
+      #     # Copy to EC2 instance
+      #     echo "Copying API files to EC2 staging instance..."
+      #     scp -i ${{ secrets.EC2_SSH_KEY_PATH }} -o StrictHostKeyChecking=no \
+      #       dist/api-deployment.tar.gz \
+      #       ${{ secrets.EC2_STAGING_USER }}@${{ secrets.EC2_STAGING_API_HOST }}:/tmp/
+      #     
+      #     # Deploy on EC2 instance
+      #     ssh -i ${{ secrets.EC2_SSH_KEY_PATH }} -o StrictHostKeyChecking=no \
+      #       ${{ secrets.EC2_STAGING_USER }}@${{ secrets.EC2_STAGING_API_HOST }} << 'EOF'
+      #       cd /opt/traffic-guardian-api
+      #       sudo systemctl stop traffic-guardian-api || true
+      #       sudo rm -rf backup && sudo mv current backup 2>/dev/null || true
+      #       sudo mkdir -p current
+      #       cd current
+      #       sudo tar -xzf /tmp/api-deployment.tar.gz
+      #       sudo npm install --production
+      #       sudo systemctl start traffic-guardian-api
+      #       sudo systemctl enable traffic-guardian-api
+      #     EOF
+      #     
+      #     echo " API deployed to EC2 staging instance"
 
-      # Deploy API to EC2 (Staging) - FREE TIER: Use t2.micro instance only
-      - name: Deploy API to EC2 Staging
-        run: |
-          echo "===== DEPLOYING API TO EC2 STAGING INSTANCE ====="
-          echo " WARNING: Ensure EC2 instance is t2.micro to stay within free tier"
-          
-          # Create deployment package
-          cd dist/api
-          tar -czf ../api-deployment.tar.gz .
-          cd ../..
-          
-          # Copy to EC2 instance
-          echo "Copying API files to EC2 staging instance..."
-          scp -i ${{ secrets.EC2_SSH_KEY_PATH }} -o StrictHostKeyChecking=no \
-            dist/api-deployment.tar.gz \
-            ${{ secrets.EC2_STAGING_USER }}@${{ secrets.EC2_STAGING_API_HOST }}:/tmp/
-          
-          # Deploy on EC2 instance
-          ssh -i ${{ secrets.EC2_SSH_KEY_PATH }} -o StrictHostKeyChecking=no \
-            ${{ secrets.EC2_STAGING_USER }}@${{ secrets.EC2_STAGING_API_HOST }} << 'EOF'
-            cd /opt/traffic-guardian-api
-            sudo systemctl stop traffic-guardian-api || true
-            sudo rm -rf backup && sudo mv current backup 2>/dev/null || true
-            sudo mkdir -p current
-            cd current
-            sudo tar -xzf /tmp/api-deployment.tar.gz
-            sudo npm install --production
-            sudo systemctl start traffic-guardian-api
-            sudo systemctl enable traffic-guardian-api
-          EOF
-          
-          echo " API deployed to EC2 staging instance"
-
-      # AWS verification using improved health checks
+          # AWS verification using improved health checks
       - name: Verify AWS Staging Deployment
         run: |
           echo "===== VERIFYING AWS STAGING DEPLOYMENT ====="
@@ -144,16 +144,16 @@ jobs:
             echo "  Frontend service: WARNING - Could not verify"
           fi
           
-          # API health check with better error handling
-          echo "Checking API (EC2)..."
-          API_URL="http://${{ secrets.EC2_STAGING_API_HOST }}:5000/api/health"
-          if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
-            echo "  API service: HEALTHY"
-          else
-            echo "  API service: WARNING - Could not verify health endpoint"
-          fi
+          # API health check - COMMENTED OUT (no staging EC2 cost restrictions)
+          # echo "Checking API (EC2)..."
+          # API_URL="http://${{ secrets.EC2_STAGING_API_HOST }}:5000/api/health"
+          # if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
+          #   echo "  API service: HEALTHY"
+          # else
+          #   echo "  API service: WARNING - Could not verify health endpoint"
+          # fi
           
-          echo "Staging verification completed!"
+          echo "Staging verification completed! (Frontend only - API tests in production)"
 
   deploy-production:
     name: Deploy to Production
@@ -186,6 +186,12 @@ jobs:
 
       - name: Build Frontend for production
         working-directory: ./frontend
+        env:
+          # Frontend environment variables for production build
+          REACT_APP_API_URL: http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}
+          REACT_APP_API_BASE_URL: http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api
+          REACT_APP_ENVIRONMENT: production
+          # Add other frontend environment variables as needed
         run: |
           echo "Building frontend for production..."
           npm install --no-fund --no-audit
@@ -231,20 +237,18 @@ jobs:
           bucket: ${{ secrets.AWS_S3_PRODUCTION_BUCKET }}
           folder: dist/frontend
           delete-removed: true
-          
-      # Old CLI approach (replaced with aws-actions above):
-      # - name: Deploy Frontend to S3 Production
-      #   run: |
-      #     echo "===== DEPLOYING FRONTEND TO S3 PRODUCTION BUCKET ====="
-      #     # Deploy directly to production bucket (no backup to save costs)
-      #     aws s3 sync dist/frontend s3://${{ secrets.AWS_S3_PRODUCTION_BUCKET }} --delete
-      #     echo " Frontend deployed to S3 production bucket"
 
       # Deploy API to EC2 (Production) - FREE TIER: Use t2.micro instance only
       - name: Deploy API to EC2 Production
         run: |
           echo "===== DEPLOYING API TO EC2 PRODUCTION INSTANCE ====="
           echo " WARNING: Ensure EC2 instance is t2.micro to stay within free tier"
+          
+          # Setup SSH key from secret
+          echo "Setting up SSH key..."
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
+          chmod 600 ~/.ssh/ec2_key.pem
           
           # Create deployment package
           cd dist/api
@@ -253,42 +257,63 @@ jobs:
           
           # Copy to EC2 instance
           echo "Copying API files to EC2 production instance..."
-          scp -i ${{ secrets.EC2_SSH_KEY_PATH }} -o StrictHostKeyChecking=no \
+          scp -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
             dist/api-deployment.tar.gz \
             ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API_HOST }}:/tmp/
           
           # Deploy on EC2 instance with zero-downtime strategy
-          ssh -i ${{ secrets.EC2_SSH_KEY_PATH }} -o StrictHostKeyChecking=no \
+          ssh -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
             ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API_HOST }} << 'EOF'
-            cd /opt/traffic-guardian-api
+            # Navigate to the correct API directory (matching associate's setup)
+            cd /var/www/api
+            
+            # Stop any running processes (screen sessions, npm processes)
+            echo "Stopping existing API processes..."
+            pkill -f "npm start" || true
+            screen -S api -X quit || true
             
             # Create backup of current version
-            sudo rm -rf backup && sudo mv current backup 2>/dev/null || true
-            sudo mkdir -p current
-            cd current
+            sudo rm -rf API_backup && sudo mv API API_backup 2>/dev/null || true
+            sudo mkdir -p API
             
-            # Extract new version
+            # Extract new version to API directory
+            cd API
             sudo tar -xzf /tmp/api-deployment.tar.gz
+            
+            # Preserve existing .env file (don't overwrite environment variables)
+            if [ -f "../API_backup/.env" ]; then
+              echo "Preserving existing .env file..."
+              sudo cp ../API_backup/.env .env
+            else
+              echo "Warning: No existing .env file found. Please ensure environment variables are configured."
+            fi
+            
+            # Install dependencies
             sudo npm install --production
             
-            # Test new version before switching
-            sudo npm run test || echo "Tests completed"
+            # Test new version before starting
+            sudo npm run test || echo "Tests completed (or no test script found)"
             
-            # Gracefully restart service
-            sudo systemctl reload traffic-guardian-api || sudo systemctl restart traffic-guardian-api
-            sudo systemctl enable traffic-guardian-api
+            # Start the API in a screen session (persistent background process)
+            echo "Starting API in screen session..."
+            screen -dmS api bash -c 'cd /var/www/api/API && npm start'
             
-            # Verify service is running
-            sleep 10
-            if ! sudo systemctl is-active --quiet traffic-guardian-api; then
-              echo "New version failed, rolling back..."
-              sudo systemctl stop traffic-guardian-api
-              cd ..
-              sudo rm -rf current && sudo mv backup current
-              sudo systemctl start traffic-guardian-api
+            # Wait a moment and verify the screen session is running
+            sleep 5
+            if screen -list | grep -q "api"; then
+              echo "API successfully started in screen session"
+            else
+              echo "Failed to start API, attempting rollback..."
+              sudo rm -rf /var/www/api/API
+              sudo mv /var/www/api/API_backup /var/www/api/API 2>/dev/null || true
+              cd /var/www/api/API
+              screen -dmS api bash -c 'cd /var/www/api/API && npm start'
               exit 1
             fi
           EOF
+          
+          # Clean up SSH key for security
+          rm -f ~/.ssh/ec2_key.pem
           
           echo " API deployed to EC2 production instance"
 
@@ -325,11 +350,15 @@ jobs:
           fi
           
           echo "Checking API (EC2)..."
-          API_URL="http://${{ secrets.EC2_PRODUCTION_API_HOST }}:5000/api/health"
+          API_URL="http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api/health"
           if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
             echo "  API service: HEALTHY"
           else
             echo "  API service: WARNING - Could not verify health endpoint"
+            # Try alternative health check
+            if curl -f -s "http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/" > /dev/null; then
+              echo "  API service: Server responding on port ${{ secrets.API_PORT }}"
+            fi
           fi
           
           echo "Production verification completed!"
@@ -358,11 +387,15 @@ jobs:
           
           # Test API health endpoint
           echo "Checking API (EC2)..."
-          API_URL="http://${{ secrets.EC2_PRODUCTION_API_HOST }}:5000/api/health"
+          API_URL="http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api/health"
           if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
             echo "API: HEALTHY"
           else
             echo "API: Could not verify health endpoint"
+            # Try basic connection test
+            if curl -f -s "http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/" > /dev/null; then
+              echo "API: Server responding on port ${{ secrets.API_PORT }}"
+            fi
           fi
           
           echo "Health verification completed"
@@ -372,7 +405,7 @@ jobs:
           echo "Running basic performance checks..."
           
           # Test API response time
-          API_URL="http://${{ secrets.EC2_PRODUCTION_API_HOST }}:5000/api/health"
+          API_URL="http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api/health"
           RESPONSE_TIME=$(curl -f -s -w "%{time_total}" -o /dev/null "$API_URL" 2>/dev/null || echo "0")
           
           if [ "$RESPONSE_TIME" != "0" ]; then
