@@ -68,7 +68,7 @@ export default function Index() {
       latitude: coords.latitude + 0.01,
       longitude: coords.longitude,
     });
-    console.log("Emitted new-location:", coords);
+    //console.log("Emitted new-location:", coords); works
   }, 5000);
 
   },[socket, coords, user]);
