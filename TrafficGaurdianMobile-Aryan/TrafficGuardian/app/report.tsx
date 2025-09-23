@@ -5,7 +5,7 @@ import { createIncident, sendVoice } from "../services/incidentsApi";
 import { useLocation } from "../services/location";
 import { Picker } from "@react-native-picker/picker";
 import { useSession } from "../services/sessionContext";
-import { Audio } from "expo-av";
+import * as Audio from "expo-audio";
 
 export default function Report() {
     const router = useRouter();
