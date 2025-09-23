@@ -89,7 +89,7 @@ export default function Index() {
   }, [socket]);
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{flex : 1, backgroundColor : 'rgba(41, 41, 41)'}}>
       <View style={globalStyles.navbar}>
         <TouchableOpacity onPress={() => router.push("/login")}>
           <Text style={globalStyles.navText}>Login</Text>
