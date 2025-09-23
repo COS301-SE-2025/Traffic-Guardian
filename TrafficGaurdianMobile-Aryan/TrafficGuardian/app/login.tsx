@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { loginUser } from "../services/usersApi";
 import React from "react";
 import { useSession } from "../services/sessionContext";
+import { globalStyles } from "../styles/globalStyles";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Register() {
   const router = useRouter();
@@ -30,72 +32,45 @@ export default function Register() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView>
 
               <Text>lonwabo@example.com</Text>
               <Text>StrongPa$$20</Text>
 
-            <View style={styles.navbar}>
+            <View style={globalStyles.navbar}>
               <TouchableOpacity onPress={() => router.push("/")}>
-                <Text style={styles.navText}>Home</Text>
+                <Text style={globalStyles.navText}>Home</Text>
               </TouchableOpacity>
       
               <TouchableOpacity onPress={() => router.push("/register")}>
-                <Text style={styles.navText}>Register</Text>
+                <Text style={globalStyles.navText}>Register</Text>
               </TouchableOpacity>
             </View>
 
-      <Text style={styles.title}>Login</Text>
+      <Text style={globalStyles.headerTitle}>Login</Text>
 
-      <TextInput
-        style={styles.input}
+{/*       <TextInput
+        style={globalStyles.input}
         placeholder="lonwabo@example.com"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
       />
       <TextInput
-        style={styles.input}
+        style={globalStyles.input}
         placeholder="StrongPa$$20"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-      />
+      /> */}
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity style={globalStyles.primaryButton} onPress={handleLogin}>
+        <Text style={globalStyles.primaryButtonText}>Login</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/register")}>
-        <Text style={styles.link}>Register</Text>
+      <TouchableOpacity style={globalStyles.secondaryButton} onPress={() => router.push("/register")}>
+        <Text style={globalStyles.secondaryButtonText}>Register</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 20, backgroundColor: "#fff" },
-  title: { fontSize: 28, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
-  input: { borderWidth: 1, borderColor: "#ccc", padding: 12, borderRadius: 8, marginBottom: 15 },
-  button: { backgroundColor: "#007bff", padding: 15, borderRadius: 8, alignItems: "center" },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  link: { marginTop: 15, color: "#007bff", textAlign: "center" },
-
-      navbar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#333",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-  },
-  navText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSocket } from "../services/socketProvider";
 import * as Location from "expo-location";
 import { useSession } from "../services/sessionContext";
+import { globalStyles }from "../styles/globalStyles"
 
 
 export default function Index() {
@@ -88,15 +89,15 @@ export default function Index() {
   }, [socket]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View style={styles.navbar}>
+    <SafeAreaView>
+      <View style={globalStyles.navbar}>
         <TouchableOpacity onPress={() => router.push("/login")}>
-          <Text style={styles.navText}>Login</Text>
+          <Text style={globalStyles.navText}>Login</Text>
         </TouchableOpacity>
 
         {user && (
           <TouchableOpacity onPress={() => router.push("/report")}>
-            <Text style={styles.navText}>Report</Text>
+            <Text style={globalStyles.navText}>Report</Text>
           </TouchableOpacity>
         )}
 
@@ -107,18 +108,20 @@ export default function Index() {
               router.push("/");
             }}
           >
-            <Text style={styles.navText}>Logout</Text>
+            <Text style={globalStyles.navText}>Logout</Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity onPress={() => router.push("/register")}>
-          <Text style={styles.navText}>Register</Text>
+          <Text style={globalStyles.navText}>Register</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-        <Text style={{ fontSize: 18 }}>Welcome!</Text>
-        <Text>Traffic and Incident Alerts</Text>
+      <View>
+        <View style={globalStyles.header}>
+          <Text style={globalStyles.headerTitle}>Welcome!</Text>
+          <Text style={globalStyles.headerSubtitle}>Traffic and Incident Alerts</Text>
+        </View>
 
         <ScrollView contentContainerStyle={{ padding: 20 }}>
           {traffic &&
@@ -149,23 +152,3 @@ export default function Index() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  navbar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#333",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-  },
-  navText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
