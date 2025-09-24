@@ -989,7 +989,7 @@ const Map: React.FC = () => {
     setLaneClosureAnalysis(laneClosureService.getLaneClosureAnalysis());
 
     // Start periodic updates for lane closures
-    laneClosureService.startPeriodicUpdates(5); // Update every 5 minutes
+    laneClosureService.startPeriodicUpdates(30); // Update every 30 minutes
 
     return unsubscribe;
   }, []);
