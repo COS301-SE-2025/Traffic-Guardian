@@ -133,13 +133,11 @@ class DataPrefetchService {
       });
 
       if (!response.ok) {
-        console.warn(`Prefetch failed for ${url}: ${response.status}`);
         return null;
       }
 
       return await response.json();
     } catch (error) {
-      console.warn(`Prefetch error for ${url}:`, error);
       return null;
     }
   }
@@ -147,7 +145,6 @@ class DataPrefetchService {
   // Start background prefetching after user logs in
   startPrefetching() {
     if (!this.isAuthenticated) {
-      console.log('🔄 Starting background data prefetching...');
       this.isAuthenticated = true;
 
       // Initial fetch of all high-priority data
@@ -187,7 +184,6 @@ class DataPrefetchService {
 
   // Stop prefetching when user logs out
   stopPrefetching() {
-    console.log('⏹ Stopping background data prefetching...');
     this.isAuthenticated = false;
 
     // Clear all intervals
@@ -212,7 +208,6 @@ class DataPrefetchService {
         isStale: false,
       });
 
-      console.log(`✅ Prefetched: ${config.cacheKey}`);
     }
   }
 

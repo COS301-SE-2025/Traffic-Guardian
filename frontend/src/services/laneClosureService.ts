@@ -177,7 +177,7 @@ class LaneClosureService {
       const severity = this.calculateClosureSeverity(closure.totalExistingLanes, closure.lanesClosed, closure.facility);
 
       const laneClosureObject: LaneClosure = {
-        id: closure.closureID || `${lcs.index}-${Date.now()}`,
+        id: `${closure.closureID || 'unknown'}-${lcs.index}-${closure.logNumber}-${Math.random().toString(36).substr(2, 9)}`,
         recordTimestamp: lcs.recordTimestamp,
         beginLocation: {
           latitude: beginLat,

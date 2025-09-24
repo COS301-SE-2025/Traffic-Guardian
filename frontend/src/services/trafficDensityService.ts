@@ -103,14 +103,6 @@ class TrafficDensityService {
       riskLevel,
     };
 
-    // Debug logging
-    console.log(
-      `🚗 Camera ${cameraId}: ${vehicleCount} vehicles at [${coordinates.lat.toFixed(
-        4,
-      )}, ${coordinates.lng.toFixed(4)}], intensity: ${intensity.toFixed(
-        2,
-      )}, risk: ${riskLevel}`,
-    );
 
     // Update heatmap data
     this.updateHeatmapData(cameraId, heatmapPoint);
@@ -210,7 +202,6 @@ class TrafficDensityService {
   // Fetch real traffic data from the database
   async fetchRealTrafficData(): Promise<void> {
     try {
-      // console.log('🔄 Fetching real traffic data from database...');
 
       const cameras = await ApiService.fetchCamerasWithTrafficCounts();
       if (!cameras || cameras.length === 0) {
@@ -221,7 +212,6 @@ class TrafficDensityService {
         return;
       }
 
-      // console.log(`📹 Processing ${cameras.length} cameras from database`);
       let processedCount = 0;
 
       cameras.forEach(camera => {
@@ -249,22 +239,15 @@ class TrafficDensityService {
           this.updateHeatmapData(camera.Camera_ID.toString(), heatmapPoint);
           processedCount++;
 
-          console.log(
-            `🚗 ${camera.Camera_RoadwayName}: ${vehicleCount} vehicles → intensity: ${heatmapPoint.intensity}`,
-          );
-        } else {
-          // console.log(`⚠️ Camera ${camera.Camera_ID}: no traffic count (${vehicleCount})`);
         }
       });
 
-      // console.log(`✅ Processed ${processedCount} cameras with traffic data`);
 
       // Notify subscribers of the updated heatmap data
       this.updateCallbacks.forEach(callback => callback(this.heatmapData));
 
       // If no cameras had traffic data, clear the heatmap
       if (processedCount === 0) {
-        console.log('🏠 No traffic data found - clearing heatmap');
         this.heatmapData = [];
         this.updateCallbacks.forEach(callback => callback(this.heatmapData));
       }
@@ -313,16 +296,7 @@ class TrafficDensityService {
   // Simulate object detection data for demo purposes
   // In production, this would come from your ML model
   generateSimulatedData(cameraFeeds: any[]): void {
-    console.log(
-      `🎬 Processing ${cameraFeeds.length} camera feeds for traffic simulation`,
-    );
-
     cameraFeeds.forEach(camera => {
-      console.log(
-        `📹 Camera ${camera.id}: status=${
-          camera.status
-        }, hasCoords=${!!camera.coordinates}`,
-      );
 
       // Generate traffic for all cameras with coordinates, regardless of status
       if (camera.coordinates) {
@@ -360,18 +334,11 @@ class TrafficDensityService {
         };
 
         this.processDetectionData(detectionData);
-      } else {
-        console.log(`⚠️ Skipping camera ${camera.id}: no coordinates`);
       }
     });
 
-    console.log(
-      `📊 Total heatmap points after simulation: ${this.heatmapData.length}`,
-    );
-
     // If no cameras generated traffic, create some test data for demonstration
     if (this.heatmapData.length === 0 && cameraFeeds.length > 0) {
-      console.log('🏠 No traffic generated, creating test data...');
       this.createTestHeatmapData(cameraFeeds);
     }
   }
@@ -400,17 +367,9 @@ class TrafficDensityService {
       };
 
       this.heatmapData.push(heatmapPoint);
-      console.log(
-        `🟡 Test point ${index + 1}: ${point.vehicles} vehicles at [${
-          point.lat
-        }, ${point.lng}], intensity: ${intensity.toFixed(2)}`,
-      );
     });
 
     // Notify subscribers of test data
-    console.log(
-      // `📡 Notifying ${this.updateCallbacks.length} subscribers with ${this.heatmapData.length} test heatmap points`,
-    );
     this.updateCallbacks.forEach(callback => callback(this.heatmapData));
   }
 
