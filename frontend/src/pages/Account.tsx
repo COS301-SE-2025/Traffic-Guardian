@@ -199,6 +199,7 @@ const Account: React.FC = () => {
                 required
                 placeholder="Enter your email"
                 data-testid="email-input"
+                autoComplete="email"
               />
             </div>
 
@@ -217,6 +218,7 @@ const Account: React.FC = () => {
                   required
                   placeholder="Enter your password"
                   data-testid="password-input"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"

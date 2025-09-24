@@ -333,9 +333,7 @@ const Analytics: React.FC = () => {
 
   useEffect(() => {
     // Initialise socket connection
-    const socketConnection = io(
-      process.env.REACT_APP_SERVER_URL || 'http://localhost:5000',
-    );
+    const socketConnection = io(process.env.REACT_APP_SERVER_URL!);
     _setSocket(socketConnection);
 
     // Socket event listeners for real-time updates
