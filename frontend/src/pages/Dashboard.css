@@ -1962,3 +1962,36 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(247, 148, 0, 0.2);
 }
+
+/* Dashboard Layout Styles */
+
+/* Dual Container Layout for Camera Carousel and Archive Summary */
+.dashboard-dual-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: stretch;
+}
+
+.dashboard-camera-carousel {
+  min-width: 0; /* Prevents overflow in grid */
+}
+
+.dashboard-archive-summary {
+  min-width: 0; /* Prevents overflow in grid */
+}
+
+/* Responsive Design for Dual Container */
+@media (max-width: 1024px) {
+  .dashboard-dual-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-dual-container {
+    gap: 1rem;
+  }
+}

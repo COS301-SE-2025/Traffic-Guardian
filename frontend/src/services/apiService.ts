@@ -775,6 +775,40 @@ class ApiService {
       return null;
     }
   }
+
+  // Get top 5 cameras by traffic count (public access)
+  static async fetchTopCamerasByTraffic(): Promise<any[] | null> {
+    try {
+      // Use the public endpoint for top cameras by traffic
+      const url = `${API_BASE_URL}/cameras/public/top-by-traffic`;
+      console.log('🔗 Fetching top cameras by traffic from:', url);
+
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        console.error(`❌ Public API request failed: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const result = await this.handleResponse<{data: any[]}>(response);
+      console.log('📊 Top cameras API response:', {
+        total: result.data?.length || 0,
+        hasData: !!result.data,
+        sampleCamera: result.data?.[0]
+      });
+
+      return result.data || [];
+    } catch (error) {
+      console.error('❌ Error fetching top cameras by traffic:', error);
+      return null;
+    }
+  }
 }
 
 export default ApiService;
