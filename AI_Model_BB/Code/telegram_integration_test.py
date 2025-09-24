@@ -22,7 +22,7 @@ class MockCrashReport:
         self.incident_type = "tbone_side_impact"
         self.confidence = 0.85
         self.video_path = "test_incident_2_20250811_181338_966_collision.mp4"
-        self.test_video_path = os.path.join(os.path.dirname(__file__), "test_video.mp4")
+        self.test_video_path = os.path.join(os.path.dirname(__file__), "Videos", "Demo2.mp4")
         self.processing_timestamp = datetime.now().isoformat()
         self.vehicles_involved = 2
         self.impact_severity = "high"
@@ -196,21 +196,12 @@ def test_video_message():
         return False
 
     # Check if test video exists
-    test_video_path = os.path.join(os.path.dirname(__file__), "test_video.mp4")
+    test_video_path = os.path.join(os.path.dirname(__file__), "Videos", "Demo2.mp4")
 
     if not os.path.exists(test_video_path):
         print(f"   WARNING: Test video not found at {test_video_path}")
-        print("   Creating a simple test video file...")
-
-        # Try to create a minimal test video using available tools
-        try:
-            # Create a simple text file as a placeholder (won't work as video but tests the path logic)
-            with open(test_video_path, 'w') as f:
-                f.write("This is a test file placeholder for video testing")
-            print("   Created placeholder test file")
-        except Exception as e:
-            print(f"   Could not create test file: {e}")
-            return False
+        print("   Please ensure Demo2.mp4 exists in the Videos directory")
+        return False
 
     print(f"   Testing video upload from: {test_video_path}")
 
@@ -253,7 +244,7 @@ def test_combined_notification():
     }
 
     # Check if test video exists
-    test_video_path = os.path.join(os.path.dirname(__file__), "test_video.mp4")
+    test_video_path = os.path.join(os.path.dirname(__file__), "Videos", "Demo2.mp4")
 
     print("   Mock crash report created with video:")
     print(f"   - Type: {crash_report.incident_type}")
@@ -408,17 +399,12 @@ def quick_video_test():
         return
 
     # Check for test video
-    test_video_path = os.path.join(os.path.dirname(__file__), "test_video.mp4")
+    test_video_path = os.path.join(os.path.dirname(__file__), "Videos", "Demo2.mp4")
 
     if not os.path.exists(test_video_path):
-        print("No test video found - creating placeholder...")
-        try:
-            with open(test_video_path, 'w') as f:
-                f.write("Test placeholder")
-            print("Created placeholder file")
-        except Exception as e:
-            print(f"Could not create test file: {e}")
-            return
+        print(f"No test video found at {test_video_path}")
+        print("Please ensure Demo2.mp4 exists in the Videos directory")
+        return
 
     print(f"Testing video upload: {test_video_path}")
     result = notifier.send_video_message(test_video_path, "🧪 Quick video test from TrafficGuardian AI")
@@ -429,12 +415,6 @@ def quick_video_test():
     else:
         print(f"FAILED: {result['error']}")
 
-    # Clean up placeholder
-    try:
-        if os.path.getsize(test_video_path) < 100:  # Small placeholder file
-            os.remove(test_video_path)
-    except:
-        pass
 
 if __name__ == "__main__":
     print("Choose test type:")
