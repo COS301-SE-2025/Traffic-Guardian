@@ -36,6 +36,15 @@ try:
 except ImportError:
     logger.warning("python-dotenv not installed. Using system environment variables only.")
 
+# Import telegram notifier
+try:
+    from telegram_notifier import TelegramNotifier
+    TELEGRAM_AVAILABLE = True
+    logger.info("Telegram notifier imported successfully")
+except ImportError:
+    TELEGRAM_AVAILABLE = False
+    logger.warning("Telegram notifier not available. Install dependencies or check telegram_notifier.py")
+
 # May need to move these other classes into a different file?
 # Simple LRU Cache implementation
 class LRUCache:
@@ -376,6 +385,20 @@ class EnhancedCrashClassifier:
         
         # Load API configuration
         self.api_config = self._load_api_config()
+
+        # Initialize telegram notifier
+        if TELEGRAM_AVAILABLE:
+            try:
+                self.telegram_notifier = TelegramNotifier()
+                if self.telegram_notifier.enabled:
+                    logger.info("Telegram notifier initialized and ready")
+                else:
+                    logger.warning("Telegram notifier initialized but not configured")
+            except Exception as e:
+                logger.error(f"Failed to initialize telegram notifier: {e}")
+                self.telegram_notifier = None
+        else:
+            self.telegram_notifier = None
         
         # Valid (basic) incident types from filename classification
         self.incident_types = {
@@ -2636,6 +2659,26 @@ class EnhancedCrashClassifier:
                 
                 if api_result['success']:
                     logger.info(f" Incident successfully submitted - API ID: {api_result['incident_id']}")
+
+                    # Send telegram notification after successful API submission
+                    if self.telegram_notifier and self.telegram_notifier.enabled:
+                        logger.info("📱 Sending Telegram notification...")
+                        try:
+                            telegram_result = self.telegram_notifier.notify_incident(
+                                crash_report,
+                                api_result,
+                                video_path  # Send the video clip
+                            )
+                            if telegram_result['success']:
+                                logger.info("✅ Telegram notification sent successfully")
+                                if telegram_result.get('video_sent'):
+                                    logger.info("🎥 Incident video sent to Telegram")
+                                if telegram_result.get('voice_sent'):
+                                    logger.info("🔊 Voice alert sent to Telegram")
+                            else:
+                                logger.warning(f"⚠️ Telegram notification failed: {telegram_result.get('error', 'Unknown error')}")
+                        except Exception as e:
+                            logger.error(f"❌ Error sending Telegram notification: {e}")
 
                     # DELETION OF VIDEO FILE AFTER SUBMISSION
                     # # 🗑️ DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
