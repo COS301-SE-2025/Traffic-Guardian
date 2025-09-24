@@ -2986,6 +2986,27 @@ def main():
                     print(f"  ✅ API Submission SUCCESS!")
                     print(f"     Incident ID: {api_result.get('incident_id', 'N/A')}")
                     print(f"     Database Response: {api_result.get('message', 'Created successfully')}")
+
+                    # Send telegram notification before video deletion
+                    if hasattr(classifier, 'telegram_notifier') and classifier.telegram_notifier and classifier.telegram_notifier.enabled:
+                        print("  📱 Sending Telegram notification...")
+                        try:
+                            telegram_result = classifier.telegram_notifier.notify_incident(
+                                crash_report,
+                                api_result,
+                                video_path  # Send the video clip
+                            )
+                            if telegram_result['success']:
+                                print("  ✅ Telegram notification sent successfully")
+                                if telegram_result.get('video_sent'):
+                                    print("  🎥 Incident video sent to Telegram")
+                                if telegram_result.get('voice_sent'):
+                                    print("  🔊 Voice alert sent to Telegram")
+                            else:
+                                print(f"  ⚠️ Telegram notification failed: {telegram_result.get('error', 'Unknown error')}")
+                        except Exception as e:
+                            print(f"  ❌ Error sending Telegram notification: {e}")
+
                     # DELETION!!!!1
                     # 🗑️ DELETE VIDEO FILE AFTER SUCCESSFUL DATABASE SUBMISSION
                     try:
