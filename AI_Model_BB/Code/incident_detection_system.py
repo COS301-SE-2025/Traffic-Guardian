@@ -758,7 +758,6 @@ class AdvancedIncidentDetectionSystem:
             confidence_threshold = 0.8   # Reduced from 0.95
             parallel_filter_strict = True
         
-        print(f"    Traffic State: {traffic_state}, Vehicles: {vehicle_count}")
         
         # Pre-filter vehicle pairs using enhanced lane analysis
         viable_pairs = self._get_viable_collision_pairs(active_tracks, parallel_filter_strict)
