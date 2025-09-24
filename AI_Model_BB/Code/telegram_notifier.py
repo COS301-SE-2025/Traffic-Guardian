@@ -1,8 +1,6 @@
 """
 Telegram Notification System for TrafficGuardian AI
 Sends voice messages to Telegram when incidents are detected and submitted to API.
-requires pip install pyttsx3 gtts requests python-dotenv
-
 """
 
 import os
@@ -13,9 +11,6 @@ from typing import Dict, Optional
 from datetime import datetime
 import tempfile
 from pathlib import Path
-import asyncio
-import aiohttp
-import aiofiles
 
 # Text-to-speech imports
 try:
@@ -49,7 +44,8 @@ class TelegramNotifier:
         
         if self.enabled:
             self.base_url = f"https://api.telegram.org/bot{self.bot_token}"
-            logger.info("Telegram notifier initialized successfully")
+            logger.info(f"Telegram notifier initialized successfully")
+            logger.debug(f"Base URL: {self.base_url}")
         else:
             logger.warning("Telegram notifier disabled - missing configuration")
             
@@ -368,37 +364,39 @@ class TelegramNotifier:
         # Fallback to text
         result = self.send_text_message(f"🧪 **TEST NOTIFICATION**\n\n{test_message}")
         return {'success': result['success'], 'method': 'text', 'result': result}
-    
-    def setup_telegram_env_example():
-        """
-        Display example environment variables setup for Telegram integration.
-        """
-        print("🤖 TELEGRAM INTEGRATION SETUP")
-        print("=" * 50)
-        print("Required Environment Variables:")
-        print()
-        print("1. Create a Telegram bot:")
-        print("   - Message @BotFather on Telegram")
-        print("   - Use /newbot command")
-        print("   - Get your bot token")
-        print()
-        print("2. Get your chat ID:")
-        print("   - Start chat with your bot")
-        print("   - Visit: https://api.telegram.org/bot<TOKEN>/getUpdates")
-        print("   - Find 'chat' -> 'id' in the response")
-        print()
-        print("3. Add to your .env file:")
-        print("   TELEGRAM_BOT_TOKEN=your_bot_token_here")
-        print("   TELEGRAM_CHAT_ID=your_chat_id_here")
-        print()
-        print("4. Install required packages:")
-        print("   pip install pyttsx3 gtts requests")
-        print()
-        print("Example .env file:")
-        print("   AIAPIKEY=your_api_key")
-        print("   TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz")
-        print("   TELEGRAM_CHAT_ID=123456789")
-        print("=" * 50)
+
+
+def setup_telegram_env_example():
+    """
+    Display example environment variables setup for Telegram integration.
+    """
+    print("🤖 TELEGRAM INTEGRATION SETUP")
+    print("=" * 50)
+    print("Required Environment Variables:")
+    print()
+    print("1. Create a Telegram bot:")
+    print("   - Message @BotFather on Telegram")
+    print("   - Use /newbot command")
+    print("   - Get your bot token")
+    print()
+    print("2. Get your chat ID:")
+    print("   - Start chat with your bot")
+    print("   - Visit: https://api.telegram.org/bot<TOKEN>/getUpdates")
+    print("   - Find 'chat' -> 'id' in the response")
+    print()
+    print("3. Add to your .env file:")
+    print("   TELEGRAM_BOT_TOKEN=your_bot_token_here")
+    print("   TELEGRAM_CHAT_ID=your_chat_id_here")
+    print()
+    print("4. Install required packages:")
+    print("   pip install pyttsx3 gtts requests")
+    print()
+    print("Example .env file:")
+    print("   AIAPIKEY=your_api_key")
+    print("   TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz")
+    print("   TELEGRAM_CHAT_ID=123456789")
+    print("=" * 50)
+
 
 if __name__ == "__main__":
     # Test the notification system
