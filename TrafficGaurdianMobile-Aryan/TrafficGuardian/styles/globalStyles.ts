@@ -62,6 +62,7 @@ navbar: {
   headerSubtitle: {
     ...typography.body,
     color: colors.text.secondary,
+    color : 'white',
     marginTop: 4,
   },
 
