@@ -22,6 +22,7 @@ class MockCrashReport:
         self.incident_type = "tbone_side_impact"
         self.confidence = 0.85
         self.video_path = "test_incident_2_20250811_181338_966_collision.mp4"
+        self.test_video_path = os.path.join(os.path.dirname(__file__), "test_video.mp4")
         self.processing_timestamp = datetime.now().isoformat()
         self.vehicles_involved = 2
         self.impact_severity = "high"
@@ -184,12 +185,102 @@ def test_full_incident_notification():
         print(f"   ERROR: Failed to send incident notification - {result['error']}")
         return False
 
+def test_video_message():
+    """Test video message functionality."""
+    print("\n5. Testing Video Message Functionality:")
+
+    notifier = TelegramNotifier()
+
+    if not notifier.enabled:
+        print("   ERROR: Telegram notifier not enabled")
+        return False
+
+    # Check if test video exists
+    test_video_path = os.path.join(os.path.dirname(__file__), "test_video.mp4")
+
+    if not os.path.exists(test_video_path):
+        print(f"   WARNING: Test video not found at {test_video_path}")
+        print("   Creating a simple test video file...")
+
+        # Try to create a minimal test video using available tools
+        try:
+            # Create a simple text file as a placeholder (won't work as video but tests the path logic)
+            with open(test_video_path, 'w') as f:
+                f.write("This is a test file placeholder for video testing")
+            print("   Created placeholder test file")
+        except Exception as e:
+            print(f"   Could not create test file: {e}")
+            return False
+
+    print(f"   Testing video upload from: {test_video_path}")
+
+    # Get file size
+    try:
+        file_size = os.path.getsize(test_video_path)
+        print(f"   File size: {file_size} bytes ({file_size / 1024:.1f} KB)")
+
+        if file_size > 50 * 1024 * 1024:  # 50MB limit
+            print("   WARNING: File too large for Telegram (50MB limit)")
+            return False
+
+    except Exception as e:
+        print(f"   ERROR: Could not check file size - {e}")
+        return False
+
+    # Test sending video
+    result = notifier.send_video_message(test_video_path, "🧪 **TEST VIDEO MESSAGE**\nTesting video upload functionality")
+
+    if result['success']:
+        print("   SUCCESS: Video message sent to Telegram")
+        print(f"   Message ID: {result.get('message_id', 'N/A')}")
+        return True
+    else:
+        print(f"   ERROR: Failed to send video message - {result['error']}")
+        return False
+
+def test_combined_notification():
+    """Test combined voice + video notification."""
+    print("\n6. Testing Combined Voice + Video Notification:")
+
+    notifier = TelegramNotifier()
+
+    # Create mock crash report
+    crash_report = MockCrashReport()
+    api_result = {
+        'success': True,
+        'incident_id': 'TEST_VIDEO_123',
+        'response': {'message': 'Test incident with video created successfully'}
+    }
+
+    # Check if test video exists
+    test_video_path = os.path.join(os.path.dirname(__file__), "test_video.mp4")
+
+    print("   Mock crash report created with video:")
+    print(f"   - Type: {crash_report.incident_type}")
+    print(f"   - Severity: {crash_report.incident_severity}")
+    print(f"   - Video path: {test_video_path}")
+    print(f"   - Video exists: {os.path.exists(test_video_path)}")
+
+    # Send combined notification
+    print("\n   Sending combined notification (video + voice)...")
+    result = notifier.notify_incident(crash_report, api_result, test_video_path if os.path.exists(test_video_path) else None)
+
+    if result['success']:
+        print("   SUCCESS: Combined notification sent")
+        print(f"   Video sent: {result.get('video_sent', False)}")
+        print(f"   Voice sent: {result.get('voice_sent', False)}")
+        print(f"   Messages sent: {result.get('messages_sent', 0)}/{result.get('expected_messages', 1)}")
+        return True
+    else:
+        print(f"   ERROR: Failed to send combined notification - {result.get('error', 'Unknown')}")
+        return False
+
 def test_failed_api_scenario():
     """Test notification for failed API submission scenario."""
-    print("\n5. Testing Failed API Submission Scenario:")
-    
+    print("\n7. Testing Failed API Submission Scenario:")
+
     notifier = TelegramNotifier()
-    
+
     # Create mock crash report
     crash_report = MockCrashReport()
     api_result = {
@@ -197,52 +288,64 @@ def test_failed_api_scenario():
         'error': 'HTTP 500: Internal Server Error',
         'incident_id': None
     }
-    
+
     print("   Testing notification for failed API submission...")
     result = notifier.notify_incident(crash_report, api_result)
-    
+
     if result['success']:
         print("   SUCCESS: Failure notification sent")
         return True
     else:
-        print(f"   ERROR: Failed to send failure notification - {result['error']}")
+        print(f"   ERROR: Failed to send failure notification - {result.get('error', 'Unknown')}")
         return False
 
 def run_full_test_suite():
     """Run complete test suite."""
     print("STARTING TELEGRAM INTEGRATION TEST SUITE")
     print("=" * 60)
-    
+
     tests_passed = 0
-    total_tests = 5
-    
+    total_tests = 7
+
     # Test 1: Environment setup
     if test_environment_setup():
         tests_passed += 1
     else:
         print("Environment setup failed - stopping tests")
         return
-    
+
     # Test 2: Basic connection
     if test_basic_connection():
         tests_passed += 1
     else:
         print("Basic connection failed - you may have token/chat ID issues")
         return
-    
+
     # Test 3: Voice message
     if test_voice_message():
         tests_passed += 1
     else:
         print("Voice message test failed - check TTS dependencies")
-    
+
     # Test 4: Full incident notification
     if test_full_incident_notification():
         tests_passed += 1
     else:
         print("Full incident notification test failed")
-    
-    # Test 5: Failed API scenario
+
+    # Test 5: Video message
+    if test_video_message():
+        tests_passed += 1
+    else:
+        print("Video message test failed - check video file or format")
+
+    # Test 6: Combined notification (video + voice)
+    if test_combined_notification():
+        tests_passed += 1
+    else:
+        print("Combined notification test failed")
+
+    # Test 7: Failed API scenario
     if test_failed_api_scenario():
         tests_passed += 1
     else:
@@ -278,10 +381,10 @@ def quick_test():
     """Quick test - just send a simple message."""
     print("QUICK TELEGRAM TEST")
     print("=" * 30)
-    
+
     load_dotenv()
     notifier = TelegramNotifier()
-    
+
     if notifier.enabled:
         result = notifier.send_text_message("Quick test from TrafficGuardian AI - Telegram integration working!")
         if result['success']:
@@ -292,16 +395,60 @@ def quick_test():
     else:
         print("FAILED: Telegram not configured properly")
 
+def quick_video_test():
+    """Quick test - send a video if available."""
+    print("QUICK VIDEO TEST")
+    print("=" * 30)
+
+    load_dotenv()
+    notifier = TelegramNotifier()
+
+    if not notifier.enabled:
+        print("FAILED: Telegram not configured properly")
+        return
+
+    # Check for test video
+    test_video_path = os.path.join(os.path.dirname(__file__), "test_video.mp4")
+
+    if not os.path.exists(test_video_path):
+        print("No test video found - creating placeholder...")
+        try:
+            with open(test_video_path, 'w') as f:
+                f.write("Test placeholder")
+            print("Created placeholder file")
+        except Exception as e:
+            print(f"Could not create test file: {e}")
+            return
+
+    print(f"Testing video upload: {test_video_path}")
+    result = notifier.send_video_message(test_video_path, "🧪 Quick video test from TrafficGuardian AI")
+
+    if result['success']:
+        print("SUCCESS: Test video sent to Telegram!")
+        print("Check your Telegram chat for the video.")
+    else:
+        print(f"FAILED: {result['error']}")
+
+    # Clean up placeholder
+    try:
+        if os.path.getsize(test_video_path) < 100:  # Small placeholder file
+            os.remove(test_video_path)
+    except:
+        pass
+
 if __name__ == "__main__":
     print("Choose test type:")
     print("1. Quick test (just send a message)")
-    print("2. Full test suite (comprehensive testing)")
-    
-    choice = input("Enter choice (1 or 2): ").strip()
-    
+    print("2. Quick video test (send a video)")
+    print("3. Full test suite (comprehensive testing)")
+
+    choice = input("Enter choice (1, 2, or 3): ").strip()
+
     if choice == "1":
         quick_test()
     elif choice == "2":
+        quick_video_test()
+    elif choice == "3":
         run_full_test_suite()
     else:
         print("Invalid choice. Running quick test...")
