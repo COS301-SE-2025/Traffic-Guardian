@@ -1,14 +1,15 @@
 export function calculateDistance(pointA: number[], pointB: number[]): string {
   if (pointA.length !== 2 || pointB.length !== 2) {
-        return "Invalid coordinates";
-    }
+    console.log(`Invalid coordinates, pointA: ${pointA}, pointB: ${pointB}`);
+    return "";
+  }
 
   const toRadians = (deg: number) => (deg * Math.PI) / 180;
 
   const [lat1, lon1] = pointA;
   const [lat2, lon2] = pointB;
 
-  const R = 6371000; // Earth's radius in meters
+  const R = 6371000;
   const dLat = toRadians(lat2 - lat1);
   const dLon = toRadians(lon2 - lon1);
 
@@ -21,6 +22,11 @@ export function calculateDistance(pointA: number[], pointB: number[]): string {
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  const distance = R * c; // distance in meters
-  return `${distance}m away`;
+  const distance = R * c;
+
+  if (distance < 1000) {
+    return `${Math.round(distance)} m away`;
+  } else {
+    return `${(distance / 1000).toFixed(0)} km away`;
+  }
 }

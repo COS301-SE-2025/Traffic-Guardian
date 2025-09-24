@@ -159,7 +159,7 @@ const {
             const lineString = incident?.geometry?.coordinates;
             return (
               <Text key={i} style={globalStyles.cardSubtitle}>
-                - {description} {calculateDistance(lineString, [-26.1278244561, 28.0815629307])}
+                - {description} {calculateDistance(lineString[0], [-26.1278244561, 28.0815629307])}
               </Text>
             );
           })}
