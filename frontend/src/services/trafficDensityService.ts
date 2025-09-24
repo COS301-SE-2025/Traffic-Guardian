@@ -353,7 +353,7 @@ class TrafficDensityService {
       { lat: 33.6773, lng: -117.862, vehicles: 12 }, // West OC
     ];
 
-    testPoints.forEach((point, index) => {
+    testPoints.forEach((point, _index) => {
       const intensity = Math.min(point.vehicles / this.THRESHOLDS.CRITICAL, 1);
       const riskLevel = this.calculateRiskLevel(point.vehicles);
 
