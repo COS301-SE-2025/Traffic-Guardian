@@ -153,6 +153,17 @@ const cameraController = {
       console.error('Error fetching public traffic data:', error);
       res.status(500).json({ error: 'Failed to fetch public traffic data' });
     }
+  },
+
+  // Public endpoint for top cameras by traffic count (no authentication required)
+  getTopCamerasByTraffic: async (req, res) => {
+    try {
+      const result = await cameraModel.getTopCamerasByTraffic();
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching top cameras by traffic:', error);
+      res.status(500).json({ error: 'Failed to fetch top cameras by traffic' });
+    }
   }
 };
 
