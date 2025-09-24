@@ -6,7 +6,7 @@ import { createIncident, sendVoice } from "../services/incidentsApi";
 import { useLocation } from "../services/location";
 import { Picker } from "@react-native-picker/picker";
 import { useSession } from "../services/sessionContext";
-import * as Audio from "expo-audio";
+import { Audio } from "expo-av";
 import { globalStyles } from "../styles/globalStyles";
 
 export default function Report() {
@@ -26,52 +26,52 @@ export default function Report() {
         }
       : undefined;
   }, [sound]);
-
-  async function startRecording() {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== "granted") {
-        alert("Microphone permission is required!");
-        return;
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-
-      setRecording(recording);
-    }catch(err){
-      console.error("Failed to start recording", err);
+//
+async function startRecording() {
+  try {
+    const permission = await Audio.requestPermissionsAsync();
+    if (permission.status !== "granted") {
+      Alert.alert("Microphone permission is required!");
+      return;
     }
+
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      playsInSilentModeIOS: true,
+    });
+
+    const recording = new Audio.Recording();
+    await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+    await recording.startAsync();
+
+    setRecording(recording);
+  } catch (err) {
+    console.error("Failed to start recording", err);
   }
+}
 
-  async function stopRecording(){
-    if (!recording) return;
-
-    try {
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-      setUri(uri);
-      setRecording(null);
-      console.log("Recording stored at", uri);
-    } catch (err) {
-      console.error("Failed to stop recording", err);
-    }
+async function stopRecording() {
+  if (!recording) return;
+  try {
+    await recording.stopAndUnloadAsync();
+    const uri = recording.getURI();
+    setUri(uri);
+    setRecording(null);
+    console.log("Recording stored at", uri);
+  } catch (err) {
+    console.error("Failed to stop recording", err);
   }
+}
 
-  async function playSound() {
-    if (!uri) return;
-    console.log("Loading sound from", uri);
+async function playSound() {
+  if (!uri) return;
+  console.log("Loading sound from", uri);
 
-    const { sound } = await Audio.Sound.createAsync({ uri });
-    setSound(sound);
-    await sound.playAsync();
-  }
+  const { sound } = await Audio.Sound.createAsync({ uri });
+  setSound(sound);
+  await sound.playAsync();
+}
+//
 
   async function sendVoiceRecording(){
     try{

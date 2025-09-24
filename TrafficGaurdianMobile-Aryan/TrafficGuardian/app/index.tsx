@@ -125,7 +125,7 @@ const {
 
       <View style={{flex : 1}}>
         <View style={globalStyles.header}>
-          <Text style={globalStyles.headerTitle}>Welcome!</Text>
+          <Text style={globalStyles.headerTitle}>Welcome! {user?.user.User_Username ?? ""}</Text>
           <Text style={globalStyles.headerSubtitle}>Traffic and Incident Alerts</Text>
         </View>
 

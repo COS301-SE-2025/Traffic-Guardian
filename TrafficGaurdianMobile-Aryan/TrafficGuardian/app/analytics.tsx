@@ -34,8 +34,8 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
     backgroundGradientFrom: "#292929",
     backgroundGradientTo: "#292929",
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(255, 165, 0, ${opacity})`, // orange
-    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`, // white
+    color: (opacity = 1) => `rgba(255, 165, 0, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
     style: { borderRadius: 16 },
   };
 
@@ -65,6 +65,11 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
     contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 12 }}
     style={{ flex: 1 }}
   >
+
+    <View style={globalStyles.header}>
+      <Text style={globalStyles.headerTitle}>Analtyitcs</Text>
+    </View>
+
     {/* Critical Incidents Card */}
     {criticalIncidents && (
       <View
@@ -97,12 +102,12 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
     </Text>
     <PieChart
       data={pieData}
-      width={screenWidth - 16} // account for container padding
+      width={screenWidth - 16}
       height={220}
       chartConfig={chartConfig}
       accessor="population"
       backgroundColor="transparent"
-      paddingLeft="0" // reduces space between pie and legend
+      paddingLeft="0"
       absolute
     />
   </View>
@@ -118,7 +123,7 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <BarChart
             data={barData}
-            width={Math.max(screenWidth, barData.labels.length * 60)} // scroll if too many bars
+            width={Math.max(screenWidth, barData.labels.length * 60)}
             height={220}
             chartConfig={chartConfig}
             verticalLabelRotation={30}
@@ -133,6 +138,11 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
 
   {/* Navbar */}
   <View style={globalStyles.navbar}>
+
+    <TouchableOpacity onPress={() => router.push("/")}>
+        <Text style={globalStyles.navText}>Home</Text>
+    </TouchableOpacity>
+
     {!user && (
       <TouchableOpacity onPress={() => router.push("/login")}>
         <Text style={globalStyles.navText}>Login</Text>
