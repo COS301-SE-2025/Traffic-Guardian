@@ -193,38 +193,38 @@ class TelegramNotifier:
     def send_voice_message(self, voice_file_path: str, caption: str = "") -> Dict:
         """
         Send voice message to Telegram chat.
-        
+
         Args:
             voice_file_path: Path to voice file
             caption: Optional text caption
-            
+
         Returns:
             Dictionary with send status
         """
         if not self.enabled:
             return {'success': False, 'error': 'Telegram notifier not configured'}
-        
+
         if not os.path.exists(voice_file_path):
             return {'success': False, 'error': 'Voice file not found'}
-        
+
         try:
             url = f"{self.base_url}/sendVoice"
-            
+
             with open(voice_file_path, 'rb') as voice_file:
                 files = {'voice': voice_file}
                 data = {
                     'chat_id': self.chat_id,
                     'caption': caption[:1024] if caption else ""  # Telegram caption limit
                 }
-                
+
                 response = requests.post(url, files=files, data=data, timeout=30)
-                
+
             if response.status_code == 200:
                 result = response.json()
                 if result.get('ok'):
                     logger.info("Voice message sent successfully to Telegram")
                     return {
-                        'success': True, 
+                        'success': True,
                         'message_id': result.get('result', {}).get('message_id'),
                         'response': result
                     }
@@ -235,7 +235,78 @@ class TelegramNotifier:
             else:
                 logger.error(f"HTTP error: {response.status_code}")
                 return {'success': False, 'error': f'HTTP {response.status_code}'}
-                
+
+        except requests.RequestException as e:
+            logger.error(f"Request failed: {e}")
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            return {'success': False, 'error': str(e)}
+
+    def send_video_message(self, video_file_path: str, caption: str = "", duration: int = None, width: int = None, height: int = None) -> Dict:
+        """
+        Send video message to Telegram chat.
+
+        Args:
+            video_file_path: Path to video file
+            caption: Optional text caption
+            duration: Optional video duration in seconds
+            width: Optional video width in pixels
+            height: Optional video height in pixels
+
+        Returns:
+            Dictionary with send status
+        """
+        if not self.enabled:
+            return {'success': False, 'error': 'Telegram notifier not configured'}
+
+        if not os.path.exists(video_file_path):
+            return {'success': False, 'error': 'Video file not found'}
+
+        # Check file size (Telegram has a 50MB limit for videos)
+        file_size = os.path.getsize(video_file_path)
+        max_size = 50 * 1024 * 1024  # 50MB in bytes
+
+        if file_size > max_size:
+            return {'success': False, 'error': f'Video file too large: {file_size / 1024 / 1024:.1f}MB (max 50MB)'}
+
+        try:
+            url = f"{self.base_url}/sendVideo"
+
+            with open(video_file_path, 'rb') as video_file:
+                files = {'video': video_file}
+                data = {
+                    'chat_id': self.chat_id,
+                    'caption': caption[:1024] if caption else ""  # Telegram caption limit
+                }
+
+                # Add optional parameters if provided
+                if duration is not None:
+                    data['duration'] = duration
+                if width is not None:
+                    data['width'] = width
+                if height is not None:
+                    data['height'] = height
+
+                response = requests.post(url, files=files, data=data, timeout=60)  # Longer timeout for video uploads
+
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('ok'):
+                    logger.info("Video message sent successfully to Telegram")
+                    return {
+                        'success': True,
+                        'message_id': result.get('result', {}).get('message_id'),
+                        'response': result
+                    }
+                else:
+                    error_msg = result.get('description', 'Unknown error')
+                    logger.error(f"Telegram API error: {error_msg}")
+                    return {'success': False, 'error': error_msg}
+            else:
+                logger.error(f"HTTP error: {response.status_code}")
+                return {'success': False, 'error': f'HTTP {response.status_code}'}
+
         except requests.RequestException as e:
             logger.error(f"Request failed: {e}")
             return {'success': False, 'error': str(e)}
@@ -281,64 +352,103 @@ class TelegramNotifier:
             logger.error(f"Failed to send text message: {e}")
             return {'success': False, 'error': str(e)}
     
-    def notify_incident(self, crash_report, api_result: Dict) -> Dict:
+    def notify_incident(self, crash_report, api_result: Dict, video_file_path: str = None) -> Dict:
         """
-        Main notification method - sends voice message about incident.
-        
+        Main notification method - sends voice message and optional video about incident.
+
         Args:
             crash_report: CrashReport object
             api_result: API submission result
-            
+            video_file_path: Optional path to incident video file
+
         Returns:
             Dictionary with notification status
         """
         if not self.enabled:
             logger.warning("Telegram notifications disabled")
             return {'success': False, 'error': 'Not configured'}
-        
+
         try:
             # Generate voice message text
             message_text = self.generate_incident_voice_message(crash_report, api_result)
-            
-            # Create voice file
+
+            # Send video first if provided
+            video_result = None
+            if video_file_path and os.path.exists(video_file_path):
+                logger.info("Sending incident video...")
+                video_caption = f"🎥 **INCIDENT VIDEO**\n{crash_report.incident_type.replace('_', ' ').title()} - {crash_report.incident_severity.title()} Severity"
+                video_result = self.send_video_message(video_file_path, video_caption)
+
+                if video_result['success']:
+                    logger.info("Incident video sent successfully")
+                else:
+                    logger.warning(f"Failed to send video: {video_result['error']}")
+
+            # Create and send voice message
             voice_file = self.create_voice_file(message_text)
-            
+            voice_result = None
+
             if voice_file:
-                # Send voice message
-                result = self.send_voice_message(voice_file)
-                
+                # Send voice message with reference to video if sent
+                caption = "🚨 **TRAFFIC INCIDENT ALERT**"
+                if video_result and video_result['success']:
+                    caption += " (See video above)"
+
+                voice_result = self.send_voice_message(voice_file, caption)
+
                 # Clean up voice file
                 try:
                     os.remove(voice_file)
                 except:
                     pass
-                
-                if result['success']:
+
+                if voice_result['success']:
                     logger.info("Incident notification sent via voice message")
-                    return result
                 else:
-                    # Fallback to text message
                     logger.warning("Voice message failed, sending text message")
-                    return self.send_text_message(f"🚨 **TRAFFIC INCIDENT ALERT**\n\n{message_text}")
+                    voice_result = self.send_text_message(f"🚨 **TRAFFIC INCIDENT ALERT**\n\n{message_text}")
             else:
                 # Send as text message if voice creation failed
                 logger.warning("Voice file creation failed, sending text message")
-                return self.send_text_message(f"🚨 **TRAFFIC INCIDENT ALERT**\n\n{message_text}")
-                
+                voice_result = self.send_text_message(f"🚨 **TRAFFIC INCIDENT ALERT**\n\n{message_text}")
+
+            # Return combined result
+            success_count = 0
+            if video_result and video_result['success']:
+                success_count += 1
+            if voice_result and voice_result['success']:
+                success_count += 1
+
+            has_video = video_file_path and os.path.exists(video_file_path)
+            expected_messages = 2 if has_video else 1
+
+            return {
+                'success': success_count > 0,
+                'video_sent': video_result['success'] if video_result else False,
+                'voice_sent': voice_result['success'] if voice_result else False,
+                'messages_sent': success_count,
+                'expected_messages': expected_messages,
+                'video_result': video_result,
+                'voice_result': voice_result
+            }
+
         except Exception as e:
             logger.error(f"Notification failed: {e}")
             return {'success': False, 'error': str(e)}
     
-    def test_notification(self) -> Dict:
+    def test_notification(self, test_video_path: str = None) -> Dict:
         """
-        Test notification system with a sample message.
-        
+        Test notification system with a sample message and optional video.
+
+        Args:
+            test_video_path: Optional path to test video file
+
         Returns:
             Dictionary with test result
         """
         if not self.enabled:
             return {'success': False, 'error': 'Telegram notifier not configured'}
-        
+
         test_message = (
             "Traffic Guardian Alert. This is a test notification. "
             "High severity incident detected. T-bone collision involving 2 vehicles. "
@@ -346,24 +456,48 @@ class TelegramNotifier:
             "Incident successfully reported to database. "
             "Emergency response: Priority 2."
         )
-        
+
         logger.info("Sending test notification...")
-        
-        # Try voice message first
+
+        # Test video message if path provided
+        video_result = None
+        if test_video_path and os.path.exists(test_video_path):
+            logger.info("Testing video message...")
+            video_result = self.send_video_message(test_video_path, "🧪 **TEST VIDEO**\nTest incident video")
+
+        # Try voice message
         voice_file = self.create_voice_file(test_message)
+        voice_result = None
+
         if voice_file:
-            result = self.send_voice_message(voice_file, "🧪 Test Notification")
+            caption = "🧪 Test Notification"
+            if video_result and video_result['success']:
+                caption += " (See test video above)"
+
+            voice_result = self.send_voice_message(voice_file, caption)
             try:
                 os.remove(voice_file)
             except:
                 pass
-            
-            if result['success']:
-                return {'success': True, 'method': 'voice', 'result': result}
-        
+
+            if voice_result['success']:
+                return {
+                    'success': True,
+                    'method': 'voice',
+                    'video_sent': video_result['success'] if video_result else False,
+                    'voice_result': voice_result,
+                    'video_result': video_result
+                }
+
         # Fallback to text
-        result = self.send_text_message(f"🧪 **TEST NOTIFICATION**\n\n{test_message}")
-        return {'success': result['success'], 'method': 'text', 'result': result}
+        text_result = self.send_text_message(f"🧪 **TEST NOTIFICATION**\n\n{test_message}")
+        return {
+            'success': text_result['success'],
+            'method': 'text',
+            'video_sent': video_result['success'] if video_result else False,
+            'text_result': text_result,
+            'video_result': video_result
+        }
 
 
 def setup_telegram_env_example():
