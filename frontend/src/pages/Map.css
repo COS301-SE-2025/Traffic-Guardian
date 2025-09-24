@@ -1125,6 +1125,435 @@
   background: #555;
 }
 
+/* Lane Closure Styles */
+.lane-closures-panel {
+  background: linear-gradient(135deg, rgb(30 30 30 / 95%) 0%, rgb(25 25 25 / 95%) 100%);
+}
+
+.lane-closures-panel .panel-header h3 {
+  color: #dc2626; /* Red for lane closures */
+}
+
+.lane-closures-panel .toggle-button.lane-closures {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+}
+
+.lane-closures-panel .toggle-button.lane-closures:hover {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+}
+
+.lane-closures-panel .toggle-button.lane-closures.active {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  box-shadow: 0 8px 25px rgb(220 38 38 / 30%);
+}
+
+/* Lane Closure Metrics */
+.lane-closure-metrics {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgb(0 0 0 / 20%);
+  border-radius: 12px;
+  border: 1px solid rgb(255 255 255 / 5%);
+}
+
+.lane-closure-metrics .metric-value {
+  color: #dc2626; /* Red theme for lane closures */
+}
+
+.lane-closure-metrics .metric-value.warning {
+  color: #f59e0b; /* Orange for warnings */
+  animation: pulse 2s infinite;
+}
+
+/* Lane Closure Filter Controls */
+.lane-closure-filters {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgb(0 0 0 / 10%);
+  border-radius: 12px;
+  border: 1px solid rgb(255 255 255 / 5%);
+}
+
+.filter-section {
+  margin-bottom: 1rem;
+}
+
+.filter-section:last-child {
+  margin-bottom: 0;
+}
+
+.filter-section h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Status Filter Indicators */
+.active-closure-indicator {
+  background: #dc2626;
+}
+
+.upcoming-closure-indicator {
+  background: #f59e0b;
+}
+
+.completed-closure-indicator {
+  background: #6b7280;
+}
+
+/* Severity Filter Indicators */
+.low-severity-indicator {
+  background: #22c55e;
+}
+
+.medium-severity-indicator {
+  background: #f59e0b;
+}
+
+.high-severity-indicator {
+  background: #ef4444;
+}
+
+/* Filter Button Styles */
+.filter-chip.active-closure.active {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border-color: #dc2626;
+  color: white;
+}
+
+.filter-chip.upcoming-closure.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: #f59e0b;
+  color: white;
+}
+
+.filter-chip.completed-closure.active {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  border-color: #6b7280;
+  color: white;
+}
+
+.filter-chip.low-severity.active {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-color: #22c55e;
+  color: white;
+}
+
+.filter-chip.medium-severity.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: #f59e0b;
+  color: white;
+}
+
+.filter-chip.high-severity.active {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: #ef4444;
+  color: white;
+}
+
+/* Lane Closure Popup */
+.lane-closure-popup {
+  min-width: 250px;
+  color: #1e1e1e;
+}
+
+.lane-closure-popup strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #1e1e1e;
+  font-weight: 700;
+}
+
+.severity-text {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin: 0.25rem 0;
+}
+
+.severity-text.low {
+  background: #22c55e;
+  color: white;
+}
+
+.severity-text.medium {
+  background: #f59e0b;
+  color: white;
+}
+
+.severity-text.high {
+  background: #ef4444;
+  color: white;
+}
+
+.status-text {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin: 0.25rem 0;
+}
+
+.status-text.active {
+  background: #dc2626;
+  color: white;
+}
+
+.status-text.upcoming {
+  background: #f59e0b;
+  color: white;
+}
+
+.status-text.completed {
+  background: #6b7280;
+  color: white;
+}
+
+/* Lane Closure Modal */
+.lane-closure-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgb(0 0 0 / 80%);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1rem;
+}
+
+.lane-closure-modal {
+  background: linear-gradient(135deg, #1e1e1e 0%, #0f0f0f 100%);
+  border-radius: 16px;
+  border: 1px solid rgb(254 172 52 / 30%);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 50%);
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.lane-closure-modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgb(220 38 38 / 10%) 0%, transparent 100%);
+}
+
+.lane-closure-modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #dc2626, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.lane-closure-modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.lane-closure-modal-close:hover {
+  background: rgb(239 68 68 / 20%);
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+.lane-closure-modal-content {
+  padding: 1.5rem 2rem 2rem;
+  max-height: calc(90vh - 100px);
+  overflow-y: auto;
+}
+
+/* Closure Sections */
+.closure-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgb(255 255 255 / 3%);
+  border-radius: 12px;
+  border: 1px solid rgb(255 255 255 / 5%);
+}
+
+.closure-section:last-child {
+  margin-bottom: 0;
+}
+
+.closure-section h4 {
+  margin: 0 0 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #feac34;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.closure-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.closure-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgb(0 0 0 / 20%);
+  border-radius: 8px;
+  border: 1px solid rgb(255 255 255 / 5%);
+}
+
+.closure-detail-label {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.closure-detail-value {
+  font-weight: 600;
+  color: #f1f1f1;
+  text-align: right;
+}
+
+.closure-detail-value.closure-impact {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* Status and Severity Badges */
+.closure-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 20%);
+  border-radius: 8px;
+  border: 1px solid rgb(255 255 255 / 5%);
+}
+
+.status-label {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge,
+.severity-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
+}
+
+/* Legend Updates */
+.legend-section {
+  margin-bottom: 1rem;
+}
+
+.legend-section:last-child {
+  margin-bottom: 0;
+}
+
+.legend-section h5 {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive Design for Modal */
+@media (max-width: 768px) {
+  .lane-closure-modal {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .lane-closure-modal-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .lane-closure-modal-content {
+    padding: 1rem 1.5rem 1.5rem;
+  }
+
+  .closure-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .closure-detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .closure-detail-value {
+    text-align: left;
+  }
+
+  .closure-status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.legend-color.lane-closure-low {
+  background: #22c55e;
+}
+
+.legend-color.lane-closure-medium {
+  background: #f59e0b;
+}
+
+.legend-color.lane-closure-high {
+  background: #ef4444;
+}
+
 /* Animation for loading states */
 @keyframes pulse {
   0%,
