@@ -1,6 +1,7 @@
 const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
+const emailSender = require("../emailService/emailService");
 
 async function generatePDF(incidents = []) {
   const browser = await puppeteer.launch();
@@ -43,6 +44,7 @@ async function generatePDF(incidents = []) {
 
   await browser.close();
   console.log("Report generated:", pdfPath);
+  return pdfPath;
 }
 
 module.exports = { 
@@ -64,4 +66,11 @@ const incidents = [
   }
 ];
 
-// generatePDF(incidents);
+async function sendit(){
+  const pdfPATH = await generatePDF(incidents);
+  console.log(pdfPATH);
+  await emailSender.sendEmail("aryanmohanlall@gmail.com", "Traffic Gaurdian Report", "", incidents[0].Incident_Reporter, pdfPATH);
+}
+
+sendit();
+//sendEmail(to, subject, text, html, reportName, reportFile)
