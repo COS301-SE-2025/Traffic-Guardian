@@ -1,22 +1,31 @@
 const nodemailer = require("nodemailer");
+require('dotenv').config({
+path: require('path').join(__dirname, '../../.env')
+});
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "your_email@gmail.com",      // your email
-    pass: "your_app_password",         // use App Password (not normal Gmail password)
+    user: "aryanmohanlall@gmail.com",
+    pass: process.env.EMAIL_PASSWORD,
   },
 });
 
-// Function to send an email
-export async function sendEmail(to, subject, text, html) {
+async function sendEmail(to, subject, text, html, reportName, reportFile) {
   try {
     const info = await transporter.sendMail({
-      from: '"My App" <your_email@gmail.com>',
-      to,              // recipient
-      subject,         // subject line
-      text,            // plain text body
-      html,            // html body (optional)
+      from: '"Traffic Gaurdian Report" <aryanmohanlall@gmail.com>',
+      to,              
+      subject,         
+      text,            
+      html,
+      attachments: [
+        {
+          filename: reportName,
+          path: reportFile,
+          contentType: "application/pdf"
+        }
+      ]         
     });
 
     console.log("Message sent: %s", info.messageId);
@@ -27,6 +36,7 @@ export async function sendEmail(to, subject, text, html) {
   }
 }
 
+//sendEmail("aryanmohanlall@gmail.com", "Traffic Gaurdian Report", "Kindly find below your incident report summary");
 
 module.exports = {
     sendEmail
