@@ -1148,6 +1148,15 @@
   box-shadow: 0 8px 25px rgb(220 38 38 / 30%);
 }
 
+/* Lane Closure Loading */
+.lane-closure-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  min-height: 80px;
+}
+
 /* Lane Closure Metrics */
 .lane-closure-metrics {
   display: flex;

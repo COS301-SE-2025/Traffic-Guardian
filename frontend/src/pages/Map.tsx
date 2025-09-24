@@ -262,6 +262,7 @@ interface MapControlsProps {
   activeLaneClosureStatusFilter: string;
   onLaneClosureSeverityFilter: (severity: string) => void;
   activeLaneClosureSeverityFilter: string;
+  laneClosuresLoading: boolean;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -287,6 +288,7 @@ const MapControls: React.FC<MapControlsProps> = ({
   activeLaneClosureStatusFilter,
   onLaneClosureSeverityFilter,
   activeLaneClosureSeverityFilter,
+  laneClosuresLoading,
 }) => (
   <div className="map-controls" data-testid="map-controls">
     <div
@@ -444,7 +446,11 @@ const MapControls: React.FC<MapControlsProps> = ({
         </div>
 
         <div className="panel-content">
-          {laneClosureAnalysis ? (
+          {laneClosuresLoading ? (
+            <div className="lane-closure-loading">
+              <LoadingSpinner size="small" text="Loading lane closures..." />
+            </div>
+          ) : laneClosureAnalysis ? (
             <div className="lane-closure-metrics">
               <div className="metric">
                 <div className="metric-value">
@@ -823,6 +829,7 @@ const Map: React.FC = () => {
   const [laneClosureStatusFilter, setLaneClosureStatusFilter] = useState<string>('all');
   const [laneClosureSeverityFilter, setLaneClosureSeverityFilter] = useState<string>('all');
   const [selectedLaneClosure, setSelectedLaneClosure] = useState<LaneClosure | null>(null);
+  const [laneClosuresLoading, setLaneClosuresLoading] = useState<boolean>(false);
 
   // Filter cameras based on status and coordinates
   const filteredCameras = useMemo(() => {
@@ -836,8 +843,6 @@ const Map: React.FC = () => {
 
   // Filter lane closures based on status and severity
   const filteredLaneClosures = useMemo(() => {
-    console.log(`🚧 Total lane closures: ${laneClosures.length}`);
-    console.log(`🚧 Lane closure data:`, laneClosures);
     return laneClosures.filter(closure => {
       const matchesStatus =
         laneClosureStatusFilter === 'all' || closure.status === laneClosureStatusFilter;
@@ -910,7 +915,6 @@ const Map: React.FC = () => {
 
   const handleHeatmapToggle = () => {
     const newVisible = !heatmapVisible;
-    console.log(`🔄 Toggling heatmap: ${heatmapVisible} -> ${newVisible}`);
     setHeatmapVisible(newVisible);
   };
 
@@ -920,22 +924,18 @@ const Map: React.FC = () => {
 
   const handleLaneClosuresToggle = () => {
     const newVisible = !laneClosuresVisible;
-    console.log(`🚧 Toggling lane closures: ${laneClosuresVisible} -> ${newVisible}`);
     setLaneClosuresVisible(newVisible);
   };
 
   const handleLaneClosureStatusFilter = (status: string) => {
-    console.log(`🚧 Filtering lane closures by status: ${status}`);
     setLaneClosureStatusFilter(status);
   };
 
   const handleLaneClosureSeverityFilter = (severity: string) => {
-    console.log(`🚧 Filtering lane closures by severity: ${severity}`);
     setLaneClosureSeverityFilter(severity);
   };
 
   const handleLaneClosureMarkerClick = (closure: LaneClosure) => {
-    console.log(`🚧 Selected lane closure: ${closure.route} - ${closure.nearbyLandmark}`);
     setSelectedLaneClosure(closure);
   };
 
@@ -945,10 +945,8 @@ const Map: React.FC = () => {
 
   // Subscribe to heatmap updates
   useEffect(() => {
-    console.log('🔗 Subscribing to traffic density service...');
     const unsubscribe = trafficDensityService.subscribe(
       (data: HeatmapPoint[]) => {
-        console.log(`📊 Map received ${data.length} heatmap points`);
         setHeatmapData(data);
         setTrafficAnalysis(trafficDensityService.getTrafficAnalysis());
       },
@@ -957,7 +955,6 @@ const Map: React.FC = () => {
     // Get any existing data immediately
     const existingData = trafficDensityService.getCurrentHeatmapData();
     if (existingData.length > 0) {
-      console.log(`📋 Using ${existingData.length} existing heatmap points`);
       setHeatmapData(existingData);
     }
 
@@ -969,20 +966,21 @@ const Map: React.FC = () => {
 
   // Subscribe to lane closure updates
   useEffect(() => {
-    console.log('🚧 Subscribing to lane closure service...');
+    setLaneClosuresLoading(true);
+
     const unsubscribe = laneClosureService.subscribe(
       (data: LaneClosure[]) => {
-        console.log(`🚧 Map received ${data.length} lane closures`);
         setLaneClosures(data);
         setLaneClosureAnalysis(laneClosureService.getLaneClosureAnalysis());
+        setLaneClosuresLoading(false);
       },
     );
 
     // Get any existing data immediately
     const existingData = laneClosureService.getCurrentLaneClosures();
     if (existingData.length > 0) {
-      console.log(`🚧 Using ${existingData.length} existing lane closures`);
       setLaneClosures(existingData);
+      setLaneClosuresLoading(false);
     }
 
     // Always set initial lane closure analysis (even if empty)
@@ -996,14 +994,11 @@ const Map: React.FC = () => {
 
   // Fetch real traffic data from database
   useEffect(() => {
-    console.log('🚗 Setting up real traffic data fetching...');
-
     const fetchTrafficData = async () => {
       try {
-        console.log('🔄 Fetching real traffic data from database...');
         await trafficDensityService.fetchRealTrafficData();
       } catch (error) {
-        console.error('❌ Failed to fetch real traffic data:', error);
+        console.error('Failed to fetch real traffic data:', error);
         // No fallback - only show real data when authenticated
       }
     };
@@ -1013,7 +1008,6 @@ const Map: React.FC = () => {
 
     // Set up periodic updates every 30 seconds for real traffic data
     const interval = setInterval(() => {
-      console.log('🔄 Updating real traffic data...');
       fetchTrafficData();
     }, 30000); // Update every 30 seconds
 
@@ -1074,6 +1068,7 @@ const Map: React.FC = () => {
         activeLaneClosureStatusFilter={laneClosureStatusFilter}
         onLaneClosureSeverityFilter={handleLaneClosureSeverityFilter}
         activeLaneClosureSeverityFilter={laneClosureSeverityFilter}
+        laneClosuresLoading={laneClosuresLoading}
       />
 
       <div className="map-container" data-testid="map-container">

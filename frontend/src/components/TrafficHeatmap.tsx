@@ -45,11 +45,8 @@ const TrafficHeatmap: React.FC<TrafficHeatmapProps> = ({
       return;
     }
 
-    console.log(`🎯 Creating heatmap with ${data.length} points`);
-
     // Convert data to leaflet.heat format: [lat, lng, intensity]
     const heatData: [number, number, number][] = data.map(point => {
-      console.log(`📍 Point: ${point.vehicleCount} vehicles → intensity: ${point.intensity}`);
       return [point.lat, point.lng, point.intensity];
     });
 
@@ -66,8 +63,6 @@ const TrafficHeatmap: React.FC<TrafficHeatmapProps> = ({
       (heatLayer as any).setOpacity(opacity);
     }
     heatLayerRef.current = heatLayer;
-
-    console.log(`✅ Heatmap created with ${heatData.length} points`);
 
     // Cleanup function
     return () => {
