@@ -157,8 +157,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
   >('overview');
   const [_lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  const API_BASE_URL =
-    process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api';
+  const API_BASE_URL = process.env.REACT_APP_SERVER_URL! + '/api';
 
   const getAuthHeaders = useCallback((): HeadersInit => {
     const apiKey = sessionStorage.getItem('apiKey');
