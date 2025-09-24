@@ -7,6 +7,9 @@ const rateLimiters = require('../middleware/rateLimiter');
 // Public route for traffic data (no authentication required)
 router.get('/public/traffic-data', rateLimiters.camera, cameraController.getPublicTrafficData);
 
+// Public route for top cameras by traffic count (no authentication required)
+router.get('/public/top-by-traffic', rateLimiters.camera, cameraController.getTopCamerasByTraffic);
+
 // All other routes in this file require authentication
 router.use(authMiddleware.authenticate);
 
