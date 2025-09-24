@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const path = require("path");
 require('dotenv').config({
 path: require('path').join(__dirname, '../../.env')
 });
@@ -11,21 +12,23 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function sendEmail(to, subject, text, html, reportName, reportFile) {
+async function sendEmail(to, subject, text, html, attachmentPath) {
   try {
     const info = await transporter.sendMail({
-      from: '"Traffic Gaurdian Report" <aryanmohanlall@gmail.com>',
-      to,              
-      subject,         
-      text,            
+      from: '"Traffic Guardian Report" <aryanmohanlall@gmail.com>',
+      to,
+      subject,
+      text,
       html,
-      attachments: [
-        {
-          filename: reportName,
-          path: reportFile,
-          contentType: "application/pdf"
-        }
-      ]         
+      attachments: attachmentPath
+        ? [
+            {
+              filename: path.basename(attachmentPath),
+              path: attachmentPath,
+              contentType: "application/pdf",
+            },
+          ]
+        : [],
     });
 
     console.log("Message sent: %s", info.messageId);
@@ -35,6 +38,7 @@ async function sendEmail(to, subject, text, html, reportName, reportFile) {
     throw error;
   }
 }
+
 
 //sendEmail("aryanmohanlall@gmail.com", "Traffic Gaurdian Report", "Kindly find below your incident report summary");
 
