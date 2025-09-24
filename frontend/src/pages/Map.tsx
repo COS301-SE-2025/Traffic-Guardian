@@ -9,6 +9,11 @@ import trafficDensityService, {
   HeatmapPoint,
   TrafficDensityAnalysis,
 } from '../services/trafficDensityService';
+import laneClosureService, {
+  LaneClosure,
+  LaneClosureAnalysis,
+} from '../services/laneClosureService';
+import LaneClosureModal from '../components/LaneClosureModal';
 import 'leaflet/dist/leaflet.css';
 import './Map.css';
 
@@ -22,6 +27,30 @@ delete ((L as any).Icon.Default.prototype as any)._getIconUrl;
   shadowUrl:
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
+
+// Custom lane closure icons based on severity
+const createLaneClosureIcon = (severity: 'low' | 'medium' | 'high'): any => {
+  const colorMap = {
+    low: '#22c55e',    // Green
+    medium: '#f59e0b', // Orange
+    high: '#ef4444',   // Red
+  };
+
+  const color = colorMap[severity];
+
+  return new (L as any).Icon({
+    iconUrl: `data:image/svg+xml;base64,${btoa(`
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="14" cy="14" r="13" fill="${color}" stroke="white" stroke-width="2"/>
+        <path d="M8 14h12M10 10h8M10 18h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <text x="14" y="19" text-anchor="middle" fill="white" font-size="8" font-weight="bold">!</text>
+      </svg>
+    `)}`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -28],
+  });
+};
 
 // Custom camera icons based on status
 const createCameraIcon = (status: 'Online' | 'Offline' | 'Loading'): any => {
@@ -226,6 +255,13 @@ interface MapControlsProps {
   onHeatmapOpacityChange: (opacity: number) => void;
   trafficAnalysis: TrafficDensityAnalysis | null;
   dynamicVehicleCount: number;
+  onLaneClosuresToggle: () => void;
+  laneClosuresVisible: boolean;
+  laneClosureAnalysis: LaneClosureAnalysis | null;
+  onLaneClosureStatusFilter: (status: string) => void;
+  activeLaneClosureStatusFilter: string;
+  onLaneClosureSeverityFilter: (severity: string) => void;
+  activeLaneClosureSeverityFilter: string;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -244,6 +280,13 @@ const MapControls: React.FC<MapControlsProps> = ({
   onHeatmapOpacityChange,
   trafficAnalysis,
   dynamicVehicleCount,
+  onLaneClosuresToggle,
+  laneClosuresVisible,
+  laneClosureAnalysis,
+  onLaneClosureStatusFilter,
+  activeLaneClosureStatusFilter,
+  onLaneClosureSeverityFilter,
+  activeLaneClosureSeverityFilter,
 }) => (
   <div className="map-controls" data-testid="map-controls">
     <div
@@ -373,6 +416,157 @@ const MapControls: React.FC<MapControlsProps> = ({
             </div>
           </div>
         )}
+      </div>
+
+      {/* Lane Closures Panel */}
+      <div className="control-panel lane-closures-panel">
+        <div className="panel-header">
+          <h3>Lane Closures</h3>
+          <button
+            className={`toggle-button lane-closures ${
+              laneClosuresVisible ? 'active' : ''
+            }`}
+            onClick={onLaneClosuresToggle}
+            data-testid="lane-closures-toggle"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+            </svg>
+            District 12
+          </button>
+        </div>
+
+        <div className="panel-content">
+          {laneClosureAnalysis ? (
+            <div className="lane-closure-metrics">
+              <div className="metric">
+                <div className="metric-value">
+                  {laneClosureAnalysis.activeClosure}
+                </div>
+                <div className="metric-label">Active Closures</div>
+              </div>
+              <div className="metric">
+                <div className={`metric-value ${
+                  laneClosureAnalysis.highSeverityClosures > 0 ? 'warning' : ''
+                }`}>
+                  {laneClosureAnalysis.highSeverityClosures}
+                </div>
+                <div className="metric-label">High Severity</div>
+              </div>
+              <div className="metric">
+                <div className="metric-value">
+                  {laneClosureAnalysis.upcomingClosures}
+                </div>
+                <div className="metric-label">Upcoming</div>
+              </div>
+            </div>
+          ) : (
+            <div className="lane-closure-metrics">
+              <div className="metric">
+                <div className="metric-value">-</div>
+                <div className="metric-label">Active Closures</div>
+              </div>
+              <div className="metric">
+                <div className="metric-value">-</div>
+                <div className="metric-label">High Severity</div>
+              </div>
+              <div className="metric">
+                <div className="metric-value">-</div>
+                <div className="metric-label">Upcoming</div>
+              </div>
+            </div>
+          )}
+
+          {/* Lane Closure Filter Controls */}
+          {laneClosuresVisible && (
+            <div className="lane-closure-filters">
+              <div className="filter-section">
+                <h4>Filter by Status</h4>
+                <div className="filter-buttons-grid">
+                  <button
+                    className={`filter-chip ${activeLaneClosureStatusFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => onLaneClosureStatusFilter('all')}
+                  >
+                    <span className="chip-label">All</span>
+                  </button>
+                  <button
+                    className={`filter-chip active-closure ${
+                      activeLaneClosureStatusFilter === 'active' ? 'active' : ''
+                    }`}
+                    onClick={() => onLaneClosureStatusFilter('active')}
+                  >
+                    <div className="chip-indicator active-closure-indicator" />
+                    <span className="chip-label">Active</span>
+                  </button>
+                  <button
+                    className={`filter-chip upcoming-closure ${
+                      activeLaneClosureStatusFilter === 'upcoming' ? 'active' : ''
+                    }`}
+                    onClick={() => onLaneClosureStatusFilter('upcoming')}
+                  >
+                    <div className="chip-indicator upcoming-closure-indicator" />
+                    <span className="chip-label">Upcoming</span>
+                  </button>
+                  <button
+                    className={`filter-chip completed-closure ${
+                      activeLaneClosureStatusFilter === 'completed' ? 'active' : ''
+                    }`}
+                    onClick={() => onLaneClosureStatusFilter('completed')}
+                  >
+                    <div className="chip-indicator completed-closure-indicator" />
+                    <span className="chip-label">Completed</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="filter-section">
+                <h4>Filter by Severity</h4>
+                <div className="filter-buttons-grid">
+                  <button
+                    className={`filter-chip ${activeLaneClosureSeverityFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => onLaneClosureSeverityFilter('all')}
+                  >
+                    <span className="chip-label">All</span>
+                  </button>
+                  <button
+                    className={`filter-chip low-severity ${
+                      activeLaneClosureSeverityFilter === 'low' ? 'active' : ''
+                    }`}
+                    onClick={() => onLaneClosureSeverityFilter('low')}
+                  >
+                    <div className="chip-indicator low-severity-indicator" />
+                    <span className="chip-label">Low</span>
+                  </button>
+                  <button
+                    className={`filter-chip medium-severity ${
+                      activeLaneClosureSeverityFilter === 'medium' ? 'active' : ''
+                    }`}
+                    onClick={() => onLaneClosureSeverityFilter('medium')}
+                  >
+                    <div className="chip-indicator medium-severity-indicator" />
+                    <span className="chip-label">Medium</span>
+                  </button>
+                  <button
+                    className={`filter-chip high-severity ${
+                      activeLaneClosureSeverityFilter === 'high' ? 'active' : ''
+                    }`}
+                    onClick={() => onLaneClosureSeverityFilter('high')}
+                  >
+                    <div className="chip-indicator high-severity-indicator" />
+                    <span className="chip-label">High</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Traffic Density Panel */}
@@ -622,6 +816,14 @@ const Map: React.FC = () => {
   const [visibleCamerasInViewport, setVisibleCamerasInViewport] = useState<CameraFeed[]>([]);
   const [dynamicVehicleCount, setDynamicVehicleCount] = useState<number>(0);
 
+  // Lane closures state
+  const [laneClosuresVisible, setLaneClosuresVisible] = useState<boolean>(true);
+  const [laneClosures, setLaneClosures] = useState<LaneClosure[]>([]);
+  const [laneClosureAnalysis, setLaneClosureAnalysis] = useState<LaneClosureAnalysis | null>(null);
+  const [laneClosureStatusFilter, setLaneClosureStatusFilter] = useState<string>('all');
+  const [laneClosureSeverityFilter, setLaneClosureSeverityFilter] = useState<string>('all');
+  const [selectedLaneClosure, setSelectedLaneClosure] = useState<LaneClosure | null>(null);
+
   // Filter cameras based on status and coordinates
   const filteredCameras = useMemo(() => {
     return cameraFeeds.filter(camera => {
@@ -631,6 +833,19 @@ const Map: React.FC = () => {
       return hasCoords && matchesFilter;
     });
   }, [cameraFeeds, statusFilter]);
+
+  // Filter lane closures based on status and severity
+  const filteredLaneClosures = useMemo(() => {
+    console.log(`🚧 Total lane closures: ${laneClosures.length}`);
+    console.log(`🚧 Lane closure data:`, laneClosures);
+    return laneClosures.filter(closure => {
+      const matchesStatus =
+        laneClosureStatusFilter === 'all' || closure.status === laneClosureStatusFilter;
+      const matchesSeverity =
+        laneClosureSeverityFilter === 'all' || closure.severity === laneClosureSeverityFilter;
+      return matchesStatus && matchesSeverity;
+    });
+  }, [laneClosures, laneClosureStatusFilter, laneClosureSeverityFilter]);
 
   // Calculate dynamic vehicle count from visible cameras in viewport
   const calculateDynamicVehicleCount = useCallback((visibleCameras: CameraFeed[]) => {
@@ -703,6 +918,31 @@ const Map: React.FC = () => {
     setHeatmapOpacity(opacity);
   };
 
+  const handleLaneClosuresToggle = () => {
+    const newVisible = !laneClosuresVisible;
+    console.log(`🚧 Toggling lane closures: ${laneClosuresVisible} -> ${newVisible}`);
+    setLaneClosuresVisible(newVisible);
+  };
+
+  const handleLaneClosureStatusFilter = (status: string) => {
+    console.log(`🚧 Filtering lane closures by status: ${status}`);
+    setLaneClosureStatusFilter(status);
+  };
+
+  const handleLaneClosureSeverityFilter = (severity: string) => {
+    console.log(`🚧 Filtering lane closures by severity: ${severity}`);
+    setLaneClosureSeverityFilter(severity);
+  };
+
+  const handleLaneClosureMarkerClick = (closure: LaneClosure) => {
+    console.log(`🚧 Selected lane closure: ${closure.route} - ${closure.nearbyLandmark}`);
+    setSelectedLaneClosure(closure);
+  };
+
+  const handleCloseLaneClosureModal = () => {
+    setSelectedLaneClosure(null);
+  };
+
   // Subscribe to heatmap updates
   useEffect(() => {
     console.log('🔗 Subscribing to traffic density service...');
@@ -726,6 +966,33 @@ const Map: React.FC = () => {
 
     return unsubscribe;
   }, [heatmapVisible, heatmapOpacity]);
+
+  // Subscribe to lane closure updates
+  useEffect(() => {
+    console.log('🚧 Subscribing to lane closure service...');
+    const unsubscribe = laneClosureService.subscribe(
+      (data: LaneClosure[]) => {
+        console.log(`🚧 Map received ${data.length} lane closures`);
+        setLaneClosures(data);
+        setLaneClosureAnalysis(laneClosureService.getLaneClosureAnalysis());
+      },
+    );
+
+    // Get any existing data immediately
+    const existingData = laneClosureService.getCurrentLaneClosures();
+    if (existingData.length > 0) {
+      console.log(`🚧 Using ${existingData.length} existing lane closures`);
+      setLaneClosures(existingData);
+    }
+
+    // Always set initial lane closure analysis (even if empty)
+    setLaneClosureAnalysis(laneClosureService.getLaneClosureAnalysis());
+
+    // Start periodic updates for lane closures
+    laneClosureService.startPeriodicUpdates(5); // Update every 5 minutes
+
+    return unsubscribe;
+  }, []);
 
   // Fetch real traffic data from database
   useEffect(() => {
@@ -800,6 +1067,13 @@ const Map: React.FC = () => {
         onHeatmapOpacityChange={handleHeatmapOpacityChange}
         trafficAnalysis={trafficAnalysis}
         dynamicVehicleCount={dynamicVehicleCount}
+        onLaneClosuresToggle={handleLaneClosuresToggle}
+        laneClosuresVisible={laneClosuresVisible}
+        laneClosureAnalysis={laneClosureAnalysis}
+        onLaneClosureStatusFilter={handleLaneClosureStatusFilter}
+        activeLaneClosureStatusFilter={laneClosureStatusFilter}
+        onLaneClosureSeverityFilter={handleLaneClosureSeverityFilter}
+        activeLaneClosureSeverityFilter={laneClosureSeverityFilter}
       />
 
       <div className="map-container" data-testid="map-container">
@@ -838,6 +1112,55 @@ const Map: React.FC = () => {
             cameras={filteredCameras}
             onViewportChange={handleViewportChange}
           />
+
+          {/* Lane Closure Markers */}
+          {laneClosuresVisible && filteredLaneClosures.map(closure => (
+            <Marker
+              key={closure.id}
+              {...({
+                position: [
+                  closure.beginLocation.latitude,
+                  closure.beginLocation.longitude,
+                ] as [number, number],
+                icon: createLaneClosureIcon(closure.severity),
+                eventHandlers: {
+                  click: () => handleLaneClosureMarkerClick(closure),
+                },
+              } as any)}
+            >
+              <Popup>
+                <div className="lane-closure-popup">
+                  <strong>{closure.route} - {closure.nearbyLandmark}</strong>
+                  <br />
+                  <span className={`severity-text ${closure.severity}`}>
+                    Severity: {closure.severity.toUpperCase()}
+                  </span>
+                  <br />
+                  <span className={`status-text ${closure.status}`}>
+                    Status: {closure.status.toUpperCase()}
+                  </span>
+                  <br />
+                  <small>Lanes: {closure.details.lanesClosed}/{closure.details.lanesExisting} closed</small>
+                  <br />
+                  <small>Type: {closure.details.closureType}</small>
+                  <br />
+                  <small>Work: {closure.details.workType}</small>
+                  {closure.details.startDateTime && (
+                    <>
+                      <br />
+                      <small>Start: {new Date(closure.details.startDateTime).toLocaleDateString()}</small>
+                    </>
+                  )}
+                  {closure.details.endDateTime && (
+                    <>
+                      <br />
+                      <small>End: {new Date(closure.details.endDateTime).toLocaleDateString()}</small>
+                    </>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
 
           {filteredCameras.map(camera => (
             <Marker
@@ -880,23 +1203,54 @@ const Map: React.FC = () => {
         />
       )}
 
+      {/* Lane Closure Detail Modal */}
+      {selectedLaneClosure && (
+        <LaneClosureModal
+          closure={selectedLaneClosure}
+          isOpen={!!selectedLaneClosure}
+          onClose={handleCloseLaneClosureModal}
+        />
+      )}
+
       {/* Status Legend */}
       <div className="map-legend">
-        <h4>Camera Status</h4>
-        <div className="legend-items">
-          <div className="legend-item">
-            <div className="legend-color online" />
-            <span>Online</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-color loading" />
-            <span>Loading</span>
-          </div>
-          <div className="legend-item">
-            <div className="legend-color offline" />
-            <span>Offline</span>
+        <h4>Legend</h4>
+        <div className="legend-section">
+          <h5>Cameras</h5>
+          <div className="legend-items">
+            <div className="legend-item">
+              <div className="legend-color online" />
+              <span>Online</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-color loading" />
+              <span>Loading</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-color offline" />
+              <span>Offline</span>
+            </div>
           </div>
         </div>
+        {laneClosuresVisible && (
+          <div className="legend-section">
+            <h5>Lane Closures</h5>
+            <div className="legend-items">
+              <div className="legend-item">
+                <div className="legend-color lane-closure-low" />
+                <span>Low Impact</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-color lane-closure-medium" />
+                <span>Medium Impact</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-color lane-closure-high" />
+                <span>High Impact</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );
