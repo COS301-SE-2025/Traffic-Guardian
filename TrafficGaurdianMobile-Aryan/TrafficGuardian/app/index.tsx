@@ -7,7 +7,8 @@ import * as Location from "expo-location";
 import { useSession } from "../services/sessionContext";
 import { globalStyles }from "../styles/globalStyles"
 import { useTraffic } from "../services/trafficContext";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
+import { calculateDistance } from "../services/distanceCalculator";
 
 export default function Index() {
   const router = useRouter();
@@ -92,30 +93,52 @@ const {
           <Text style={globalStyles.headerSubtitle}>Traffic and Incident Alerts</Text>
         </View>
 
+
 {coords && (
-  <>
-    {console.log("coords :", coords)}
-    <View style={{ height: 300 }}>
-      <MapView
-        style={{ flex: 1 }}
-        initialRegion={{
-          latitude: /* coords?.latitude ?? */ -26.2708,
-          longitude: /* coords?.longitude ?? */ 28.1123,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}
-      >
-        <Marker
-          coordinate={{
-            latitude: /* coords?.latitude ?? */ -26.2708,
-            longitude: /* coords?.longitude ?? */ 28.1123,
-          }}
-          title={user?.user.User_Username ?? "You"}
-        />
-      </MapView>
-    </View>
-  </>
+  <View style={{ height: 300 }}>
+    <MapView
+      style={{ flex: 1 }}
+      initialRegion={{
+        latitude: -26.1278,
+        longitude: 28.082, 
+        latitudeDelta: 0.01 * 100,
+        longitudeDelta: 0.01 * 100,
+      }}
+    >
+      <Marker
+        coordinate={{ latitude: -26.1278244561, longitude: 28.0815629307 }}
+        title={user?.user.User_Username ?? "You"}
+      />
+
+      {traffic &&
+        Object.entries(traffic).map(([key, value]) =>
+          value.incidents?.map((incident, i) => {
+            if (!incident?.geometry?.coordinates) return null;
+
+            const coordinates = incident.geometry.coordinates.map(([lon, lat]) => ({
+              latitude: lat,
+              longitude: lon,
+            }));
+
+            let lineColour = 'orange';
+            if(incident.properties.magnitudeOfDelay < 3) lineColour = "yellow";
+            if(incident.properties.magnitudeOfDelay == 3) lineColour = "orange";
+            if(incident.properties.magnitudeOfDelay >= 3) lineColour = "red";
+            return (
+              <Polyline
+                key={`${key}-${i}`}
+                coordinates={coordinates}
+                strokeColor={lineColour}
+                strokeWidth={4}
+              />
+            );
+          })
+        )}
+    </MapView>
+  </View>
 )}
+
+
 
 
 <ScrollView contentContainerStyle={{ padding: 20 }} style={{flex : 1}}>
@@ -133,9 +156,10 @@ const {
           {/* Incidents */}
           {value.incidents?.map((incident, i) => {
             const description = incident?.properties?.iconCategory;
+            const lineString = incident?.geometry?.coordinates;
             return (
               <Text key={i} style={globalStyles.cardSubtitle}>
-                - {description}
+                - {description} {calculateDistance(lineString, [-26.1278244561, 28.0815629307])}
               </Text>
             );
           })}
