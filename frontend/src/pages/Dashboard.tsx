@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { useUser, Permission } from '../contexts/UserContext';
 import ApiService, {
   IncidentStats,
   TrafficIncident,
 } from '../services/apiService';
-import LoadingSpinner from '../components/LoadingSpinner';
 import PEMSTrafficAnalysis from '../components/PEMSTrafficAnalysis';
 import WeeklyTrafficTrends from '../components/WeeklyTrafficTrends';
+import CameraCarousel from '../components/CameraCarousel';
+import ArchiveSummary from '../components/ArchiveSummary';
+import '../components/CameraCarousel.css';
+import '../components/ArchiveSummary.css';
 import './Dashboard.css';
 
 interface CriticalIncidentsData {
@@ -330,8 +334,9 @@ type NewAlertPayload = { Incident_Location: string; [key: string]: unknown };
 
 const Dashboard: React.FC = () => {
   const { isAuthenticated, hasPermission } = useUser();
+  const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
   // Real data state
@@ -370,6 +375,7 @@ const Dashboard: React.FC = () => {
   // PEMS dashboard data
   const [pemsDashboardData, setPemsDashboardData] = useState<any>(null);
   const [_pemsLoading, setPemsLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
 
 
   const addEvent = useCallback((eventText: string) => {
@@ -400,16 +406,16 @@ const Dashboard: React.FC = () => {
     try {
       if (!isAuthenticated || !hasPermission(Permission.VIEW_PEMS_DATA)) {
         // Public users get demo data
-        setPemsDashboardData(generateDemoPEMSData());
+        const demoData = generateDemoPEMSData();
+        setPemsDashboardData(demoData);
         setPemsLoading(false);
+        setStatsLoading(false);
         return;
       }
 
       const apiKey = sessionStorage.getItem('apiKey');
       const response = await fetch(
-        `${
-          process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api'
-        }/pems/dashboard-summary`,
+        `${process.env.REACT_APP_SERVER_URL!}/api/pems/dashboard-summary`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -421,13 +427,18 @@ const Dashboard: React.FC = () => {
       if (response.ok) {
         const pemsData = await response.json();
         setPemsDashboardData(pemsData);
+        setStatsLoading(false);
       } else {
         console.error('Failed to fetch PEMS data, using demo data');
-        setPemsDashboardData(generateDemoPEMSData());
+        const demoData = generateDemoPEMSData();
+        setPemsDashboardData(demoData);
+        setStatsLoading(false);
       }
     } catch (error) {
       console.error('Error fetching PEMS data, using demo data:', error);
-      setPemsDashboardData(generateDemoPEMSData());
+      const demoData = generateDemoPEMSData();
+      setPemsDashboardData(demoData);
+      setStatsLoading(false);
     } finally {
       setPemsLoading(false);
     }
@@ -450,7 +461,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        setLoading(true);
+        _setLoading(true);
 
         if (isAuthenticated && hasPermission(Permission.VIEW_BASIC_TRAFFIC)) {
           // Authenticated users get full data
@@ -479,7 +490,7 @@ const Dashboard: React.FC = () => {
           // Public users get basic traffic data from public endpoint
           try {
             const response = await fetch(
-              `${process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api'}/traffic/public`
+              `${process.env.REACT_APP_SERVER_URL!}/api/traffic/public`
             );
             if (response.ok) {
               const publicData = await response.json();
@@ -541,7 +552,7 @@ const Dashboard: React.FC = () => {
       } catch (error) {
         console.error('Error loading initial data:', error);
       } finally {
-        setLoading(false);
+        _setLoading(false);
       }
     };
 
@@ -550,8 +561,7 @@ const Dashboard: React.FC = () => {
 
   // Socket.io connection
   useEffect(() => {
-    const SERVER_URL =
-      process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+    const SERVER_URL = process.env.REACT_APP_SERVER_URL!;
 
     const newSocket = io(SERVER_URL, {
       transports: ['websocket', 'polling'],
@@ -728,7 +738,7 @@ const Dashboard: React.FC = () => {
       );
       console.log(
         '- SERVER_URL:',
-        process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'
+        process.env.REACT_APP_SERVER_URL!
       );
     };
   }, [
@@ -741,17 +751,19 @@ const Dashboard: React.FC = () => {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'live-feed':
-        // Opening live camera feeds
+        navigate('/live-feed');
         break;
       case 'report-incident':
-        // Opening incident reporting form
+        navigate('/incidents');
         break;
       case 'analytics':
-        // Loading traffic analytics dashboard
+        navigate('/analytics');
         break;
       case 'archive':
-        // Opening incident archive
+        navigate('/archives');
         break;
+      default:
+        console.warn(`Unknown quick action: ${action}`);
     }
   };
 
@@ -859,249 +871,137 @@ const Dashboard: React.FC = () => {
 
       <div className="dashboard-content" data-cy="dashboard-content">
 
-        {loading && (
-          <LoadingSpinner
-            size="large"
-            text="Loading dashboard data..."
-            className="content"
-          />
-        )}
-
         <div className="stats-grid" data-cy="stats-grid">
-          {/* Traffic Detectors */}
-          <div
-            className="stat-card"
-            data-cy="stat-card-detectors"
-            data-testid="stats-card"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <GaugeIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              Traffic Detectors
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.total_detectors || 0}
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              Active monitoring points
-            </div>
-          </div>
+          {statsLoading ? (
+            <>
+              {/* Loading Cards */}
+              <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                <div className="loading-spinner-container">
+                  <div className="loading-spinner small"></div>
+                </div>
+              </div>
 
-          {/* Average Speed */}
-          <div
-            className="stat-card"
-            data-cy="stat-card-avg-speed"
-            data-testid="stats-card"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <TrendingUpIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              Average Speed
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.avg_speed_mph?.toFixed(1) || 0} mph
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              System-wide average
-            </div>
-          </div>
+              <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                <div className="loading-spinner-container">
+                  <div className="loading-spinner small"></div>
+                </div>
+              </div>
 
-          {/* High Risk Areas */}
-          <div
-            className="stat-card risk-indicator"
-            data-cy="stat-card-high-risk"
-            data-testid="stats-card"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <AlertTriangleIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              High Risk Areas
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.high_risk_count || 0}
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              Require attention
-            </div>
-            <div className="progress-bar" data-cy="progress-bar">
+              <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                <div className="loading-spinner-container">
+                  <div className="loading-spinner small"></div>
+                </div>
+              </div>
+
+              <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                <div className="loading-spinner-container">
+                  <div className="loading-spinner small"></div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Traffic Detectors */}
               <div
-                className="progress-fill critical"
-                style={{
-                  width: `${Math.min(
-                    ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) *
-                      100,
-                    100
-                  )}%`,
-                }}
-                data-cy="progress-fill"
-              ></div>
-            </div>
-          </div>
+                className="stat-card"
+                data-cy="stat-card-detectors"
+                data-testid="stats-card"
+              >
+                <div className="stat-card-icon" data-cy="stat-card-icon">
+                  <GaugeIcon />
+                </div>
+                <div className="stat-card-title" data-cy="stat-card-title">
+                  Traffic Detectors
+                </div>
+                <div className="stat-card-value" data-cy="stat-card-value">
+                  {pemsDashboardData?.overview?.total_detectors || 0}
+                </div>
+                <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                  Active monitoring points
+                </div>
+              </div>
 
-          {/* System Status */}
-          <div
-            className={`stat-card system-status-card ${getSystemStatusClass(
-              pemsDashboardData?.overview?.system_status
-            )}`}
-            data-cy="stat-card-system-status"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <ActivityIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              System Status
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.system_status || 'UNKNOWN'}
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              Traffic management system
-            </div>
-          </div>
+              {/* Average Speed */}
+              <div
+                className="stat-card"
+                data-cy="stat-card-avg-speed"
+                data-testid="stats-card"
+              >
+                <div className="stat-card-icon" data-cy="stat-card-icon">
+                  <TrendingUpIcon />
+                </div>
+                <div className="stat-card-title" data-cy="stat-card-title">
+                  Average Speed
+                </div>
+                <div className="stat-card-value" data-cy="stat-card-value">
+                  {pemsDashboardData?.overview?.avg_speed_mph?.toFixed(1) || 0} mph
+                </div>
+                <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                  System-wide average
+                </div>
+              </div>
+
+              {/* High Risk Areas */}
+              <div
+                className="stat-card risk-indicator"
+                data-cy="stat-card-high-risk"
+                data-testid="stats-card"
+              >
+                <div className="stat-card-icon" data-cy="stat-card-icon">
+                  <AlertTriangleIcon />
+                </div>
+                <div className="stat-card-title" data-cy="stat-card-title">
+                  High Risk Areas
+                </div>
+                <div className="stat-card-value" data-cy="stat-card-value">
+                  {pemsDashboardData?.overview?.high_risk_count || 0}
+                </div>
+                <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                  Require attention
+                </div>
+                <div className="progress-bar" data-cy="progress-bar">
+                  <div
+                    className="progress-fill critical"
+                    style={{
+                      width: `${Math.min(
+                        ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) *
+                          100,
+                        100
+                      )}%`,
+                    }}
+                    data-cy="progress-fill"
+                  ></div>
+                </div>
+              </div>
+
+              {/* System Status */}
+              <div
+                className={`stat-card system-status-card ${getSystemStatusClass(
+                  pemsDashboardData?.overview?.system_status
+                )}`}
+                data-cy="stat-card-system-status"
+              >
+                <div className="stat-card-icon" data-cy="stat-card-icon">
+                  <ActivityIcon />
+                </div>
+                <div className="stat-card-title" data-cy="stat-card-title">
+                  System Status
+                </div>
+                <div className="stat-card-value" data-cy="stat-card-value">
+                  {pemsDashboardData?.overview?.system_status || 'UNKNOWN'}
+                </div>
+                <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                  Traffic management system
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Weather Section */}
-        <div
-          className="weather-section"
-          data-cy="weather-section"
-          id="weather-section"
-        >
-          <div className="weather-header" data-cy="weather-header">
-            <h3 data-cy="weather-title">Weather Conditions</h3>
-            {weatherLastUpdate && (
-              <div
-                className="weather-last-update"
-                data-cy="weather-last-update"
-              >
-                Last updated: {formatTime(weatherLastUpdate)}
-              </div>
-            )}
-          </div>
-
-          {weatherLoading ? (
-            <div
-              className="weather-loading-section"
-              data-cy="weather-loading-section"
-            >
-              <div
-                className="loading-spinner"
-                data-cy="weather-section-spinner"
-              ></div>
-              <div
-                className="loading-text"
-                data-cy="weather-section-loading-text"
-              >
-                Loading weather data...
-              </div>
-            </div>
-          ) : weatherData.length > 0 ? (
-            <div className="weather-grid" data-cy="weather-grid">
-              {weatherData.slice(0, 6).map((weather, index) => (
-                <div
-                  key={index}
-                  className="weather-card"
-                  data-cy={`weather-card-${index}`}
-                >
-                  <div
-                    className="weather-card-header"
-                    data-cy="weather-card-header"
-                  >
-                    <div
-                      className="weather-location-name"
-                      data-cy="weather-location-name"
-                    >
-                      {weather.location.name}
-                    </div>
-                    <div
-                      className="weather-icon-large"
-                      data-cy="weather-icon-large"
-                    >
-                      <WeatherIcon
-                        condition={weather.current.condition.text}
-                        isDay={weather.current.is_day === 1}
-                      />
-                    </div>
-                  </div>
-
-                  <div
-                    className="weather-main-temp"
-                    data-cy="weather-main-temp"
-                  >
-                    {Math.round(weather.current.temp_c)}°C
-                  </div>
-
-                  <div
-                    className="weather-condition"
-                    data-cy="weather-condition"
-                  >
-                    {weather.current.condition.text}
-                  </div>
-
-                  <div className="weather-details" data-cy="weather-details">
-                    <div
-                      className="weather-detail-item"
-                      data-cy="weather-detail-humidity"
-                    >
-                      <span className="weather-detail-label">Humidity</span>
-                      <span className="weather-detail-value">
-                        {weather.current.humidity}%
-                      </span>
-                    </div>
-                    <div
-                      className="weather-detail-item"
-                      data-cy="weather-detail-wind"
-                    >
-                      <span className="weather-detail-label">Wind</span>
-                      <span className="weather-detail-value">
-                        {weather.current.wind_kph} km/h{' '}
-                        {weather.current.wind_dir}
-                      </span>
-                    </div>
-                    <div
-                      className="weather-detail-item"
-                      data-cy="weather-detail-pressure"
-                    >
-                      <span className="weather-detail-label">Pressure</span>
-                      <span className="weather-detail-value">
-                        {weather.current.pressure_mb} mb
-                      </span>
-                    </div>
-                    <div
-                      className="weather-detail-item"
-                      data-cy="weather-detail-visibility"
-                    >
-                      <span className="weather-detail-label">Visibility</span>
-                      <span className="weather-detail-value">
-                        {weather.current.vis_km} km
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    className="weather-update-time"
-                    data-cy="weather-update-time"
-                  >
-                    Updated: {weather.current.last_updated}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div
-              className="weather-error-section"
-              data-cy="weather-error-section"
-            >
-              <div
-                className="weather-error-message"
-                data-cy="weather-error-message"
-              >
-                Unable to load weather data. Please check your connection.
-              </div>
-            </div>
-          )}
+        {/* High Volume Areas & Archive Summary Section */}
+        <div className="dashboard-dual-container">
+          <CameraCarousel className="dashboard-camera-carousel" />
+          <ArchiveSummary className="dashboard-archive-summary" />
         </div>
 
         {/* Weekly Traffic Trends Section */}
@@ -1316,6 +1216,147 @@ const Dashboard: React.FC = () => {
               Real-time updates
             </div>
           </div>
+        </div>
+
+        {/* Weather Section */}
+        <div
+          className="weather-section"
+          data-cy="weather-section"
+          id="weather-section"
+        >
+          <div className="weather-header" data-cy="weather-header">
+            <h3 data-cy="weather-title">Weather Conditions</h3>
+            {weatherLastUpdate && (
+              <div
+                className="weather-last-update"
+                data-cy="weather-last-update"
+              >
+                Last updated: {formatTime(weatherLastUpdate)}
+              </div>
+            )}
+          </div>
+
+          {weatherLoading ? (
+            <div
+              className="weather-loading-section"
+              data-cy="weather-loading-section"
+            >
+              <div
+                className="loading-spinner"
+                data-cy="weather-section-spinner"
+              ></div>
+              <div
+                className="loading-text"
+                data-cy="weather-section-loading-text"
+              >
+                Loading weather data...
+              </div>
+            </div>
+          ) : weatherData.length > 0 ? (
+            <div className="weather-grid" data-cy="weather-grid">
+              {weatherData.slice(0, 6).map((weather, index) => (
+                <div
+                  key={index}
+                  className="weather-card"
+                  data-cy={`weather-card-${index}`}
+                >
+                  <div
+                    className="weather-card-header"
+                    data-cy="weather-card-header"
+                  >
+                    <div
+                      className="weather-location-name"
+                      data-cy="weather-location-name"
+                    >
+                      {weather.location.name}
+                    </div>
+                    <div
+                      className="weather-icon-large"
+                      data-cy="weather-icon-large"
+                    >
+                      <WeatherIcon
+                        condition={weather.current.condition.text}
+                        isDay={weather.current.is_day === 1}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    className="weather-main-temp"
+                    data-cy="weather-main-temp"
+                  >
+                    {Math.round(weather.current.temp_c)}°C
+                  </div>
+
+                  <div
+                    className="weather-condition"
+                    data-cy="weather-condition"
+                  >
+                    {weather.current.condition.text}
+                  </div>
+
+                  <div className="weather-details" data-cy="weather-details">
+                    <div
+                      className="weather-detail-item"
+                      data-cy="weather-detail-humidity"
+                    >
+                      <span className="weather-detail-label">Humidity</span>
+                      <span className="weather-detail-value">
+                        {weather.current.humidity}%
+                      </span>
+                    </div>
+                    <div
+                      className="weather-detail-item"
+                      data-cy="weather-detail-wind"
+                    >
+                      <span className="weather-detail-label">Wind</span>
+                      <span className="weather-detail-value">
+                        {weather.current.wind_kph} km/h{' '}
+                        {weather.current.wind_dir}
+                      </span>
+                    </div>
+                    <div
+                      className="weather-detail-item"
+                      data-cy="weather-detail-pressure"
+                    >
+                      <span className="weather-detail-label">Pressure</span>
+                      <span className="weather-detail-value">
+                        {weather.current.pressure_mb} mb
+                      </span>
+                    </div>
+                    <div
+                      className="weather-detail-item"
+                      data-cy="weather-detail-visibility"
+                    >
+                      <span className="weather-detail-label">Visibility</span>
+                      <span className="weather-detail-value">
+                        {weather.current.vis_km} km
+                      </span>
+                    </div>
+                  </div>
+
+                  <div
+                    className="weather-update-time"
+                    data-cy="weather-update-time"
+                  >
+                    Updated: {weather.current.last_updated}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="weather-error-section"
+              data-cy="weather-error-section"
+            >
+              <div
+                className="weather-error-message"
+                data-cy="weather-error-message"
+              >
+                Unable to load weather data. Please check your connection.
+              </div>
+            </div>
+          )}
         </div>
 
         <div

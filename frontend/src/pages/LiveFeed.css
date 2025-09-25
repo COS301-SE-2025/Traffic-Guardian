@@ -688,10 +688,19 @@
 }
 
 /* Map Container Specific Styles */
-.map-container {
+.video-modal .map-container {
   width: 100%;
   margin-bottom: 0;
   max-width: 800px; /* Match video container max-width */
+}
+
+.video-modal .camera-map {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto !important;
+  border: 1px solid var(--feed-tile-border);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 /* Remove bottom padding when map container is present */
@@ -704,6 +713,7 @@
   position: relative;
   width: 100%;
   max-width: 800px;
+  padding-bottom: 60px; /* Space for controls */
 }
 
 .modal-video {
@@ -762,9 +772,16 @@
 }
 
 .timelapse-controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 8px;
+  border-radius: 6px;
+  z-index: 10;
 }
 
 .timelapse-btn {
