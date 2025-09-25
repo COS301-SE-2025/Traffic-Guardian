@@ -5,26 +5,19 @@ name: Continuous Deployment Pipeline
 # - EC2 t2.micro instances (750 hours/month = 1 instance full-time)
 # Removed costly services: CloudFront, backup buckets, cache invalidations
 
-# on:
-#   workflow_run:
-#     workflows: ["Continuous Integration Pipeline"]
-#     branches: [main]
-#     types: 
-#       - completed
-# # Run deployment only if the CI workflow completed successfully on main or Dev branch
 on:
-  push:
+  workflow_run:
+    workflows: ["Continuous Integration Pipeline"]
     branches: [main]
-  pull_request:
-    branches: [main]
+    types:
+      - completed
 
 jobs:
 
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    # if: ${{ github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'Dev') }}
-# Ensure it is only run once CI is successful and its either main or Dev branch
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     environment:
       name: staging
     steps:
@@ -93,13 +86,17 @@ jobs:
           cp -r API/* dist/api/
           echo "API artifacts created"
 
-      # Deploy Frontend to S3 (Staging) - Using dedicated staging bucket
+      # Deploy Frontend to S3 (Staging) - Using supported S3 sync action
       - name: Deploy Frontend to S3 Staging
-        uses: aws-actions/amazon-s3-deploy-action@v1
+        uses: jakejarvis/s3-sync-action@v0.5.1
         with:
-          bucket: ${{ secrets.AWS_S3_STAGING_BUCKET }}
-          folder: dist/frontend
-          delete-removed: true
+          args: --delete
+        env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_STAGING_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SOURCE_DIR: dist/frontend
           
       # Deploy API to EC2 (Staging) - COMMENTED OUT to stay within free tier
       # Only frontend goes to staging, API only deploys to production EC2
@@ -163,9 +160,9 @@ jobs:
 
   deploy-production:
     name: Deploy to Production
-    needs: [deploy-staging] #removed performance-test dependency for now
+    needs: [deploy-staging]
     runs-on: ubuntu-latest
-    # if: ${{ github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: production
     steps:
@@ -236,13 +233,17 @@ jobs:
           
           echo "All deployment artifacts ready"
 
-      # Deploy Frontend to S3 (Production) - Using official AWS action
+      # Deploy Frontend to S3 (Production) - Using supported S3 sync action
       - name: Deploy Frontend to S3 Production
-        uses: aws-actions/amazon-s3-deploy-action@v1
+        uses: jakejarvis/s3-sync-action@v0.5.1
         with:
-          bucket: ${{ secrets.AWS_S3_PRODUCTION_BUCKET }}
-          folder: dist/frontend
-          delete-removed: true
+          args: --delete
+        env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_PRODUCTION_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SOURCE_DIR: dist/frontend
 
       # API deployment to a EC2 (staging) was removed as we are restricted to free tier
       # Deploy API to EC2 (Production) - FREE TIER: Use t2.micro instance only
@@ -374,7 +375,7 @@ jobs:
     name: Post-Deployment Monitoring
     needs: [deploy-production]
     runs-on: ubuntu-latest
-    # if: ${{ github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
