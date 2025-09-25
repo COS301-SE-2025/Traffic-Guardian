@@ -8,21 +8,43 @@ name: Continuous Deployment Pipeline
 on:
   workflow_run:
     workflows: ["Continuous Integration Pipeline"]
-    branches: [main]
     types:
       - completed
+    branches:
+      - main
+  # Manual trigger for testing - can be used to bypass workflow_run issues
+  workflow_dispatch:
 
 jobs:
 
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    # Handle both workflow_run and manual triggers
+    if: |
+      (github.event_name == 'workflow_run' && 
+       github.event.workflow_run.conclusion == 'success' && 
+       github.event.workflow_run.head_branch == 'main') ||
+      (github.event_name == 'workflow_dispatch')
     environment:
       name: staging
     steps:
+      - name: Debug workflow trigger (for troubleshooting)
+        run: |
+          echo "=== DEBUGGING WORKFLOW TRIGGER ==="
+          echo "Event name: ${{ github.event_name }}"
+          echo "Workflow run conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Workflow run head branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "Triggering workflow name: ${{ github.event.workflow_run.name }}"
+          echo "Triggering workflow ID: ${{ github.event.workflow_run.id }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "================================="
+
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Dynamic ref based on trigger type - ensures we get the right commit
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       # AWS credential configuration for staging deployment
       - name: Configure AWS credentials
@@ -132,7 +154,7 @@ jobs:
       #     
       #     echo " API deployed to EC2 staging instance"
 
-          # AWS verification using improved health checks
+      # AWS verification using improved health checks
       - name: Verify AWS Staging Deployment
         run: |
           echo "===== VERIFYING AWS STAGING DEPLOYMENT ====="
@@ -162,12 +184,20 @@ jobs:
     name: Deploy to Production
     needs: [deploy-staging]
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' }}
+    # Handle both workflow_run and manual triggers
+    if: |
+      (github.event_name == 'workflow_run' && 
+       github.event.workflow_run.conclusion == 'success' && 
+       github.event.workflow_run.head_branch == 'main') ||
+      (github.event_name == 'workflow_dispatch')
     environment:
       name: production
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Dynamic ref based on trigger type - ensures we get the right commit
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       # AWS credential configuration for production deployment
       - name: Configure AWS credentials
@@ -375,10 +405,18 @@ jobs:
     name: Post-Deployment Monitoring
     needs: [deploy-production]
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' }}
+    # Handle both workflow_run and manual triggers
+    if: |
+      (github.event_name == 'workflow_run' && 
+       github.event.workflow_run.conclusion == 'success' && 
+       github.event.workflow_run.head_branch == 'main') ||
+      (github.event_name == 'workflow_dispatch')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Dynamic ref based on trigger type - ensures we get the right commit
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - name: Initial Health Check
         run: |
@@ -442,4 +480,4 @@ jobs:
           echo "   • Set up external uptime monitoring (e.g., UptimeRobot, Pingdom)"
           echo "   • Configure CloudWatch alarms for EC2 instance metrics"
           echo "   • Set up log aggregation for application logs"
-          echo "   • Monitor API response times and error rates" 
+          echo "   • Monitor API response times and error rates"
