@@ -115,28 +115,28 @@ jobs:
           npx cypress run --e2e --reporter cypress-mochawesome-reporter
           echo "E2E tests completed"
           
-      # - name: Generate HTML test report
-      #   if: always()
-      #   working-directory: ./frontend
-      #   run: |
-      #     # Create required directories if they don't exist
-      #     mkdir -p cypress/reports/mochawesome
-      #     mkdir -p cypress/reports/mochawesome/.jsons
+      - name: Generate HTML test report
+        if: always()
+        working-directory: ./frontend
+        run: |
+          # Create required directories if they don't exist
+          mkdir -p cypress/reports/mochawesome
+          mkdir -p cypress/reports/mochawesome/.jsons
           
-      #     # Check if any JSON reports exist in the .jsons directory
-      #     if [ "$(find cypress/reports/mochawesome/.jsons -name "*.json" 2>/dev/null | wc -l)" -gt 0 ]; then
-      #       # Merge the reports
-      #       npx mochawesome-merge cypress/reports/mochawesome/.jsons/*.json > cypress/reports/mochawesome-report.json
+          # Check if any JSON reports exist in the .jsons directory
+          if [ "$(find cypress/reports/mochawesome/.jsons -name "*.json" 2>/dev/null | wc -l)" -gt 0 ]; then
+            # Merge the reports
+            npx mochawesome-merge cypress/reports/mochawesome/.jsons/*.json > cypress/reports/mochawesome-report.json
             
-      #       # Generate HTML report
-      #       npx mochawesome-report-generator cypress/reports/mochawesome-report.json --reportDir cypress/reports
-      #       echo "Test report generated"
-      #     else
-      #       # Create a placeholder report if no tests were run
-      #       echo '{"stats":{"suites":0,"tests":0,"passes":0,"pending":0,"failures":0,"start":"'"$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"'","end":"'"$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"'","duration":0},"results":[]}' > cypress/reports/mochawesome-report.json
-      #       npx mochawesome-report-generator cypress/reports/mochawesome-report.json --reportDir cypress/reports
-      #       echo "Generated placeholder test report (no tests were run)"
-      #     fi
+            # Generate HTML report
+            npx mochawesome-report-generator cypress/reports/mochawesome-report.json --reportDir cypress/reports
+            echo "Test report generated"
+          else
+            # Create a placeholder report if no tests were run
+            echo '{"stats":{"suites":0,"tests":0,"passes":0,"pending":0,"failures":0,"start":"'"$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"'","end":"'"$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"'","duration":0},"results":[]}' > cypress/reports/mochawesome-report.json
+            npx mochawesome-report-generator cypress/reports/mochawesome-report.json --reportDir cypress/reports
+            echo "Generated placeholder test report (no tests were run)"
+          fi
           
   # Check to see in the .json lock for plugin dependencies for mochawesome-merge and mochawesome-report-generator
           
