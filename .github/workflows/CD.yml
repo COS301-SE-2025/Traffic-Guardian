@@ -354,7 +354,8 @@ jobs:
             
             # Start the API in a screen session with the detected entry point
             echo "Starting API with entry point: $ENTRY_POINT"
-            screen -dmS api bash -c "cd /var/www/api/API && node $ENTRY_POINT"
+            export $(grep -v '^#' /var/www/api/API/.env | xargs)
+            screen -dmS api bash -c "cd /var/www/api/API && node ./src/server.js"
             
             # Wait and verify the screen session
             sleep 10
