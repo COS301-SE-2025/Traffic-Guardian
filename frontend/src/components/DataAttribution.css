@@ -3,7 +3,7 @@
   background-color: var(--background-secondary);
   border-top: 1px solid var(--border-color);
   margin-top: auto;
-  opacity: 0.8;
+  opacity: 80%;
   font-size: 12px;
   color: var(--text-secondary);
 }
