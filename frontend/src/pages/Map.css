@@ -6,26 +6,26 @@
   color: #f1f1f1;
   position: relative;
   animation: fadeIn 0.6s ease-out;
-  padding-top: 80px; /* Reduced from 100px */
+  padding-top: var(--page-content-offset);
 }
 
 @media (max-width: 768px) {
   .map-page {
-    padding-top: 60px;
+    padding-top: var(--page-content-offset);
   }
-  
+
   .map-page .map-container {
-    height: calc(100vh - 60px - 280px - 100px); /* Adjusted for mobile controls height */
+    height: calc(100vh - var(--navbar-total-height) - 280px - 100px); /* Adjusted for mobile controls height */
   }
 }
 
 @media (max-width: 480px) {
   .map-page {
-    padding-top: 50px;
+    padding-top: var(--page-content-offset);
   }
-  
+
   .map-page .map-container {
-    height: calc(100vh - 50px - 320px - 100px); /* Further adjusted for smaller screens */
+    height: calc(100vh - var(--navbar-total-height) - 320px - 100px); /* Further adjusted for smaller screens */
   }
 }
 
@@ -652,7 +652,7 @@
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
   /* Calculate height by subtracting header, controls, and legend space */
-  height: calc(100vh - 80px - 220px - 100px);
+  height: calc(100vh - var(--navbar-total-height) - 220px - 100px);
   /* 80px for top padding */
   /* 220px for controls section */
   /* 100px for legend and bottom spacing */
