@@ -122,6 +122,48 @@ const cameraController = {
     } catch (error) {
       console.error('Error in scheduled camera data update:', error);
     }
+  },
+
+  updateTrafficCount: async (req, res) => {
+    try {
+      const { cameraId, count } = req.body;
+
+      if (!cameraId || count === undefined) {
+        return res.status(400).json({ error: 'Camera ID and count are required' });
+      }
+
+      if (typeof count !== 'number' || count < 0) {
+        return res.status(400).json({ error: 'Count must be a non-negative number' });
+      }
+
+      const result = await cameraModel.updateTrafficCount(cameraId, count);
+      res.json(result);
+    } catch (error) {
+      console.error('Error updating traffic count:', error);
+      res.status(500).json({ error: 'Failed to update traffic count' });
+    }
+  },
+
+  // Public endpoint for traffic data (no authentication required)
+  getPublicTrafficData: async (req, res) => {
+    try {
+      const result = await cameraModel.getPublicTrafficData();
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching public traffic data:', error);
+      res.status(500).json({ error: 'Failed to fetch public traffic data' });
+    }
+  },
+
+  // Public endpoint for top cameras by traffic count (no authentication required)
+  getTopCamerasByTraffic: async (req, res) => {
+    try {
+      const result = await cameraModel.getTopCamerasByTraffic();
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching top cameras by traffic:', error);
+      res.status(500).json({ error: 'Failed to fetch top cameras by traffic' });
+    }
   }
 };
 

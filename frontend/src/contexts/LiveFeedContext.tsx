@@ -11,6 +11,7 @@ import { LiveFeedDatabaseIntegration } from '../services/CameraDataService';
 export interface CameraFeed {
   id: string;
   location: string;
+  locationName?: string;
   status: 'Online' | 'Offline' | 'Loading';
   image: string;
   videoUrl?: string;
@@ -95,7 +96,7 @@ interface LiveFeedContextType {
 }
 
 const LiveFeedContext = createContext<LiveFeedContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const useLiveFeed = () => {
@@ -123,7 +124,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (!dbIntegrationRef.current) {
       dbIntegrationRef.current = new LiveFeedDatabaseIntegration(
-        process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'
+        process.env.REACT_APP_SERVER_URL!,
       );
     }
 
@@ -138,7 +139,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
     if (originalUrl && originalUrl.startsWith('http://cwwp2.dot.ca.gov')) {
       return originalUrl.replace(
         'http://cwwp2.dot.ca.gov',
-        'https://caltrans.blinktag.com/api'
+        'https://caltrans.blinktag.com/api',
       );
     }
     return originalUrl;
@@ -164,12 +165,12 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return { lat: latitude, lng: longitude };
     },
-    []
+    [],
   );
 
   const processDistrictData = useCallback(
     (data: CalTransCameraData, district: number): CameraFeed[] => {
-      if (!data?.data || !Array.isArray(data.data)) return [];
+      if (!data?.data || !Array.isArray(data.data)) {return [];}
 
       const validCameras = data.data.filter(
         item =>
@@ -177,7 +178,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
           ((item.cctv.imageData.streamingVideoURL &&
             item.cctv.imageData.streamingVideoURL !== 'Not Reported') ||
             (item.cctv.imageData.static.currentImageURL &&
-              item.cctv.imageData.static.currentImageURL !== 'Not Reported'))
+              item.cctv.imageData.static.currentImageURL !== 'Not Reported')),
       );
 
       return validCameras.slice(0, 15).map(item => {
@@ -213,6 +214,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
             location.locationName ||
             location.nearbyPlace ||
             `District ${district} Camera`,
+          locationName: location.locationName,
           status: 'Loading' as const,
           image: httpsImageUrl,
           videoUrl,
@@ -231,7 +233,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       });
     },
-    [convertToHttps, parseCoordinates]
+    [convertToHttps, parseCoordinates],
   );
 
   const fetchDistrictData = useCallback(
@@ -254,7 +256,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (!response.ok) {
           console.warn(
-            `Failed to fetch District ${district} cameras: ${response.status}`
+            `Failed to fetch District ${district} cameras: ${response.status}`,
           );
           return [];
         }
@@ -266,7 +268,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
         return [];
       }
     },
-    [processDistrictData]
+    [processDistrictData],
   );
 
   const fetchCameraData = useCallback(
@@ -290,7 +292,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
           if (dbIntegrationRef.current) {
             try {
               await dbIntegrationRef.current.syncCamerasWithDatabase(
-                orangeCountyCameras
+                orangeCountyCameras,
               );
               console.log('Camera metadata synced with database');
             } catch (dbError) {
@@ -308,7 +310,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
       }
     },
-    [fetchDistrictData, cameraFeeds.length, isInitialized]
+    [fetchDistrictData, cameraFeeds.length, isInitialized],
   );
 
   // Initialize data on first mount
@@ -344,18 +346,18 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
   const setCameraStatus = useCallback(
     (feedId: string, status: 'Online' | 'Offline' | 'Loading') => {
       setCameraFeeds(prevFeeds =>
-        prevFeeds.map(feed => (feed.id === feedId ? { ...feed, status } : feed))
+        prevFeeds.map(feed => (feed.id === feedId ? { ...feed, status } : feed)),
       );
 
       // Track status in database
       if (dbIntegrationRef.current) {
         dbIntegrationRef.current.trackCameraStatus(
           feedId,
-          status.toLowerCase() as any
+          status.toLowerCase() as any,
         );
       }
     },
-    []
+    [],
   );
 
   const value: LiveFeedContextType = {
