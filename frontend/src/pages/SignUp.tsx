@@ -191,6 +191,7 @@ const SignUp: React.FC = () => {
                 onChange={handleChange}
                 required
                 minLength={6}
+                autoComplete="new-password"
               />
             </div>
 
@@ -205,6 +206,7 @@ const SignUp: React.FC = () => {
                 onChange={handleChange}
                 required
                 minLength={6}
+                autoComplete="new-password"
               />
             </div>
 

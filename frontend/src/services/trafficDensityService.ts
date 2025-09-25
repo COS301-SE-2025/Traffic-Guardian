@@ -1,6 +1,8 @@
 // Traffic Density Service
 // Processes object detection data and generates heatmap points for traffic visualization
 
+import ApiService from './apiService';
+
 export interface VehicleDetection {
   id: string;
   type: 'car' | 'truck' | 'motorcycle' | 'bus';
@@ -45,6 +47,7 @@ class TrafficDensityService {
   private heatmapData: HeatmapPoint[] = [];
   private updateCallbacks: ((data: HeatmapPoint[]) => void)[] = [];
 
+
   // Thresholds for traffic density classification
   private readonly THRESHOLDS = {
     LOW: 5, // 1-5 vehicles
@@ -87,7 +90,7 @@ class TrafficDensityService {
 
     // Calculate traffic density
     const vehicleCount = vehicles.length;
-    const intensity = Math.min(vehicleCount / this.THRESHOLDS.CRITICAL, 1);
+    const intensity = this.calculateIntensity(vehicleCount);
     const riskLevel = this.calculateRiskLevel(vehicleCount);
 
     // Create heatmap point
@@ -100,19 +103,25 @@ class TrafficDensityService {
       riskLevel,
     };
 
-    // Debug logging
-    console.log(
-      `🚗 Camera ${cameraId}: ${vehicleCount} vehicles at [${coordinates.lat.toFixed(
-        4,
-      )}, ${coordinates.lng.toFixed(4)}], intensity: ${intensity.toFixed(
-        2,
-      )}, risk: ${riskLevel}`,
-    );
 
     // Update heatmap data
     this.updateHeatmapData(cameraId, heatmapPoint);
 
     return heatmapPoint;
+  }
+
+  // Calculate intensity for better color distribution
+  private calculateIntensity(vehicleCount: number): number {
+    // Use a much wider range to prevent leaflet auto-normalization
+    // This ensures visible color differences across the spectrum
+
+    if (vehicleCount <= 2) { return 1.0; }   // Very light green
+    if (vehicleCount <= 5) { return 3.0; }   // Light green (LOW threshold)
+    if (vehicleCount <= 8) { return 5.0; }   // Yellow-green
+    if (vehicleCount <= 12) { return 7.0; }  // Yellow-orange
+    if (vehicleCount <= 16) { return 9.0; }  // Orange (HIGH threshold)
+    if (vehicleCount <= 20) { return 12.0; } // Red-orange (CRITICAL threshold)
+    return 15.0; // Deep red for 21+ vehicles
   }
 
   // Calculate risk level based on vehicle count
@@ -142,9 +151,6 @@ class TrafficDensityService {
     );
 
     // Notify subscribers
-    console.log(
-      `📡 Notifying ${this.updateCallbacks.length} subscribers with ${this.heatmapData.length} heatmap points`,
-    );
     this.updateCallbacks.forEach(callback => callback(this.heatmapData));
   }
 
@@ -193,19 +199,104 @@ class TrafficDensityService {
     };
   }
 
+  // Fetch real traffic data from the database
+  async fetchRealTrafficData(): Promise<void> {
+    try {
+
+      const cameras = await ApiService.fetchCamerasWithTrafficCounts();
+      if (!cameras || cameras.length === 0) {
+        console.log('⚠️ No cameras found in database - no heatmap data to display');
+        // Clear any existing heatmap data
+        this.heatmapData = [];
+        this.updateCallbacks.forEach(callback => callback(this.heatmapData));
+        return;
+      }
+
+      let processedCount = 0;
+
+      cameras.forEach(camera => {
+        // Convert database camera to coordinates if available
+        const coordinates = this.extractCoordinatesFromCamera(camera);
+        if (!coordinates) {
+          return;
+        }
+
+        // Get traffic count from database (handle both camelCase and snake_case)
+        const vehicleCount = camera.last_traffic_count || camera.lastTrafficCount || camera['last_traffic_count'] || 0;
+
+        if (vehicleCount > 0) {
+          // Create heatmap point directly from database traffic count
+          const heatmapPoint: HeatmapPoint = {
+            lat: coordinates.lat,
+            lng: coordinates.lng,
+            intensity: this.calculateIntensity(vehicleCount),
+            timestamp: new Date(),
+            vehicleCount: vehicleCount, // Use exact database count
+            riskLevel: this.calculateRiskLevel(vehicleCount),
+          };
+
+          // Update heatmap data
+          this.updateHeatmapData(camera.Camera_ID.toString(), heatmapPoint);
+          processedCount++;
+
+        }
+      });
+
+
+      // Notify subscribers of the updated heatmap data
+      this.updateCallbacks.forEach(callback => callback(this.heatmapData));
+
+      // If no cameras had traffic data, clear the heatmap
+      if (processedCount === 0) {
+        this.heatmapData = [];
+        this.updateCallbacks.forEach(callback => callback(this.heatmapData));
+      }
+    } catch (error) {
+      console.error('❌ Error fetching real traffic data:', error);
+      // Clear heatmap on error instead of showing fallback data
+      this.heatmapData = [];
+      this.updateCallbacks.forEach(callback => callback(this.heatmapData));
+    }
+  }
+
+  // Extract coordinates from database camera record
+  private extractCoordinatesFromCamera(camera: any): { lat: number; lng: number } | null {
+    // Handle both quoted and unquoted column names
+    const lat = parseFloat(camera.Camera_Latitude || camera['Camera_Latitude'] || camera.latitude);
+    const lng = parseFloat(camera.Camera_Longitude || camera['Camera_Longitude'] || camera.longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return null;
+    }
+
+    // Validate coordinates are in reasonable range for California
+    if (lat < 32 || lat > 42 || lng < -125 || lng > -114) {
+      return null;
+    }
+
+    return { lat, lng };
+  }
+
+  // Generate vehicle detections based on count
+  private generateVehicleDetections(count: number): VehicleDetection[] {
+    return Array.from({ length: count }, (_, i) => ({
+      id: `real_vehicle_${i}`,
+      type: this.getRandomVehicleType(),
+      confidence: 0.85 + Math.random() * 0.15,
+      bbox: {
+        x: Math.random() * 640,
+        y: Math.random() * 480,
+        width: 50 + Math.random() * 100,
+        height: 30 + Math.random() * 60,
+      },
+    }));
+  }
+
+
   // Simulate object detection data for demo purposes
   // In production, this would come from your ML model
   generateSimulatedData(cameraFeeds: any[]): void {
-    console.log(
-      `🎬 Processing ${cameraFeeds.length} camera feeds for traffic simulation`,
-    );
-
     cameraFeeds.forEach(camera => {
-      console.log(
-        `📹 Camera ${camera.id}: status=${
-          camera.status
-        }, hasCoords=${!!camera.coordinates}`,
-      );
 
       // Generate traffic for all cameras with coordinates, regardless of status
       if (camera.coordinates) {
@@ -243,18 +334,11 @@ class TrafficDensityService {
         };
 
         this.processDetectionData(detectionData);
-      } else {
-        console.log(`⚠️ Skipping camera ${camera.id}: no coordinates`);
       }
     });
 
-    console.log(
-      `📊 Total heatmap points after simulation: ${this.heatmapData.length}`,
-    );
-
     // If no cameras generated traffic, create some test data for demonstration
     if (this.heatmapData.length === 0 && cameraFeeds.length > 0) {
-      console.log('🏠 No traffic generated, creating test data...');
       this.createTestHeatmapData(cameraFeeds);
     }
   }
@@ -269,7 +353,7 @@ class TrafficDensityService {
       { lat: 33.6773, lng: -117.862, vehicles: 12 }, // West OC
     ];
 
-    testPoints.forEach((point, index) => {
+    testPoints.forEach((point, _index) => {
       const intensity = Math.min(point.vehicles / this.THRESHOLDS.CRITICAL, 1);
       const riskLevel = this.calculateRiskLevel(point.vehicles);
 
@@ -283,17 +367,9 @@ class TrafficDensityService {
       };
 
       this.heatmapData.push(heatmapPoint);
-      console.log(
-        `🟡 Test point ${index + 1}: ${point.vehicles} vehicles at [${
-          point.lat
-        }, ${point.lng}], intensity: ${intensity.toFixed(2)}`,
-      );
     });
 
     // Notify subscribers of test data
-    console.log(
-      `📡 Notifying ${this.updateCallbacks.length} subscribers with ${this.heatmapData.length} test heatmap points`,
-    );
     this.updateCallbacks.forEach(callback => callback(this.heatmapData));
   }
 

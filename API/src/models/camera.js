@@ -618,6 +618,75 @@ const cameraModel = {
       console.error('Error in updateTrafficCount:', error);
       throw error;
     }
+  },
+
+  // Public method to get cameras with traffic data (no authentication required)
+  async getPublicTrafficData() {
+    try {
+      const result = await db.query(`
+        SELECT
+          "Camera_ID",
+          "Camera_RoadwayName",
+          "Camera_Latitude",
+          "Camera_Longitude",
+          last_traffic_count,
+          "Camera_Status"
+        FROM public."Camera"
+        WHERE "Camera_Latitude" IS NOT NULL
+          AND "Camera_Longitude" IS NOT NULL
+          AND last_traffic_count IS NOT NULL
+          AND last_traffic_count > 0
+        ORDER BY last_traffic_count DESC
+        LIMIT 100
+      `);
+
+      return {
+        success: true,
+        data: result.rows,
+        total: result.rows.length
+      };
+    } catch (error) {
+      console.error('Error in getPublicTrafficData:', error);
+      throw error;
+    }
+  },
+
+  // Get top 5 cameras by traffic count for dashboard carousel
+  async getTopCamerasByTraffic() {
+    try {
+      const result = await db.query(`
+        SELECT
+          "Camera_ID",
+          "Camera_RoadwayName",
+          "Camera_DirectionOfTravel",
+          "Camera_Latitude",
+          "Camera_Longitude",
+          "Camera_ImageURL",
+          "Camera_StreamURL",
+          "Camera_Route",
+          "Camera_District",
+          last_traffic_count,
+          "Camera_Status",
+          "Camera_Description"
+        FROM public."Camera"
+        WHERE "Camera_Latitude" IS NOT NULL
+          AND "Camera_Longitude" IS NOT NULL
+          AND last_traffic_count IS NOT NULL
+          AND last_traffic_count >= 0
+          AND ("Camera_ImageURL" IS NOT NULL OR "Camera_StreamURL" IS NOT NULL)
+        ORDER BY last_traffic_count DESC
+        LIMIT 5
+      `);
+
+      return {
+        success: true,
+        data: result.rows,
+        total: result.rows.length
+      };
+    } catch (error) {
+      console.error('Error in getTopCamerasByTraffic:', error);
+      throw error;
+    }
   }
 };
 
