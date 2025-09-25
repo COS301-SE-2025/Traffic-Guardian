@@ -6,6 +6,7 @@ import { LiveFeedProvider } from './contexts/LiveFeedContext';
 import { UserProvider } from './contexts/UserContext';
 import NavBar from './components/NavBar';
 import GlobalAlertBadge from './components/GlobalAlertBadge';
+import DataAttribution from './components/DataAttribution';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LiveFeed from './pages/LiveFeed';
@@ -173,6 +174,7 @@ const App: React.FC = () => {
             <LiveFeedProvider>
             <div className="App">
               <AnimatedRoutes />
+              <DataAttribution />
 
               {/* Global Toast Container for real-time notifications */}
               <ToastContainer
