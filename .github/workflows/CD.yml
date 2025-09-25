@@ -6,14 +6,10 @@ name: Continuous Deployment Pipeline
 # Removed costly services: CloudFront, backup buckets, cache invalidations
 
 on:
-  workflow_run:
-    workflows: ["Continuous Integration Pipeline"]
-    types:
-      - completed
-    branches:
-      - main
-  # Manual trigger for testing - can be used to bypass workflow_run issues
-  workflow_dispatch:
+  push:
+    branches: [main, Dev]
+  pull_request:
+    branches: [main, Dev]
 
 jobs:
 
@@ -21,11 +17,6 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     # Handle both workflow_run and manual triggers
-    if: |
-      (github.event_name == 'workflow_run' && 
-       github.event.workflow_run.conclusion == 'success' && 
-       github.event.workflow_run.head_branch == 'main') ||
-      (github.event_name == 'workflow_dispatch')
     environment:
       name: staging
     steps:
@@ -185,11 +176,6 @@ jobs:
     needs: [deploy-staging]
     runs-on: ubuntu-latest
     # Handle both workflow_run and manual triggers
-    if: |
-      (github.event_name == 'workflow_run' && 
-       github.event.workflow_run.conclusion == 'success' && 
-       github.event.workflow_run.head_branch == 'main') ||
-      (github.event_name == 'workflow_dispatch')
     environment:
       name: production
     steps:
@@ -405,12 +391,6 @@ jobs:
     name: Post-Deployment Monitoring
     needs: [deploy-production]
     runs-on: ubuntu-latest
-    # Handle both workflow_run and manual triggers
-    if: |
-      (github.event_name == 'workflow_run' && 
-       github.event.workflow_run.conclusion == 'success' && 
-       github.event.workflow_run.head_branch == 'main') ||
-      (github.event_name == 'workflow_dispatch')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
