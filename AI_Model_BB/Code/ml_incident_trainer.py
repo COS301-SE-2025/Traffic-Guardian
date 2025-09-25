@@ -1,6 +1,5 @@
 """
 ML Incident Trainer Module
-Save this as: ml_incident_trainer.py
 """
 import numpy as np
 import pandas as pd

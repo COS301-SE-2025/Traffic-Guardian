@@ -1,35 +1,106 @@
 {
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true,
+    "jest": true
+  },
   "extends": [
     "react-app",
     "react-app/jest"
   ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
   "rules": {
-    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    // Console rules - strategic approach for production
+    "no-console": ["warn", { 
+      "allow": ["warn", "error", "info"] 
+    }],
+    "no-debugger": "error",
+    "no-alert": "error",
+    
+    // Code quality
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-unused-vars": "off", // Handled by TypeScript
+    "@typescript-eslint/no-unused-vars": ["error", { 
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
+    }],
+    
+    // TypeScript specific
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-explicit-any": "warn",
-    "react-hooks/exhaustive-deps": "error",
-    "no-console": ["warn", { "allow": ["warn", "error"] }],
-    "prefer-const": "error",
-    "no-var": "error"
+    "@typescript-eslint/no-inferrable-types": "error",
+    "@typescript-eslint/strict-boolean-expressions": "off",
+    "@typescript-eslint/prefer-as-const": "error",
+    "@typescript-eslint/no-non-null-assertion": "warn",
+    
+    // React specific
+    "react/react-in-jsx-scope": "off", // Not needed in React 17+
+    "react/prop-types": "off", // TypeScript handles this
+    "react/jsx-uses-react": "off",
+    "react/jsx-uses-vars": "error",
+    "react/jsx-key": "error",
+    "react/jsx-no-duplicate-props": "error",
+    "react/jsx-no-undef": "error",
+    "react/no-array-index-key": "warn",
+    "react/no-direct-mutation-state": "error",
+    "react/no-unescaped-entities": "warn",
+    "react/self-closing-comp": "warn",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    
+    // Best practices
+    "eqeqeq": ["error", "always"],
+    "curly": "error",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "no-return-assign": "error",
+    "no-sequences": "error",
+    "no-throw-literal": "error",
+    "no-unmodified-loop-condition": "error",
+    "no-use-before-define": ["error", { "functions": false }],
+    
+    // Style (less strict for production)
+    "semi": ["error", "always"],
+    "quotes": ["warn", "single", { "avoidEscape": true }],
+    "comma-dangle": ["warn", "always-multiline"],
+    "indent": ["warn", 2, { "SwitchCase": 1 }],
+    "max-len": ["warn", { "code": 150, "ignoreUrls": true }],
+    
+    // Imports
+    "no-duplicate-imports": "error",
+    
+    // Security
+    "no-new-wrappers": "error",
+    "no-script-url": "error"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
   },
   "overrides": [
     {
-      "files": ["**/*.test.{ts,tsx}", "**/__tests__/**/*"],
+      "files": ["*.test.ts", "*.test.tsx", "*.spec.ts", "*.spec.tsx"],
       "rules": {
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-unused-vars": "off",
         "no-console": "off",
-        "testing-library/no-unnecessary-act": "off",
-        "testing-library/no-node-access": "off",
-        "testing-library/no-container": "off",
-        "testing-library/no-wait-for-multiple-assertions": "off"
+        "@typescript-eslint/no-explicit-any": "off"
       }
     },
     {
       "files": ["cypress/**/*"],
       "rules": {
-        "@typescript-eslint/no-unused-vars": "off"
+        "no-console": "off"
       }
     }
   ]

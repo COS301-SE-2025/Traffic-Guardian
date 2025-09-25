@@ -1,6 +1,6 @@
 const socket = io('http://localhost:5000');
 
-var eventLog = document.getElementById('eventLog');
+var eventLog = document.getElementById('event-log');
 
 var position;
 var markers = [];
@@ -12,7 +12,7 @@ socket.on('welcome', (msg)=>{
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const seconds = now.getSeconds();
-    var eventLog = document.getElementById('eventLog');
+    var eventLog = document.getElementById('event-log');
     var ev = document.createElement('div');
     ev.innerText = `${msg} (${hours}:${minutes}:${seconds})`;
     eventLog.appendChild(ev);
@@ -35,7 +35,7 @@ function mapClick(e){
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const seconds = now.getSeconds();
-    var eventLog = document.getElementById('eventLog');
+    var eventLog = document.getElementById('event-log');
     var ev = document.createElement('div');
     ev.innerText = `You clicked map at [${e.latlng.toString()}] (${hours}:${minutes}:${seconds})`;
     //eventLog.appendChild(ev);
@@ -66,7 +66,7 @@ socket.on('incident-recived',(msg)=>{
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const seconds = now.getSeconds();
-    var eventLog = document.getElementById('eventLog');
+    var eventLog = document.getElementById('event-log');
     var ev = document.createElement('div');
     console.log(msg);
     ev.innerText = `${msg} (${hours}:${minutes}:${seconds})`;
@@ -80,7 +80,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 function addEvent(event){
-    var eventLog = document.getElementById('eventLog');
+    var eventLog = document.getElementById('event-log');
     while(eventLog.hasChildNodes())eventLog.removeChild(eventLog.firstChild);
 
     const now = new Date();
