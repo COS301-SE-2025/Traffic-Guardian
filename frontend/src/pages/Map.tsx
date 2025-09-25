@@ -811,8 +811,8 @@ const Map: React.FC = () => {
     useState<WeatherLayer | null>(null);
   const [weatherOpacity, setWeatherOpacity] = useState<number>(0.6);
 
-  // Heatmap state - Enable by default for testing
-  const [heatmapVisible, setHeatmapVisible] = useState<boolean>(true);
+  // Heatmap state - Disabled by default
+  const [heatmapVisible, setHeatmapVisible] = useState<boolean>(false);
   const [heatmapOpacity, setHeatmapOpacity] = useState<number>(1.0);
   const [heatmapData, setHeatmapData] = useState<HeatmapPoint[]>([]);
   const [trafficAnalysis, setTrafficAnalysis] =
@@ -822,8 +822,8 @@ const Map: React.FC = () => {
   const [visibleCamerasInViewport, setVisibleCamerasInViewport] = useState<CameraFeed[]>([]);
   const [dynamicVehicleCount, setDynamicVehicleCount] = useState<number>(0);
 
-  // Lane closures state
-  const [laneClosuresVisible, setLaneClosuresVisible] = useState<boolean>(true);
+  // Lane closures state - Disabled by default
+  const [laneClosuresVisible, setLaneClosuresVisible] = useState<boolean>(false);
   const [laneClosures, setLaneClosures] = useState<LaneClosure[]>([]);
   const [laneClosureAnalysis, setLaneClosureAnalysis] = useState<LaneClosureAnalysis | null>(null);
   const [laneClosureStatusFilter, setLaneClosureStatusFilter] = useState<string>('all');

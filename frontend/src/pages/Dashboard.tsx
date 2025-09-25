@@ -6,7 +6,6 @@ import ApiService, {
   IncidentStats,
   TrafficIncident,
 } from '../services/apiService';
-import LoadingSpinner from '../components/LoadingSpinner';
 import PEMSTrafficAnalysis from '../components/PEMSTrafficAnalysis';
 import WeeklyTrafficTrends from '../components/WeeklyTrafficTrends';
 import CameraCarousel from '../components/CameraCarousel';
@@ -337,7 +336,7 @@ const Dashboard: React.FC = () => {
   const { isAuthenticated, hasPermission } = useUser();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
   // Real data state
@@ -376,6 +375,7 @@ const Dashboard: React.FC = () => {
   // PEMS dashboard data
   const [pemsDashboardData, setPemsDashboardData] = useState<any>(null);
   const [_pemsLoading, setPemsLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
 
 
   const addEvent = useCallback((eventText: string) => {
@@ -406,8 +406,10 @@ const Dashboard: React.FC = () => {
     try {
       if (!isAuthenticated || !hasPermission(Permission.VIEW_PEMS_DATA)) {
         // Public users get demo data
-        setPemsDashboardData(generateDemoPEMSData());
+        const demoData = generateDemoPEMSData();
+        setPemsDashboardData(demoData);
         setPemsLoading(false);
+        setStatsLoading(false);
         return;
       }
 
@@ -425,13 +427,18 @@ const Dashboard: React.FC = () => {
       if (response.ok) {
         const pemsData = await response.json();
         setPemsDashboardData(pemsData);
+        setStatsLoading(false);
       } else {
         console.error('Failed to fetch PEMS data, using demo data');
-        setPemsDashboardData(generateDemoPEMSData());
+        const demoData = generateDemoPEMSData();
+        setPemsDashboardData(demoData);
+        setStatsLoading(false);
       }
     } catch (error) {
       console.error('Error fetching PEMS data, using demo data:', error);
-      setPemsDashboardData(generateDemoPEMSData());
+      const demoData = generateDemoPEMSData();
+      setPemsDashboardData(demoData);
+      setStatsLoading(false);
     } finally {
       setPemsLoading(false);
     }
@@ -454,7 +461,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        setLoading(true);
+        _setLoading(true);
 
         if (isAuthenticated && hasPermission(Permission.VIEW_BASIC_TRAFFIC)) {
           // Authenticated users get full data
@@ -545,7 +552,7 @@ const Dashboard: React.FC = () => {
       } catch (error) {
         console.error('Error loading initial data:', error);
       } finally {
-        setLoading(false);
+        _setLoading(false);
       }
     };
 
@@ -864,108 +871,131 @@ const Dashboard: React.FC = () => {
 
       <div className="dashboard-content" data-cy="dashboard-content">
 
-        {loading && (
-          <LoadingSpinner
-            size="large"
-            text="Loading dashboard data..."
-            className="content"
-          />
-        )}
-
         <div className="stats-grid" data-cy="stats-grid">
-          {/* Traffic Detectors */}
-          <div
-            className="stat-card"
-            data-cy="stat-card-detectors"
-            data-testid="stats-card"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <GaugeIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              Traffic Detectors
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.total_detectors || 0}
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              Active monitoring points
-            </div>
-          </div>
+          {statsLoading ? (
+            <>
+              {/* Loading Cards */}
+              <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                <div className="loading-spinner-container">
+                  <div className="loading-spinner small"></div>
+                </div>
+              </div>
 
-          {/* Average Speed */}
-          <div
-            className="stat-card"
-            data-cy="stat-card-avg-speed"
-            data-testid="stats-card"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <TrendingUpIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              Average Speed
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.avg_speed_mph?.toFixed(1) || 0} mph
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              System-wide average
-            </div>
-          </div>
+              <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                <div className="loading-spinner-container">
+                  <div className="loading-spinner small"></div>
+                </div>
+              </div>
 
-          {/* High Risk Areas */}
-          <div
-            className="stat-card risk-indicator"
-            data-cy="stat-card-high-risk"
-            data-testid="stats-card"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <AlertTriangleIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              High Risk Areas
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.high_risk_count || 0}
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              Require attention
-            </div>
-            <div className="progress-bar" data-cy="progress-bar">
+              <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                <div className="loading-spinner-container">
+                  <div className="loading-spinner small"></div>
+                </div>
+              </div>
+
+              <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                <div className="loading-spinner-container">
+                  <div className="loading-spinner small"></div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Traffic Detectors */}
               <div
-                className="progress-fill critical"
-                style={{
-                  width: `${Math.min(
-                    ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) *
-                      100,
-                    100
-                  )}%`,
-                }}
-                data-cy="progress-fill"
-              ></div>
-            </div>
-          </div>
+                className="stat-card"
+                data-cy="stat-card-detectors"
+                data-testid="stats-card"
+              >
+                <div className="stat-card-icon" data-cy="stat-card-icon">
+                  <GaugeIcon />
+                </div>
+                <div className="stat-card-title" data-cy="stat-card-title">
+                  Traffic Detectors
+                </div>
+                <div className="stat-card-value" data-cy="stat-card-value">
+                  {pemsDashboardData?.overview?.total_detectors || 0}
+                </div>
+                <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                  Active monitoring points
+                </div>
+              </div>
 
-          {/* System Status */}
-          <div
-            className={`stat-card system-status-card ${getSystemStatusClass(
-              pemsDashboardData?.overview?.system_status
-            )}`}
-            data-cy="stat-card-system-status"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <ActivityIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              System Status
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.system_status || 'UNKNOWN'}
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              Traffic management system
-            </div>
-          </div>
+              {/* Average Speed */}
+              <div
+                className="stat-card"
+                data-cy="stat-card-avg-speed"
+                data-testid="stats-card"
+              >
+                <div className="stat-card-icon" data-cy="stat-card-icon">
+                  <TrendingUpIcon />
+                </div>
+                <div className="stat-card-title" data-cy="stat-card-title">
+                  Average Speed
+                </div>
+                <div className="stat-card-value" data-cy="stat-card-value">
+                  {pemsDashboardData?.overview?.avg_speed_mph?.toFixed(1) || 0} mph
+                </div>
+                <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                  System-wide average
+                </div>
+              </div>
+
+              {/* High Risk Areas */}
+              <div
+                className="stat-card risk-indicator"
+                data-cy="stat-card-high-risk"
+                data-testid="stats-card"
+              >
+                <div className="stat-card-icon" data-cy="stat-card-icon">
+                  <AlertTriangleIcon />
+                </div>
+                <div className="stat-card-title" data-cy="stat-card-title">
+                  High Risk Areas
+                </div>
+                <div className="stat-card-value" data-cy="stat-card-value">
+                  {pemsDashboardData?.overview?.high_risk_count || 0}
+                </div>
+                <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                  Require attention
+                </div>
+                <div className="progress-bar" data-cy="progress-bar">
+                  <div
+                    className="progress-fill critical"
+                    style={{
+                      width: `${Math.min(
+                        ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) *
+                          100,
+                        100
+                      )}%`,
+                    }}
+                    data-cy="progress-fill"
+                  ></div>
+                </div>
+              </div>
+
+              {/* System Status */}
+              <div
+                className={`stat-card system-status-card ${getSystemStatusClass(
+                  pemsDashboardData?.overview?.system_status
+                )}`}
+                data-cy="stat-card-system-status"
+              >
+                <div className="stat-card-icon" data-cy="stat-card-icon">
+                  <ActivityIcon />
+                </div>
+                <div className="stat-card-title" data-cy="stat-card-title">
+                  System Status
+                </div>
+                <div className="stat-card-value" data-cy="stat-card-value">
+                  {pemsDashboardData?.overview?.system_status || 'UNKNOWN'}
+                </div>
+                <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                  Traffic management system
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* High Volume Areas & Archive Summary Section */}
