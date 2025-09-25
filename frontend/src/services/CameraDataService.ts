@@ -34,8 +34,8 @@ interface SyncResult {
 class RobustCameraDataService {
   private baseUrl: string;
   private syncQueue: any[] = [];
-  private lastSyncTime: number = 0;
-  private syncInProgress: boolean = false;
+  private lastSyncTime = 0;
+  private syncInProgress = false;
   private readonly MIN_SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes minimum between syncs
   private readonly MAX_RETRY_ATTEMPTS = 3;
   private readonly RETRY_DELAY = 1000; // 1 second
@@ -45,8 +45,7 @@ class RobustCameraDataService {
   }
 
   private getAuthHeaders(): HeadersInit {
-    const apiKey =
-      sessionStorage.getItem('apiKey') || localStorage.getItem('apiKey');
+    const apiKey = sessionStorage.getItem('apiKey');
     return {
       'Content-Type': 'application/json',
       'X-API-Key': apiKey || '',
@@ -57,7 +56,7 @@ class RobustCameraDataService {
   private async safeFetch(
     url: string,
     options: RequestInit = {},
-    retryCount = 0
+    retryCount = 0,
   ): Promise<Response | null> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -79,10 +78,10 @@ class RobustCameraDataService {
           `Network error, retrying ${retryCount + 1}/${
             this.MAX_RETRY_ATTEMPTS
           }:`,
-          error.message
+          error.message,
         );
         await new Promise(resolve =>
-          setTimeout(resolve, this.RETRY_DELAY * Math.pow(2, retryCount))
+          setTimeout(resolve, this.RETRY_DELAY * Math.pow(2, retryCount)),
         );
         return this.safeFetch(url, options, retryCount + 1);
       }
@@ -161,16 +160,16 @@ class RobustCameraDataService {
     try {
       this.syncInProgress = true;
       const cameras = cameraFeeds.map(feed =>
-        this.convertCameraFeedToDatabase(feed)
+        this.convertCameraFeedToDatabase(feed),
       );
 
       const response = await this.safeFetch(
-        `${this.baseUrl}/api/cameras/bulk-upsert`,
+        `${this.baseUrl}/api/system/internal/cameras/bulk-upsert`,
         {
           method: 'POST',
-          headers: this.getAuthHeaders(),
-          body: JSON.stringify({ cameras }),
-        }
+          headers: { 'Content-Type': 'application/json' }, // No auth required for internal endpoint
+          body: JSON.stringify({ cameras, source: 'frontend' }),
+        },
       );
 
       if (!response) {
@@ -233,10 +232,10 @@ class RobustCameraDataService {
   private queueForLaterSync(cameras: DatabaseCamera[]): void {
     // Add to queue, removing duplicates by external ID
     const existingIds = new Set(
-      this.syncQueue.map(cam => cam.Camera_ExternalID)
+      this.syncQueue.map(cam => cam.Camera_ExternalID),
     );
     const newCameras = cameras.filter(
-      cam => !existingIds.has(cam.Camera_ExternalID)
+      cam => !existingIds.has(cam.Camera_ExternalID),
     );
 
     this.syncQueue.push(...newCameras);
@@ -262,12 +261,15 @@ class RobustCameraDataService {
     this.syncQueue = []; // Clear queue
 
     const response = await this.safeFetch(
-      `${this.baseUrl}/api/cameras/bulk-upsert`,
+      `${this.baseUrl}/api/system/internal/cameras/bulk-upsert`,
       {
         method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ cameras: queuedCameras }),
-      }
+        headers: { 'Content-Type': 'application/json' }, // No auth required for internal endpoint
+        body: JSON.stringify({
+          cameras: queuedCameras,
+          source: 'frontend-queue',
+        }),
+      },
     );
 
     if (!response || !response.ok) {
@@ -299,7 +301,7 @@ class RobustCameraDataService {
       status: 'online' | 'offline' | 'loading';
       responseTime?: number;
       errorMessage?: string;
-    }>
+    }>,
   ): Promise<void> {
     // Only attempt if we have a reasonable number of updates
     if (statusUpdates.length === 0 || statusUpdates.length > 50) {
@@ -307,29 +309,29 @@ class RobustCameraDataService {
     }
 
     const response = await this.safeFetch(
-      `${this.baseUrl}/api/cameras/status-batch`,
+      `${this.baseUrl}/api/system/internal/cameras/status-batch`,
       {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers: { 'Content-Type': 'application/json' }, // No auth required for internal endpoint
         body: JSON.stringify({ statusUpdates }),
-      }
+      },
     );
 
     // Don't throw errors - this is non-critical
     if (!response || !response.ok) {
       console.warn(
-        'Status update failed - continuing without database logging'
+        'Status update failed - continuing without database logging',
       );
     }
   }
 
   // Get camera by external ID with caching
   async getCameraByExternalId(
-    externalId: string
+    externalId: string,
   ): Promise<DatabaseCamera | null> {
     const response = await this.safeFetch(
       `${this.baseUrl}/api/cameras/external/${encodeURIComponent(externalId)}`,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders() },
     );
 
     if (!response || !response.ok) {
@@ -348,7 +350,7 @@ class RobustCameraDataService {
     lastSyncTime: Date | null;
     queueLength: number;
     syncInProgress: boolean;
-  } {
+    } {
     return {
       lastSyncTime: this.lastSyncTime > 0 ? new Date(this.lastSyncTime) : null,
       queueLength: this.syncQueue.length,
@@ -391,7 +393,7 @@ export class LiveFeedDatabaseIntegration {
     feedId: string,
     status: 'online' | 'offline' | 'loading',
     responseTime?: number,
-    errorMessage?: string
+    errorMessage?: string,
   ): Promise<void> {
     // Add to queue instead of immediate API call
     this.statusQueue.push({
@@ -437,9 +439,9 @@ export class LiveFeedDatabaseIntegration {
   }
 
   // Legacy method for backwards compatibility - replaced by automatic queue processing
-  startStatusMonitoring(cameraFeeds: any[], intervalMinutes: number = 5): void {
+  startStatusMonitoring(cameraFeeds: any[], _intervalMinutes = 5): void {
     console.warn(
-      'startStatusMonitoring is deprecated - status monitoring now happens automatically in background'
+      'startStatusMonitoring is deprecated - status monitoring now happens automatically in background',
     );
     // No-op - background processing handles this automatically
   }
