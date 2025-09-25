@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../consts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 import './Archives.css';
 
 // TypeScript interfaces to match ArchivesV2 table structure
@@ -73,6 +74,7 @@ type ViewMode = 'cards' | 'table' | 'detailed';
 
 const Archives: React.FC = () => {
   const { isDarkMode } = useTheme();
+  const { isAuthenticated } = useUser();
   const navigate = useNavigate();
 
   const [archives, setArchives] = useState<ArchiveRecord[]>([]);
@@ -314,6 +316,46 @@ const Archives: React.FC = () => {
         return <FileText size={16} />;
     }
   };
+
+  // Show sign-in prompt for unauthenticated users
+  if (!isAuthenticated) {
+    return (
+      <div className={`archives-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+        <div className="archives-signin-container">
+          <div className="archives-signin-content">
+            <div className="signin-header">
+              <Clock size={48} />
+              <h2>Incident Archives</h2>
+              <p>Access Comprehensive Historical Data</p>
+            </div>
+            <div className="signin-description">
+              <p>Sign in or create an account to access:</p>
+              <ul>
+                <li>Complete incident archive history</li>
+                <li>Advanced search and filtering capabilities</li>
+                <li>Detailed metadata and analytics</li>
+                <li>Export functionality for research and reports</li>
+                <li>Time-series analysis and trend identification</li>
+                <li>Geographic clustering and correlation data</li>
+              </ul>
+            </div>
+            <div className="signin-actions">
+              <a href="/account" className="signin-btn primary">
+                <FileText size={16} />
+                Sign In to Access Archives
+              </a>
+              <a href="/signup" className="signin-btn secondary">
+                Create Free Account
+              </a>
+            </div>
+            <div className="signin-footer">
+              <p>Join our platform to unlock powerful traffic data analysis tools</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
