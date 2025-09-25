@@ -38,66 +38,18 @@ class PEMSService {
     this.password = process.env.PEMS_PASSWORD;
     this.isAuthenticated = false;
     this.sessionCookie = null;
-    
+
     // Cache for traffic data
     this.dataCache = new Map();
     this.cacheExpiry = 5 * 60 * 1000; // 5 minutes
   }
 
-  // Real PEMS authentication using account credentials
+  // PEMS authentication - disabled since no public API exists
   async authenticate() {
-    try {
-      if (!this.username || !this.password) {
-        console.log('🚫 PEMS credentials not configured, using enhanced simulation...');
-        this.isAuthenticated = false;
-        return false;
-      }
-
-      console.log('🔐 Attempting real PEMS authentication...');
-
-      // Step 1: Get login page to extract any CSRF tokens
-      const loginPageResponse = await axios.get(`${this.baseURL}/`, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        },
-        timeout: 15000
-      });
-
-      // Step 2: Attempt login with credentials
-      const loginData = new URLSearchParams();
-      loginData.append('username', this.username);
-      loginData.append('password', this.password);
-      loginData.append('login', 'Login');
-
-      const loginResponse = await axios.post(`${this.baseURL}/`, loginData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Referer': `${this.baseURL}/`,
-          'Cookie': this.extractCookies(loginPageResponse.headers['set-cookie'])
-        },
-        maxRedirects: 0,
-        validateStatus: status => status < 400,
-        timeout: 15000
-      });
-
-      // Check if login was successful
-      if (loginResponse.headers['set-cookie'] || loginResponse.data.includes('Welcome')) {
-        this.sessionCookie = this.extractCookies(loginResponse.headers['set-cookie']);
-        this.isAuthenticated = true;
-        console.log('✅ PEMS authentication successful');
-        return true;
-      }
-
-      console.log('❌ PEMS authentication failed - invalid credentials or site structure changed');
-      this.isAuthenticated = false;
-      return false;
-
-    } catch (error) {
-      console.log('🚫 PEMS authentication error, using enhanced simulation:', error.message);
-      this.isAuthenticated = false;
-      return false;
-    }
+    // PEMS doesn't offer a public API, so we'll always use enhanced simulation
+    console.log('🚫 PEMS API not publicly available - using enhanced traffic simulation based on real patterns');
+    this.isAuthenticated = false;
+    return false;
   }
 
   // Extract cookies from response headers

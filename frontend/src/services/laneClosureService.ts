@@ -66,8 +66,6 @@ class LaneClosureService {
   // Fetch lane closure data from DOT API
   async fetchLaneClosures(): Promise<LaneClosure[]> {
     try {
-      console.log('🚧 Fetching District 12 lane closures from:', this.API_URL);
-
       const response = await fetch(this.API_URL, {
         method: 'GET',
         mode: 'cors',
@@ -76,34 +74,21 @@ class LaneClosureService {
         },
       });
 
-      console.log('🚧 Response status:', response.status);
-      console.log('🚧 Response headers:', response.headers);
-
       if (!response.ok) {
         throw new Error(`Failed to fetch lane closures: ${response.status} - ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('🚧 Raw API response:', data);
-      console.log('🚧 Data structure:', {
-        hasData: !!data.data,
-        isArray: Array.isArray(data.data),
-        length: data.data?.length || 0
-      });
 
       if (!data.data || !Array.isArray(data.data)) {
-        console.warn('⚠️ Unexpected lane closure data format:', data);
+        console.warn('⚠️ Unexpected lane closure data format');
         return [];
       }
 
-      console.log(`🚧 Processing ${data.data.length} raw lane closure items...`);
-      console.log('🚧 Sample item structure:', data.data[0]);
       const processedClosures = data.data.map((item: any) => this.processLaneClosureItem(item));
 
       // Filter valid closures with coordinates
       const validClosures = processedClosures.filter((closure: LaneClosure | null) => closure !== null);
-
-      console.log(`✅ Processed ${validClosures.length} lane closures`);
 
       this.laneClosures = validClosures;
       this.notifySubscribers();
@@ -111,7 +96,6 @@ class LaneClosureService {
       return validClosures;
     } catch (error) {
       console.error('❌ Error fetching lane closures:', error);
-      console.log('🚧 Creating test data due to API error...');
 
       // Return test data to verify the UI works
       return this.createTestLaneClosures();
@@ -121,21 +105,14 @@ class LaneClosureService {
   // Process individual lane closure item from API
   private processLaneClosureItem(item: any): LaneClosure | null {
     try {
-      console.log('🚧 Processing item:', item);
       const lcs = item.lcs;
       if (!lcs) {
-        console.log('❌ No lcs data in item');
         return null;
       }
-
-      console.log('🚧 LCS keys:', Object.keys(lcs));
-      console.log('🚧 Location data:', lcs.location);
-      console.log('🚧 Closure data:', lcs.closure);
 
       // Extract location data from the location object
       const location = lcs.location;
       if (!location) {
-        console.log('❌ No location data');
         return null;
       }
 
@@ -144,29 +121,21 @@ class LaneClosureService {
       const end = location.end;
 
       if (!begin || !end) {
-        console.log('❌ No begin/end location data');
         return null;
       }
-
-      console.log('🚧 Begin data:', begin);
-      console.log('🚧 End data:', end);
 
       const beginLat = parseFloat(begin.beginLatitude);
       const beginLng = parseFloat(begin.beginLongitude);
       const endLat = parseFloat(end.endLatitude);
       const endLng = parseFloat(end.endLongitude);
 
-      console.log('🚧 Coordinates:', { beginLat, beginLng, endLat, endLng });
-
       if (isNaN(beginLat) || isNaN(beginLng)) {
-        console.log('❌ Invalid coordinates');
         return null;
       }
 
       // Get closure details
       const closure = lcs.closure;
       if (!closure) {
-        console.log('❌ No closure data');
         return null;
       }
 
@@ -214,7 +183,7 @@ class LaneClosureService {
 
       return laneClosureObject;
     } catch (error) {
-      console.error('❌ Error processing lane closure item:', error);
+      // Silently skip invalid items
       return null;
     }
   }
@@ -426,7 +395,6 @@ class LaneClosureService {
       },
     ];
 
-    console.log(`🚧 Created ${testClosures.length} test lane closures`);
     this.laneClosures = testClosures;
     this.notifySubscribers();
     return testClosures;
@@ -434,13 +402,11 @@ class LaneClosureService {
 
   // Start periodic updates
   startPeriodicUpdates(intervalMinutes = 5): void {
-    console.log('🚧 Starting lane closure periodic updates...');
     // Initial fetch
     this.fetchLaneClosures();
 
     // Set up periodic updates (DOT updates every 5 minutes)
     setInterval(() => {
-      console.log('🔄 Updating lane closure data...');
       this.fetchLaneClosures();
     }, intervalMinutes * 60 * 1000);
   }
