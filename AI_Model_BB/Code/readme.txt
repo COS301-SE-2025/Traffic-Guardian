@@ -65,3 +65,7 @@ Controls
 - `p` - Pause/resume video
 - `ESC` - Close video window
 
+
+for telegram dependencies
+
+pip install python-dotenv requests pyttsx3 gtts

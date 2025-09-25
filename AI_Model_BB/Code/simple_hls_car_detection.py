@@ -141,9 +141,15 @@ class SimpleHLSCapture:
 class SimpleCarDetector:
     """Simple car detection using YOLO"""
     
-    def __init__(self):
+    def __init__(self, api_endpoint=None, transmission_interval=30):
         self.model = None
         self._load_model()
+        
+        # Car count transmission settings
+        self.api_endpoint = api_endpoint
+        self.transmission_interval = transmission_interval  # seconds
+        self.last_transmission_time = time.time()
+        self.car_count_buffer = []
     
     def _load_model(self):
         """Load YOLO model"""
@@ -185,6 +191,70 @@ class SimpleCarDetector:
         except Exception as e:
             print(f"⚠️ Detection error: {e}")
             return []
+    
+    def send_car_count_to_api(self, vehicle_count, camera_id="unknown"):
+        """Send current car count to API endpoint if configured and interval has passed."""
+        if not self.api_endpoint:
+            return
+        
+        current_time = time.time()
+        
+        # Add current count to buffer
+        self.car_count_buffer.append({
+            'count': vehicle_count,
+            'timestamp': time.strftime('%Y-%m-%dT%H:%M:%S'),
+            'camera_id': camera_id
+        })
+        
+        # Check if it's time to send data
+        if current_time - self.last_transmission_time >= self.transmission_interval:
+            self._transmit_car_count_data(camera_id)
+            self.last_transmission_time = current_time
+    
+    def _transmit_car_count_data(self, camera_id):
+        """Transmit buffered car count data to the API endpoint."""
+        if not self.car_count_buffer or not self.api_endpoint:
+            return
+        
+        try:
+            # Calculate statistics for the interval
+            avg_count = sum(item['count'] for item in self.car_count_buffer) / len(self.car_count_buffer)
+            max_count = max(item['count'] for item in self.car_count_buffer)
+            min_count = min(item['count'] for item in self.car_count_buffer)
+            
+            # Prepare payload
+            payload = {
+                'camera_id': camera_id,
+                'timestamp': time.strftime('%Y-%m-%dT%H:%M:%S'),
+                'interval_seconds': self.transmission_interval,
+                'car_count': {
+                    'average': round(avg_count, 2),
+                    'maximum': max_count,
+                    'minimum': min_count,
+                    'samples': len(self.car_count_buffer)
+                }
+            }
+            
+            # Send to API
+            response = requests.post(
+                self.api_endpoint,
+                json=payload,
+                timeout=10,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 200:
+                print(f"✅ Car count data sent to API: {avg_count:.1f} avg vehicles")
+            else:
+                print(f"⚠️ API transmission failed: {response.status_code}")
+                
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error sending car count to API: {e}")
+        except Exception as e:
+            print(f"❌ Unexpected error in car count transmission: {e}")
+        finally:
+            # Clear buffer after transmission attempt
+            self.car_count_buffer.clear()
 
 def fetch_district12_cameras():
     """Fetch cameras from District 12 like the frontend does"""
@@ -226,7 +296,7 @@ def fetch_district12_cameras():
         print(f"❌ Error fetching cameras: {e}")
         return []
 
-def run_simple_detection(camera_config):
+def run_simple_detection(camera_config, api_endpoint=None, transmission_interval=30):
     """Run simple car detection on HLS stream"""
     camera_id = camera_config['id']
     location = camera_config['location']
@@ -235,10 +305,12 @@ def run_simple_detection(camera_config):
     print(f"\n🎯 Starting detection for Camera {camera_id}")
     print(f"📍 Location: {location}")
     print(f"🔗 Stream: {stream_url}")
+    if api_endpoint:
+        print(f"🌐 API Endpoint: {api_endpoint}")
     
     # Initialize components
     capture = SimpleHLSCapture(stream_url, camera_id)
-    detector = SimpleCarDetector()
+    detector = SimpleCarDetector(api_endpoint, transmission_interval)
     
     if not capture.start_capture():
         print(f"❌ Failed to start capture for camera {camera_id}")
@@ -269,11 +341,16 @@ def run_simple_detection(camera_config):
             if frame_count % 5 == 0:
                 detections = detector.detect_cars(frame)
                 
+                current_car_count = len(detections)
                 if detections:
-                    cars_detected += len(detections)
-                    print(f"🚗 Frame {frame_count}: Found {len(detections)} vehicles")
-                    
-                    # Draw detections on frame
+                    cars_detected += current_car_count
+                    print(f"🚗 Frame {frame_count}: Found {current_car_count} vehicles")
+                
+                # Send car count to API (will buffer and send periodically)
+                detector.send_car_count_to_api(current_car_count, camera_id)
+                
+                # Draw detections on frame
+                if detections:
                     for det in detections:
                         x1, y1, x2, y2 = det['bbox']
                         class_name = det['class']
@@ -323,6 +400,16 @@ def main():
     print("🎥 Simple HLS Car Detection for Frontend Integration")
     print("=" * 60)
     
+    # Load API configuration from environment
+    api_endpoint = os.getenv('CAR_COUNT_API_ENDPOINT')
+    transmission_interval = int(os.getenv('CAR_COUNT_INTERVAL', '30'))
+    
+    if api_endpoint:
+        print(f"🌐 API Endpoint configured: {api_endpoint}")
+        print(f"⏱️ Transmission interval: {transmission_interval} seconds")
+    else:
+        print("ℹ️ No API endpoint configured (set CAR_COUNT_API_ENDPOINT env var)")
+    
     # Check dependencies
     try:
         import cv2
@@ -353,7 +440,7 @@ def main():
     # Run detection on first camera
     if cameras:
         print(f"\n🎯 Running detection on Camera {cameras[0]['id']}")
-        run_simple_detection(cameras[0])
+        run_simple_detection(cameras[0], api_endpoint, transmission_interval)
     
     print("\n✅ Simple HLS detection completed!")
 

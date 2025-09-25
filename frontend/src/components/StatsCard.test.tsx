@@ -37,8 +37,7 @@ describe('StatsCard Component', () => {
 
     expect(screen.getByText('Description')).toBeInTheDocument();
     // Check that the component renders even with empty value
-    const container = document.querySelector('.stats-card');
-    expect(container).toBeInTheDocument();
+    expect(screen.getByTestId('stats-card')).toBeInTheDocument();
   });
 
   test('renders with long title', () => {
@@ -73,9 +72,8 @@ describe('StatsCard Component', () => {
   });
 
   test('has correct CSS class', () => {
-    const { container } = render(<StatsCard title="Test" value={123} />);
-    const statsCardDiv = container.querySelector('.stats-card');
-    expect(statsCardDiv).toBeInTheDocument();
+    render(<StatsCard title="Test" value={123} />);
+    expect(screen.getByTestId('stats-card')).toBeInTheDocument();
   });
 
   test('contains heading and paragraph elements', () => {
@@ -83,7 +81,7 @@ describe('StatsCard Component', () => {
 
     expect(screen.getByRole('heading', { level: 4 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent(
-      'Test Title'
+      'Test Title',
     );
   });
 
@@ -93,7 +91,7 @@ describe('StatsCard Component', () => {
         <StatsCard title="Card 1" value={100} />
         <StatsCard title="Card 2" value="Text" />
         <StatsCard title="Card 3" value={200} />
-      </div>
+      </div>,
     );
 
     expect(screen.getByText('Card 1')).toBeInTheDocument();

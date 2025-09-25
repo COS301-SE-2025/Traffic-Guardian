@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const axios = require('axios');
 const FormData = require('form-data');
 const traffic = require('../src/Traffic/traffic');
+const caltransTraffic = require('../src/Traffic/caltransTraffic');
 const archivesModel = require('./models/archives');
 const ILM = require('../src/IncidentLocationMapping/ilmInstance');
 const weather = require('./Weather/weather');
@@ -35,7 +36,7 @@ const broadcastActiveUsers = () => {
     count: activeUsersCount,
     timestamp: new Date()
   });
-  console.log(`📊 Broadcasting active users: ${activeUsersCount}`);
+  console.log(`Broadcasting active users: ${activeUsersCount}`);
 };
 
 var welcomeMsg;
@@ -58,10 +59,20 @@ io.on('connection',(socket)=>{
   // Broadcast updated user count
   broadcastActiveUsers();
   
-  console.log(`👤 New user connected: ${socket.id} (Total: ${activeConnections.size})`);
+  console.log(`New user connected: ${socket.id} (Total: ${activeConnections.size})`);
     
-    //traffic prt
-    traffic.getTraffic().then((data)=>{
+    //traffic prt - try enhanced California traffic first
+    const getTrafficData = async () => {
+      if (process.env.USE_CALIFORNIA_TRAFFIC === 'true') {
+        console.log('🌴 Initial fetch: Using enhanced California traffic data...');
+        return await caltransTraffic.getEnhancedCaliforniaTraffic();
+      } else {
+        console.log('🗺️  Initial fetch: Using TomTom traffic data...');
+        return await traffic.getTraffic();
+      }
+    };
+    
+    getTrafficData().then((data)=>{
       if (data && Array.isArray(data)) {
         socket.emit('trafficUpdate', data);
 
@@ -80,7 +91,7 @@ io.on('connection',(socket)=>{
         const res_incidentLocations =  traffic.incidentLocations(data);
         socket.emit('incidentLocations', res_incidentLocations);
       } else {
-        console.log('⚠️  Traffic API unavailable on connection - using empty data');
+        console.log('Traffic API unavailable on connection - using empty data');
         socket.emit('trafficUpdate', []);
         socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0 });
         socket.emit('incidentCategory', { categories: [], percentages: [] });
@@ -104,7 +115,15 @@ io.on('connection',(socket)=>{
     
     setInterval(async()=>{
       try {
-        const data = await traffic.getTraffic();
+        let data;
+        
+        if (process.env.USE_CALIFORNIA_TRAFFIC === 'true') {
+          console.log('🌴 Using enhanced California traffic data...');
+          data = await caltransTraffic.getEnhancedCaliforniaTraffic();
+        } else {
+          console.log('🗺️  Using TomTom traffic data...');
+          data = await traffic.getTraffic();
+        }
         
         if (data && Array.isArray(data)) {
           socket.emit('trafficUpdate', data);
@@ -124,7 +143,7 @@ io.on('connection',(socket)=>{
           const res_incidentLocations =  traffic.incidentLocations(data);
           socket.emit('incidentLocations', res_incidentLocations);
         } else {
-          console.log('⚠️  Traffic API unavailable in interval update - skipping');
+          console.log('Traffic API unavailable in interval update - skipping');
         }
       } catch (error) {
         console.error('Traffic API error in interval update:', error.message);
@@ -302,7 +321,7 @@ io.on('connection',(socket)=>{
       // Broadcast updated user count
       broadcastActiveUsers();
       
-      console.log(`👋 User disconnected: ${socket.id} (Reason: ${reason}) (Total: ${activeConnections.size})`);
+      console.log(`User disconnected: ${socket.id} (Reason: ${reason}) (Total: ${activeConnections.size})`);
     });
     
     // Handle request for current stats
