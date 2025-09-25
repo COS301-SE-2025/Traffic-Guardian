@@ -143,3 +143,52 @@
     gap: 0.8rem;
   }
 }
+
+/* Add these new media queries for laptop screens */
+@media screen and (max-width: 1366px) {
+  .navbar {
+    padding: 0.5rem 1rem;
+  }
+
+  .navbar .tg-nav-links {
+    gap: 1.5rem;
+  }
+
+  .navbar .logo-container {
+    padding: 1rem;
+  }
+
+  .navbar .navbar-logo {
+    height: 60px;
+  }
+
+  .navbar .nav-item a {
+    font-size: 0.9rem;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .navbar {
+    padding: 0.5rem;
+  }
+
+  .navbar .tg-nav-links {
+    gap: 1rem;
+  }
+
+  .navbar .logo-container {
+    padding: 0.75rem;
+  }
+
+  .navbar .navbar-logo {
+    height: 50px;
+  }
+
+  .navbar .nav-item a {
+    font-size: 0.85rem;
+  }
+
+  .navbar .help-icon {
+    font-size: 18px;
+  }
+}
