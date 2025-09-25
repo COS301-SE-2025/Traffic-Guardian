@@ -100,7 +100,7 @@
   font-family: "Segoe UI", Arial, sans-serif;
   line-height: 1.6;
   padding: 2rem;
-  padding-top: calc(160px + 2rem);
+  padding-top: calc(var(--page-content-offset) + 1.5rem);
   transition: all 0.3s ease;
 
   /* Typography & Spacing */

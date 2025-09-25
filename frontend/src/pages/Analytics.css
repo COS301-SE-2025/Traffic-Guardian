@@ -5,18 +5,18 @@
   background-color: #0f0f0f;
   color: #f1f1f1;
   transition: background-color 0.3s ease;
-  padding-top: 160px;
+  padding-top: var(--page-content-offset);
 }
 
 @media (max-width: 768px) {
   .analytics-container {
-    padding-top: 140px;
+    padding-top: var(--page-content-offset);
   }
 }
 
 @media (max-width: 480px) {
   .analytics-container {
-    padding-top: 130px;
+    padding-top: var(--page-content-offset);
   }
 }
 
