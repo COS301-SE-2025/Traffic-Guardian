@@ -1,0 +1,239 @@
+.weekly-traffic-trends {
+  background: var(--card-background);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.trends-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.trends-title h3 {
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.public-badge {
+  background: #feac34;
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.trends-subtitle {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.trends-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.metric-selector,
+.chart-type-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.metric-selector label,
+.chart-type-selector label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.metric-selector select,
+.chart-type-selector select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--input-background);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.trends-error {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.trends-error p {
+  color: #856404;
+  margin: 0 0 0.5rem 0;
+}
+
+.retry-btn {
+  background: #F79400;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.retry-btn:hover {
+  background: #d04a1e;
+}
+
+.trends-chart {
+  margin: 1.5rem 0;
+  min-height: 400px;
+}
+
+.trends-insights {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.trends-insights h4 {
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.day-insight {
+  background: var(--secondary-background);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.day-insight h5 {
+  color: var(--text-primary);
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.insight-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metric-label {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.metric-value {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.upgrade-notice {
+  background: linear-gradient(135deg, #F79400, #feac34);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.upgrade-notice p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.upgrade-notice a {
+  color: white;
+  text-decoration: underline;
+  font-weight: 600;
+  margin: 0 0.25rem;
+}
+
+.upgrade-notice a:hover {
+  text-decoration: none;
+}
+
+/* Dark mode adjustments */
+.dark-mode .weekly-traffic-trends {
+  --card-background: #2d2d2d;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --border-color: #404040;
+  --input-background: #3d3d3d;
+  --secondary-background: #3d3d3d;
+}
+
+/* Light mode adjustments */
+.light-mode .weekly-traffic-trends {
+  --card-background: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --border-color: #e0e0e0;
+  --input-background: #ffffff;
+  --secondary-background: #f8f9fa;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .trends-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .trends-controls {
+    justify-content: space-between;
+  }
+
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .weekly-traffic-trends {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .trends-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .metric-selector,
+  .chart-type-selector {
+    justify-content: space-between;
+  }
+}

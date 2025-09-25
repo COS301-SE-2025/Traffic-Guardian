@@ -43,7 +43,7 @@
 
 .global-alerts-btn.has-alerts {
   background: linear-gradient(135deg, #dc2626, #b91c1c);
-  animation: pulse-alerts 2s infinite;
+  animation: pulseAlerts 2s infinite;
 }
 
 .global-alerts-btn.has-alerts:hover {
@@ -59,7 +59,7 @@
   position: absolute;
   top: -8px;
   right: -8px;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  background: linear-gradient(135deg, #ff8a5b, #feac34);
   color: #1f2937;
   font-size: 11px;
   font-weight: 700;
@@ -70,10 +70,10 @@
   line-height: 1;
   border: 2px solid white;
   box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
-  animation: bounce-in 0.5s ease-out;
+  animation: bounceIn 0.5s ease-out;
 }
 
-@keyframes pulse-alerts {
+@keyframes pulseAlerts {
   0%,
   100% {
     transform: scale(1);
@@ -86,15 +86,17 @@
   }
 }
 
-@keyframes bounce-in {
+@keyframes bounceIn {
   0% {
     transform: scale(0);
     opacity: 0%;
   }
+
   50% {
     transform: scale(1.2);
     opacity: 100%;
   }
+
   100% {
     transform: scale(1);
     opacity: 100%;
@@ -109,7 +111,7 @@
   right: 0;
   bottom: 0;
   background: rgb(0 0 0 / 60%);
-  z-index: 10000;
+  z-index: 9998;
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
@@ -120,7 +122,8 @@
 .global-alert-panel {
   background: white;
   border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 10%),
+  box-shadow:
+    0 20px 25px -5px rgb(0 0 0 / 10%),
     0 10px 10px -5px rgb(0 0 0 / 4%);
   width: 100%;
   max-width: 450px;
@@ -459,5 +462,34 @@
 
   .global-alert-item {
     padding: 16px;
+  }
+}
+
+/* Hide global alert badge when modal is open */
+.video-modal-overlay ~ .global-alert-badge,
+.modal-overlay ~ .global-alert-badge,
+.alerts-panel-overlay ~ .global-alert-badge {
+  display: none;
+}
+
+/* Adjust positioning when modal content is present */
+@media (max-width: 480px) {
+  .global-alert-badge {
+    top: 10px;
+    right: 10px;
+    z-index: 998;
+  }
+
+  .global-alerts-btn {
+    width: 45px;
+    height: 45px;
+  }
+
+  .global-alert-count {
+    top: -6px;
+    right: -6px;
+    font-size: 10px;
+    min-width: 18px;
+    padding: 2px 5px;
   }
 }

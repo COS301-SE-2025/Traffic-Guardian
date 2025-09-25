@@ -3,11 +3,14 @@ import './App.css';
 import { ThemeProvider } from './consts/ThemeContext';
 import { SocketProvider } from './consts/SocketContext';
 import { LiveFeedProvider } from './contexts/LiveFeedContext';
+import { UserProvider } from './contexts/UserContext';
 import NavBar from './components/NavBar';
 import GlobalAlertBadge from './components/GlobalAlertBadge';
+import DataAttribution from './components/DataAttribution';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LiveFeed from './pages/LiveFeed';
+import Map from './pages/Map';
 import Incidents from './pages/Incidents';
 import Account from './pages/Account';
 import SignUp from './pages/SignUp';
@@ -29,6 +32,7 @@ import {
 import { AnimatePresence } from 'framer-motion';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import dataPrefetchService from './services/DataPrefetchService';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -59,6 +63,14 @@ const AnimatedRoutes = () => {
             element={
               <PageWrapper>
                 <LiveFeed />
+              </PageWrapper>
+            }
+          />
+          <Route
+            path="/map"
+            element={
+              <PageWrapper>
+                <Map />
               </PageWrapper>
             }
           />
@@ -140,32 +152,49 @@ const App: React.FC = () => {
   const initialTheme = localStorage.getItem('theme');
   const isDarkMode = initialTheme ? initialTheme === 'dark' : true;
 
+  // Check if user is already logged in and start prefetching
+  React.useEffect(() => {
+    const apiKey = sessionStorage.getItem('apiKey');
+    if (apiKey) {
+      console.log('🔄 App startup: Starting background data prefetching...');
+      dataPrefetchService.startPrefetching();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      dataPrefetchService.stopPrefetching();
+    };
+  }, []);
+
   return (
     <ThemeProvider initialDarkMode={isDarkMode}>
-      <Router>
-        <SocketProvider>
-          <LiveFeedProvider>
-            <div className="App">
-              <AnimatedRoutes />
+      <UserProvider>
+        <Router>
+          <SocketProvider>
+            <LiveFeedProvider>
+              <div className="App">
+                <AnimatedRoutes />
+                <DataAttribution />
 
-              {/* Global Toast Container for real-time notifications */}
-              <ToastContainer
-                position="top-right"
-                autoClose={8000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-                style={{ zIndex: 99999 }}
-              />
-            </div>
-          </LiveFeedProvider>
-        </SocketProvider>
-      </Router>
+                {/* Global Toast Container for real-time notifications */}
+                <ToastContainer
+                  position="top-right"
+                  autoClose={8000}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="dark"
+                  style={{ zIndex: 99999 }}
+                />
+              </div>
+            </LiveFeedProvider>
+          </SocketProvider>
+        </Router>
+      </UserProvider>
     </ThemeProvider>
   );
 };
