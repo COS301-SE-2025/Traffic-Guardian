@@ -5,13 +5,19 @@ name: Continuous Deployment Pipeline
 # - EC2 t2.micro instances (750 hours/month = 1 instance full-time)
 # Removed costly services: CloudFront, backup buckets, cache invalidations
 
+# on:
+#   workflow_run:
+#     workflows: ["Continuous Integration Pipeline"]
+#     branches: [main]
+#     types: 
+#       - completed
+# # Run deployment only if the CI workflow completed successfully on main or Dev branch
 on:
-  workflow_run:
-    workflows: ["Continuous Integration Pipeline"]
+  push:
     branches: [main]
-    types: 
-      - completed
-# Run deployment only if the CI workflow completed successfully on main or Dev branch
+  pull_request:
+    branches: [main]
+
 jobs:
 
   deploy-staging:
