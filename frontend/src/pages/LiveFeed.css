@@ -713,6 +713,7 @@
   position: relative;
   width: 100%;
   max-width: 800px;
+  padding-bottom: 60px; /* Space for controls */
 }
 
 .modal-video {
@@ -771,9 +772,16 @@
 }
 
 .timelapse-controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 8px;
+  border-radius: 6px;
+  z-index: 10;
 }
 
 .timelapse-btn {

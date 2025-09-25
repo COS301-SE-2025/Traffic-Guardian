@@ -912,7 +912,7 @@
 /* Map Legend */
 .map-legend {
   position: absolute;
-  bottom: 1.5rem; /* Reduced from 2rem */
+  bottom: 120px; /* Moved higher to prevent spillage when filters are off */
   left: 2rem;
   background: rgb(30 30 30 / 95%);
   backdrop-filter: blur(20px);

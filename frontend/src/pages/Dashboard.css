@@ -1995,3 +1995,40 @@ body {
     gap: 1rem;
   }
 }
+
+/* Stat Card Loading Styles */
+.stat-card-loading {
+  pointer-events: none;
+  user-select: none;
+}
+
+.loading-spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-height: 120px;
+}
+
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #d97700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner.small {
+  width: 24px;
+  height: 24px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Dark mode loading spinner */
+[data-theme="dark"] .loading-spinner {
+  border-color: #444;
+  border-top-color: #d97700;
+}
