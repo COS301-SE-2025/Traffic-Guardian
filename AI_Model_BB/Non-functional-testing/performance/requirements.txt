@@ -1,0 +1,23 @@
+# Performance Testing Requirements for Traffic Guardian Incident Detection System
+
+# Core testing framework
+unittest2>=1.1.0
+
+# System monitoring and profiling
+psutil>=5.9.0
+memory-profiler>=0.60.0
+
+# Data processing and analysis
+numpy>=1.21.0
+matplotlib>=3.5.0
+
+# Computer vision (required by incident detection system)
+opencv-python>=4.8.0
+torch>=1.13.0
+torchvision>=0.14.0
+
+# Additional utilities
+python-dotenv>=1.0.0
+
+# Statistical analysis
+scipy>=1.9.0
