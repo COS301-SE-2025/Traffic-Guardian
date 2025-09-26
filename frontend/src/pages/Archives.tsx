@@ -339,15 +339,6 @@ const Archives: React.FC = () => {
                 <li>Geographic clustering and correlation data</li>
               </ul>
             </div>
-            <div className="signin-actions">
-              <a href="/account" className="signin-btn primary">
-                <FileText size={16} />
-                Sign In to Access Archives
-              </a>
-              <a href="/signup" className="signin-btn secondary">
-                Create Free Account
-              </a>
-            </div>
             <div className="signin-footer">
               <p>Join our platform to unlock powerful traffic data analysis tools</p>
             </div>
