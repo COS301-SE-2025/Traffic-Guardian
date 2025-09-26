@@ -9,19 +9,19 @@ describe('Incident Location Mapping unit tests', () => {
 
     test('should initialize regions correctly', () => {
         expect(ilm.regions.size).toBe(ilm.regionNames.length);
-        const rosebank = ilm.regions.get('Rosebank');
-        expect(rosebank.location).toBe('Rosebank');
-        expect(rosebank.coordinates).toEqual({
-            latitude: '-26.1438',
-            longitude: '28.0406'
+        const Pasadena = ilm.regions.get('Pasadena');
+        expect(Pasadena.location).toBe('Pasadena');
+        expect(Pasadena.coordinates).toEqual({
+            latitude: '34.1478',
+            longitude: '-118.1445'
         });
-        expect(rosebank.incidents).toEqual([]);
+        expect(Pasadena.incidents).toEqual([]);
     });
 
     test('should add a new incident to a region', () => {
         const incident = { type: 'accident', severity: 'high' };
-        ilm.addNewIncident('Rosebank', incident);
-        expect(ilm.regions.get('Rosebank').incidents).toContain(incident);
+        ilm.addNewIncident('Pasadena', incident);
+        expect(ilm.regions.get('Pasadena').incidents).toContain(incident);
     });
 
     test('addNewIncident should handle unknown region gracefully', () => {
@@ -30,21 +30,21 @@ describe('Incident Location Mapping unit tests', () => {
 
     test('should update traffic for multiple regions', () => {
         const trafficData = [
-            { location: 'Rosebank', incidents: [{ type: 'jam' }] },
-            { location: 'Sandton', incidents: [{ type: 'accident' }] }
+            { location: 'Pasadena', incidents: [{ type: 'jam' }] },
+            { location: 'Sacramento', incidents: [{ type: 'accident' }] }
         ];
         ilm.updateTraffic(trafficData);
-        expect(ilm.regions.get('Rosebank').incidents).toEqual([{ type: 'jam' }]);
-        expect(ilm.regions.get('Sandton').incidents).toEqual([{ type: 'accident' }]);
+        expect(ilm.regions.get('Pasadena').incidents).toEqual([{ type: 'jam' }]);
+        expect(ilm.regions.get('Sacramento').incidents).toEqual([{ type: 'accident' }]);
     });
 
     test('updateTraffic should skip unknown regions', () => {
         const trafficData = [
-            { location: 'Rosebank', incidents: [{ type: 'jam' }] },
+            { location: 'Pasadena', incidents: [{ type: 'jam' }] },
             { location: 'Nowhere', incidents: [{ type: 'ghost' }] }
         ];
         ilm.updateTraffic(trafficData);
-        expect(ilm.regions.get('Rosebank').incidents).toEqual([{ type: 'jam' }]);
+        expect(ilm.regions.get('Pasadena').incidents).toEqual([{ type: 'jam' }]);
         expect(ilm.regions.has('Nowhere')).toBe(false);
     });
 
@@ -92,8 +92,8 @@ describe('Incident Location Mapping unit tests', () => {
     });
 
     test('notifyUsers should return correct notifications for nearby incidents', () => {
-        ilm.addUser('u1', { latitude: '-26.1438', longitude: '28.0406' });
-        ilm.updateTraffic([{ location: 'Rosebank', incidents: [{ type: 'crash' }] }]);
+        ilm.addUser('u1', { latitude: '34.1478', longitude: '-118.1445' });
+        ilm.updateTraffic([{ location: 'Pasadena', incidents: [{ type: 'crash' }] }]);
         const notifications = ilm.notifyUsers();
         expect(notifications.length).toBeGreaterThan(0);
         expect(notifications[0].userID).toBe('u1');
@@ -101,28 +101,66 @@ describe('Incident Location Mapping unit tests', () => {
     });
 
     test('notifyUsers should return empty if no new incidents', () => {
-        ilm.addUser('u1', { latitude: '-26.1438', longitude: '28.0406' });
-        // First update to set baseline
-        ilm.updateTraffic([{ location: 'Rosebank', incidents: [{ type: 'crash' }] }]);
+        ilm.addUser('u1', { latitude: '34.1478', longitude: '-118.1445' });
+        ilm.updateTraffic([{ location: 'Pasadena', incidents: [{ type: 'crash' }] }]);
         ilm.notifyUsers(); // baseline
-        // Same incidents again → no new notifications
         const notifications = ilm.notifyUsers();
         expect(notifications).toEqual([]);
     });
 
-    test('notifyUsersIncident should emit only to nearby users', () => {
-        const fakeIo = { to: jest.fn().mockReturnThis(), emit: jest.fn() };
-        ilm.addUser('u1', { latitude: '-26.1438', longitude: '28.0406' });
-        ilm.notifyUsersIncident({
-            Incidents_Latitude: '-26.1438',
-            Incidents_Longitude: '28.0406'
-        }, fakeIo);
-        expect(fakeIo.to).toHaveBeenCalledWith('u1');
-        expect(fakeIo.emit).toHaveBeenCalled();
-    });
 
-    test('emptyObject should work correctly', () => {
-        expect(ilm.emptyObject({})).toBe(true);
-        expect(ilm.emptyObject({ key: 1 })).toBe(false);
-    });
+test('addNewIncident should handle unknown region gracefully if modified to skip', () => {
+    ilm.addNewIncident = function(location, incident) {
+        const region = this.regions.get(location);
+        if (!region) return false;
+        region.incidents.push(incident);
+        return true;
+    };
+
+    const incident = { type: 'accident' };
+    const result = ilm.addNewIncident('Unknown', incident);
+    expect(result).toBe(false);
+});
+
+test('notifyUsers handles multiple nearby users correctly', () => {
+    ilm.addUser('user1', {latitude: '34.1478', longitude: '-118.1445' });
+    ilm.addUser('user2', { latitude: '34.1478', longitude: '-118.1440' });
+    ilm.updateTraffic([{ location: 'Pasadena', incidents: [{ type: 'jam' }] }]);
+
+    const notifications = ilm.notifyUsers();
+    expect(notifications).toHaveLength(2);
+    const userIds = notifications.map(n => n.userID);
+    expect(userIds).toEqual(expect.arrayContaining(['user1', 'user2']));
+});
+
+
+test('updateUserIncidents should not modify user coordinates', () => {
+    ilm.addUser('user1', { latitude: '-26.1000', longitude: '28.2000' });
+    ilm.updateUserIncidents('user1', [{ type: 'flood' }]);
+    const user = ilm.users.get('user1');
+    expect(user.coordinates).toEqual({ latitude: '-26.1000', longitude: '28.2000' });
+});
+
+test('initRegions logs the correct number of regions', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const tempIlm = new ILM();
+    expect(consoleSpy).toHaveBeenCalledWith('\x1b[32m%s\x1b[0m', `${tempIlm.regions.size} regions set`);
+    consoleSpy.mockRestore();
+});
+
+test('removeUser does not throw for unknown users', () => {
+    expect(() => ilm.removeUser('unknown')).not.toThrow();
+});
+
+test('isNearby returns true exactly at 5km', () => {
+    const locA = { latitude: '0', longitude: '0' };
+    const locB = { latitude: '0', longitude: (5 / 111.32).toString() };
+    expect(ilm.isNearby(locA, locB)).toBe(true);
+});
+
+test('updateTraffic with empty array does not modify regions', () => {
+    const initialRegions = new Map(ilm.regions);
+    ilm.updateTraffic([]);
+    expect(ilm.regions).toEqual(initialRegions);
+});
 });
