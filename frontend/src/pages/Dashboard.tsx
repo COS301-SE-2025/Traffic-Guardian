@@ -344,7 +344,7 @@ const Dashboard: React.FC = () => {
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherLastUpdate, setWeatherLastUpdate] = useState<Date | null>(null);
 
-  const [userStats, setUserStats] = useState<UserStats>({
+  const [_userStats, _setUserStats] = useState<UserStats>({
     totalOnline: 0,
     topRegion: { region: null, userCount: 0 },
     timeline: [],
@@ -587,21 +587,50 @@ const Dashboard: React.FC = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           position => {
-            const pos = {
+            const actualPos = {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
             };
-            newSocket.emit('new-location', pos);
-            addEvent(
-              `Location shared: ${pos.latitude.toFixed(
-                4
-              )}, ${pos.longitude.toFixed(4)}`
-            );
+
+            // Check if location is in California (rough bounds)
+            // California bounds: lat 32.5-42.0, lng -124.4 to -114.1
+            const isInCalifornia =
+              actualPos.latitude >= 32.5 && actualPos.latitude <= 42.0 &&
+              actualPos.longitude >= -124.4 && actualPos.longitude <= -114.1;
+
+            let locationToSend = actualPos;
+            let eventMessage = `Location shared: ${actualPos.latitude.toFixed(4)}, ${actualPos.longitude.toFixed(4)}`;
+
+            if (!isInCalifornia) {
+              // Use Los Angeles coordinates for California traffic data
+              locationToSend = {
+                latitude: 34.0522,
+                longitude: -118.2437
+              };
+              eventMessage = `Location set in California: ${locationToSend.latitude.toFixed(4)}, ${locationToSend.longitude.toFixed(4)} (Los Angeles area)`;
+            }
+
+            newSocket.emit('new-location', locationToSend);
+            addEvent(eventMessage);
           },
           _error => {
-            addEvent('Location sharing: Permission denied or unavailable');
+            // If geolocation fails, use Los Angeles as fallback
+            const fallbackPos = {
+              latitude: 34.0522,
+              longitude: -118.2437
+            };
+            newSocket.emit('new-location', fallbackPos);
+            addEvent(`Location set in California: ${fallbackPos.latitude.toFixed(4)}, ${fallbackPos.longitude.toFixed(4)} (Los Angeles area)`);
           }
         );
+      } else {
+        // If geolocation is not supported, use Los Angeles as fallback
+        const fallbackPos = {
+          latitude: 34.0522,
+          longitude: -118.2437
+        };
+        newSocket.emit('new-location', fallbackPos);
+        addEvent(`Location set in California: ${fallbackPos.latitude.toFixed(4)}, ${fallbackPos.longitude.toFixed(4)} (Los Angeles area)`);
       }
     });
 
@@ -622,7 +651,7 @@ const Dashboard: React.FC = () => {
     });
 
     newSocket.on('userStatsUpdate', (data: UserStats) => {
-      setUserStats(data);
+      _setUserStats(data);
     });
 
     newSocket.on('todaysIncidentsUpdate', (data: TodaysIncidents) => {
@@ -1019,10 +1048,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="signin-prompt-actions">
                 <a href="/account" className="signin-btn primary">
-                  Sign In for Dashboard Access
-                </a>
-                <a href="/signup" className="signin-btn secondary">
-                  Create Account
+                  Sign In to Access Dashboard
                 </a>
               </div>
             </div>
@@ -1077,10 +1103,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="signup-prompt-actions">
                 <a href="/account" className="signup-btn primary">
-                  Sign In for Full Access
-                </a>
-                <a href="/signup" className="signup-btn secondary">
-                  Create Free Account
+                  Sign In for PEMS Access
                 </a>
               </div>
             </div>
@@ -1088,196 +1111,115 @@ const Dashboard: React.FC = () => {
         )}
 
         {/* Traffic Incidents Section - Authentication Required */}
-        <div className="dashboard-main-grid" data-cy="dashboard-main-grid">
-          {isAuthenticated ? (
-            <div
-              className="incidents-section"
-              data-cy="incidents-section"
-              id="incidents-section"
-            >
-              <div className="incidents-header" data-cy="incidents-header">
-                <h3 data-cy="incidents-title">Live Traffic Incidents</h3>
-                <div className="incidents-badge" data-cy="incidents-badge">
-                  {trafficData.length} Locations
-                </div>
+        {isAuthenticated ? (
+          <div
+            className="incidents-section incidents-full-width"
+            data-cy="incidents-section"
+            id="incidents-section"
+          >
+            <div className="incidents-header" data-cy="incidents-header">
+              <h3 data-cy="incidents-title">Live Traffic Incidents</h3>
+              <div className="incidents-badge" data-cy="incidents-badge">
+                {trafficData.length} Locations
               </div>
-              <div className="incidents-list" data-cy="incidents-list">
-                {trafficData.map((location, index) => (
-                  <div
-                    key={index}
-                    className="incident-item"
-                    data-cy={`incident-item-${index}`}
-                  >
-                    <div className="incident-header" data-cy="incident-header">
-                      <div className="incident-type" data-cy="incident-type">
-                        <MapPinIcon />
-                        {location.location}
-                      </div>
-                      <div
-                        className="severity-badge medium"
-                        data-cy="severity-badge"
-                      >
-                        {location.incidents.length} Incidents
-                      </div>
+            </div>
+            <div className="incidents-list" data-cy="incidents-list">
+              {trafficData.map((location, index) => (
+                <div
+                  key={index}
+                  className="incident-item"
+                  data-cy={`incident-item-${index}`}
+                >
+                  <div className="incident-header" data-cy="incident-header">
+                    <div className="incident-type" data-cy="incident-type">
+                      <MapPinIcon />
+                      {location.location}
                     </div>
+                    <div
+                      className="severity-badge medium"
+                      data-cy="severity-badge"
+                    >
+                      {location.incidents.length} Incidents
+                    </div>
+                  </div>
 
-                    <div className="incident-details" data-cy="incident-details">
-                      {location.incidents
-                        .slice(0, 3)
-                        .map((incident, incIndex) => (
-                          <div
-                            key={incIndex}
-                            className="incident-detail"
-                            data-cy="incident-detail-item"
-                          >
-                            <AlertTriangleIcon />
-                            <span>{incident.properties.iconCategory}</span>
-                            <span
-                              className="magnitude-badge"
-                              data-cy="magnitude-badge"
-                            >
-                              Severity: {incident.properties.magnitudeOfDelay}
-                            </span>
-                          </div>
-                        ))}
-                      {location.incidents.length > 3 && (
+                  <div className="incident-details" data-cy="incident-details">
+                    {location.incidents
+                      .slice(0, 3)
+                      .map((incident, incIndex) => (
                         <div
+                          key={incIndex}
                           className="incident-detail"
-                          data-cy="incident-detail-more"
+                          data-cy="incident-detail-item"
                         >
-                          <span>
-                            +{location.incidents.length - 3} more incidents
+                          <AlertTriangleIcon />
+                          <span>{incident.properties.iconCategory}</span>
+                          <span
+                            className="magnitude-badge"
+                            data-cy="magnitude-badge"
+                          >
+                            Severity: {incident.properties.magnitudeOfDelay}
                           </span>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {trafficData.length === 0 && (
-                  <div className="incident-item" data-cy="incident-empty">
-                    <div className="incident-header">
-                      <div className="incident-type">
-                        <AlertTriangleIcon />
-                        No Traffic Data
-                      </div>
-                    </div>
-                    <div className="incident-details">
-                      <div className="incident-detail">
-                        Waiting for traffic updates...
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="last-updated" data-cy="last-updated-incidents">
-                <div
-                  className="update-indicator"
-                  data-cy="update-indicator"
-                ></div>
-                Last updated: {formatTime(lastUpdate)}
-              </div>
-            </div>
-          ) : (
-            <div className="incidents-section incidents-signin-prompt" data-cy="incidents-signin-prompt">
-              <div className="signin-prompt-content">
-                <div className="signin-prompt-header">
-                  <div className="signin-prompt-icon">
-                    <AlertTriangleIcon />
-                  </div>
-                  <h3>Live Traffic Incidents</h3>
-                </div>
-                <div className="signin-prompt-description">
-                  <p>Access real-time traffic incident data including:</p>
-                  <ul>
-                    <li>Live incident locations and severity levels</li>
-                    <li>Traffic disruption and delay information</li>
-                    <li>Emergency response coordination data</li>
-                    <li>Detailed incident analytics</li>
-                  </ul>
-                </div>
-                <div className="signin-prompt-actions">
-                  <a href="/account" className="signin-btn primary">
-                    Sign In to View Incidents
-                  </a>
-                  <a href="/signup" className="signin-btn secondary">
-                    Create Free Account
-                  </a>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div
-            className="regional-stats-section"
-            data-cy="regional-stats-section"
-            id="regional-stats-section"
-          >
-            <div className="regional-header" data-cy="regional-header">
-              <h3 data-cy="regional-title">Regional Activity</h3>
-            </div>
-            <div className="regional-list" data-cy="regional-list">
-              {userStats.regionCounts
-                .filter(region => region.userCount > 0)
-                .sort((a, b) => b.userCount - a.userCount)
-                .map((region, index) => (
-                  <div
-                    key={index}
-                    className="regional-item"
-                    data-cy={`regional-item-${region.region}`}
-                  >
-                    <div className="regional-info" data-cy="regional-info">
+                      ))}
+                    {location.incidents.length > 3 && (
                       <div
-                        className="regional-details"
-                        data-cy="regional-details"
+                        className="incident-detail"
+                        data-cy="incident-detail-more"
                       >
-                        <h4 data-cy="regional-name">{region.region}</h4>
-                        <p data-cy="regional-users">
-                          {region.userCount} active users
-                        </p>
+                        <span>
+                          +{location.incidents.length - 3} more incidents
+                        </span>
                       </div>
-                    </div>
-                    <div className="regional-stats" data-cy="regional-stats">
-                      <div
-                        className="progress-bar small"
-                        data-cy="progress-bar-small"
-                      >
-                        <div
-                          className="progress-fill"
-                          style={{
-                            width: `${Math.min(
-                              (region.userCount /
-                                Math.max(userStats.totalOnline, 1)) *
-                                100,
-                              100
-                            )}%`,
-                          }}
-                          data-cy="progress-fill-regional"
-                        ></div>
-                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {trafficData.length === 0 && (
+                <div className="incident-item" data-cy="incident-empty">
+                  <div className="incident-header">
+                    <div className="incident-type">
+                      <AlertTriangleIcon />
+                      No Traffic Data
                     </div>
                   </div>
-                ))}
-              {userStats.regionCounts.filter(r => r.userCount > 0).length ===
-                0 && (
-                <div className="regional-item" data-cy="regional-empty">
-                  <div className="regional-info">
-                    <div className="regional-details">
-                      <h4>No Regional Data</h4>
-                      <p>Waiting for user location data...</p>
+                  <div className="incident-details">
+                    <div className="incident-detail">
+                      Waiting for traffic updates...
                     </div>
                   </div>
                 </div>
               )}
             </div>
-            <div className="last-updated" data-cy="last-updated-regional">
+            <div className="last-updated" data-cy="last-updated-incidents">
               <div
                 className="update-indicator"
                 data-cy="update-indicator"
               ></div>
-              Real-time updates
+              Last updated: {formatTime(lastUpdate)}
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="incidents-section incidents-signin-prompt incidents-full-width" data-cy="incidents-signin-prompt">
+            <div className="signin-prompt-content">
+              <div className="signin-prompt-header">
+                <div className="signin-prompt-icon">
+                  <AlertTriangleIcon />
+                </div>
+                <h3>Live Traffic Incidents</h3>
+              </div>
+              <div className="signin-prompt-description">
+                <p>Access real-time traffic incident data including:</p>
+                <ul>
+                  <li>Live incident locations and severity levels</li>
+                  <li>Traffic disruption and delay information</li>
+                  <li>Emergency response coordination data</li>
+                  <li>Detailed incident analytics</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Weather Section */}
         <div
