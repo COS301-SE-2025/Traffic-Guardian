@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const emailSender = require("../emailService/emailService");
 
-async function generatePDF(incidents = []) {
+async function generatePDF(incidents = [], User_Email) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
@@ -12,14 +12,15 @@ async function generatePDF(incidents = []) {
 
   const incidentsHtml = incidents.map(incident => `
     <div class="incident-entry">
-      <div class="form-group"><label>Date & Time:</label> ${incident.Incidents_DateTime}</div>
-      <div class="form-group"><label>Longitude:</label> ${incident.Incidents_Longitude}</div>
-      <div class="form-group"><label>Latitude:</label> ${incident.Incidents_Latitude}</div>
-      <div class="form-group"><label>Severity:</label> ${incident.Incident_Severity}</div>
-      <div class="form-group"><label>Status:</label> ${incident.Incident_Status}</div>
-      <div class="form-group"><label>Reporter:</label> ${incident.Incident_Reporter}</div>
-      <div class="form-group"><label>Camera ID:</label> ${incident.Incident_CameraID}</div>
-      <div class="form-group"><label>Description:</label> ${incident.Incident_Description}</div>
+      <div class="form-group"><label>Date & Time:</label> ${incident.Incidents_DateTime ?? ""}</div>
+      <div class="form-group"><label>Longitude:</label> ${incident.Incidents_Longitude ?? ""}</div>
+      <div class="form-group"><label>Latitude:</label> ${incident.Incidents_Latitude ?? ""}</div>
+      <div class="form-group"><label>Severity:</label> ${incident.Incident_Severity ?? ""}</div>
+      <div class="form-group"><label>Status:</label> ${incident.Incident_Status ?? ""}</div>
+      <div class="form-group"><label>Reporter:</label> ${incident.Incident_Reporter ?? ""}</div>
+      <div class="form-group"><label>Camera ID:</label> ${incident.Incident_CameraID ?? ""}</div>
+      <div class="form-group"><label>Description:</label> ${incident.Incident_Description ?? ""}</div>
+      <div class="form-group"><label>Reporter Email:</label> ${User_Email ?? ""}</div>
       <hr>
     </div>
   `).join("");
@@ -44,13 +45,23 @@ async function generatePDF(incidents = []) {
 
   await browser.close();
   console.log("Report generated:", pdfPath);
+  //sendEmail(to, subject, text, html, reportName, reportFile)
+  await emailSender.sendEmail(User_Email, "Traffic Gaurdian Report", "", incidents[0].Incident_Reporter, pdfPath);
   return pdfPath;
 }
 
+
+
 module.exports = { 
-  generatePDF 
+  generatePDF,
+  generateAndSend
 };
 
+async function generateAndSend(){
+  const pdfPATH = await generatePDF(incidents, User_Email);
+  console.log(pdfPATH);
+  await emailSender.sendEmail("aryanmohanlall@gmail.com", "Traffic Gaurdian Report", "", incidents[0].Incident_Reporter, pdfPATH);
+}
 
 //testing
 const incidents = [
@@ -66,11 +77,5 @@ const incidents = [
   }
 ];
 
-async function sendit(){
-  const pdfPATH = await generatePDF(incidents);
-  console.log(pdfPATH);
-  await emailSender.sendEmail("aryanmohanlall@gmail.com", "Traffic Gaurdian Report", "", incidents[0].Incident_Reporter, pdfPATH);
-}
 
-sendit();
 //sendEmail(to, subject, text, html, reportName, reportFile)
