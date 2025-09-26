@@ -684,13 +684,22 @@ const Incidents: React.FC = () => {
     if (isNaN(date.getTime())) {
       return 'Invalid Date';
     }
-    return date.toLocaleString('en-US', {
+    const dateTimeString = date.toLocaleString('en-US', {
+      timeZone: 'America/Los_Angeles',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
     });
+
+    // Get timezone abbreviation (PST/PDT)
+    const timeZone = date.toLocaleDateString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      timeZoneName: 'short'
+    }).split(', ')[1];
+
+    return `${dateTimeString} (${timeZone})`;
   };
 
   if (isLoading && incidents.length === 0) {

@@ -22,7 +22,7 @@
   max-height: 600px;
   background-color: #1e1e1e;
   border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 40%);
   overflow: hidden;
 }
 
@@ -50,12 +50,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(254, 172, 52, 0.2) 0%,
-    rgba(0, 0, 0, 0.3) 50%,
-    rgba(0, 0, 0, 0.6) 100%
-  );
+  background:
+    linear-gradient(
+      135deg,
+      rgb(254 172 52 / 20%) 0%,
+      rgb(0 0 0 / 30%) 50%,
+      rgb(0 0 0 / 60%) 100%
+    );
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -69,14 +70,14 @@
   font-size: 2.5rem;
   font-weight: bold;
   margin-bottom: 1rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  text-shadow: 2px 2px 4px rgb(0 0 0 / 70%);
 }
 
 .image-overlay p {
   color: #f0f0f0;
   font-size: 1.2rem;
   font-weight: 300;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  text-shadow: 1px 1px 2px rgb(0 0 0 / 70%);
   max-width: 300px;
   line-height: 1.4;
 }
@@ -151,17 +152,7 @@ input {
 }
 
 .signup-btn:hover {
-  background: #F79400;
-}
-
-.showcase-container {
-  width: 500px;
-  height: 100%;
-  border-radius: 15px;
-  background-color: #1e1e1e;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background: #f79400;
 }
 
 .password-row {
@@ -285,7 +276,7 @@ input {
 
 .edit-btn:hover,
 .delete-btn:hover {
-  background-color: #F79400;
+  background-color: #f79400;
 }
 
 /* Responsive Design */

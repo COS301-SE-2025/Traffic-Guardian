@@ -57,7 +57,7 @@
 }
 
 .back-button:hover {
-  background: #F79400; /* Matches button hover */
+  background: #f79400; /* Matches button hover */
 }
 
 .incident-table {
@@ -121,7 +121,7 @@
 }
 
 .incident-table button:hover {
-  background: #F79400;
+  background: #f79400;
 }
 
 .incident-card {

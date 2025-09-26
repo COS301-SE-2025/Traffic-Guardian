@@ -210,7 +210,7 @@ const Account: React.FC = () => {
               </span>
               <div className="password-input-container">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
                   value={loginData.password}
@@ -225,7 +225,7 @@ const Account: React.FC = () => {
                   className="password-toggle-btn"
                   onClick={() => setShowPassword(!showPassword)}
                   data-testid="password-toggle"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">

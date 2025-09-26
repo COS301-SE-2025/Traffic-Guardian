@@ -2,7 +2,7 @@
   background: var(--card-background);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgb(0 0 0 / 10%);
   margin-bottom: 1.5rem;
 }
 
@@ -17,7 +17,7 @@
 
 .trends-title h3 {
   color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.5rem;
   font-size: 1.4rem;
   font-weight: 600;
   display: flex;
@@ -82,11 +82,11 @@
 
 .trends-error p {
   color: #856404;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.5rem;
 }
 
 .retry-btn {
-  background: #F79400;
+  background: #f79400;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -112,7 +112,7 @@
 
 .trends-insights h4 {
   color: var(--text-primary);
-  margin: 0 0 1rem 0;
+  margin: 0 0 1rem;
   font-size: 1.1rem;
   font-weight: 600;
 }
@@ -132,7 +132,7 @@
 
 .day-insight h5 {
   color: var(--text-primary);
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 0.75rem;
   font-size: 1rem;
   font-weight: 600;
   text-align: center;
@@ -162,7 +162,7 @@
 }
 
 .upgrade-notice {
-  background: linear-gradient(135deg, #F79400, #feac34);
+  background: linear-gradient(135deg, #f79400, #feac34);
   color: white;
   padding: 1rem;
   border-radius: 8px;
@@ -189,7 +189,7 @@
 /* Dark mode adjustments */
 .dark-mode .weekly-traffic-trends {
   --card-background: #2d2d2d;
-  --text-primary: #ffffff;
+  --text-primary: #fff;
   --text-secondary: #b0b0b0;
   --border-color: #404040;
   --input-background: #3d3d3d;
@@ -198,11 +198,11 @@
 
 /* Light mode adjustments */
 .light-mode .weekly-traffic-trends {
-  --card-background: #ffffff;
-  --text-primary: #333333;
-  --text-secondary: #666666;
+  --card-background: #fff;
+  --text-primary: #333;
+  --text-secondary: #666;
   --border-color: #e0e0e0;
-  --input-background: #ffffff;
+  --input-background: #fff;
   --secondary-background: #f8f9fa;
 }
 

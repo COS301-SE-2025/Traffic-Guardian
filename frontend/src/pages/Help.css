@@ -4,7 +4,7 @@
 :root {
   /* Core Brand Colors - Consistent with Traffic Guardian */
   --primary-color: #fa3;
-  --primary-hover: #F79400;
+  --primary-hover: #f79400;
   --primary-muted: rgb(255 170 51 / 10%);
 
   /* Neutral Palette - Sophisticated Dark Theme */
@@ -95,18 +95,18 @@
   color: #f1f1f1;
   font-weight: 400;
   letter-spacing: -0.01em;
-  padding-top: 160px;
+  padding-top: var(--page-content-offset);
 }
 
 @media (max-width: 768px) {
   .help-page {
-    padding-top: 140px;
+    padding-top: var(--page-content-offset);
   }
 }
 
 @media (max-width: 480px) {
   .help-page {
-    padding-top: 130px;
+    padding-top: var(--page-content-offset);
   }
 }
 
