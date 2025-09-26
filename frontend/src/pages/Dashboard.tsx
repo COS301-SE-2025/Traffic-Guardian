@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { useUser, Permission } from '../contexts/UserContext';
 import ApiService, {
   IncidentStats,
   TrafficIncident,
 } from '../services/apiService';
-import LoadingSpinner from '../components/LoadingSpinner';
 import PEMSTrafficAnalysis from '../components/PEMSTrafficAnalysis';
 import WeeklyTrafficTrends from '../components/WeeklyTrafficTrends';
+import CameraCarousel from '../components/CameraCarousel';
+import ArchiveSummary from '../components/ArchiveSummary';
+import '../components/CameraCarousel.css';
+import '../components/ArchiveSummary.css';
 import './Dashboard.css';
 
 interface CriticalIncidentsData {
@@ -330,8 +334,9 @@ type NewAlertPayload = { Incident_Location: string; [key: string]: unknown };
 
 const Dashboard: React.FC = () => {
   const { isAuthenticated, hasPermission } = useUser();
+  const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
   // Real data state
@@ -370,6 +375,7 @@ const Dashboard: React.FC = () => {
   // PEMS dashboard data
   const [pemsDashboardData, setPemsDashboardData] = useState<any>(null);
   const [_pemsLoading, setPemsLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
 
 
   const addEvent = useCallback((eventText: string) => {
@@ -400,16 +406,16 @@ const Dashboard: React.FC = () => {
     try {
       if (!isAuthenticated || !hasPermission(Permission.VIEW_PEMS_DATA)) {
         // Public users get demo data
-        setPemsDashboardData(generateDemoPEMSData());
+        const demoData = generateDemoPEMSData();
+        setPemsDashboardData(demoData);
         setPemsLoading(false);
+        setStatsLoading(false);
         return;
       }
 
       const apiKey = sessionStorage.getItem('apiKey');
       const response = await fetch(
-        `${
-          process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api'
-        }/pems/dashboard-summary`,
+        `${process.env.REACT_APP_SERVER_URL!}/api/pems/dashboard-summary`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -421,13 +427,18 @@ const Dashboard: React.FC = () => {
       if (response.ok) {
         const pemsData = await response.json();
         setPemsDashboardData(pemsData);
+        setStatsLoading(false);
       } else {
         console.error('Failed to fetch PEMS data, using demo data');
-        setPemsDashboardData(generateDemoPEMSData());
+        const demoData = generateDemoPEMSData();
+        setPemsDashboardData(demoData);
+        setStatsLoading(false);
       }
     } catch (error) {
       console.error('Error fetching PEMS data, using demo data:', error);
-      setPemsDashboardData(generateDemoPEMSData());
+      const demoData = generateDemoPEMSData();
+      setPemsDashboardData(demoData);
+      setStatsLoading(false);
     } finally {
       setPemsLoading(false);
     }
@@ -450,7 +461,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        setLoading(true);
+        _setLoading(true);
 
         if (isAuthenticated && hasPermission(Permission.VIEW_BASIC_TRAFFIC)) {
           // Authenticated users get full data
@@ -479,7 +490,7 @@ const Dashboard: React.FC = () => {
           // Public users get basic traffic data from public endpoint
           try {
             const response = await fetch(
-              `${process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api'}/traffic/public`
+              `${process.env.REACT_APP_SERVER_URL!}/api/traffic/public`
             );
             if (response.ok) {
               const publicData = await response.json();
@@ -541,7 +552,7 @@ const Dashboard: React.FC = () => {
       } catch (error) {
         console.error('Error loading initial data:', error);
       } finally {
-        setLoading(false);
+        _setLoading(false);
       }
     };
 
@@ -550,8 +561,7 @@ const Dashboard: React.FC = () => {
 
   // Socket.io connection
   useEffect(() => {
-    const SERVER_URL =
-      process.env.REACT_APP_SERVER_URL || 'http://localhost:5000';
+    const SERVER_URL = process.env.REACT_APP_SERVER_URL!;
 
     const newSocket = io(SERVER_URL, {
       transports: ['websocket', 'polling'],
@@ -728,7 +738,7 @@ const Dashboard: React.FC = () => {
       );
       console.log(
         '- SERVER_URL:',
-        process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'
+        process.env.REACT_APP_SERVER_URL!
       );
     };
   }, [
@@ -741,17 +751,19 @@ const Dashboard: React.FC = () => {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'live-feed':
-        // Opening live camera feeds
+        navigate('/live-feed');
         break;
       case 'report-incident':
-        // Opening incident reporting form
+        navigate('/incidents');
         break;
       case 'analytics':
-        // Loading traffic analytics dashboard
+        navigate('/analytics');
         break;
       case 'archive':
-        // Opening incident archive
+        navigate('/archives');
         break;
+      default:
+        console.warn(`Unknown quick action: ${action}`);
     }
   };
 
@@ -859,106 +871,410 @@ const Dashboard: React.FC = () => {
 
       <div className="dashboard-content" data-cy="dashboard-content">
 
-        {loading && (
-          <LoadingSpinner
-            size="large"
-            text="Loading dashboard data..."
-            className="content"
-          />
+        {/* Dashboard Summary Stats - Authentication Required */}
+        {isAuthenticated ? (
+          <div className="stats-grid" data-cy="stats-grid">
+            {statsLoading ? (
+              <>
+                {/* Loading Cards */}
+                <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                  <div className="loading-spinner-container">
+                    <div className="loading-spinner small"></div>
+                  </div>
+                </div>
+
+                <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                  <div className="loading-spinner-container">
+                    <div className="loading-spinner small"></div>
+                  </div>
+                </div>
+
+                <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                  <div className="loading-spinner-container">
+                    <div className="loading-spinner small"></div>
+                  </div>
+                </div>
+
+                <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
+                  <div className="loading-spinner-container">
+                    <div className="loading-spinner small"></div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Traffic Detectors */}
+                <div
+                  className="stat-card"
+                  data-cy="stat-card-detectors"
+                  data-testid="stats-card"
+                >
+                  <div className="stat-card-icon" data-cy="stat-card-icon">
+                    <GaugeIcon />
+                  </div>
+                  <div className="stat-card-title" data-cy="stat-card-title">
+                    Traffic Detectors
+                  </div>
+                  <div className="stat-card-value" data-cy="stat-card-value">
+                    {pemsDashboardData?.overview?.total_detectors || 0}
+                  </div>
+                  <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                    Active monitoring points
+                  </div>
+                </div>
+
+                {/* Average Speed */}
+                <div
+                  className="stat-card"
+                  data-cy="stat-card-avg-speed"
+                  data-testid="stats-card"
+                >
+                  <div className="stat-card-icon" data-cy="stat-card-icon">
+                    <TrendingUpIcon />
+                  </div>
+                  <div className="stat-card-title" data-cy="stat-card-title">
+                    Average Speed
+                  </div>
+                  <div className="stat-card-value" data-cy="stat-card-value">
+                    {pemsDashboardData?.overview?.avg_speed_mph?.toFixed(1) || 0} mph
+                  </div>
+                  <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                    System-wide average
+                  </div>
+                </div>
+
+                {/* High Risk Areas */}
+                <div
+                  className="stat-card risk-indicator"
+                  data-cy="stat-card-high-risk"
+                  data-testid="stats-card"
+                >
+                  <div className="stat-card-icon" data-cy="stat-card-icon">
+                    <AlertTriangleIcon />
+                  </div>
+                  <div className="stat-card-title" data-cy="stat-card-title">
+                    High Risk Areas
+                  </div>
+                  <div className="stat-card-value" data-cy="stat-card-value">
+                    {pemsDashboardData?.overview?.high_risk_count || 0}
+                  </div>
+                  <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                    Require attention
+                  </div>
+                  <div className="progress-bar" data-cy="progress-bar">
+                    <div
+                      className="progress-fill critical"
+                      style={{
+                        width: `${Math.min(
+                          ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) *
+                            100,
+                          100
+                        )}%`,
+                      }}
+                      data-cy="progress-fill"
+                    ></div>
+                  </div>
+                </div>
+
+                {/* System Status */}
+                <div
+                  className={`stat-card system-status-card ${getSystemStatusClass(
+                    pemsDashboardData?.overview?.system_status
+                  )}`}
+                  data-cy="stat-card-system-status"
+                >
+                  <div className="stat-card-icon" data-cy="stat-card-icon">
+                    <ActivityIcon />
+                  </div>
+                  <div className="stat-card-title" data-cy="stat-card-title">
+                    System Status
+                  </div>
+                  <div className="stat-card-value" data-cy="stat-card-value">
+                    {pemsDashboardData?.overview?.system_status || 'UNKNOWN'}
+                  </div>
+                  <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+                    Traffic management system
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="stats-signin-prompt" data-cy="stats-signin-prompt">
+            <div className="signin-prompt-content">
+              <div className="signin-prompt-header">
+                <div className="signin-prompt-icon">
+                  <GaugeIcon />
+                </div>
+                <h3>Dashboard Summary</h3>
+              </div>
+              <div className="signin-prompt-description">
+                <p>Sign in to access comprehensive traffic system metrics:</p>
+                <ul>
+                  <li>Real-time traffic detector status</li>
+                  <li>System-wide average speeds</li>
+                  <li>High-risk area monitoring</li>
+                  <li>Traffic management system health</li>
+                </ul>
+              </div>
+              <div className="signin-prompt-actions">
+                <a href="/account" className="signin-btn primary">
+                  Sign In for Dashboard Access
+                </a>
+                <a href="/signup" className="signin-btn secondary">
+                  Create Account
+                </a>
+              </div>
+            </div>
+          </div>
         )}
 
-        <div className="stats-grid" data-cy="stats-grid">
-          {/* Traffic Detectors */}
-          <div
-            className="stat-card"
-            data-cy="stat-card-detectors"
-            data-testid="stats-card"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <GaugeIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              Traffic Detectors
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.total_detectors || 0}
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              Active monitoring points
+        {/* High Volume Areas & Archive Summary Section */}
+        <div className="dashboard-dual-container">
+          <CameraCarousel className="dashboard-camera-carousel" />
+          <ArchiveSummary className="dashboard-archive-summary" />
+        </div>
+
+        {/* Weekly Traffic Trends Section */}
+        <div className="weekly-trends-section" data-cy="weekly-trends-section">
+          <WeeklyTrafficTrends
+            className="dashboard-weekly-trends"
+            district={isAuthenticated ? 12 : undefined}
+            showDetailed={isAuthenticated && hasPermission(Permission.VIEW_DETAILED_ANALYTICS)}
+          />
+        </div>
+
+        {/* PEMS Traffic Analysis Section - Auth Required */}
+        {isAuthenticated && hasPermission(Permission.VIEW_PEMS_DATA) ? (
+          <div data-testid="incident-chart">
+            <PEMSTrafficAnalysis
+              district={12}
+              onAlertSelect={_alert => {
+                // Alert selected
+              }}
+              onDetectorSelect={_detector => {
+                // Detector selected
+              }}
+            />
+          </div>
+        ) : (
+          <div className="pems-signup-prompt" data-cy="pems-signup-prompt">
+            <div className="signup-prompt-content">
+              <div className="signup-prompt-header">
+                <div className="signup-prompt-icon">
+                  <ActivityIcon />
+                </div>
+                <h3>Advanced PEMS Traffic Analysis</h3>
+              </div>
+              <div className="signup-prompt-description">
+                <p>Get access to detailed Performance Measurement System (PEMS) data including:</p>
+                <ul>
+                  <li>Real-time detector data from 39,000+ sensors</li>
+                  <li>Traffic flow patterns and congestion analysis</li>
+                  <li>High-risk area identification</li>
+                  <li>Historical traffic trends and reports</li>
+                </ul>
+              </div>
+              <div className="signup-prompt-actions">
+                <a href="/account" className="signup-btn primary">
+                  Sign In for Full Access
+                </a>
+                <a href="/signup" className="signup-btn secondary">
+                  Create Free Account
+                </a>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Average Speed */}
-          <div
-            className="stat-card"
-            data-cy="stat-card-avg-speed"
-            data-testid="stats-card"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <TrendingUpIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              Average Speed
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.avg_speed_mph?.toFixed(1) || 0} mph
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              System-wide average
-            </div>
-          </div>
+        {/* Traffic Incidents Section - Authentication Required */}
+        <div className="dashboard-main-grid" data-cy="dashboard-main-grid">
+          {isAuthenticated ? (
+            <div
+              className="incidents-section"
+              data-cy="incidents-section"
+              id="incidents-section"
+            >
+              <div className="incidents-header" data-cy="incidents-header">
+                <h3 data-cy="incidents-title">Live Traffic Incidents</h3>
+                <div className="incidents-badge" data-cy="incidents-badge">
+                  {trafficData.length} Locations
+                </div>
+              </div>
+              <div className="incidents-list" data-cy="incidents-list">
+                {trafficData.map((location, index) => (
+                  <div
+                    key={index}
+                    className="incident-item"
+                    data-cy={`incident-item-${index}`}
+                  >
+                    <div className="incident-header" data-cy="incident-header">
+                      <div className="incident-type" data-cy="incident-type">
+                        <MapPinIcon />
+                        {location.location}
+                      </div>
+                      <div
+                        className="severity-badge medium"
+                        data-cy="severity-badge"
+                      >
+                        {location.incidents.length} Incidents
+                      </div>
+                    </div>
 
-          {/* High Risk Areas */}
+                    <div className="incident-details" data-cy="incident-details">
+                      {location.incidents
+                        .slice(0, 3)
+                        .map((incident, incIndex) => (
+                          <div
+                            key={incIndex}
+                            className="incident-detail"
+                            data-cy="incident-detail-item"
+                          >
+                            <AlertTriangleIcon />
+                            <span>{incident.properties.iconCategory}</span>
+                            <span
+                              className="magnitude-badge"
+                              data-cy="magnitude-badge"
+                            >
+                              Severity: {incident.properties.magnitudeOfDelay}
+                            </span>
+                          </div>
+                        ))}
+                      {location.incidents.length > 3 && (
+                        <div
+                          className="incident-detail"
+                          data-cy="incident-detail-more"
+                        >
+                          <span>
+                            +{location.incidents.length - 3} more incidents
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {trafficData.length === 0 && (
+                  <div className="incident-item" data-cy="incident-empty">
+                    <div className="incident-header">
+                      <div className="incident-type">
+                        <AlertTriangleIcon />
+                        No Traffic Data
+                      </div>
+                    </div>
+                    <div className="incident-details">
+                      <div className="incident-detail">
+                        Waiting for traffic updates...
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="last-updated" data-cy="last-updated-incidents">
+                <div
+                  className="update-indicator"
+                  data-cy="update-indicator"
+                ></div>
+                Last updated: {formatTime(lastUpdate)}
+              </div>
+            </div>
+          ) : (
+            <div className="incidents-section incidents-signin-prompt" data-cy="incidents-signin-prompt">
+              <div className="signin-prompt-content">
+                <div className="signin-prompt-header">
+                  <div className="signin-prompt-icon">
+                    <AlertTriangleIcon />
+                  </div>
+                  <h3>Live Traffic Incidents</h3>
+                </div>
+                <div className="signin-prompt-description">
+                  <p>Access real-time traffic incident data including:</p>
+                  <ul>
+                    <li>Live incident locations and severity levels</li>
+                    <li>Traffic disruption and delay information</li>
+                    <li>Emergency response coordination data</li>
+                    <li>Detailed incident analytics</li>
+                  </ul>
+                </div>
+                <div className="signin-prompt-actions">
+                  <a href="/account" className="signin-btn primary">
+                    Sign In to View Incidents
+                  </a>
+                  <a href="/signup" className="signin-btn secondary">
+                    Create Free Account
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div
-            className="stat-card risk-indicator"
-            data-cy="stat-card-high-risk"
-            data-testid="stats-card"
+            className="regional-stats-section"
+            data-cy="regional-stats-section"
+            id="regional-stats-section"
           >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <AlertTriangleIcon />
+            <div className="regional-header" data-cy="regional-header">
+              <h3 data-cy="regional-title">Regional Activity</h3>
             </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              High Risk Areas
+            <div className="regional-list" data-cy="regional-list">
+              {userStats.regionCounts
+                .filter(region => region.userCount > 0)
+                .sort((a, b) => b.userCount - a.userCount)
+                .map((region, index) => (
+                  <div
+                    key={index}
+                    className="regional-item"
+                    data-cy={`regional-item-${region.region}`}
+                  >
+                    <div className="regional-info" data-cy="regional-info">
+                      <div
+                        className="regional-details"
+                        data-cy="regional-details"
+                      >
+                        <h4 data-cy="regional-name">{region.region}</h4>
+                        <p data-cy="regional-users">
+                          {region.userCount} active users
+                        </p>
+                      </div>
+                    </div>
+                    <div className="regional-stats" data-cy="regional-stats">
+                      <div
+                        className="progress-bar small"
+                        data-cy="progress-bar-small"
+                      >
+                        <div
+                          className="progress-fill"
+                          style={{
+                            width: `${Math.min(
+                              (region.userCount /
+                                Math.max(userStats.totalOnline, 1)) *
+                                100,
+                              100
+                            )}%`,
+                          }}
+                          data-cy="progress-fill-regional"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              {userStats.regionCounts.filter(r => r.userCount > 0).length ===
+                0 && (
+                <div className="regional-item" data-cy="regional-empty">
+                  <div className="regional-info">
+                    <div className="regional-details">
+                      <h4>No Regional Data</h4>
+                      <p>Waiting for user location data...</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.high_risk_count || 0}
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              Require attention
-            </div>
-            <div className="progress-bar" data-cy="progress-bar">
+            <div className="last-updated" data-cy="last-updated-regional">
               <div
-                className="progress-fill critical"
-                style={{
-                  width: `${Math.min(
-                    ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) *
-                      100,
-                    100
-                  )}%`,
-                }}
-                data-cy="progress-fill"
+                className="update-indicator"
+                data-cy="update-indicator"
               ></div>
-            </div>
-          </div>
-
-          {/* System Status */}
-          <div
-            className={`stat-card system-status-card ${getSystemStatusClass(
-              pemsDashboardData?.overview?.system_status
-            )}`}
-            data-cy="stat-card-system-status"
-          >
-            <div className="stat-card-icon" data-cy="stat-card-icon">
-              <ActivityIcon />
-            </div>
-            <div className="stat-card-title" data-cy="stat-card-title">
-              System Status
-            </div>
-            <div className="stat-card-value" data-cy="stat-card-value">
-              {pemsDashboardData?.overview?.system_status || 'UNKNOWN'}
-            </div>
-            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
-              Traffic management system
+              Real-time updates
             </div>
           </div>
         </div>
@@ -1102,220 +1418,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-
-        {/* Weekly Traffic Trends Section */}
-        <div className="weekly-trends-section" data-cy="weekly-trends-section">
-          <WeeklyTrafficTrends
-            className="dashboard-weekly-trends"
-            district={isAuthenticated ? 12 : undefined}
-            showDetailed={isAuthenticated && hasPermission(Permission.VIEW_DETAILED_ANALYTICS)}
-          />
-        </div>
-
-        {/* PEMS Traffic Analysis Section - Auth Required */}
-        {isAuthenticated && hasPermission(Permission.VIEW_PEMS_DATA) ? (
-          <div data-testid="incident-chart">
-            <PEMSTrafficAnalysis
-              district={12}
-              onAlertSelect={_alert => {
-                // Alert selected
-              }}
-              onDetectorSelect={_detector => {
-                // Detector selected
-              }}
-            />
-          </div>
-        ) : (
-          <div className="pems-signup-prompt" data-cy="pems-signup-prompt">
-            <div className="signup-prompt-content">
-              <div className="signup-prompt-header">
-                <div className="signup-prompt-icon">
-                  <ActivityIcon />
-                </div>
-                <h3>Advanced PEMS Traffic Analysis</h3>
-              </div>
-              <div className="signup-prompt-description">
-                <p>Get access to detailed Performance Measurement System (PEMS) data including:</p>
-                <ul>
-                  <li>Real-time detector data from 39,000+ sensors</li>
-                  <li>Traffic flow patterns and congestion analysis</li>
-                  <li>High-risk area identification</li>
-                  <li>Historical traffic trends and reports</li>
-                </ul>
-              </div>
-              <div className="signup-prompt-actions">
-                <a href="/account" className="signup-btn primary">
-                  Sign In for Full Access
-                </a>
-                <a href="/signup" className="signup-btn secondary">
-                  Create Free Account
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Traffic Incidents Section */}
-        <div className="dashboard-main-grid" data-cy="dashboard-main-grid">
-          <div
-            className="incidents-section"
-            data-cy="incidents-section"
-            id="incidents-section"
-          >
-            <div className="incidents-header" data-cy="incidents-header">
-              <h3 data-cy="incidents-title">Live Traffic Incidents</h3>
-              <div className="incidents-badge" data-cy="incidents-badge">
-                {trafficData.length} Locations
-              </div>
-            </div>
-            <div className="incidents-list" data-cy="incidents-list">
-              {trafficData.map((location, index) => (
-                <div
-                  key={index}
-                  className="incident-item"
-                  data-cy={`incident-item-${index}`}
-                >
-                  <div className="incident-header" data-cy="incident-header">
-                    <div className="incident-type" data-cy="incident-type">
-                      <MapPinIcon />
-                      {location.location}
-                    </div>
-                    <div
-                      className="severity-badge medium"
-                      data-cy="severity-badge"
-                    >
-                      {location.incidents.length} Incidents
-                    </div>
-                  </div>
-
-                  <div className="incident-details" data-cy="incident-details">
-                    {location.incidents
-                      .slice(0, 3)
-                      .map((incident, incIndex) => (
-                        <div
-                          key={incIndex}
-                          className="incident-detail"
-                          data-cy="incident-detail-item"
-                        >
-                          <AlertTriangleIcon />
-                          <span>{incident.properties.iconCategory}</span>
-                          <span
-                            className="magnitude-badge"
-                            data-cy="magnitude-badge"
-                          >
-                            Severity: {incident.properties.magnitudeOfDelay}
-                          </span>
-                        </div>
-                      ))}
-                    {location.incidents.length > 3 && (
-                      <div
-                        className="incident-detail"
-                        data-cy="incident-detail-more"
-                      >
-                        <span>
-                          +{location.incidents.length - 3} more incidents
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {trafficData.length === 0 && (
-                <div className="incident-item" data-cy="incident-empty">
-                  <div className="incident-header">
-                    <div className="incident-type">
-                      <AlertTriangleIcon />
-                      No Traffic Data
-                    </div>
-                  </div>
-                  <div className="incident-details">
-                    <div className="incident-detail">
-                      Waiting for traffic updates...
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="last-updated" data-cy="last-updated-incidents">
-              <div
-                className="update-indicator"
-                data-cy="update-indicator"
-              ></div>
-              Last updated: {formatTime(lastUpdate)}
-            </div>
-          </div>
-
-          <div
-            className="regional-stats-section"
-            data-cy="regional-stats-section"
-            id="regional-stats-section"
-          >
-            <div className="regional-header" data-cy="regional-header">
-              <h3 data-cy="regional-title">Regional Activity</h3>
-            </div>
-            <div className="regional-list" data-cy="regional-list">
-              {userStats.regionCounts
-                .filter(region => region.userCount > 0)
-                .sort((a, b) => b.userCount - a.userCount)
-                .map((region, index) => (
-                  <div
-                    key={index}
-                    className="regional-item"
-                    data-cy={`regional-item-${region.region}`}
-                  >
-                    <div className="regional-info" data-cy="regional-info">
-                      <div
-                        className="regional-details"
-                        data-cy="regional-details"
-                      >
-                        <h4 data-cy="regional-name">{region.region}</h4>
-                        <p data-cy="regional-users">
-                          {region.userCount} active users
-                        </p>
-                      </div>
-                    </div>
-                    <div className="regional-stats" data-cy="regional-stats">
-                      <div
-                        className="progress-bar small"
-                        data-cy="progress-bar-small"
-                      >
-                        <div
-                          className="progress-fill"
-                          style={{
-                            width: `${Math.min(
-                              (region.userCount /
-                                Math.max(userStats.totalOnline, 1)) *
-                                100,
-                              100
-                            )}%`,
-                          }}
-                          data-cy="progress-fill-regional"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              {userStats.regionCounts.filter(r => r.userCount > 0).length ===
-                0 && (
-                <div className="regional-item" data-cy="regional-empty">
-                  <div className="regional-info">
-                    <div className="regional-details">
-                      <h4>No Regional Data</h4>
-                      <p>Waiting for user location data...</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="last-updated" data-cy="last-updated-regional">
-              <div
-                className="update-indicator"
-                data-cy="update-indicator"
-              ></div>
-              Real-time updates
-            </div>
-          </div>
         </div>
 
         <div

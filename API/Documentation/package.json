@@ -1,0 +1,13 @@
+{
+  "name": "traffic-guardian-api-docs",
+  "version": "1.0.0",
+  "description": "Documentation for Traffic Guardian API",
+  "private": true,
+  "scripts": {
+    "generate": "jsdoc -c jsdoc.json"
+  },
+  "dependencies": {
+    "docdash": "^2.0.0",
+    "jsdoc": "^4.0.2"
+  }
+}

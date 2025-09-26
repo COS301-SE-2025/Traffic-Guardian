@@ -677,12 +677,35 @@
 .video-modal-content {
   padding: 1rem;
   min-height: 400px;
+  max-height: 500px; /* Prevent excessive expansion */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   background: var(--feed-tile-bg);
   color: var(--feed-info-text);
+  overflow: hidden;
+}
+
+/* Map Container Specific Styles */
+.video-modal .map-container {
+  width: 100%;
+  margin-bottom: 0;
+  max-width: 800px; /* Match video container max-width */
+}
+
+.video-modal .camera-map {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto !important;
+  border: 1px solid var(--feed-tile-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Remove bottom padding when map container is present */
+.video-modal-content:has(.map-container) {
+  padding-bottom: 0;
 }
 
 /* Video Container */
@@ -690,6 +713,7 @@
   position: relative;
   width: 100%;
   max-width: 800px;
+  padding-bottom: 60px; /* Space for controls */
 }
 
 .modal-video {
@@ -748,9 +772,16 @@
 }
 
 .timelapse-controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 8px;
+  border-radius: 6px;
+  z-index: 10;
 }
 
 .timelapse-btn {
@@ -787,8 +818,19 @@
 /* Video Modal Info */
 .video-modal-info {
   padding: 1rem 1.5rem;
-  border-top: 1px solid var(--feed-tile-border);
   background-color: var(--feed-details-bg);
+}
+
+/* Add proper spacing between map info and video modal info */
+.video-modal:has(.map-container) .video-modal-info {
+  padding-top: 1rem;
+  border-top: 1px solid var(--feed-tile-border);
+  margin-top: 1rem;
+}
+
+/* Ensure proper spacing for map container */
+.video-modal-content .map-container {
+  margin-bottom: 0;
 }
 
 .camera-details-modal {
@@ -928,10 +970,14 @@
 
 /* Map Info Styling */
 .map-info {
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   background-color: var(--feed-details-bg);
   border-radius: 0 0 8px 8px;
   text-align: center;
+  margin-bottom: 0;
+  border-bottom: none; /* Remove border to prevent visual gap */
+  max-height: 100px; /* Limit height to prevent modal expansion */
+  overflow: hidden;
 }
 
 .map-info p {
@@ -946,7 +992,8 @@
 
 .camera-map {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 9; /* Television proportions */
+  height: auto !important;
   border: 1px solid var(--feed-tile-border);
   border-radius: 8px;
   overflow: hidden;

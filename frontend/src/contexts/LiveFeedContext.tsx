@@ -11,6 +11,7 @@ import { LiveFeedDatabaseIntegration } from '../services/CameraDataService';
 export interface CameraFeed {
   id: string;
   location: string;
+  locationName?: string;
   status: 'Online' | 'Offline' | 'Loading';
   image: string;
   videoUrl?: string;
@@ -123,7 +124,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (!dbIntegrationRef.current) {
       dbIntegrationRef.current = new LiveFeedDatabaseIntegration(
-        process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000',
+        process.env.REACT_APP_SERVER_URL!,
       );
     }
 
@@ -213,6 +214,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
             location.locationName ||
             location.nearbyPlace ||
             `District ${district} Camera`,
+          locationName: location.locationName,
           status: 'Loading' as const,
           image: httpsImageUrl,
           videoUrl,
