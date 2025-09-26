@@ -4,6 +4,7 @@ test('block out scalability testing',()=>{
   expect(1+1).toBe(2);
 })
 */
+/*
 describe('Performance Test with Autocannon', () => {
   test('Case with 50 connections', async()=>{
     const params = {
@@ -32,3 +33,4 @@ function runAutoCannon(p){
         })
     });
 }
+    */

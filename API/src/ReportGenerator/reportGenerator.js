@@ -23,7 +23,7 @@ const incidents = [
   }
 ];
 
-generatePDF(incidents, "aryanmohanlall@gmail.com");
+//generatePDF(incidents, "aryanmohanlall@gmail.com");
 
 
 //sendEmail(to, subject, text, html, reportName, reportFile)
