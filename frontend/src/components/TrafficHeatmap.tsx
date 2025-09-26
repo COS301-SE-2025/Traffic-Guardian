@@ -1,9 +1,18 @@
-// Traffic Density Heatmap Component
+// Traffic Density Visualization Component
 import React, { useEffect, useRef } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet.heat';
 import { HeatmapPoint } from '../services/trafficDensityService';
+
+declare global {
+  namespace L {
+    function heatLayer(
+      latlngs: [number, number, number][],
+      options?: any,
+    ): any;
+  }
+}
 
 interface TrafficHeatmapProps {
   data: HeatmapPoint[];
@@ -25,72 +34,35 @@ const TrafficHeatmap: React.FC<TrafficHeatmapProps> = ({
   const map = useMap();
   const heatLayerRef = useRef<any>(null);
 
-  const { radius = 60, blur = 25, intensityMultiplier = 3.0 } = options;
-
   useEffect(() => {
-    if (!visible) {
-      if (heatLayerRef.current) {
-        map.removeLayer(heatLayerRef.current);
-        heatLayerRef.current = null;
-      }
+    // Remove existing heat layer
+    if (heatLayerRef.current) {
+      map.removeLayer(heatLayerRef.current);
+      heatLayerRef.current = null;
+    }
+
+    if (!visible || data.length === 0) {
       return;
     }
 
-    // Prepare heatmap data: [lat, lng, intensity]
-    const heatmapData: [number, number, number][] = data.map(point => [
-      point.lat,
-      point.lng,
-      point.intensity * intensityMultiplier,
-    ]);
-
-    console.log(
-      `🔥 Heatmap rendering ${heatmapData.length} points with config:`,
-      {
-        radius,
-        blur,
-        intensityMultiplier,
-        opacity,
-        visible,
-        samplePoints: heatmapData.slice(0, 3),
-      },
-    );
-
-    // Remove existing layer
-    if (heatLayerRef.current) {
-      map.removeLayer(heatLayerRef.current);
-    }
-
-    // Create new heatmap layer with custom gradient
-    const heatLayer = L.heatLayer(heatmapData, {
-      radius: radius,
-      blur: blur,
-      maxZoom: 18,
-      max: 1.0,
-      minOpacity: 0.6, // Increased minimum opacity for better visibility
-      gradient: {
-        0.0: 'rgba(0,255,0,0.9)', // Green - low traffic (more opaque)
-        0.2: 'rgba(255,255,0,0.9)', // Yellow - moderate traffic
-        0.4: 'rgba(255,107,53,1.0)', // Orange - high traffic
-        0.6: 'rgba(229,90,46,1.0)', // Dark orange - very high traffic
-        0.8: 'rgba(255,0,0,1.0)', // Red - critical traffic
-        1.0: 'rgba(139,0,0,1.0)', // Dark red - extreme risk
-      },
+    // Convert data to leaflet.heat format: [lat, lng, intensity]
+    const heatData: [number, number, number][] = data.map(point => {
+      return [point.lat, point.lng, point.intensity];
     });
 
-    // Set opacity and add to map
-    map.addLayer(heatLayer);
-    heatLayerRef.current = heatLayer;
+    // Create heat layer with updated options
+    const heatLayer = L.heatLayer(heatData, {
+      radius: options.radius || 100,
+      blur: options.blur || 20,
+      maxZoom: 18,
+    });
 
-    // Force opacity update if supported
-    if (
-      (heatLayer as any).setOpacity &&
-      typeof (heatLayer as any).setOpacity === 'function'
-    ) {
+    // Add to map and set opacity
+    (heatLayer as any).addTo(map);
+    if ((heatLayer as any).setOpacity) {
       (heatLayer as any).setOpacity(opacity);
-      console.log(`🎭 Heatmap opacity set to: ${opacity}`);
-    } else {
-      console.log('⚠️ Heatmap layer does not support opacity control');
     }
+    heatLayerRef.current = heatLayer;
 
     // Cleanup function
     return () => {
@@ -99,20 +71,14 @@ const TrafficHeatmap: React.FC<TrafficHeatmapProps> = ({
         heatLayerRef.current = null;
       }
     };
-  }, [data, visible, opacity, radius, blur, intensityMultiplier, map]);
+  }, [data, visible, options.radius, options.blur, map]);
 
-  // Force opacity update when opacity changes
+  // Update opacity when it changes
   useEffect(() => {
-    if (heatLayerRef.current && visible) {
-      if (
-        (heatLayerRef.current as any).setOpacity &&
-        typeof (heatLayerRef.current as any).setOpacity === 'function'
-      ) {
-        (heatLayerRef.current as any).setOpacity(opacity);
-        console.log(`🎭 Opacity updated to: ${opacity}`);
-      }
+    if (heatLayerRef.current && (heatLayerRef.current as any).setOpacity) {
+      (heatLayerRef.current as any).setOpacity(opacity);
     }
-  }, [opacity, visible]);
+  }, [opacity]);
 
   return null; // This component doesn't render anything directly
 };

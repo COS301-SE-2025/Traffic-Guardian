@@ -6,6 +6,7 @@ import { LiveFeedProvider } from './contexts/LiveFeedContext';
 import { UserProvider } from './contexts/UserContext';
 import NavBar from './components/NavBar';
 import GlobalAlertBadge from './components/GlobalAlertBadge';
+import DataAttribution from './components/DataAttribution';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LiveFeed from './pages/LiveFeed';
@@ -171,28 +172,29 @@ const App: React.FC = () => {
         <Router>
           <SocketProvider>
             <LiveFeedProvider>
-            <div className="App">
-              <AnimatedRoutes />
+              <div className="App">
+                <AnimatedRoutes />
+                <DataAttribution />
 
-              {/* Global Toast Container for real-time notifications */}
-              <ToastContainer
-                position="top-right"
-                autoClose={8000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-                style={{ zIndex: 99999 }}
-              />
-            </div>
-          </LiveFeedProvider>
-        </SocketProvider>
-      </Router>
-    </UserProvider>
+                {/* Global Toast Container for real-time notifications */}
+                <ToastContainer
+                  position="top-right"
+                  autoClose={8000}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="dark"
+                  style={{ zIndex: 99999 }}
+                />
+              </div>
+            </LiveFeedProvider>
+          </SocketProvider>
+        </Router>
+      </UserProvider>
     </ThemeProvider>
   );
 };

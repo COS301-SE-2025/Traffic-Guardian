@@ -1,8 +1,7 @@
 // Frontend API Service for Analytics with Caching
 import { cacheService } from './CacheService';
 
-const API_BASE_URL =
-  process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_SERVER_URL! + '/api';
 
 export interface DatabaseIncident {
   Incident_ID: number;
@@ -739,6 +738,74 @@ class ApiService {
       return permissions;
     } catch (error) {
       console.error('Error fetching user permissions:', error);
+      return null;
+    }
+  }
+
+  // Get cameras with their latest traffic counts (public access)
+  static async fetchCamerasWithTrafficCounts(): Promise<any[] | null> {
+    try {
+      // Use the public endpoint for traffic data
+      const url = `${API_BASE_URL}/cameras/public/traffic-data`;
+      console.log('🔗 Fetching public traffic data from:', url);
+
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        console.error(`❌ Public API request failed: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const result = await this.handleResponse<{data: any[]}>(response);
+      console.log('📊 Public API response:', {
+        total: result.data?.length || 0,
+        hasData: !!result.data,
+        sampleCamera: result.data?.[0]
+      });
+
+      return result.data || [];
+    } catch (error) {
+      console.error('❌ Error fetching public cameras with traffic counts:', error);
+      return null;
+    }
+  }
+
+  // Get top 5 cameras by traffic count (public access)
+  static async fetchTopCamerasByTraffic(): Promise<any[] | null> {
+    try {
+      // Use the public endpoint for top cameras by traffic
+      const url = `${API_BASE_URL}/cameras/public/top-by-traffic`;
+      console.log('🔗 Fetching top cameras by traffic from:', url);
+
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        console.error(`❌ Public API request failed: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const result = await this.handleResponse<{data: any[]}>(response);
+      console.log('📊 Top cameras API response:', {
+        total: result.data?.length || 0,
+        hasData: !!result.data,
+        sampleCamera: result.data?.[0]
+      });
+
+      return result.data || [];
+    } catch (error) {
+      console.error('❌ Error fetching top cameras by traffic:', error);
       return null;
     }
   }
