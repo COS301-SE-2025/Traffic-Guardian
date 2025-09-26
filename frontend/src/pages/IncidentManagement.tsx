@@ -131,7 +131,21 @@ const IncidentManagement: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toISOString().split('T')[0];
+    const date = new Date(dateString);
+    const dateString_ca = date.toLocaleDateString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
+    // Get timezone abbreviation (PST/PDT)
+    const timeZone = date.toLocaleDateString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      timeZoneName: 'short'
+    }).split(', ')[1];
+
+    return `${dateString_ca} (${timeZone})`;
   };
 
   if (loading) {return <div className="loading-message">Loading...</div>;}
