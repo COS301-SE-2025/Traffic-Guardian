@@ -385,16 +385,16 @@ const Dashboard: React.FC = () => {
   }, []);
 
 
-  // Generate demo PEMS data for public users
+  // Generate standardized demo PEMS data for public users
   const generateDemoPEMSData = useCallback(() => {
     return {
       timestamp: new Date().toISOString(),
       overview: {
-        total_detectors: 850 + Math.floor(Math.random() * 200),
-        active_detectors: 800 + Math.floor(Math.random() * 180),
-        avg_speed_mph: 55 + Math.floor(Math.random() * 15),
-        total_flow_vehicles: 125000 + Math.floor(Math.random() * 50000),
-        high_risk_count: 8 + Math.floor(Math.random() * 12),
+        total_detectors: 1024,
+        active_detectors: 987,
+        avg_speed_mph: 62.5,
+        total_flow_vehicles: 147500,
+        high_risk_count: 15,
         system_status: 'HEALTHY',
       },
       publicDemo: true,
@@ -513,10 +513,24 @@ const Dashboard: React.FC = () => {
             }
           } catch (error) {
             console.error('Error fetching public traffic data:', error);
-            // Fallback demo data for public users
+            // Standardized fallback demo data for public users
             setTrafficData([
               {
-                location: 'Los Angeles',
+                location: 'Los Angeles County',
+                incidents: [{
+                  properties: {
+                    iconCategory: 'Traffic Alert',
+                    magnitudeOfDelay: 2,
+                    events: [],
+                  },
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [[0, 0]],
+                  },
+                }],
+              },
+              {
+                location: 'San Francisco Bay Area',
                 incidents: [{
                   properties: {
                     iconCategory: 'Traffic Alert',
@@ -530,11 +544,25 @@ const Dashboard: React.FC = () => {
                 }],
               },
               {
-                location: 'San Francisco',
+                location: 'Orange County',
                 incidents: [{
                   properties: {
                     iconCategory: 'Traffic Alert',
                     magnitudeOfDelay: 2,
+                    events: [],
+                  },
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [[0, 0]],
+                  },
+                }],
+              },
+              {
+                location: 'San Diego County',
+                incidents: [{
+                  properties: {
+                    iconCategory: 'Traffic Alert',
+                    magnitudeOfDelay: 1,
                     events: [],
                   },
                   geometry: {
