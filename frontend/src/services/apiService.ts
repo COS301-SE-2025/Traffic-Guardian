@@ -766,7 +766,7 @@ class ApiService {
       console.log('📊 Public API response:', {
         total: result.data?.length || 0,
         hasData: !!result.data,
-        sampleCamera: result.data?.[0]
+        sampleCamera: result.data?.[0],
       });
 
       return result.data || [];
@@ -800,7 +800,7 @@ class ApiService {
       console.log('📊 Top cameras API response:', {
         total: result.data?.length || 0,
         hasData: !!result.data,
-        sampleCamera: result.data?.[0]
+        sampleCamera: result.data?.[0],
       });
 
       return result.data || [];

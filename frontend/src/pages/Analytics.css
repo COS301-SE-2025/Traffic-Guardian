@@ -332,7 +332,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 /* Archive-specific card icons */
 .card-icon.archive {
-  background: linear-gradient(135deg, #feac34 0%, #F79400 100%);
+  background: linear-gradient(135deg, #feac34 0%, #f79400 100%);
 }
 
 .card-icon.archive-time {

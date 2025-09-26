@@ -537,7 +537,7 @@
   margin-bottom: 2rem;
   text-align: center;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
 }
 
 .upgrade-prompt:hover {
@@ -548,14 +548,14 @@
 
 .upgrade-prompt h4 {
   color: var(--title-color);
-  margin: 0 0 1rem 0;
+  margin: 0 0 1rem;
   font-size: 1.5rem;
   font-weight: 700;
 }
 
 .upgrade-prompt p {
   color: var(--text-color);
-  margin: 0 0 1rem 0;
+  margin: 0 0 1rem;
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -596,7 +596,7 @@
   background: var(--button-primary-hover);
   border-color: var(--button-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(217, 119, 0, 0.3);
+  box-shadow: 0 4px 16px rgb(217 119 0 / 30%);
   text-decoration: none;
   color: var(--button-primary-text);
 }

@@ -324,7 +324,7 @@ const WeeklyTrafficTrends: React.FC<WeeklyTrafficTrendsProps> = ({
       {!isAuthenticated && (
         <div className="upgrade-notice">
           <p>
-            <i className="fas fa-chart-bar"></i> <strong>Want more detailed insights?</strong>
+            <i className="fas fa-chart-bar" /> <strong>Want more detailed insights?</strong>
             <a href="/account">Sign in</a> to access advanced analytics,
             historical trends, and district-specific data.
           </p>
