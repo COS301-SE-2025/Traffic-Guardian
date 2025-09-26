@@ -1043,17 +1043,18 @@
   background: var(--card-bg);
   border-radius: 20px;
   padding: var(--space-8) var(--space-6);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
   border: 1px solid var(--border-color);
   max-width: 600px;
   width: 100%;
   text-align: center;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  animation: fadeInArchives 0.6s ease-out;
 }
 
 .archives-signin-content:hover {
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 48px rgb(0 0 0 / 15%);
   transform: translateY(-2px);
 }
 
@@ -1067,7 +1068,7 @@
 
 .signin-header svg {
   color: var(--primary-color);
-  opacity: 0.8;
+  opacity: 80%;
 }
 
 .signin-header h2 {
@@ -1142,7 +1143,7 @@
   background: var(--primary-hover);
   border-color: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(217, 119, 0, 0.3);
+  box-shadow: 0 4px 16px rgb(217 119 0 / 30%);
 }
 
 .archives-signin-content .signin-btn.secondary {
@@ -1152,9 +1153,9 @@
 }
 
 .archives-signin-content .signin-btn.secondary:hover {
-  background: rgba(217, 119, 0, 0.1);
+  background: rgb(217 119 0 / 10%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(217, 119, 0, 0.15);
+  box-shadow: 0 4px 16px rgb(217 119 0 / 15%);
 }
 
 .signin-footer {
@@ -1237,15 +1238,12 @@
 /* Animation for archives signin */
 @keyframes fadeInArchives {
   from {
-    opacity: 0;
+    opacity: 0%;
     transform: translateY(30px) scale(0.95);
   }
+
   to {
-    opacity: 1;
+    opacity: 100%;
     transform: translateY(0) scale(1);
   }
-}
-
-.archives-signin-content {
-  animation: fadeInArchives 0.6s ease-out;
 }

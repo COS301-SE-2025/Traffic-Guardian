@@ -352,7 +352,7 @@ const Dashboard: React.FC = () => {
   });
 
   const [_incidentStats, setIncidentStats] = useState<IncidentStats | null>(
-    null
+    null,
   );
   const [_todaysIncidents, setTodaysIncidents] = useState<TodaysIncidents>({
     count: 0,
@@ -395,9 +395,9 @@ const Dashboard: React.FC = () => {
         avg_speed_mph: 55 + Math.floor(Math.random() * 15),
         total_flow_vehicles: 125000 + Math.floor(Math.random() * 50000),
         high_risk_count: 8 + Math.floor(Math.random() * 12),
-        system_status: 'HEALTHY'
+        system_status: 'HEALTHY',
       },
-      publicDemo: true
+      publicDemo: true,
     };
   }, []);
 
@@ -421,7 +421,7 @@ const Dashboard: React.FC = () => {
             'Content-Type': 'application/json',
             'X-API-Key': apiKey || '',
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -490,7 +490,7 @@ const Dashboard: React.FC = () => {
           // Public users get basic traffic data from public endpoint
           try {
             const response = await fetch(
-              `${process.env.REACT_APP_SERVER_URL!}/api/traffic/public`
+              `${process.env.REACT_APP_SERVER_URL!}/api/traffic/public`,
             );
             if (response.ok) {
               const publicData = await response.json();
@@ -501,13 +501,13 @@ const Dashboard: React.FC = () => {
                   properties: {
                     iconCategory: 'Traffic Alert',
                     magnitudeOfDelay: 2,
-                    events: []
+                    events: [],
                   },
                   geometry: {
                     type: 'Point',
-                    coordinates: [[0, 0]]
-                  }
-                })
+                    coordinates: [[0, 0]],
+                  },
+                }),
               })) || [];
               setTrafficData(publicTrafficData);
             }
@@ -521,13 +521,13 @@ const Dashboard: React.FC = () => {
                   properties: {
                     iconCategory: 'Traffic Alert',
                     magnitudeOfDelay: 1,
-                    events: []
+                    events: [],
                   },
                   geometry: {
                     type: 'Point',
-                    coordinates: [[0, 0]]
-                  }
-                }]
+                    coordinates: [[0, 0]],
+                  },
+                }],
               },
               {
                 location: 'San Francisco',
@@ -535,14 +535,14 @@ const Dashboard: React.FC = () => {
                   properties: {
                     iconCategory: 'Traffic Alert',
                     magnitudeOfDelay: 2,
-                    events: []
+                    events: [],
                   },
                   geometry: {
                     type: 'Point',
-                    coordinates: [[0, 0]]
-                  }
-                }]
-              }
+                    coordinates: [[0, 0]],
+                  },
+                }],
+              },
             ]);
           }
         }
@@ -605,7 +605,7 @@ const Dashboard: React.FC = () => {
               // Use Los Angeles coordinates for California traffic data
               locationToSend = {
                 latitude: 34.0522,
-                longitude: -118.2437
+                longitude: -118.2437,
               };
               eventMessage = `Location set in California: ${locationToSend.latitude.toFixed(4)}, ${locationToSend.longitude.toFixed(4)} (Los Angeles area)`;
             }
@@ -617,17 +617,17 @@ const Dashboard: React.FC = () => {
             // If geolocation fails, use Los Angeles as fallback
             const fallbackPos = {
               latitude: 34.0522,
-              longitude: -118.2437
+              longitude: -118.2437,
             };
             newSocket.emit('new-location', fallbackPos);
             addEvent(`Location set in California: ${fallbackPos.latitude.toFixed(4)}, ${fallbackPos.longitude.toFixed(4)} (Los Angeles area)`);
-          }
+          },
         );
       } else {
         // If geolocation is not supported, use Los Angeles as fallback
         const fallbackPos = {
           latitude: 34.0522,
-          longitude: -118.2437
+          longitude: -118.2437,
         };
         newSocket.emit('new-location', fallbackPos);
         addEvent(`Location set in California: ${fallbackPos.latitude.toFixed(4)}, ${fallbackPos.longitude.toFixed(4)} (Los Angeles area)`);
@@ -759,15 +759,15 @@ const Dashboard: React.FC = () => {
       console.log('- Realtime Events Count:', realtimeEvents?.length || 0);
       console.log(
         '- Auth Token:',
-        sessionStorage.getItem('token') ? 'Present' : 'Missing'
+        sessionStorage.getItem('token') ? 'Present' : 'Missing',
       );
       console.log(
         '- User Info:',
-        sessionStorage.getItem('userInfo') ? 'Present' : 'Missing'
+        sessionStorage.getItem('userInfo') ? 'Present' : 'Missing',
       );
       console.log(
         '- SERVER_URL:',
-        process.env.REACT_APP_SERVER_URL!
+        process.env.REACT_APP_SERVER_URL!,
       );
     };
   }, [
@@ -839,7 +839,7 @@ const Dashboard: React.FC = () => {
               <div
                 className={`status-dot ${getSystemHealthStatus().class}`}
                 data-cy="status-dot"
-              ></div>
+              />
               {getSystemHealthStatus().text}
             </div>
           </div>
@@ -854,7 +854,7 @@ const Dashboard: React.FC = () => {
                 <div
                   className="loading-spinner small"
                   data-cy="weather-loading-spinner"
-                ></div>
+                />
                 <span>Loading weather...</span>
               </div>
             ) : getPrimaryWeather() ? (
@@ -908,25 +908,25 @@ const Dashboard: React.FC = () => {
                 {/* Loading Cards */}
                 <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
                   <div className="loading-spinner-container">
-                    <div className="loading-spinner small"></div>
+                    <div className="loading-spinner small" />
                   </div>
                 </div>
 
                 <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
                   <div className="loading-spinner-container">
-                    <div className="loading-spinner small"></div>
+                    <div className="loading-spinner small" />
                   </div>
                 </div>
 
                 <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
                   <div className="loading-spinner-container">
-                    <div className="loading-spinner small"></div>
+                    <div className="loading-spinner small" />
                   </div>
                 </div>
 
                 <div className="stat-card stat-card-loading" data-cy="stat-card-loading">
                   <div className="loading-spinner-container">
-                    <div className="loading-spinner small"></div>
+                    <div className="loading-spinner small" />
                   </div>
                 </div>
               </>
@@ -997,18 +997,18 @@ const Dashboard: React.FC = () => {
                         width: `${Math.min(
                           ((pemsDashboardData?.overview?.high_risk_count || 0) / 20) *
                             100,
-                          100
+                          100,
                         )}%`,
                       }}
                       data-cy="progress-fill"
-                    ></div>
+                    />
                   </div>
                 </div>
 
                 {/* System Status */}
                 <div
                   className={`stat-card system-status-card ${getSystemStatusClass(
-                    pemsDashboardData?.overview?.system_status
+                    pemsDashboardData?.overview?.system_status,
                   )}`}
                   data-cy="stat-card-system-status"
                 >
@@ -1195,7 +1195,7 @@ const Dashboard: React.FC = () => {
               <div
                 className="update-indicator"
                 data-cy="update-indicator"
-              ></div>
+              />
               Last updated: {formatTime(lastUpdate)}
             </div>
           </div>
@@ -1247,7 +1247,7 @@ const Dashboard: React.FC = () => {
               <div
                 className="loading-spinner"
                 data-cy="weather-section-spinner"
-              ></div>
+              />
               <div
                 className="loading-text"
                 data-cy="weather-section-loading-text"

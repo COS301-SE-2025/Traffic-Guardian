@@ -80,7 +80,7 @@
 }
 
 .retry-button:hover {
-  background: #F79400;
+  background: #f79400;
   transform: translateY(-2px);
 }
 
@@ -632,7 +632,7 @@
 }
 
 .opacity-slider::-webkit-slider-thumb:hover {
-  background: #F79400;
+  background: #f79400;
   transform: scale(1.1);
 }
 
@@ -651,10 +651,14 @@
   width: 100vw;
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
+
   /* Calculate height by subtracting header, controls, and legend space */
   height: calc(100vh - var(--navbar-total-height) - 220px - 100px);
+
   /* 80px for top padding */
+
   /* 220px for controls section */
+
   /* 100px for legend and bottom spacing */
   position: relative;
   overflow: hidden;
@@ -698,6 +702,7 @@
   font-size: 0.8rem;
   margin: 0.3rem 0;
   display: inline-block;
+  text-transform: uppercase;
 }
 
 .status-text.online {
@@ -1303,16 +1308,6 @@
 .severity-text.high {
   background: #ef4444;
   color: white;
-}
-
-.status-text {
-  display: inline-block;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  margin: 0.25rem 0;
 }
 
 .status-text.active {

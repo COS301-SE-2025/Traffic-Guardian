@@ -21,7 +21,7 @@
   --scrollbar-thumb-hover: #888;
   --button-bg: #feac34;
   --button-text: #fff;
-  --button-hover-bg: #F79400;
+  --button-hover-bg: #f79400;
   --error-bg: #2d1b1f;
   --error-text: #f8d7da;
   --error-border: #842029;
@@ -53,7 +53,7 @@
   --scrollbar-thumb-hover: #666;
   --button-bg: #feac34;
   --button-text: #fff;
-  --button-hover-bg: #F79400;
+  --button-hover-bg: #f79400;
   --error-bg: #f8d7da;
   --error-text: #721c24;
   --error-border: #f5c6cb;
@@ -107,7 +107,7 @@
   text-align: center;
   margin-bottom: 2rem;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid var(--livefeed-border, rgba(255, 255, 255, 0.1));
+  border-bottom: 1px solid var(--livefeed-border, rgb(255 255 255 / 10%));
 }
 
 .livefeed-page h2 {
@@ -781,7 +781,7 @@
   display: flex;
   gap: 0.5rem;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgb(0 0 0 / 80%);
   padding: 8px;
   border-radius: 6px;
   z-index: 10;
