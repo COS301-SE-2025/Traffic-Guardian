@@ -829,7 +829,23 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         <div className="last-update">
           Last Updated:{' '}
           {dashboardData?.timestamp
-            ? new Date(dashboardData.timestamp).toLocaleString()
+            ? (() => {
+                const date = new Date(dashboardData.timestamp);
+                const dateTimeString = date.toLocaleString('en-US', {
+                  timeZone: 'America/Los_Angeles',
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                });
+                const timeZone = date.toLocaleDateString('en-US', {
+                  timeZone: 'America/Los_Angeles',
+                  timeZoneName: 'short'
+                }).split(', ')[1];
+                return `${dateTimeString} (${timeZone})`;
+              })()
             : 'Unknown'}
         </div>
         <button onClick={fetchPEMSAnalytics} className="refresh-button">

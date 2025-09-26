@@ -741,12 +741,21 @@ const Dashboard: React.FC = () => {
   }, [weatherLastUpdate]);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
+    const timeString = date.toLocaleTimeString('en-US', {
+      timeZone: 'America/Los_Angeles',
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
       hour12: false,
     });
+
+    // Get timezone abbreviation (PST/PDT)
+    const timeZone = date.toLocaleDateString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      timeZoneName: 'short'
+    }).split(', ')[1];
+
+    return `${timeString} (${timeZone})`;
   };
 
   // Debug function - can be called from browser console as window.debugDashboard()
