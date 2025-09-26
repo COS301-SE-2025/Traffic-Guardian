@@ -23,6 +23,7 @@ import ApiService, {
 import './Analytics.css';
 import io from 'socket.io-client';
 import PEMSAnalytics from '../components/PEMSAnalytics';
+import LaneClosureAnalytics from '../components/LaneClosureAnalytics';
 
 const ChartIcon = () => (
   <svg
@@ -129,7 +130,7 @@ const Analytics: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [_socket, _setSocket] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'incidents' | 'pems'>('incidents');
+  const [activeTab, setActiveTab] = useState<'incidents' | 'pems' | 'closures'>('incidents');
 
   // Existing traffic data state
   const [categoryBreakdown, setCategoryBreakdown] = useState<
@@ -440,8 +441,8 @@ const Analytics: React.FC = () => {
           <div className="analytics-title">
             <h1>Traffic Analytics Dashboard</h1>
             <p>
-              Real-time traffic incident insights, PEMS data analytics, and
-              archive management
+              Real-time traffic incident insights, PEMS data analytics, lane closure impact analysis,
+              and archive management
             </p>
             <div className="analytics-tabs">
               <button
@@ -455,6 +456,12 @@ const Analytics: React.FC = () => {
                 onClick={() => setActiveTab('pems')}
               >
                 PEMS Analytics
+              </button>
+              <button
+                className={activeTab === 'closures' ? 'active' : ''}
+                onClick={() => setActiveTab('closures')}
+              >
+                Lane Closures
               </button>
             </div>
           </div>
@@ -944,6 +951,13 @@ const Analytics: React.FC = () => {
         {activeTab === 'pems' && (
           <div className="pems-analytics-section">
             <PEMSAnalytics />
+          </div>
+        )}
+
+        {/* Lane Closures Analytics Tab */}
+        {activeTab === 'closures' && (
+          <div className="lane-closures-analytics-section">
+            <LaneClosureAnalytics />
           </div>
         )}
       </div>

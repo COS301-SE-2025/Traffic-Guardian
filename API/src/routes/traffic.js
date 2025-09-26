@@ -129,6 +129,107 @@ router.get('/orange-county', async (req, res) => {
   }
 });
 
+// Location-based incident retrieval using 511 Bay Area API
+router.get('/incidents/nearby', async (req, res) => {
+  try {
+    const { lat, lng, radius = 25 } = req.query; // radius in miles, default 25 miles
+
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+    const searchRadius = parseFloat(radius);
+
+    if (isNaN(latitude) || isNaN(longitude) || isNaN(searchRadius)) {
+      return res.status(400).json({ error: 'Invalid coordinates or radius provided' });
+    }
+
+    console.log(`Fetching 511 incidents near ${latitude}, ${longitude} within ${searchRadius} miles...`);
+
+    // Get real-time 511 traffic events
+    const traffic511Events = await get511TrafficEvents();
+
+    // Helper function to calculate distance between two points in miles
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 3959; // Earth's radius in miles
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    // Filter 511 incidents within the specified radius
+    const nearbyIncidents = traffic511Events
+      .filter(incident => {
+        if (!incident.geometry || !incident.geometry.coordinates) return false;
+
+        const coords = incident.geometry.coordinates;
+        let incidentLat, incidentLng;
+
+        // Handle different coordinate formats
+        if (Array.isArray(coords) && coords.length >= 2) {
+          // Standard [lng, lat] format
+          incidentLng = coords[0];
+          incidentLat = coords[1];
+        } else {
+          return false;
+        }
+
+        const distance = calculateDistance(latitude, longitude, incidentLat, incidentLng);
+        return distance <= searchRadius;
+      })
+      .map(incident => {
+        const coords = incident.geometry.coordinates;
+        const incidentLat = coords[1];
+        const incidentLng = coords[0];
+        const distance = calculateDistance(latitude, longitude, incidentLat, incidentLng);
+
+        return {
+          id: incident.properties?.id || 'unknown',
+          title: incident.properties?.headline || incident.properties?.event_type || 'Traffic Incident',
+          description: incident.properties?.description || 'No details available',
+          severity: incident.properties?.severity || 'Unknown',
+          eventType: incident.properties?.event_type || incident.properties?.iconCategory || 'Traffic',
+          status: incident.properties?.status || 'Active',
+          location: incident.properties?.location || 'Location not specified',
+          coordinates: {
+            latitude: incidentLat,
+            longitude: incidentLng
+          },
+          distance: Math.round(distance * 10) / 10, // Round to 1 decimal
+          startTime: incident.properties?.created || incident.properties?.start_time,
+          lastUpdated: incident.properties?.updated || incident.properties?.last_updated,
+          source: '511 Bay Area'
+        };
+      })
+      .sort((a, b) => a.distance - b.distance); // Sort by distance (closest first)
+
+    const response = {
+      incidents: nearbyIncidents,
+      searchLocation: {
+        latitude,
+        longitude,
+        region: 'California'
+      },
+      searchRadius: searchRadius,
+      count: nearbyIncidents.length,
+      timestamp: new Date().toISOString(),
+      source: '511 Bay Area Traffic API'
+    };
+
+    console.log(`Found ${nearbyIncidents.length} 511 incidents within ${searchRadius} miles`);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Nearby 511 incidents error:', error);
+    res.status(500).json({ error: 'Failed to fetch nearby incidents', details: error.message });
+  }
+});
+
 // Public traffic data endpoint (limited data for unauthenticated users)
 router.get('/public', async (req, res) => {
   try {
