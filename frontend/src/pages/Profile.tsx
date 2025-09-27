@@ -3,7 +3,9 @@ import './Profile.css';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../consts/ThemeContext';
+import { useUser } from '../contexts/UserContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import dataPrefetchService from '../services/DataPrefetchService';
 
 interface User {
   name: string;
@@ -20,6 +22,7 @@ interface Preferences {
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { toggleDarkMode } = useTheme();
+  const { logout } = useUser();
   const hasInitialized = useRef(false);
   const [user, setUser] = useState<User>({ name: '', email: '' });
   const [preferences, setPreferences] = useState<Preferences>({
@@ -45,7 +48,7 @@ const Profile: React.FC = () => {
             'X-API-Key': apiKey,
             'Content-Type': 'application/json',
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -78,7 +81,7 @@ const Profile: React.FC = () => {
           'Profile useEffect: apiKey=',
           apiKey,
           'savedTheme=',
-          savedTheme
+          savedTheme,
         );
 
         if (!apiKey) {
@@ -92,7 +95,7 @@ const Profile: React.FC = () => {
               'X-API-Key': apiKey,
               'Content-Type': 'application/json',
             },
-          }
+          },
         );
 
         if (!userResponse.ok) {
@@ -113,7 +116,7 @@ const Profile: React.FC = () => {
               'X-API-Key': apiKey,
               'Content-Type': 'application/json',
             },
-          }
+          },
         );
 
         let currentPrefs = {
@@ -135,7 +138,7 @@ const Profile: React.FC = () => {
           } catch (err) {
             console.warn(
               'Profile: Failed to parse preferences, using fallback',
-              err
+              err,
             );
             fetchedPrefs = {};
           }
@@ -155,7 +158,7 @@ const Profile: React.FC = () => {
         } else {
           console.warn(
             'Profile: Failed to fetch preferences, using saved theme:',
-            savedTheme
+            savedTheme,
           );
           if (savedTheme) {
             currentPrefs = {
@@ -231,7 +234,7 @@ const Profile: React.FC = () => {
             User_Email: user.email,
             preferences: validatedPrefs,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -251,7 +254,7 @@ const Profile: React.FC = () => {
         } catch (err) {
           console.warn(
             'Profile: Failed to parse updated preferences, using temp',
-            err
+            err,
           );
           updatedPrefs = validatedPrefs;
         }
@@ -279,13 +282,19 @@ const Profile: React.FC = () => {
   };
 
   const handleSignOut = () => {
-    sessionStorage.removeItem('apiKey');
-    sessionStorage.removeItem('userEmail');
-    navigate('/account');
+    logout();
+    dataPrefetchService.stopPrefetching();
+    navigate('/');
   };
 
   if (loading) {
-    return <LoadingSpinner size="large" text="Loading profile..." className="content" />;
+    return (
+      <LoadingSpinner
+        size="large"
+        text="Loading profile..."
+        className="content"
+      />
+    );
   }
   if (error) {
     return (

@@ -138,7 +138,7 @@ const LiveFeedSocketComponent: React.FC = () => {
         {weatherData.length > 0 ? (
           weatherData.map((weather: Weather, index: number) => (
             <div
-              key={index}
+              key={`${weather.location}-${index}`}
               data-testid={`weather-${index}`}
               className="weather-item"
             >
@@ -173,7 +173,7 @@ describe('LiveFeed Socket Integration Tests', () => {
     expect(screen.getByTestId('livefeed-socket-component')).toBeInTheDocument();
     expect(screen.getByText('Live Camera Feeds')).toBeInTheDocument();
     expect(screen.getByTestId('connection-status')).toHaveTextContent(
-      'Status: Disconnected'
+      'Status: Disconnected',
     );
   });
 
@@ -181,7 +181,7 @@ describe('LiveFeed Socket Integration Tests', () => {
     renderWithSocketProvider(<LiveFeedSocketComponent />);
 
     expect(screen.getByTestId('connection-status')).toHaveTextContent(
-      'Status: Disconnected'
+      'Status: Disconnected',
     );
   });
 
@@ -200,7 +200,7 @@ describe('LiveFeed Socket Integration Tests', () => {
     expect(screen.getByText('Traffic incident detected')).toBeInTheDocument();
     expect(screen.getByText('I-405 North')).toBeInTheDocument();
     expect(screen.getByTestId('alert-severity-high')).toHaveTextContent(
-      'Severity: high'
+      'Severity: high',
     );
   });
 
@@ -214,7 +214,7 @@ describe('LiveFeed Socket Integration Tests', () => {
     // Check for notification toast
     expect(screen.getByTestId('notification-toast')).toBeInTheDocument();
     expect(
-      screen.getByText('New incident alert received!')
+      screen.getByText('New incident alert received!'),
     ).toBeInTheDocument();
   });
 
@@ -257,9 +257,10 @@ describe('LiveFeed Socket Integration Tests', () => {
       expect(screen.getByText('Recent Alerts (2)')).toBeInTheDocument();
     });
 
-    // Should have two alert items
-    const alertItems = document.querySelectorAll('.alert-item');
-    expect(alertItems).toHaveLength(2);
+    // Should have two alert items - check by counting alerts in the text
+    expect(screen.getByText('Recent Alerts (2)')).toBeInTheDocument();
+    expect(screen.getAllByText('Traffic incident detected')).toHaveLength(2);
+    expect(screen.getAllByText('I-405 North')).toHaveLength(2);
   });
 
   test('renders camera components', () => {
@@ -310,8 +311,9 @@ describe('LiveFeed Socket Integration Tests', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Recent Alerts (1)')).toBeInTheDocument();
-      expect(screen.getByTestId('weather-0')).toBeInTheDocument();
     });
+
+    expect(screen.getByTestId('weather-0')).toBeInTheDocument();
 
     // Both incident and weather should be updated
     expect(screen.getByText('Traffic incident detected')).toBeInTheDocument();
@@ -332,10 +334,10 @@ describe('LiveFeed Socket Integration Tests', () => {
     await waitFor(
       () => {
         expect(
-          screen.queryByTestId('notification-toast')
+          screen.queryByTestId('notification-toast'),
         ).not.toBeInTheDocument();
       },
-      { timeout: 4000 }
+      { timeout: 4000 },
     );
   });
 });

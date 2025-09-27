@@ -12,11 +12,14 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'medium',
   text = 'Loading...',
   className = '',
-  'data-testid': dataTestId
+  'data-testid': dataTestId,
 }) => {
   return (
-    <div className={`loading-spinner-container ${className}`} data-testid={dataTestId}>
-      <div className={`loading-spinner ${size}`}></div>
+    <div
+      className={`loading-spinner-container ${className}`}
+      data-testid={dataTestId}
+    >
+      <div className={`loading-spinner ${size}`} />
       {text && <div className="loading-text">{text}</div>}
     </div>
   );

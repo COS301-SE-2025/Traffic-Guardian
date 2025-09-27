@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import dataPrefetchService from '../services/DataPrefetchService';
 
 // Custom hook to use cached data with fallback to fresh fetch
-export function useCachedData<T>(endpoint: string, cacheKey: string, dependencies: any[] = []) {
+export function useCachedData<T>(
+  endpoint: string,
+  cacheKey: string,
+  dependencies: any[] = [],
+) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,5 +104,9 @@ export function usePemsAlerts() {
 }
 
 export function usePemsDistrict(districtId: number) {
-  return useCachedData(`/api/pems/district/${districtId}`, `pems-district-${districtId}`, [districtId]);
+  return useCachedData(
+    `/api/pems/district/${districtId}`,
+    `pems-district-${districtId}`,
+    [districtId],
+  );
 }

@@ -24,12 +24,12 @@
 }
 
 .pems-analytics-error h3 {
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   color: var(--text-color);
 }
 
 .pems-analytics-error p {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: var(--subtitle-color);
 }
 
@@ -59,7 +59,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: var(--title-color);
   font-size: 1.8rem;
   font-weight: 700;
@@ -98,7 +98,7 @@
 .analytics-tabs button.active {
   background: var(--title-color);
   color: var(--button-primary-text);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
 }
 
 /* Content */
@@ -127,7 +127,7 @@
 
 .summary-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 10%);
 }
 
 .card-icon {
@@ -167,7 +167,7 @@
 }
 
 .card-content h3 {
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
   font-size: 1.8rem;
   font-weight: 700;
   color: var(--text-color);
@@ -175,7 +175,7 @@
 }
 
 .card-content p {
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
   font-weight: 600;
   color: var(--text-color);
   font-size: 0.95rem;
@@ -206,14 +206,14 @@
 }
 
 .chart-container h3 {
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
   color: var(--text-color);
   font-size: 1.2rem;
   font-weight: 600;
 }
 
 .chart-description {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: var(--subtitle-color);
   font-size: 0.9rem;
   line-height: 1.5;
@@ -225,7 +225,7 @@
 }
 
 .section-description h3 {
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   color: var(--text-color);
   font-size: 1.4rem;
   font-weight: 600;
@@ -244,7 +244,7 @@
 }
 
 .high-risk-areas-list h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: var(--text-color);
   font-size: 1.2rem;
   font-weight: 600;
@@ -324,7 +324,7 @@
 }
 
 .performance-insights h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   color: var(--text-color);
   font-size: 1.2rem;
   font-weight: 600;
@@ -363,7 +363,7 @@
 }
 
 .insight-content h4 {
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
   color: var(--text-color);
   font-size: 1rem;
   font-weight: 600;
@@ -411,11 +411,11 @@
   .analytics-charts-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .analytics-summary-cards {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .risk-areas-grid {
     grid-template-columns: 1fr;
   }
@@ -425,29 +425,29 @@
   .analytics-header {
     padding: 16px;
   }
-  
+
   .analytics-content {
     padding: 16px;
   }
-  
+
   .analytics-summary-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .analytics-tabs {
     flex-direction: column;
   }
-  
+
   .summary-card {
     flex-direction: column;
     text-align: center;
     gap: 12px;
   }
-  
+
   .chart-container {
     padding: 16px;
   }
-  
+
   .analytics-footer {
     flex-direction: column;
     gap: 12px;
@@ -459,19 +459,173 @@
   .analytics-header h2 {
     font-size: 1.5rem;
   }
-  
+
   .insight-item {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .area-header {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .area-metrics {
     flex-direction: column;
     gap: 4px;
+  }
+}
+
+/* Role-based Access Control Styles */
+.public-badge {
+  background: var(--stat-card-icon-bg);
+  color: var(--title-color);
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid var(--title-color);
+}
+
+.user-role-badge {
+  background: var(--status-responding-bg);
+  color: var(--status-responding-text);
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 1rem;
+  letter-spacing: 0.5px;
+  border: 1px solid var(--status-responding-text);
+}
+
+.export-button {
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.export-button:hover {
+  background: var(--button-primary-hover);
+  transform: translateY(-1px);
+}
+
+.weekly-section {
+  padding: 1.5rem;
+}
+
+.embedded-weekly-trends {
+  margin: 1.5rem 0;
+}
+
+.upgrade-prompt {
+  background: var(--stat-card-bg);
+  border: 2px dashed var(--stat-card-border);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
+}
+
+.upgrade-prompt:hover {
+  border-color: var(--title-color);
+  box-shadow: 0 8px 32px var(--stat-card-hover-shadow);
+  transform: translateY(-2px);
+}
+
+.upgrade-prompt h4 {
+  color: var(--title-color);
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.upgrade-prompt p {
+  color: var(--text-color);
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.upgrade-prompt ul {
+  text-align: left;
+  max-width: 400px;
+  margin: 2rem auto;
+  padding-left: 1.5rem;
+  color: var(--subtitle-color);
+}
+
+.upgrade-prompt li {
+  color: var(--subtitle-color);
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.upgrade-cta {
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 160px;
+  justify-content: center;
+  border: 2px solid var(--button-primary-bg);
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.upgrade-cta:hover {
+  background: var(--button-primary-hover);
+  border-color: var(--button-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgb(217 119 0 / 30%);
+  text-decoration: none;
+  color: var(--button-primary-text);
+}
+
+/* Responsive adjustments for role badges */
+@media (max-width: 768px) {
+  .analytics-header h2 {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .public-badge,
+  .user-role-badge {
+    margin-left: 0;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .export-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .upgrade-prompt {
+    padding: 1.5rem;
+  }
+
+  .upgrade-prompt h4 {
+    font-size: 1.1rem;
   }
 }

@@ -16,7 +16,7 @@ const IncidentManagement: React.FC = () => {
   const navigate = useNavigate();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [statusUpdates, setStatusUpdates] = useState<{ [key: number]: string }>(
-    {}
+    {},
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +38,7 @@ const IncidentManagement: React.FC = () => {
               'X-API-Key': apiKey,
               'Content-Type': 'application/json',
             },
-          }
+          },
         );
         if (!userResponse.ok) {
           throw new Error('Failed to fetch user data');
@@ -59,7 +59,7 @@ const IncidentManagement: React.FC = () => {
               'X-API-Key': apiKey,
               'Content-Type': 'application/json',
             },
-          }
+          },
         );
         if (!incidentsResponse.ok) {
           throw new Error('Failed to fetch incidents');
@@ -101,7 +101,7 @@ const IncidentManagement: React.FC = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ Incident_Status: newStatus }),
-        }
+        },
       );
       if (!response.ok) {
         throw new Error('Failed to update incident status');
@@ -110,8 +110,8 @@ const IncidentManagement: React.FC = () => {
         incidents.map(incident =>
           incident.Incident_ID === incidentId
             ? { ...incident, Incident_Status: newStatus }
-            : incident
-        )
+            : incident,
+        ),
       );
       setStatusUpdates(prev => {
         const { [incidentId]: _, ...rest } = prev;
@@ -131,13 +131,27 @@ const IncidentManagement: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toISOString().split('T')[0];
+    const date = new Date(dateString);
+    const dateString_ca = date.toLocaleDateString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
+    // Get timezone abbreviation (PST/PDT)
+    const timeZone = date.toLocaleDateString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      timeZoneName: 'short'
+    }).split(', ')[1];
+
+    return `${dateString_ca} (${timeZone})`;
   };
 
-  if (loading) return <div className="loading-message">Loading...</div>;
-  if (error) return <div className="error-message">Error: {error}</div>;
+  if (loading) {return <div className="loading-message">Loading...</div>;}
+  if (error) {return <div className="error-message">Error: {error}</div>;}
   if (userRole !== 'admin')
-    return <div className="access-denied-message">Access Denied</div>;
+  {return <div className="access-denied-message">Access Denied</div>;}
 
   return (
     <div className="incident-management-page">
@@ -187,7 +201,7 @@ const IncidentManagement: React.FC = () => {
                     handleStatusChange(
                       incident.Incident_ID,
                       statusUpdates[incident.Incident_ID] ||
-                        incident.Incident_Status
+                        incident.Incident_Status,
                     )
                   }
                 >

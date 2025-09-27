@@ -1,6 +1,7 @@
-// Frontend API Service for Analytics
-const API_BASE_URL =
-  process.env.REACT_APP_SERVER_URL || 'http://localhost:5000/api';
+// Frontend API Service for Analytics with Caching
+import { cacheService } from './CacheService';
+
+const API_BASE_URL = process.env.REACT_APP_SERVER_URL! + '/api';
 
 export interface DatabaseIncident {
   Incident_ID: number;
@@ -118,7 +119,7 @@ class ApiService {
         .json()
         .catch(() => ({ error: 'Network error' }));
       throw new Error(
-        errorData.error || `HTTP error! status: ${response.status}`
+        errorData.error || `HTTP error! status: ${response.status}`,
       );
     }
     return response.json();
@@ -147,7 +148,7 @@ class ApiService {
       });
 
       const todaysData = await this.handleResponse<TodaysIncidentsData>(
-        response
+        response,
       );
       return todaysData;
     } catch (error) {
@@ -183,7 +184,7 @@ class ApiService {
       date_to?: string;
       limit?: number;
       offset?: number;
-    } = {}
+    } = {},
   ): Promise<ArchiveData[]> {
     try {
       const queryParams = new URLSearchParams();
@@ -298,7 +299,7 @@ class ApiService {
       analytics.archivesByMonth = Array.from(monthMap.entries())
         .map(([month, count]) => ({ month, count }))
         .sort(
-          (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime()
+          (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime(),
         );
 
       analytics.archivesByLocation = Array.from(locationMap.entries())
@@ -310,10 +311,10 @@ class ApiService {
       if (archives.length > 0) {
         const dates = archives.map(a => new Date(a.Archive_DateTime));
         analytics.storageMetrics.oldestArchive = new Date(
-          Math.min(...dates.map(d => d.getTime()))
+          Math.min(...dates.map(d => d.getTime())),
         ).toISOString();
         analytics.storageMetrics.newestArchive = new Date(
-          Math.max(...dates.map(d => d.getTime()))
+          Math.max(...dates.map(d => d.getTime())),
         ).toISOString();
 
         // Estimate storage size (rough calculation)
@@ -332,7 +333,7 @@ class ApiService {
 
   // Helper to extract location from archive data
   private static extractLocationFromArchive(
-    archive: ArchiveData
+    archive: ArchiveData,
   ): string | null {
     try {
       // Try to extract from search text
@@ -365,8 +366,8 @@ class ApiService {
         typeof archive.Archive_Metadata === 'object'
       ) {
         const metadata = archive.Archive_Metadata;
-        if (metadata.location) return metadata.location;
-        if (metadata.camera_district) return metadata.camera_district;
+        if (metadata.location) {return metadata.location;}
+        if (metadata.camera_district) {return metadata.camera_district;}
       }
 
       return 'Unknown Location';
@@ -399,7 +400,7 @@ class ApiService {
         `${API_BASE_URL}/traffic/incidentLocations`,
         {
           headers: this.getAuthHeaders(),
-        }
+        },
       );
 
       const locations = await this.handleResponse<LocationData[]>(response);
@@ -417,11 +418,11 @@ class ApiService {
         `${API_BASE_URL}/traffic/criticalIncidents`,
         {
           headers: this.getAuthHeaders(),
-        }
+        },
       );
 
       const criticalData = await this.handleResponse<CriticalIncidentsData>(
-        response
+        response,
       );
       return criticalData;
     } catch (error) {
@@ -453,7 +454,7 @@ class ApiService {
       });
 
       const trafficData = await this.handleResponse<TrafficIncident[]>(
-        response
+        response,
       );
       return trafficData;
     } catch (error) {
@@ -520,14 +521,27 @@ class ApiService {
     sessionStorage.removeItem('user');
   }
 
- 
   static async fetchPEMSDashboardSummary(): Promise<any | null> {
+    const cacheKey = 'pems-dashboard-summary';
+
+    // Check cache first
+    const cachedData = cacheService.get(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/pems/dashboard-summary`, {
         headers: this.getAuthHeaders(),
       });
 
       const pemsData = await this.handleResponse<any>(response);
+
+      // Cache for 5 minutes
+      if (pemsData) {
+        cacheService.set(cacheKey, pemsData, 5 * 60 * 1000);
+      }
+
       return pemsData;
     } catch (error) {
       console.error('Error fetching PEMS dashboard summary:', error);
@@ -554,9 +568,12 @@ class ApiService {
   static async fetchPEMSAlerts(priority?: string): Promise<any | null> {
     try {
       const queryParams = priority ? `?priority=${priority}` : '';
-      const response = await fetch(`${API_BASE_URL}/pems/alerts${queryParams}`, {
-        headers: this.getAuthHeaders(),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/pems/alerts${queryParams}`,
+        {
+          headers: this.getAuthHeaders(),
+        },
+      );
 
       const alertsData = await this.handleResponse<any>(response);
       return alertsData;
@@ -569,14 +586,226 @@ class ApiService {
   // Get PEMS data for specific district (for detailed analytics)
   static async fetchPEMSDistrictData(district: number): Promise<any | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/pems/district/${district}`, {
-        headers: this.getAuthHeaders(),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/pems/district/${district}`,
+        {
+          headers: this.getAuthHeaders(),
+        },
+      );
 
       const districtData = await this.handleResponse<any>(response);
       return districtData;
     } catch (error) {
       console.error(`Error fetching PEMS district ${district} data:`, error);
+      return null;
+    }
+  }
+
+  // Public API methods (no authentication required)
+  static async fetchPublicPEMSBasicData(): Promise<any | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/pems/public/basic`);
+      const basicData = await this.handleResponse<any>(response);
+      return basicData;
+    } catch (error) {
+      console.error('Error fetching public PEMS basic data:', error);
+      return null;
+    }
+  }
+
+  static async fetchPublicTrafficVolumeTrends(): Promise<any | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/pems/public/volume-trends`);
+      const trendsData = await this.handleResponse<any>(response);
+      return trendsData;
+    } catch (error) {
+      console.error('Error fetching public traffic volume trends:', error);
+      return null;
+    }
+  }
+
+  // Real-time CHP traffic incidents
+  static async fetchRealTimeTrafficIncidents(): Promise<any | null> {
+    try {
+      // Proxy through our backend to avoid CORS issues
+      const response = await fetch(`${API_BASE_URL}/traffic/real-time-incidents`);
+      const incidentData = await this.handleResponse<any>(response);
+      return incidentData;
+    } catch (error) {
+      console.error('Error fetching real-time traffic incidents:', error);
+      return null;
+    }
+  }
+
+  // Real Orange County PEMS data with caching
+  static async fetchOrangeCountyTrafficData(): Promise<any | null> {
+    const cacheKey = 'orange-county-traffic';
+
+    // Check cache first
+    const cachedData = cacheService.get(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/traffic/orange-county`);
+      const ocData = await this.handleResponse<any>(response);
+
+      // Cache for 2 minutes (traffic data changes frequently)
+      if (ocData) {
+        cacheService.set(cacheKey, ocData, 2 * 60 * 1000);
+      }
+
+      return ocData;
+    } catch (error) {
+      console.error('Error fetching Orange County traffic data:', error);
+      return null;
+    }
+  }
+
+  // Weekly traffic volume trends (Monday-Sunday) - supports both public and authenticated
+  static async fetchWeeklyTrafficTrends(isAuthenticated = false, district?: number): Promise<any | null> {
+    try {
+      if (isAuthenticated) {
+        const url = district
+          ? `${API_BASE_URL}/pems/weekly-trends?district=${district}`
+          : `${API_BASE_URL}/pems/weekly-trends`;
+        const headers = this.getAuthHeaders();
+        const response = await fetch(url, { headers });
+        const weeklyData = await this.handleResponse<any>(response);
+        return weeklyData;
+      } else {
+        // For public users, try to get real weekly data from our backend
+        const response = await fetch(`${API_BASE_URL}/pems/public/weekly-trends`);
+        const weeklyData = await this.handleResponse<any>(response);
+        return weeklyData;
+      }
+    } catch (error) {
+      console.error('Error fetching weekly traffic trends:', error);
+      return null;
+    }
+  }
+
+  // Enhanced PEMS data with role-based filtering
+  static async fetchPEMSAnalyticsData(userRole: string, districts?: number[]): Promise<any | null> {
+    try {
+      const queryParams = new URLSearchParams();
+      if (userRole) {
+        queryParams.append('role', userRole);
+      }
+      if (districts && districts.length > 0) {
+        queryParams.append('districts', districts.join(','));
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/pems/analytics?${queryParams.toString()}`,
+        { headers: this.getAuthHeaders() },
+      );
+
+      const analyticsData = await this.handleResponse<any>(response);
+      return analyticsData;
+    } catch (error) {
+      console.error('Error fetching role-based PEMS analytics:', error);
+      return null;
+    }
+  }
+
+  // Get district-specific volume data with day-of-week breakdown
+  static async fetchDistrictVolumeByDay(district: number): Promise<any | null> {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/pems/district/${district}/volume-by-day`,
+        { headers: this.getAuthHeaders() },
+      );
+
+      const volumeData = await this.handleResponse<any>(response);
+      return volumeData;
+    } catch (error) {
+      console.error(`Error fetching district ${district} volume by day:`, error);
+      return null;
+    }
+  }
+
+  // Check user permissions and available districts
+  static async fetchUserPermissions(): Promise<any | null> {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/auth/permissions`,
+        { headers: this.getAuthHeaders() },
+      );
+
+      const permissions = await this.handleResponse<any>(response);
+      return permissions;
+    } catch (error) {
+      console.error('Error fetching user permissions:', error);
+      return null;
+    }
+  }
+
+  // Get cameras with their latest traffic counts (public access)
+  static async fetchCamerasWithTrafficCounts(): Promise<any[] | null> {
+    try {
+      // Use the public endpoint for traffic data
+      const url = `${API_BASE_URL}/cameras/public/traffic-data`;
+      console.log('🔗 Fetching public traffic data from:', url);
+
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        console.error(`❌ Public API request failed: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const result = await this.handleResponse<{data: any[]}>(response);
+      console.log('📊 Public API response:', {
+        total: result.data?.length || 0,
+        hasData: !!result.data,
+        sampleCamera: result.data?.[0],
+      });
+
+      return result.data || [];
+    } catch (error) {
+      console.error('❌ Error fetching public cameras with traffic counts:', error);
+      return null;
+    }
+  }
+
+  // Get top 5 cameras by traffic count (public access)
+  static async fetchTopCamerasByTraffic(): Promise<any[] | null> {
+    try {
+      // Use the public endpoint for top cameras by traffic
+      const url = `${API_BASE_URL}/cameras/public/top-by-traffic`;
+      console.log('🔗 Fetching top cameras by traffic from:', url);
+
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        console.error(`❌ Public API request failed: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const result = await this.handleResponse<{data: any[]}>(response);
+      console.log('📊 Top cameras API response:', {
+        total: result.data?.length || 0,
+        hasData: !!result.data,
+        sampleCamera: result.data?.[0],
+      });
+
+      return result.data || [];
+    } catch (error) {
+      console.error('❌ Error fetching top cameras by traffic:', error);
       return null;
     }
   }
