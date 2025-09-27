@@ -20,9 +20,9 @@ export default defineConfig({
       embeddedScreenshots: true,
       inlineAssets: true,
       saveAllAttempts: false,
-      reportDir: 'cypress/reports/mochawesome',
+      reportDir: 'cypress/reports/mochawesome/.jsons', //added /.jsons
       overwrite: false,
-      html: true,
+      html: false, //changed to false
       json: true,
     },
   },
