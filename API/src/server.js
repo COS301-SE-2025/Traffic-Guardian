@@ -40,7 +40,7 @@ const intervalManager = new IntervalManager();
 // Configuration - will use GitHub secrets in production, .env for local development
 
 const PORT = 5000;
-const HOST = process.env.HOST || 'localhost';
+const HOST = process.env.HOST ;
 
 // Global socket connection tracking
 let activeConnections = new Set();
