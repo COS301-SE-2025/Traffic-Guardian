@@ -339,6 +339,12 @@ class ProfilingAndMemoryTest(unittest.TestCase):
         self.ensure_system_analytics(system)
         test_frame = self.create_test_frame(1920, 1080)
 
+        # Set up mock vehicle tracking data
+        system.tracked_vehicles = {
+            1: {'history': [(100, 100), (105, 100), (110, 100)], 'class': 'car'},
+            2: {'history': [(200, 120), (195, 120), (190, 120)], 'class': 'car'}
+        }
+
         self.cpu_profiler.start_monitoring()
 
         # Profile different components
@@ -352,10 +358,7 @@ class ProfilingAndMemoryTest(unittest.TestCase):
             {'bbox': [200, 120, 50, 30], 'confidence': 0.8, 'class': 'car'}
         ]
         mock_tracking = {
-            'active_tracks': {
-                1: {'history': [(100, 100), (105, 100), (110, 100)], 'class': 'car'},
-                2: {'history': [(200, 120), (195, 120), (190, 120)], 'class': 'car'}
-            }
+            'active_tracks': [1, 2]  # List of track IDs
         }
 
         result, profile_data = self.cpu_profiler.profile_function(

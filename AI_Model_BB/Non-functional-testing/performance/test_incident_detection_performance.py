@@ -317,6 +317,13 @@ class IncidentDetectionPerformanceTest(unittest.TestCase):
         system = AdvancedIncidentDetectionSystem(config=self.test_configs['standard'])
         self.ensure_system_analytics(system)
 
+        # Set up mock vehicle tracking data
+        system.tracked_vehicles = {
+            1: {'history': [(100, 100), (105, 100), (110, 100)], 'class': 'car'},
+            2: {'history': [(200, 120), (195, 120), (190, 120)], 'class': 'car'},
+            3: {'history': [(150, 110), (152, 112), (154, 114)], 'class': 'car'}
+        }
+
         mock_detections = [
             {'bbox': [100, 100, 50, 30], 'confidence': 0.9, 'class': 'car'},
             {'bbox': [200, 120, 50, 30], 'confidence': 0.8, 'class': 'car'},
@@ -324,11 +331,7 @@ class IncidentDetectionPerformanceTest(unittest.TestCase):
         ]
 
         mock_tracking = {
-            'active_tracks': {
-                1: {'history': [(100, 100), (105, 100), (110, 100)], 'class': 'car'},
-                2: {'history': [(200, 120), (195, 120), (190, 120)], 'class': 'car'},
-                3: {'history': [(150, 110), (152, 112), (154, 114)], 'class': 'car'}
-            }
+            'active_tracks': [1, 2, 3]  # List of track IDs
         }
 
         test_frame = self.create_test_frame(640, 480)
