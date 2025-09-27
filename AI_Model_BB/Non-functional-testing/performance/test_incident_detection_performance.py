@@ -295,6 +295,26 @@ class IncidentDetectionPerformanceTest(unittest.TestCase):
     def test_incident_detection_algorithm_performance(self):
         system = AdvancedIncidentDetectionSystem(config=self.test_configs['standard'])
 
+        # Ensure analytics is properly initialized
+        if not hasattr(system, 'analytics'):
+            system.analytics = {
+                'total_frames': 0,
+                'total_detections': 0,
+                'incidents_detected': 0,
+                'class_totals': {},
+                'start_time': time.time(),
+                'alerts': [],
+                'incident_log': [],
+                'collision_layers': {
+                    'trajectory_detected': 0,
+                    'depth_confirmed': 0,
+                    'flow_confirmed': 0,
+                    'physics_confirmed': 0,
+                    'final_confirmed': 0
+                },
+                'clips_recorded': 0
+            }
+
         mock_detections = [
             {'bbox': [100, 100, 50, 30], 'confidence': 0.9, 'class': 'car'},
             {'bbox': [200, 120, 50, 30], 'confidence': 0.8, 'class': 'car'},
