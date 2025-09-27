@@ -1,5 +1,5 @@
 const autocannon = require('autocannon');
-const endpoints = require('../IntegrationTesting/artifacts.json');
+const endpoints = require('../PerformanceTesting/artifacts.json');
 
 const BASE_URL = 'http://localhost:5000';
 
@@ -30,6 +30,7 @@ test('block out scalability testing',()=>{
   expect(1+1).toBe(2);
 })
 */
+
 function runAutocannon(path, opts = {}) {
   return new Promise((resolve, reject) => {
     const instance = autocannon(
