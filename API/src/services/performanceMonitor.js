@@ -55,7 +55,6 @@ class PerformanceMonitor {
       this.cleanup();
     }, 60000);
 
-    console.log('Performance monitoring started');
   }
 
   stopMonitoring() {
@@ -66,7 +65,6 @@ class PerformanceMonitor {
     clearInterval(this.requestMetricsInterval);
     clearInterval(this.cleanupInterval);
 
-    console.log('Performance monitoring stopped');
   }
 
   updateSystemMetrics() {
