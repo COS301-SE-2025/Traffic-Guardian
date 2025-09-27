@@ -59,8 +59,8 @@ jobs:
         working-directory: ./frontend
         env:
           # Frontend environment variables for build process
-          REACT_APP_API_URL: http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}
-          REACT_APP_API_BASE_URL: http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api
+          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API }}
+          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API }}/api
           REACT_APP_ENVIRONMENT: staging
           # Add other frontend environment variables as needed
         run: |
@@ -162,7 +162,7 @@ jobs:
           
           # API health check - COMMENTED OUT (no staging EC2 cost restrictions)
           # echo "Checking API (EC2)..."
-          # API_URL="http://${{ secrets.EC2_STAGING_API_HOST }}:5000/api/health"
+          # API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
           # if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
           #   echo "  API service: HEALTHY"
           # else
@@ -207,8 +207,8 @@ jobs:
         working-directory: ./frontend
         env:
           # Frontend environment variables for production build
-          REACT_APP_API_URL: http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}
-          REACT_APP_API_BASE_URL: http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api
+          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API }}
+          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API }}/api
           REACT_APP_ENVIRONMENT: production
           # Add other frontend environment variables as needed
         run: |
@@ -223,6 +223,28 @@ jobs:
           echo "Building API for production..."
           npm install --production --no-fund --no-audit
           echo "API build completed"
+
+      - name: Create production .env file
+        working-directory: ./API
+        run: |
+          echo "Creating production .env file..."
+          cat > .env << EOF
+          DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+          DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+          API_PORT=${{ secrets.API_PORT }}
+          TOMTOMAPI=${{ secrets.TOMTOMAPI }}
+          WEATHERAPI=${{ secrets.WEATHERAPI }}
+          CORS_ORIGIN=http://localhost:3000/
+          USE_CALIFORNIA_TRAFFIC=true
+          PEMS_USERNAME=${{ secrets.PEMS_USERNAME }}
+          PEMS_PASSWORD=${{ secrets.PEMS_PASSWORD }}
+          TRAFFIC_511_API_TOKEN=${{ secrets.TRAFFIC_511_API_TOKEN }}
+          NODE_ENV=production
+          EOF
+          echo "Production .env file created with all required variables"
 
       - name: Create production deployment artifacts
         run: |
@@ -261,15 +283,126 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           SOURCE_DIR: dist/frontend
 
-      # API deployment to a EC2 (staging) was removed as we are restricted to free tier
-      # Deploy API to EC2 (Production) - FREE TIER: Use t2.micro instance only
+      # # API deployment to a EC2 (staging) was removed as we are restricted to free tier
+      # # Deploy API to EC2 (Production) - FREE TIER: Use t2.micro instance only
+      # - name: Deploy API to EC2 Production
+      #   run: |
+      #     echo "===== DEPLOYING API TO EC2 PRODUCTION INSTANCE ====="
+      #     echo " NOTE: Using t3.micro instance (better performance than t2.micro, still free tier eligible)"
+          
+      #     # Setup SSH key from secret
+      #     echo "Setting up SSH key..."
+      #     mkdir -p ~/.ssh
+      #     echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
+      #     chmod 600 ~/.ssh/ec2_key.pem
+          
+      #     # Create deployment package
+      #     cd dist/api
+      #     tar -czf ../api-deployment.tar.gz .
+      #     cd ../..
+          
+      #     # Copy to EC2 instance
+      #     echo "Copying API files to EC2 production instance..."
+      #     scp -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
+      #       dist/api-deployment.tar.gz \
+      #       ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com:/tmp/
+          
+      #     # Deploy on EC2 instance with zero-downtime strategy
+      #     ssh -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
+      #       ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com << 'EOF'
+      #       # Navigate to the correct API directory
+      #       cd /var/www/api
+            
+      #       # Stop any running processes (screen sessions, npm processes)
+      #       echo "Stopping existing API processes..."
+      #       pkill -f "npm start" || true
+      #       screen -S api -X quit || true
+            
+      #       # Create backup of current version
+      #       sudo rm -rf API_backup && sudo mv API API_backup 2>/dev/null || true
+      #       sudo mkdir -p API
+            
+      #       # Extract new version to API directory
+      #       cd API
+      #       sudo tar -xzf /tmp/api-deployment.tar.gz
+            
+      #       # Fix ownership of extracted files (including the built .env)
+      #       # sudo chown -R $(whoami):$(whoami) .
+            
+      #       # Install dependencies
+      #       npm install --omit=dev
+            
+      #       # Find the correct entry point from package.json
+      #       echo "Detecting API entry point..."
+      #       ENTRY_POINT=$(node -p "require('./package.json').main || 'index.js'" 2>/dev/null || echo "index.js")
+      #       echo "Detected entry point: $ENTRY_POINT"
+            
+      #       # Verify the entry point exists
+      #       if [ -f "$ENTRY_POINT" ]; then
+      #         echo "Entry point file exists: $ENTRY_POINT"
+      #       else
+      #         echo "Entry point file not found. Looking for alternatives..."
+      #         if [ -f "src/server.js" ]; then
+      #           ENTRY_POINT="src/server.js"
+      #           echo "Using src/server.js"
+      #         elif [ -f "app.js" ]; then
+      #           ENTRY_POINT="app.js"
+      #           echo "Using app.js"
+      #         elif [ -f "server.js" ]; then
+      #           ENTRY_POINT="server.js"
+      #           echo "Using server.js"
+      #         elif [ -f "index.js" ]; then
+      #           ENTRY_POINT="index.js"
+      #           echo "Using index.js"
+      #         else
+      #           echo "ERROR: No valid entry point found!"
+      #           ls -la
+      #           exit 1
+      #         fi
+      #       fi
+            
+      #       # Test the entry point syntax
+      #       echo "Testing entry point syntax..."
+      #       node --check "$ENTRY_POINT" || echo "Syntax check completed"
+            
+      #       # Start the API in a screen session (dotenv will handle .env loading)
+      #       echo "Starting API with entry point: $ENTRY_POINT"
+      #       echo "Built .env file will be loaded automatically by the API"
+      #       screen -dmS api bash -c "cd /var/www/api/API && node $ENTRY_POINT"
+            
+      #       # Wait and verify the screen session
+      #       sleep 10
+      #       if screen -list | grep -q "api"; then
+      #         echo "API successfully started in screen session"
+      #         # Test if the API is responding
+      #         sleep 5
+      #         if curl -f -s http://localhost:${{ secrets.API_PORT }}/api/health >/dev/null 2>&1 || curl -f -s http://localhost:${{ secrets.API_PORT }}/ >/dev/null 2>&1; then
+      #           echo "API is responding to requests"
+      #         else
+      #           echo "API started but not yet responding (may need more time to initialize)"
+      #         fi
+      #       else
+      #         echo "Failed to start API, attempting rollback..."
+      #         sudo rm -rf /var/www/api/API
+      #         sudo mv /var/www/api/API_backup /var/www/api/API 2>/dev/null || true
+      #         cd /var/www/api/API
+      #         # Fix ownership after rollback
+      #         # sudo chown -R $(whoami):$(whoami) .
+      #         screen -dmS api bash -c 'cd /var/www/api/API && npm start || node server.js || node src/server.js'
+      #         exit 1
+      #       fi
+      #     EOF
+          
+      #     # Clean up SSH key for security
+      #     rm -f ~/.ssh/ec2_key.pem
+          
+      #     echo " API deployed to EC2 production instance"
+
       - name: Deploy API to EC2 Production
         run: |
           echo "===== DEPLOYING API TO EC2 PRODUCTION INSTANCE ====="
-          echo " NOTE: Using t3.micro instance (better performance than t2.micro, still free tier eligible)"
           
           # Setup SSH key from secret
-          echo "Setting up SSH key..."
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
           chmod 600 ~/.ssh/ec2_key.pem
@@ -280,154 +413,54 @@ jobs:
           cd ../..
           
           # Copy to EC2 instance
-          echo "Copying API files to EC2 production instance..."
           scp -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
             dist/api-deployment.tar.gz \
-            ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API_HOST }}:/tmp/
+            ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com:/tmp/
           
-          # Deploy on EC2 instance with zero-downtime strategy
+          # Deploy on EC2 instance
           ssh -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
-            ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API_HOST }} << 'EOF'
-            # Navigate to the correct API directory (matching associate's setup)
-            cd /var/www/api
+            ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com << 'EOF'
             
-            # Stop any running processes (screen sessions, npm processes)
-            echo "Stopping existing API processes..."
-            pkill -f "npm start" || true
-            screen -S api -X quit || true
+            # Stop existing API if running
+            screen -S api -X quit 2>/dev/null || true
             
-            # Create backup of current version
-            sudo rm -rf API_backup && sudo mv API API_backup 2>/dev/null || true
-            sudo mkdir -p API
+            # Navigate to API directory
+            cd /var/www/api/API
             
-            # Extract new version to API directory
-            cd API
-            sudo tar -xzf /tmp/api-deployment.tar.gz
+            # Backup .env file
+            cp .env /tmp/backup.env
             
-            # Preserve existing .env file (don't overwrite environment variables)
-            if [ -f "../API_backup/.env" ]; then
-              echo "Preserving existing .env file..."
-              sudo cp ../API_backup/.env .env
-            else
-              echo "Warning: No existing .env file found. Please ensure environment variables are configured."
-            fi
+            # Remove old files (keep directory structure)
+            rm -rf node_modules src package.json package-lock.json
             
-            # Install dependencies (use --omit=dev instead of --production)
-            sudo npm install --omit=dev
+            # Extract new code
+            tar -xzf /tmp/api-deployment.tar.gz
             
-            # Skip tests since jest is not installed (focus on deployment)
-            echo "Skipping tests in deployment environment"
+            # Restore .env file
+            cp /tmp/backup.env .env
+            rm /tmp/backup.env
             
-            # Find the correct entry point from package.json
-            echo "Detecting API entry point..."
-            ENTRY_POINT=$(node -p "require('./package.json').main || 'index.js'" 2>/dev/null || echo "index.js")
-            echo "Detected entry point: $ENTRY_POINT"
+            # Install dependencies
+            npm install
             
-            # List files to debug what's actually there
-            echo "Files in API directory:"
-            ls -la
+            # Start API in detached screen session
+            screen -dmS api bash -c 'npm start'
             
-            # Verify the entry point exists
-            if [ -f "$ENTRY_POINT" ]; then
-              echo "Entry point file exists: $ENTRY_POINT"
-            else
-              echo "Entry point file not found. Looking for alternatives..."
-              if [ -f "app.js" ]; then
-                ENTRY_POINT="app.js"
-                echo "Using app.js"
-              elif [ -f "server.js" ]; then
-                ENTRY_POINT="server.js"
-                echo "Using server.js"
-              elif [ -f "index.js" ]; then
-                ENTRY_POINT="index.js"
-                echo "Using index.js"
-              else
-                echo "ERROR: No valid entry point found!"
-                ls -la
-                exit 1
-              fi
-            fi
-            
-            # Test the entry point with a quick syntax check
-            echo "Testing entry point syntax..."
-            node --check "$ENTRY_POINT" || echo "Syntax check completed"
-            
-            # Start the API in a screen session with the detected entry point
-            echo "Starting API with entry point: $ENTRY_POINT"
-            export $(grep -v '^#' /var/www/api/API/.env | xargs)
-            screen -dmS api bash -c "cd /var/www/api/API && node ./src/server.js"
-            
-            # Wait and verify the screen session
+            # Wait and verify
             sleep 10
             if screen -list | grep -q "api"; then
-              echo "API successfully started in screen session"
-              # Test if the API is responding
-              sleep 5
-              if curl -f -s http://localhost:${{ secrets.API_PORT }}/api/health >/dev/null 2>&1 || curl -f -s http://localhost:${{ secrets.API_PORT }}/ >/dev/null 2>&1; then
-                echo "API is responding to requests"
-              else
-                echo "API started but not yet responding (may need more time to initialize)"
-              fi
+              echo "API started successfully"
             else
-              echo "Failed to start API, attempting rollback..."
-              sudo rm -rf /var/www/api/API
-              sudo mv /var/www/api/API_backup /var/www/api/API 2>/dev/null || true
-              cd /var/www/api/API
-              screen -dmS api bash -c 'cd /var/www/api/API && node server.js || node index.js || npm start'
+              echo "Failed to start API"
               exit 1
             fi
+            
+            # Cleanup
+            rm -f /tmp/api-deployment.tar.gz
           EOF
           
-          # Clean up SSH key for security
           rm -f ~/.ssh/ec2_key.pem
-          
-          echo " API deployed to EC2 production instance"
 
-      - name: Post-deployment notifications
-        run: |
-          echo "===== DEPLOYMENT NOTIFICATION ====="
-          echo "Production deployment completed successfully!"
-          echo "Timestamp: $(date)"
-          echo "Version: $(cat dist/version.txt)"
-          echo "Branch: ${{ github.event.workflow_run.head_branch }}"
-          echo "Commit: ${GITHUB_SHA::8}"
-          echo ""
-          echo "Deployment Summary:"
-          echo "   - Frontend: Deployed to S3"
-          echo "   - API: Deployed to EC2"
-          echo "   - Database: Connected and migrated"
-          echo ""
-          echo "Access URLs available in secure environment variables"
-          echo "Deployment completed successfully!"
-          # For deployment, send notifications to Slack, email, etc.
-          
-      # AWS verification using improved health checks
-      - name: Verify AWS Production Deployment
-        run: |
-          echo "===== VERIFYING AWS PRODUCTION DEPLOYMENT ====="
-          echo "Running production health checks..."
-          
-          echo "Checking Frontend (S3 Static Website)..."
-          FRONTEND_URL="https://${{ secrets.AWS_S3_PRODUCTION_BUCKET }}.s3-website-${{ secrets.AWS_REGION }}.amazonaws.com"
-          if curl -f -s --head "$FRONTEND_URL" > /dev/null; then
-            echo "  Frontend service: HEALTHY"
-          else
-            echo "  Frontend service: WARNING - Could not verify"
-          fi
-          
-          echo "Checking API (EC2)..."
-          API_URL="http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api/health"
-          if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
-            echo "  API service: HEALTHY"
-          else
-            echo "  API service: WARNING - Could not verify health endpoint"
-            # Try alternative health check
-            if curl -f -s "http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/" > /dev/null; then
-              echo "  API service: Server responding on port ${{ secrets.API_PORT }}"
-            fi
-          fi
-          
-          echo "Production verification completed!"
 
   post-deployment-monitoring:
     name: Post-Deployment Monitoring
@@ -446,7 +479,7 @@ jobs:
           
           # Test S3 static website hosting
           echo "Checking Frontend (S3 Static Website)..."
-          FRONTEND_URL="https://${{ secrets.AWS_S3_PRODUCTION_BUCKET }}.s3-website-${{ secrets.AWS_REGION }}.amazonaws.com"
+          FRONTEND_URL="https://trafficguardian.co.za"
           if curl -f -s --head "$FRONTEND_URL" > /dev/null; then
             echo "Frontend: HEALTHY"
           else
@@ -455,14 +488,14 @@ jobs:
           
           # Test API health endpoint
           echo "Checking API (EC2)..."
-          API_URL="http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api/health"
+          API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
           if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
             echo "API: HEALTHY"
           else
             echo "API: Could not verify health endpoint"
             # Try basic connection test
-            if curl -f -s "http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/" > /dev/null; then
-              echo "API: Server responding on port ${{ secrets.API_PORT }}"
+            if curl -f -s "https://${{ secrets.EC2_PRODUCTION_API }}/" > /dev/null; then
+              echo "API: Server responding"
             fi
           fi
           
@@ -473,7 +506,7 @@ jobs:
           echo "Running basic performance checks..."
           
           # Test API response time
-          API_URL="http://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api/health"
+          API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
           RESPONSE_TIME=$(curl -f -s -w "%{time_total}" -o /dev/null "$API_URL" 2>/dev/null || echo "0")
           
           if [ "$RESPONSE_TIME" != "0" ]; then
