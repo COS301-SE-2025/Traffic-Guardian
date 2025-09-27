@@ -352,8 +352,10 @@ class ProfilingAndMemoryTest(unittest.TestCase):
             {'bbox': [200, 120, 50, 30], 'confidence': 0.8, 'class': 'car'}
         ]
         mock_tracking = {
-            1: {'history': [(100, 100), (105, 100), (110, 100)], 'class': 'car'},
-            2: {'history': [(200, 120), (195, 120), (190, 120)], 'class': 'car'}
+            'active_tracks': {
+                1: {'history': [(100, 100), (105, 100), (110, 100)], 'class': 'car'},
+                2: {'history': [(200, 120), (195, 120), (190, 120)], 'class': 'car'}
+            }
         }
 
         result, profile_data = self.cpu_profiler.profile_function(
