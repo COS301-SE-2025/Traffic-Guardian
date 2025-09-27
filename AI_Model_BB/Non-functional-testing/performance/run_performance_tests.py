@@ -19,8 +19,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Code'))
 
 # Import test modules
 try:
-    from test_incident_detection_performance import IncidentDetectionPerformanceTest
-    from test_video_pipeline_load import VideoPipelineLoadTest, LoadTest
+    from test_incident_detection_performance import IncidentDetectionPerformanceTest, LoadTest
+    from test_video_pipeline_load import VideoPipelineLoadTest
     from test_profiling_and_memory import ProfilingAndMemoryTest
 except ImportError as e:
     print(f"Failed to import test modules: {e}")
