@@ -133,61 +133,57 @@ jobs:
         working-directory: ./frontend
         run: |
           echo "Generating consolidated test report..."
+          
           # Check if any JSON reports exist
           if find cypress/reports/mochawesome-report -name "*.json" 2>/dev/null | grep -q .; then
             echo "Found test report JSON files, merging..."
+            
+            # Merge all JSON reports into one
             npx mochawesome-merge "cypress/reports/mochawesome-report/*.json" > cypress/reports/merged-report.json
+            
+            # Generate HTML report from merged JSON
             npx mochawesome-report-generator cypress/reports/merged-report.json \
               --reportDir cypress/reports \
               --reportFilename index \
               --reportTitle "Traffic Guardian UI Test Report" \
               --reportPageTitle "UI Test Results" \
               --inline
+            
             echo "HTML test report generated successfully"
           else
-            echo "No test JSON files found, creating placeholder report..."
-            cat > cypress/reports/merged-report.json << EOF
-{
-  "stats": {
-    "suites": 0,
-    "tests": 0,
-    "passes": 0,
-    "pending": 0,
-    "failures": 0,
-    "start": "$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")",
-    "end": "$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")",
-    "duration": 0,
-    "testsRegistered": 0,
-    "passPercent": 0,
-    "pendingPercent": 0,
-    "other": 0,
-    "hasOther": false,
-    "skipped": 0,
-    "hasSkipped": false
-  },
-  "results": [],
-  "meta": {
-    "mocha": {
-      "version": "10.0.0"
-    },
-    "mochawesome": {
-      "version": "7.1.3"
-    },
-    "marge": {
-      "version": "6.2.0"
-    }
-  }
-}
-EOF
+            echo "No test JSON files found, creating minimal placeholder report..."
+            
+            # Use node to create a proper placeholder JSON with current timestamp
+            node -e "
+            const fs = require('fs');
+            const now = new Date().toISOString();
+            const placeholder = {
+              stats: {
+                suites: 0, tests: 0, passes: 0, pending: 0, failures: 0,
+                start: now, end: now, duration: 0, testsRegistered: 0,
+                passPercent: 0, pendingPercent: 0, other: 0, hasOther: false,
+                skipped: 0, hasSkipped: false
+              },
+              results: [],
+              meta: {
+                mocha: { version: '10.0.0' },
+                mochawesome: { version: '7.1.3' },
+                marge: { version: '6.2.0' }
+              }
+            };
+            fs.writeFileSync('cypress/reports/merged-report.json', JSON.stringify(placeholder, null, 2));
+            "
+            
+            # Generate HTML from placeholder
             npx mochawesome-report-generator cypress/reports/merged-report.json \
               --reportDir cypress/reports \
               --reportFilename index \
               --reportTitle "Traffic Guardian UI Test Report" \
-              --reportPageTitle "UI Test Results" \
+              --reportPageTitle "UI Test Results - No Tests Run" \
               --inline
+            
             echo "Generated placeholder test report"
           fi
-    # No longer using local postgres service, now using remote database with secrets
 
     steps:
       - name: Checkout repository
