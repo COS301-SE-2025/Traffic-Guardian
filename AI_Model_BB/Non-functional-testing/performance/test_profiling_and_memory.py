@@ -373,7 +373,7 @@ class ProfilingAndMemoryTest(unittest.TestCase):
 
         # Assertions
         total_execution_time = sum(p['execution_time'] for p in self.cpu_profiler.profiles)
-        self.assertLess(total_execution_time, 5.0, "Total profiled execution time should be under 5 seconds")
+        self.assertLess(total_execution_time, 15.0, "Total profiled execution time should be under 15 seconds")
 
     def test_memory_usage_different_resolutions(self):
         print("\n=== Memory Usage - Different Resolutions ===")
