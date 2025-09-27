@@ -103,6 +103,27 @@ class IncidentDetectionPerformanceTest(unittest.TestCase):
             }
         }
 
+    def ensure_system_analytics(self, system):
+        """Ensure the system has proper analytics initialization."""
+        if not hasattr(system, 'analytics'):
+            system.analytics = {
+                'total_frames': 0,
+                'total_detections': 0,
+                'incidents_detected': 0,
+                'class_totals': {},
+                'start_time': time.time(),
+                'alerts': [],
+                'incident_log': [],
+                'collision_layers': {
+                    'trajectory_detected': 0,
+                    'depth_confirmed': 0,
+                    'flow_confirmed': 0,
+                    'physics_confirmed': 0,
+                    'final_confirmed': 0
+                },
+                'clips_recorded': 0
+            }
+
     def setUp(self):
         self.metrics = PerformanceMetrics()
 
