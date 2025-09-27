@@ -88,6 +88,7 @@ interface WeatherData {
 interface SocketContextType {
   socket: SocketType | null;
   isConnected: boolean;
+  connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'reconnecting' | 'failed';
   realtimeAlerts: RealTimeAlert[];
   unreadAlertCount: number;
   acknowledgeAlert: (alertId: string) => void;
@@ -119,6 +120,7 @@ interface SocketProviderProps {
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<SocketType | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting' | 'failed'>('disconnected');
   const [realtimeAlerts, setRealtimeAlerts] = useState<RealTimeAlert[]>([]);
   const [unreadAlertCount, setUnreadAlertCount] = useState(0);
   const socketRef = useRef<SocketType | null>(null);
@@ -222,40 +224,99 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     // Request notification permission when component mounts
     requestNotificationPermission();
 
-    // Create socket connection
-    const API_BASE_URL = process.env.REACT_APP_API_URL!;
-    const newSocket = io(API_BASE_URL, {
-      auth: {
-        token: apiKey,
-      },
-      transports: ['websocket', 'polling'],
-      autoConnect: true,
-    });
+    let retryCount = 0;
+    const maxRetries = 5;
+    const baseDelay = 1000; // 1 second
+    let reconnectTimer: NodeJS.Timeout;
 
-    setSocket(newSocket);
-    socketRef.current = newSocket;
+    const connectSocket = () => {
+      setConnectionStatus('connecting');
 
-    // Connection event handlers
-    newSocket.on('connect', () => {
-      console.log('Socket connected:', newSocket.id);
-      setIsConnected(true);
-      console.log('Connected to real-time alerts');
-    });
+      // Add 2-second delay before attempting connection
+      setTimeout(() => {
+        // Create socket connection
+        const API_BASE_URL = process.env.REACT_APP_API_URL!;
+        const newSocket = io(API_BASE_URL, {
+          auth: {
+            token: apiKey,
+          },
+          transports: ['websocket', 'polling'],
+          autoConnect: true,
+          timeout: 20000,
+          forceNew: true,
+        });
 
-    newSocket.on('disconnect', (reason: string) => {
-      console.log('Socket disconnected:', reason);
-      setIsConnected(false);
-      toast.warn('Disconnected from real-time alerts', {
-        position: 'bottom-right',
-        autoClose: 3000,
+      setSocket(newSocket);
+      socketRef.current = newSocket;
+
+      // Connection event handlers
+      newSocket.on('connect', () => {
+        console.log('Socket connected:', newSocket.id);
+        setIsConnected(true);
+        setConnectionStatus('connected');
+        retryCount = 0; // Reset retry count on successful connection
+        console.log('Connected to real-time alerts');
+        toast.success('Connected to real-time alerts', {
+          position: 'bottom-right',
+          autoClose: 2000,
+        });
       });
-    });
 
-    newSocket.on('connect_error', (error: any) => {
-      console.error('Socket connection error:', error);
-      setIsConnected(false);
-      console.log('failed to connect real-time alerts, trying to reconnect...');
-    });
+      newSocket.on('disconnect', (reason: string) => {
+        console.log('Socket disconnected:', reason);
+        setIsConnected(false);
+        setConnectionStatus('disconnected');
+
+        if (reason === 'io client disconnect') {
+          // Don't retry if client initiated disconnect
+          return;
+        }
+        toast.warn('Disconnected from real-time alerts', {
+          position: 'bottom-right',
+          autoClose: 3000,
+        });
+
+        // Attempt reconnection with exponential backoff
+        if (retryCount < maxRetries) {
+          setConnectionStatus('reconnecting');
+          const delay = Math.min(baseDelay * Math.pow(2, retryCount), 30000);
+          console.log(`Attempting reconnection in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+
+          reconnectTimer = setTimeout(() => {
+            retryCount++;
+            newSocket.disconnect();
+            connectSocket();
+          }, delay);
+        } else {
+          setConnectionStatus('failed');
+          toast.error('Failed to maintain connection to real-time alerts. Please refresh the page.', {
+            position: 'top-center',
+            autoClose: false,
+          });
+        }
+      });
+
+      newSocket.on('connect_error', (error: any) => {
+        console.error('Socket connection error:', error);
+        setIsConnected(false);
+
+        if (retryCount < maxRetries) {
+          setConnectionStatus('reconnecting');
+          const delay = Math.min(baseDelay * Math.pow(2, retryCount), 30000);
+          console.log(`Connection failed, retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+
+          reconnectTimer = setTimeout(() => {
+            retryCount++;
+            connectSocket();
+          }, delay);
+        } else {
+          setConnectionStatus('failed');
+          toast.error('Unable to connect to real-time alerts. Please check your connection and refresh the page.', {
+            position: 'top-center',
+            autoClose: false,
+          });
+        }
+      });
 
     // Welcome message handler
     newSocket.on('welcome', (message: string) => {
@@ -427,11 +488,23 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       },
     );
 
+      return newSocket;
+      }, 2000); // 2 second delay
+    };
+
+    // Start initial connection
+    connectSocket();
+
     // Cleanup on unmount
     return () => {
       console.log('Cleaning up socket connection');
-      newSocket.disconnect();
-      socketRef.current = null;
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
   }, []);
 
@@ -467,6 +540,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const value: SocketContextType = {
     socket,
     isConnected,
+    connectionStatus,
     realtimeAlerts,
     unreadAlertCount,
     acknowledgeAlert,
