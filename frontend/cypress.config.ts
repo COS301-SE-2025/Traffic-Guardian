@@ -1,58 +1,45 @@
-import { defineConfig } from 'cypress';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { defineConfig } from 'cypress'
 
 export default defineConfig({
   e2e: {
-    baseUrl: process.env.CYPRESS_BASE_URL || 'http://localhost:3000',
-    setupNodeEvents(on, config) {
-      // Implement node event listeners here
-      require('cypress-mochawesome-reporter/plugin')(on);
-    },
+    baseUrl: 'http://localhost:3000',
+    supportFile: 'cypress/support/e2e.ts',
+    specPattern: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}',
     video: true,
-    videoCompression: 32,
     screenshotOnRunFailure: true,
-    reporter: 'cypress-mochawesome-reporter',
-    reporterOptions: {
-      charts: true,
-      reportPageTitle: 'TrafficGuardian Cypress Tests',
-      embeddedScreenshots: true,
-      inlineAssets: true,
-      saveAllAttempts: false,
-      reportDir: 'cypress/reports/mochawesome/.jsons', //added /.jsons
-      overwrite: false,
-      html: false, //changed to false
-      json: true,
+    viewportWidth: 1280,
+    viewportHeight: 720,
+    defaultCommandTimeout: 10000,
+    requestTimeout: 10000,
+    responseTimeout: 10000,
+    setupNodeEvents(on, config) {
+      // implement node event listeners here if needed
+      return config
     },
+    env: {
+      apiUrl: 'http://localhost:5000/api'
+    }
   },
-  // component: {
-  //   devServer: {
-  //     framework: 'react',
-  //     bundler: 'vite',
-  //   },
-  //   setupNodeEvents(on, config) {
-  //     require('cypress-mochawesome-reporter/plugin')(on);
-  //   },
-  //   specPattern: 'src/**/*.cy.{js,jsx,ts,tsx}',
-  //   video: true,
-  //   videoCompression: 32,
-  //   screenshotOnRunFailure: true,
-  //   reporter: 'cypress-mochawesome-reporter',
-  //   reporterOptions: {
-  //     charts: true,
-  //     reportPageTitle: 'TrafficGuardian Component Tests',
-  //     embeddedScreenshots: true,
-  //     inlineAssets: true,
-  //     saveAllAttempts: false,
-  //     reportDir: 'cypress/reports/mochawesome',
-  //     overwrite: false,
-  //     html: true,
-  //     json: true,
-  //   },
-  //   supportFile: 'cypress/support/component.ts',
-  // },
-  env: {
-    API_URL: process.env.CYPRESS_API_URL || 'http://localhost:5000/api',
+  component: {
+    devServer: {
+      framework: 'react',
+      bundler: 'webpack',
+    },
+    specPattern: 'src/**/*.cy.{js,jsx,ts,tsx}',
+    video: true,
+    screenshotOnRunFailure: true,
+    setupNodeEvents(on, config) {
+      // implement node event listeners here if needed
+      return config
+    }
   },
-});
+  // Global reporter configuration for both e2e and component tests
+  reporter: 'mochawesome',
+  reporterOptions: {
+    reportDir: 'cypress/reports/mochawesome-report',
+    overwrite: false,
+    html: false,
+    json: true,
+    reportFilename: '[name]'
+  }
+})
