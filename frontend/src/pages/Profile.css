@@ -43,7 +43,7 @@ svg {
   --subtitle-color: #ccc;
   --button-primary-bg: #fa3;
   --button-primary-text: #000;
-  --button-primary-hover: #F79400;
+  --button-primary-hover: #f79400;
   --admin-badge-bg: #fa3;
   --admin-badge-text: #000;
   --section-border: #555;
@@ -69,6 +69,12 @@ svg {
   color: #f1f1f1;
   background-color: #0f0f0f;
   min-height: calc(100vh - 2rem);
+}
+
+/* Light mode profile page */
+:root.light-mode .profile-page {
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 @media (max-width: 768px) {
@@ -98,7 +104,7 @@ svg {
   text-align: center;
   margin-bottom: 1.5rem;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
 }
 
 .profile-header h2 {

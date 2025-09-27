@@ -163,7 +163,7 @@ const LandingPage: React.FC = () => {
           </h2>
           <div className="problem-grid">
             <div className="problem-card">
-              <div className="problem-icon"><i className="fas fa-clock"></i></div>
+              <div className="problem-icon"><i className="fas fa-clock" /></div>
               <h3>Response Delays</h3>
               <p>
                 Every second counts. Manual monitoring creates dangerous delays
@@ -171,7 +171,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="problem-card">
-              <div className="problem-icon"><i className="fas fa-car"></i></div>
+              <div className="problem-icon"><i className="fas fa-car" /></div>
               <h3>Cascading Congestion</h3>
               <p>
                 Undetected incidents rapidly escalate into major traffic events,
@@ -179,7 +179,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="problem-card">
-              <div className="problem-icon"><i className="fas fa-eye"></i></div>
+              <div className="problem-icon"><i className="fas fa-eye" /></div>
               <h3>Human Limitations</h3>
               <p>
                 Operators cannot effectively monitor multiple camera feeds 24/7,
@@ -187,7 +187,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="problem-card">
-              <div className="problem-icon"><i className="fas fa-dollar-sign"></i></div>
+              <div className="problem-icon"><i className="fas fa-dollar-sign" /></div>
               <h3>Economic Impact</h3>
               <p>
                 Traffic incidents cost millions in lost productivity, fuel
@@ -239,7 +239,7 @@ const LandingPage: React.FC = () => {
           </h2>
           <div className="features-grid">
             <div className="feature-card">
-              <div className="feature-icon"><i className="fas fa-brain"></i></div>
+              <div className="feature-icon"><i className="fas fa-brain" /></div>
               <h3 className="feature-title">Deep Learning AI</h3>
               <p>
                 State-of-the-art TensorFlow models trained on thousands of
@@ -247,7 +247,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon"><i className="fas fa-bolt"></i></div>
+              <div className="feature-icon"><i className="fas fa-bolt" /></div>
               <h3 className="feature-title">Real-Time Processing</h3>
               <p>
                 Sub-second detection latency ensures immediate awareness of
@@ -255,7 +255,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon"><i className="fas fa-map"></i></div>
+              <div className="feature-icon"><i className="fas fa-map" /></div>
               <h3 className="feature-title">3D Traffic Visualisation</h3>
               <p>
                 Interactive digital twin of the highway network with live
@@ -263,7 +263,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon"><i className="fas fa-chart-bar"></i></div>
+              <div className="feature-icon"><i className="fas fa-chart-bar" /></div>
               <h3 className="feature-title">Predictive Analytics</h3>
               <p>
                 Historical pattern recognition to identify accident hotspots and
@@ -271,7 +271,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon"><i className="fas fa-bell"></i></div>
+              <div className="feature-icon"><i className="fas fa-bell" /></div>
               <h3 className="feature-title">Smart Alert System</h3>
               <p>
                 Intelligent notification routing based on incident severity and
@@ -279,7 +279,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon"><i className="fas fa-lock"></i></div>
+              <div className="feature-icon"><i className="fas fa-lock" /></div>
               <h3 className="feature-title">Enterprise Security</h3>
               <p>
                 Bank-grade encryption with full POPI Act compliance for all
