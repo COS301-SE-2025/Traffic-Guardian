@@ -23,7 +23,7 @@ const createSmartRateLimitHandler = (type) => (req, res, next) => {
   
   // Only log every Nth violation to reduce spam
   if (violationData.count % VIOLATION_LOG_THRESHOLD === 1) {
-    console.warn(`⚠️  Rate limit exceeded for ${type} from ${req.ip} (${violationData.count} violations in last minute)`);
+    console.warn(`Rate limit exceeded for ${type} from ${req.ip} (${violationData.count} violations in last minute)`);
   }
   
   // Send response without additional logging
