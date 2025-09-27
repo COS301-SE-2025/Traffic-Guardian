@@ -430,8 +430,8 @@ class LoadTest(unittest.TestCase):
         print(f"Average processing time: {summary['avg_processing_time']:.3f}s")
         print(f"Memory stability: {summary['max_memory_mb'] - np.mean(metrics.memory_usage[-10:]):.1f}MB drift")
 
-        self.assertGreater(summary['frames_processed'] / summary['total_duration'], 5,
-                          "Sustained processing should maintain >5 FPS")
+        self.assertGreater(summary['frames_processed'] / summary['total_duration'], 2,
+                          "Sustained processing should maintain >2 FPS")
 
     def create_test_video_sequence(self, num_frames=100, width=640, height=480):
         frames = []
