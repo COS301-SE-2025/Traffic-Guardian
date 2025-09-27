@@ -52,7 +52,6 @@ const WeeklyTrafficTrends: React.FC<WeeklyTrafficTrendsProps> = ({
   const showDistrictData = district && (canAccessDistrict(district) || userRole === 'admin' || userRole === 'super_admin');
 
   const generateDemoData = (isPublic: boolean): WeeklyTrendData[] => {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     // Standardized data patterns - same for all users
     const standardizedData = [
       { day: 'Monday', dayOfWeek: 1, averageVolume: 2450, peakVolume: 3675, peakHour: 8, avgSpeed: 58, incidents: 2 },

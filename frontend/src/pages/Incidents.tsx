@@ -239,6 +239,15 @@ interface ManualIncidentForm {
   Incident_Description?: string;
 }
 
+interface EditIncidentForm {
+  Incidents_DateTime: string;
+  Incidents_Longitude: string;
+  Incidents_Latitude: string;
+  Incident_Severity: 'high' | 'medium' | 'low';
+  Incident_Status: 'open' | 'ongoing' | 'resolved' | 'closed';
+  Incident_Description?: string;
+}
+
 interface FilterState {
   search: string;
   status: string;
@@ -283,6 +292,10 @@ const Incidents: React.FC = () => {
     Record<number, 'open' | 'ongoing' | 'resolved' | 'closed'>
   >({});
   const [showAlertsPanel, setShowAlertsPanel] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<DisplayIncident | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingIncident, setEditingIncident] = useState<DisplayIncident | null>(null);
 
   const [manualIncident, setManualIncident] = useState<ManualIncidentForm>({
     Incidents_DateTime: new Date().toISOString().slice(0, 16),
@@ -297,6 +310,19 @@ const Incidents: React.FC = () => {
 
   const [formErrors, setFormErrors] = useState<
     Partial<Record<keyof ManualIncidentForm, string>>
+  >({});
+
+  const [editForm, setEditForm] = useState<EditIncidentForm>({
+    Incidents_DateTime: '',
+    Incidents_Longitude: '',
+    Incidents_Latitude: '',
+    Incident_Severity: 'medium',
+    Incident_Status: 'open',
+    Incident_Description: '',
+  });
+
+  const [editFormErrors, setEditFormErrors] = useState<
+    Partial<Record<keyof EditIncidentForm, string>>
   >({});
 
   const apiRequest = useCallback(
@@ -526,11 +552,43 @@ const Incidents: React.FC = () => {
     try {
       switch (action) {
         case 'view':
-          const _incident = await apiRequest(`/api/incidents/${incidentId}`);
-          // Viewing incident details
+          const incident = incidents.find(inc => inc.id === incidentId);
+          if (incident) {
+            setSelectedIncident(incident);
+            setShowDetailsModal(true);
+          } else {
+            toast.error('Incident not found');
+          }
           break;
         case 'edit':
-          // Editing incident
+          if (userRole !== 'admin') {
+            toast.error('Only administrators can edit incidents');
+            return;
+          }
+          const editIncident = incidents.find(inc => inc.id === incidentId);
+          if (editIncident) {
+            setEditingIncident(editIncident);
+            // Parse location coordinates if available
+            let lat = '', lng = '';
+            if (editIncident.location.includes('Lat:') && editIncident.location.includes('Lng:')) {
+              const coords = editIncident.location.match(/Lat: ([-\d.]+), Lng: ([-\d.]+)/);
+              if (coords) {
+                [, lat, lng] = coords;
+              }
+            }
+            setEditForm({
+              Incidents_DateTime: editIncident.date,
+              Incidents_Longitude: lng,
+              Incidents_Latitude: lat,
+              Incident_Severity: editIncident.severity,
+              Incident_Status: editIncident.status,
+              Incident_Description: editIncident.description || '',
+            });
+            setEditFormErrors({});
+            setShowEditModal(true);
+          } else {
+            toast.error('Incident not found');
+          }
           break;
       }
     } catch (error: unknown) {
@@ -577,6 +635,107 @@ const Incidents: React.FC = () => {
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const handleEditIncidentChange = (
+    key: keyof EditIncidentForm,
+    value: string,
+  ) => {
+    setEditForm(prev => ({ ...prev, [key]: value }));
+
+    if (editFormErrors[key]) {
+      setEditFormErrors(prev => ({ ...prev, [key]: undefined }));
+    }
+  };
+
+  const validateEditForm = (): boolean => {
+    const errors: Partial<Record<keyof EditIncidentForm, string>> = {};
+
+    if (!editForm.Incidents_DateTime.trim()) {
+      errors.Incidents_DateTime = 'Date and time is required';
+    }
+
+    if (
+      editForm.Incidents_Latitude &&
+      isNaN(parseFloat(editForm.Incidents_Latitude))
+    ) {
+      errors.Incidents_Latitude = 'Invalid latitude format';
+    }
+
+    if (
+      editForm.Incidents_Longitude &&
+      isNaN(parseFloat(editForm.Incidents_Longitude))
+    ) {
+      errors.Incidents_Longitude = 'Invalid longitude format';
+    }
+
+    setEditFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmitEditIncident = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editingIncident) {
+      toast.error('No incident selected for editing');
+      return;
+    }
+
+    if (!validateEditForm()) {
+      toast.error('Please correct the errors in the form');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const apiPayload = {
+        Incidents_DateTime: editForm.Incidents_DateTime,
+        Incidents_Latitude: editForm.Incidents_Latitude
+          ? parseFloat(editForm.Incidents_Latitude)
+          : null,
+        Incidents_Longitude: editForm.Incidents_Longitude
+          ? parseFloat(editForm.Incidents_Longitude)
+          : null,
+        Incident_Severity: editForm.Incident_Severity,
+        Incident_Status: editForm.Incident_Status,
+        Incident_Description: editForm.Incident_Description || null,
+      };
+
+      await apiRequest(`/api/incidents/${editingIncident.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(apiPayload),
+      });
+
+      // Update the local incidents list
+      setIncidents(prev =>
+        prev.map(inc =>
+          inc.id === editingIncident.id
+            ? {
+                ...inc,
+                date: editForm.Incidents_DateTime,
+                location:
+                  editForm.Incidents_Latitude && editForm.Incidents_Longitude
+                    ? `Lat: ${editForm.Incidents_Latitude}, Lng: ${editForm.Incidents_Longitude}`
+                    : 'Not Available',
+                severity: editForm.Incident_Severity,
+                status: editForm.Incident_Status,
+                description: editForm.Incident_Description || undefined,
+                updatedAt: new Date().toISOString(),
+              }
+            : inc,
+        ),
+      );
+
+      setShowEditModal(false);
+      setEditingIncident(null);
+      toast.success('Incident updated successfully!');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to update incident: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmitManualIncident = async (e: React.FormEvent) => {
@@ -1422,6 +1581,379 @@ const Incidents: React.FC = () => {
                       <>
                         <CheckIcon />
                         Submit Incident Report
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDetailsModal && selectedIncident && (
+        <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
+          <div className="modal-content incident-details-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Incident Details</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowDetailsModal(false)}
+              >
+                <XIcon />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="incident-details-grid">
+                <div className="detail-section">
+                  <h4 className="detail-section-title">Basic Information</h4>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <label className="detail-label">Incident ID</label>
+                      <span className="detail-value">#{selectedIncident.id}</span>
+                    </div>
+                    <div className="detail-item">
+                      <label className="detail-label">Date & Time</label>
+                      <span className="detail-value">{formatDateTime(selectedIncident.date)}</span>
+                    </div>
+                    <div className="detail-item">
+                      <label className="detail-label">Type</label>
+                      <span className="detail-value">
+                        <AlertTriangleIcon />
+                        {selectedIncident.type}
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <label className="detail-label">Location</label>
+                      <span className="detail-value">{selectedIncident.location}</span>
+                    </div>
+                    <div className="detail-item">
+                      <label className="detail-label">Camera ID</label>
+                      <span className="detail-value">
+                        <CameraIcon />
+                        {selectedIncident.cameraId}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h4 className="detail-section-title">Status Information</h4>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <label className="detail-label">Severity Level</label>
+                      <span className={`detail-value severity-badge ${getSeverityClass(selectedIncident.severity)}`}>
+                        {getSeverityDisplay(selectedIncident.severity)}
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <label className="detail-label">Current Status</label>
+                      <span className={`detail-value status-badge ${getStatusClass(selectedIncident.status)}`}>
+                        {getStatusDisplay(selectedIncident.status)}
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <label className="detail-label">Created</label>
+                      <span className="detail-value">{formatDateTime(selectedIncident.createdAt)}</span>
+                    </div>
+                    <div className="detail-item">
+                      <label className="detail-label">Last Updated</label>
+                      <span className="detail-value">{formatDateTime(selectedIncident.updatedAt)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedIncident.description && (
+                  <div className="detail-section full-width">
+                    <h4 className="detail-section-title">Description</h4>
+                    <div className="description-content">
+                      <p>{selectedIncident.description}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="detail-section full-width">
+                  <h4 className="detail-section-title">Quick Actions</h4>
+                  <div className="detail-actions">
+                    <button
+                      className="detail-action-btn"
+                      onClick={() => {
+                        if (selectedIncident.location.includes('Lat:') && selectedIncident.location.includes('Lng:')) {
+                          const coords = selectedIncident.location.match(/Lat: ([-\d.]+), Lng: ([-\d.]+)/);
+                          if (coords) {
+                            const [, lat, lng] = coords;
+                            window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                          }
+                        } else {
+                          toast.info('Location coordinates not available for mapping');
+                        }
+                      }}
+                    >
+                      View on Map
+                    </button>
+                    <button
+                      className="detail-action-btn"
+                      onClick={() => {
+                        const incidentText = `Incident #${selectedIncident.id} - ${selectedIncident.type} at ${selectedIncident.location} (${getSeverityDisplay(selectedIncident.severity)} severity, ${getStatusDisplay(selectedIncident.status)} status)`;
+                        navigator.clipboard.writeText(incidentText).then(() => {
+                          toast.success('Incident details copied to clipboard');
+                        }).catch(() => {
+                          toast.error('Failed to copy to clipboard');
+                        });
+                      }}
+                    >
+                      Copy Details
+                    </button>
+                    <button
+                      className="detail-action-btn"
+                      onClick={() => {
+                        setShowDetailsModal(false);
+                        setTimeout(() => {
+                          handleIncidentAction(selectedIncident.id, 'edit');
+                        }, 100);
+                      }}
+                      disabled={userRole !== 'admin'}
+                    >
+                      Edit Incident
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && editingIncident && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Edit Incident #{editingIncident.id}</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowEditModal(false)}
+              >
+                <XIcon />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <form
+                className="professional-incident-form"
+                onSubmit={handleSubmitEditIncident}
+              >
+                <div className="form-section">
+                  <h4 className="section-title">Incident Details</h4>
+                  <p className="section-description">
+                    Update incident information. Only administrators can edit incidents.
+                  </p>
+
+                  <div className="form-grid">
+                    <div className="form-group full-width">
+                      <label className="form-label required">
+                        Date and Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        className="form-input"
+                        value={editForm.Incidents_DateTime}
+                        onChange={e =>
+                          handleEditIncidentChange(
+                            'Incidents_DateTime',
+                            e.target.value,
+                          )
+                        }
+                        required
+                      />
+                      {editFormErrors.Incidents_DateTime && (
+                        <div className="form-error">
+                          {editFormErrors.Incidents_DateTime}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label required">
+                        Severity Level
+                      </label>
+                      <select
+                        className="form-select"
+                        value={editForm.Incident_Severity}
+                        onChange={e =>
+                          handleEditIncidentChange(
+                            'Incident_Severity',
+                            e.target.value as 'high' | 'medium' | 'low',
+                          )
+                        }
+                        required
+                      >
+                        <option value="low">Low - Minor disruption</option>
+                        <option value="medium">Medium - Moderate impact</option>
+                        <option value="high">High - Critical incident</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label required">
+                        Status
+                      </label>
+                      <select
+                        className="form-select"
+                        value={editForm.Incident_Status}
+                        onChange={e =>
+                          handleEditIncidentChange(
+                            'Incident_Status',
+                            e.target.value as
+                              | 'open'
+                              | 'ongoing'
+                              | 'resolved'
+                              | 'closed',
+                          )
+                        }
+                        required
+                      >
+                        <option value="open">Open - Newly reported</option>
+                        <option value="ongoing">
+                          Ongoing - Being addressed
+                        </option>
+                        <option value="resolved">Resolved - Issue fixed</option>
+                        <option value="closed">Closed - Completed</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label className="form-label">Description</label>
+                      <textarea
+                        className="form-input"
+                        placeholder="Update incident description..."
+                        value={editForm.Incident_Description || ''}
+                        onChange={e =>
+                          handleEditIncidentChange(
+                            'Incident_Description',
+                            e.target.value,
+                          )
+                        }
+                        rows={4}
+                        style={{ resize: 'vertical', minHeight: '80px' }}
+                      />
+                      <div className="form-help">
+                        Optional: Additional details about the incident.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <h4 className="section-title">Location Information</h4>
+                  <p className="section-description">
+                    Update GPS coordinates if needed.
+                  </p>
+
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">Latitude</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g., -25.7479"
+                        value={editForm.Incidents_Latitude}
+                        onChange={e =>
+                          handleEditIncidentChange(
+                            'Incidents_Latitude',
+                            e.target.value,
+                          )
+                        }
+                      />
+                      {editFormErrors.Incidents_Latitude && (
+                        <div className="form-error">
+                          {editFormErrors.Incidents_Latitude}
+                        </div>
+                      )}
+                      <div className="form-help">
+                        Decimal degrees format (negative for South)
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Longitude</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g., 28.2293"
+                        value={editForm.Incidents_Longitude}
+                        onChange={e =>
+                          handleEditIncidentChange(
+                            'Incidents_Longitude',
+                            e.target.value,
+                          )
+                        }
+                      />
+                      {editFormErrors.Incidents_Longitude && (
+                        <div className="form-error">
+                          {editFormErrors.Incidents_Longitude}
+                        </div>
+                      )}
+                      <div className="form-help">
+                        Decimal degrees format (positive for East)
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="location-helper">
+                    <button
+                      type="button"
+                      className="helper-btn"
+                      onClick={() => {
+                        if (navigator.geolocation) {
+                          navigator.geolocation.getCurrentPosition(
+                            position => {
+                              setEditForm(prev => ({
+                                ...prev,
+                                Incidents_Latitude:
+                                  position.coords.latitude.toString(),
+                                Incidents_Longitude:
+                                  position.coords.longitude.toString(),
+                              }));
+                              toast.success('Current location captured');
+                            },
+                            _error => {
+                              toast.error('Unable to get current location');
+                            },
+                          );
+                        } else {
+                          toast.error('Geolocation not supported by browser');
+                        }
+                      }}
+                    >
+                      Use Current Location
+                    </button>
+                    <span className="helper-text">
+                      Or manually enter coordinates from GPS device or map
+                    </span>
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => setShowEditModal(false)}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-submit"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <div className="loading-spinner">Updating...</div>
+                    ) : (
+                      <>
+                        <CheckIcon />
+                        Update Incident
                       </>
                     )}
                   </button>

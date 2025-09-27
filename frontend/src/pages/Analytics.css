@@ -8,6 +8,12 @@
   padding-top: var(--page-content-offset);
 }
 
+/* Light mode analytics */
+:root.light-mode .analytics-container {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
 @media (max-width: 768px) {
   .analytics-container {
     padding-top: var(--page-content-offset);

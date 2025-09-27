@@ -71,6 +71,12 @@ svg {
   min-height: calc(100vh - 2rem);
 }
 
+/* Light mode profile page */
+:root.light-mode .profile-page {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
 @media (max-width: 768px) {
   .profile-page {
     padding-top: calc(140px + 1rem);

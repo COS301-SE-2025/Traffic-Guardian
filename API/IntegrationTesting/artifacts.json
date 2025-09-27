@@ -1,0 +1,116 @@
+{
+  "admin": [
+    {
+      "path": "/api/auth/cache/stats",
+      "expect": {
+        "latency": 250,
+        "requests": 80
+      },
+      "rateLimit": 10
+    },
+    {
+      "path": "/api/auth/database/stats",
+      "expect": {
+        "latency": 300,
+        "requests": 70
+      },
+      "rateLimit": 8
+    },
+    {
+      "path": "/api/auth/deduplication/stats",
+      "expect": {
+        "latency": 250,
+        "requests": 90
+      },
+      "rateLimit": 10
+    }
+  ],
+  "archives": [
+    {
+      "path": "/api/archives",
+      "expect": {
+        "latency": 250,
+        "requests": 150
+      },
+      "rateLimit": 20
+    },
+    {
+      "path": "/api/archives/stats",
+      "expect": {
+        "latency": 200,
+        "requests": 100
+      },
+      "rateLimit": 15
+    },
+    {
+      "path": "/api/archives/profile",
+      "expect": {
+        "latency": 300,
+        "requests": 50
+      },
+      "rateLimit": 8
+    },
+    {
+      "path": "/api/archives/:id",
+      "expect": {
+        "latency": 350,
+        "requests": 40
+      },
+      "rateLimit": 5
+    }
+  ],
+  "pems": [
+    {
+      "path": "/api/pems/high-risk-areas",
+      "expect": {
+        "latency": 300,
+        "requests": 60
+      },
+      "rateLimit": 8
+    },
+    {
+      "path": "/api/pems/dashboard-summary",
+      "expect": {
+        "latency": 250,
+        "requests": 70
+      },
+      "rateLimit": 10
+    },
+    {
+      "path": "/api/pems/alerts",
+      "expect": {
+        "latency": 250,
+        "requests": 70
+      },
+      "rateLimit": 10
+    }
+  ],
+  "health": [
+    {
+      "path": "/api/health",
+      "expect": {
+        "latency": 150,
+        "requests": 200
+      },
+      "rateLimit": 20
+    },
+    {
+      "path": "/api/jobs/stats",
+      "expect": {
+        "latency": 250,
+        "requests": 100
+      },
+      "rateLimit": 15
+    }
+  ],
+  "users": [
+    {
+      "path": "/api/user/preferences",
+      "expect": {
+        "latency": 250,
+        "requests": 50
+      },
+      "rateLimit": 8
+    }
+  ]
+}
