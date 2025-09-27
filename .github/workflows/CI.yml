@@ -106,13 +106,13 @@ jobs:
         working-directory: ./frontend
         continue-on-error: true
         run: |
-          npx cypress run --component --reporter cypress-mochawesome-reporter
+          npx cypress run --component
           echo "Component tests completed"
           
       - name: Run Cypress E2E tests
         working-directory: ./frontend
         run: |
-          npx cypress run --e2e --reporter cypress-mochawesome-reporter
+          npx cypress run --e2e
           echo "E2E tests completed"
           
       - name: Generate HTML test report
