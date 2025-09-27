@@ -403,7 +403,7 @@ class EnhancedCrashClassifier:
         }
         
         # API configuration for camera information NEED TO UPDATE API STUFF NEXT
-        self.api_base_url = "http://localhost:5000/api"  # Need to adjustr
+        self.api_base_url = os.getenv('API_BASE_URL', 'http://localhost:5000/api')
         self.camera_info_cache = {}  # Cache camera information
         
     def __del__(self):
@@ -2529,7 +2529,7 @@ class EnhancedCrashClassifier:
         """
         api_key = os.getenv('AIAPIKEY')
         return {
-            'endpoint': 'http://localhost:5000/api/incidents',
+            'endpoint': f"{os.getenv('API_BASE_URL', 'http://localhost:5000/api')}/incidents",
             'api_key': api_key,
             'enabled': bool(api_key)
         }
@@ -2639,7 +2639,7 @@ class EnhancedCrashClassifier:
         # Send request
         try:
             response = requests.post(
-                "http://localhost:5000/api/incidents",
+                f"{os.getenv('API_BASE_URL', 'http://localhost:5000/api')}/incidents",
                 json=payload,
                 headers=headers,
                 timeout=10
