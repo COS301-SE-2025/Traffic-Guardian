@@ -102,32 +102,19 @@ jobs:
           mkdir -p cypress/reports/mochawesome/.jsons
           # Ensure there's a mochawesome configuration in cypress.config.ts
           echo "Cypress test environment prepared"
-      - name: Prepare Cypress test environment
-        working-directory: ./frontend
-        run: |
-          # Create directories for test reports
-          mkdir -p cypress/reports/mochawesome-report
-          mkdir -p cypress/screenshots
-          mkdir -p cypress/videos
-          echo "Cypress test environment prepared"
-
       - name: Run Cypress component tests
         working-directory: ./frontend
         continue-on-error: true
         run: |
-          npx cypress run --component \
-            --reporter mochawesome \
-            --reporter-options "reportDir=cypress/reports/mochawesome-report,overwrite=false,html=false,json=true,reportFilename=[name]"
+          npx cypress run --component --reporter cypress-mochawesome-reporter
           echo "Component tests completed"
-
+          
       - name: Run Cypress E2E tests
         working-directory: ./frontend
         run: |
-          npx cypress run --e2e \
-            --reporter mochawesome \
-            --reporter-options "reportDir=cypress/reports/mochawesome-report,overwrite=false,html=false,json=true,reportFilename=[name]"
+          npx cypress run --e2e --reporter cypress-mochawesome-reporter
           echo "E2E tests completed"
-
+          
       - name: Generate consolidated HTML test report
         if: always()
         working-directory: ./frontend
@@ -184,6 +171,12 @@ jobs:
             
             echo "Generated placeholder test report"
           fi
+
+
+  test-api:
+    name: API Tests
+    runs-on: ubuntu-latest
+    # No longer using local postgres service, now using remote database with secrets
 
     steps:
       - name: Checkout repository
