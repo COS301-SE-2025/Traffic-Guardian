@@ -22,7 +22,24 @@ const LaneClosureModal: React.FC<LaneClosureModalProps> = ({
       return 'Not specified';
     }
     try {
-      return new Date(dateTime).toLocaleString();
+      const date = new Date(dateTime);
+      const dateTimeString = date.toLocaleString('en-US', {
+        timeZone: 'America/Los_Angeles',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+
+      // Get timezone abbreviation (PST/PDT)
+      const timeZone = date.toLocaleDateString('en-US', {
+        timeZone: 'America/Los_Angeles',
+        timeZoneName: 'short'
+      }).split(', ')[1];
+
+      return `${dateTimeString} (${timeZone})`;
     } catch (error) {
       return dateTime;
     }

@@ -478,26 +478,28 @@
 
 /* Role-based Access Control Styles */
 .public-badge {
-  background: linear-gradient(135deg, #feac34, #F79400);
-  color: white;
+  background: var(--stat-card-icon-bg);
+  color: var(--title-color);
   padding: 0.3rem 0.8rem;
-  border-radius: 16px;
+  border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 600;
   margin-left: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border: 1px solid var(--title-color);
 }
 
 .user-role-badge {
-  background: linear-gradient(135deg, #0056b3, #2196f3);
-  color: white;
+  background: var(--status-responding-bg);
+  color: var(--status-responding-text);
   padding: 0.3rem 0.8rem;
-  border-radius: 16px;
+  border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 600;
   margin-left: 1rem;
   letter-spacing: 0.5px;
+  border: 1px solid var(--status-responding-text);
 }
 
 .export-button {
@@ -528,82 +530,75 @@
 }
 
 .upgrade-prompt {
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border: 2px solid #F79400;
-  border-radius: 12px;
-  padding: 2rem;
-  margin-top: 2rem;
+  background: var(--stat-card-bg);
+  border: 2px dashed var(--stat-card-border);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  margin-bottom: 2rem;
   text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
+}
+
+.upgrade-prompt:hover {
+  border-color: var(--title-color);
+  box-shadow: 0 8px 32px var(--stat-card-hover-shadow);
+  transform: translateY(-2px);
 }
 
 .upgrade-prompt h4 {
-  color: #F79400;
-  margin: 0 0 1rem 0;
-  font-size: 1.3rem;
+  color: var(--title-color);
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
 .upgrade-prompt p {
   color: var(--text-color);
-  margin: 0 0 1rem 0;
+  margin: 0 0 1rem;
   font-size: 1rem;
+  line-height: 1.6;
 }
 
 .upgrade-prompt ul {
   text-align: left;
-  max-width: 300px;
-  margin: 1.5rem auto;
-  padding: 0;
-  list-style: none;
+  max-width: 400px;
+  margin: 2rem auto;
+  padding-left: 1.5rem;
+  color: var(--subtitle-color);
 }
 
 .upgrade-prompt li {
-  color: var(--text-color);
-  margin: 0.5rem 0;
-  padding-left: 1rem;
-  font-size: 0.95rem;
-}
-
-.upgrade-prompt li::before {
-  content: '';
-  display: inline-block;
-  width: 0.8rem;
-  height: 0.8rem;
-  background: #4caf50;
-  border-radius: 50%;
-  margin-right: 0.5rem;
-  margin-left: -1rem;
+  color: var(--subtitle-color);
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .upgrade-cta {
-  background: linear-gradient(135deg, #F79400, #feac34);
-  color: white;
-  padding: 1rem 2rem;
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
-  display: inline-block;
-  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 160px;
+  justify-content: center;
+  border: 2px solid var(--button-primary-bg);
   transition: all 0.2s ease;
+  margin-top: 1rem;
 }
 
 .upgrade-cta:hover {
+  background: var(--button-primary-hover);
+  border-color: var(--button-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(229, 90, 46, 0.3);
+  box-shadow: 0 4px 16px rgb(217 119 0 / 30%);
   text-decoration: none;
-  color: white;
-}
-
-/* Dark mode adjustments for new elements */
-.dark-mode .upgrade-prompt {
-  background: linear-gradient(135deg, #2d2d2d, #3d3d3d);
-  border-color: #F79400;
-}
-
-.dark-mode .upgrade-prompt h4,
-.dark-mode .upgrade-prompt p,
-.dark-mode .upgrade-prompt li {
-  color: #ffffff;
+  color: var(--button-primary-text);
 }
 
 /* Responsive adjustments for role badges */
