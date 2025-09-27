@@ -173,7 +173,7 @@ jobs:
 
   deploy-production:
     name: Deploy to Production
-    # needs: [deploy-staging]
+    needs: [deploy-staging]
     runs-on: ubuntu-latest
     # Handle both workflow_run and manual triggers
     environment:
