@@ -988,10 +988,4 @@ jobs:
             python run_performance_tests.py
           else
             echo "run_performance_tests.py not found, creating basic test..."
-
-      - name: Upload Test Artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ai-model-test-report
-          path: ./AI_Model_BB/Non-functional-testing/performance
+          fi
