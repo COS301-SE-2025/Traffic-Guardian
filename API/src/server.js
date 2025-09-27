@@ -53,7 +53,6 @@ const broadcastActiveUsers = () => {
     count: activeUsersCount,
     timestamp: new Date()
   });
-  console.log(`Broadcasting active users: ${activeUsersCount}`);
 };
 
 var welcomeMsg;
@@ -83,7 +82,6 @@ io.on('connection',(socket)=>{
   // Broadcast updated user count
   broadcastActiveUsers();
 
-  console.log(`New user connected: ${socket.id} (Total: ${activeConnections.size})`);
 
   // Optimized traffic data fetching with circuit breaker
   const getTrafficData = async () => {
@@ -162,10 +160,8 @@ io.on('connection',(socket)=>{
         let data;
         
         if (process.env.USE_CALIFORNIA_TRAFFIC === 'true') {
-          console.log('🌴 Using enhanced California traffic data...');
           data = await caltransTraffic.getEnhancedCaliforniaTraffic();
         } else {
-          console.log('🗺️  Using TomTom traffic data...');
           data = await traffic.getTraffic();
         }
         
@@ -187,7 +183,6 @@ io.on('connection',(socket)=>{
           const res_incidentLocations =  traffic.incidentLocations(data);
           socket.emit('incidentLocations', res_incidentLocations);
         } else {
-          console.log('Traffic API unavailable in interval update - skipping');
         }
       } catch (error) {
         console.error('Traffic API error in interval update:', error.message);
@@ -365,7 +360,6 @@ io.on('connection',(socket)=>{
       // Broadcast updated user count
       broadcastActiveUsers();
       
-      console.log(`User disconnected: ${socket.id} (Reason: ${reason}) (Total: ${activeConnections.size})`);
     });
     
     // Handle request for current stats
@@ -391,7 +385,6 @@ setInterval(() => {
 
 // Function to emit archive creation events (to be called when new archives are created)
 const emitArchiveCreated = (archiveData) => {
-  console.log('Emitting archiveCreated event:', archiveData);
   io.emit('archiveCreated', {
     archive: archiveData,
     timestamp: new Date(),
@@ -401,7 +394,6 @@ const emitArchiveCreated = (archiveData) => {
 
 // Function to emit archive updates (to be called when archives are modified)
 const emitArchiveUpdated = (archiveData) => {
-  console.log('Emitting archiveUpdated event:', archiveData);
   io.emit('archiveUpdated', {
     archive: archiveData,
     timestamp: new Date(),
@@ -422,7 +414,6 @@ const emitArchiveAnalyticsRefresh = async () => {
       type: 'refresh'
     });
     
-    console.log('Archive analytics refresh emitted to all clients');
   } catch (error) {
     console.error('Error emitting archive analytics refresh:', error);
   }
@@ -439,7 +430,6 @@ app.set('emitArchiveAnalyticsRefresh', emitArchiveAnalyticsRefresh);
 const originalEmitNewAlert = (incidentData) => {
   // Emit the original incident alert
   io.emit('newAlert', incidentData);
-  console.log('Emitting newAlert:', incidentData);
   
   // Potentially trigger archive creation (simulating automatic archiving)
   setTimeout(async () => {

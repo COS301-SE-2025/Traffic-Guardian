@@ -142,7 +142,7 @@ const IncidentManagement: React.FC = () => {
     // Get timezone abbreviation (PST/PDT)
     const timeZone = date.toLocaleDateString('en-US', {
       timeZone: 'America/Los_Angeles',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).split(', ')[1];
 
     return `${dateString_ca} (${timeZone})`;
