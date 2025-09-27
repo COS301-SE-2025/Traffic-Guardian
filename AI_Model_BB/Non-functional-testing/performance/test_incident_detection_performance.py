@@ -324,9 +324,11 @@ class IncidentDetectionPerformanceTest(unittest.TestCase):
         ]
 
         mock_tracking = {
-            1: {'history': [(100, 100), (105, 100), (110, 100)], 'class': 'car'},
-            2: {'history': [(200, 120), (195, 120), (190, 120)], 'class': 'car'},
-            3: {'history': [(150, 110), (152, 112), (154, 114)], 'class': 'car'}
+            'active_tracks': {
+                1: {'history': [(100, 100), (105, 100), (110, 100)], 'class': 'car'},
+                2: {'history': [(200, 120), (195, 120), (190, 120)], 'class': 'car'},
+                3: {'history': [(150, 110), (152, 112), (154, 114)], 'class': 'car'}
+            }
         }
 
         test_frame = self.create_test_frame(640, 480)
