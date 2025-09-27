@@ -424,14 +424,14 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
 
   return (
     <div className={`pems-analytics ${className}`}>
-      <div className="analytics-header">
+      <div className="analytics-header" data-cy="analytics-header">
         <h2>
           <ActivityIcon />
           PEMS Traffic Analytics
           {!isAuthenticated && <span className="public-badge">Public View</span>}
           {isAuthenticated && <span className="user-role-badge">{userRole.toUpperCase()}</span>}
         </h2>
-        <div className="analytics-tabs">
+        <div className="analytics-tabs" data-cy="analytics-tabs">
           <button
             className={selectedView === 'overview' ? 'active' : ''}
             onClick={() => setSelectedView('overview')}
@@ -478,8 +478,8 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
 
       <div className="analytics-content">
         {selectedView === 'overview' && (
-          <div className="overview-section">
-            <div className="analytics-summary-cards">
+          <div className="overview-section" data-cy="overview-section">
+            <div className="analytics-summary-cards" data-cy="summary-cards">
               <div className="summary-card">
                 <div className="card-icon primary">
                   <ActivityIcon />
@@ -533,7 +533,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
             </div>
 
             <div className="analytics-charts-grid">
-              <div className="chart-container">
+              <div className="chart-container" data-cy="risk-distribution-chart">
                 <h3>Traffic Risk Distribution</h3>
                 <p className="chart-description">
                   Current distribution of traffic risk levels across all
@@ -563,7 +563,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
                 </ResponsiveContainer>
               </div>
 
-              <div className="chart-container">
+              <div className="chart-container" data-cy="regional-performance-chart">
                 <h3>Regional Performance Comparison</h3>
                 <p className="chart-description">
                   Performance metrics across California districts showing
@@ -597,7 +597,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         )}
 
         {selectedView === 'districts' && (
-          <div className="districts-section">
+          <div className="districts-section" data-cy="districts-section">
             <div className="section-description">
               <h3>Regional Traffic Analysis</h3>
               <p>
@@ -688,7 +688,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         )}
 
         {selectedView === 'alerts' && (
-          <div className="alerts-section">
+          <div className="alerts-section" data-cy="alerts-section">
             <div className="section-description">
               <h3>Alert Analysis & Risk Management</h3>
               <p>
@@ -752,7 +752,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
             </div>
 
             {highRiskData?.high_risk_areas && highRiskData.high_risk_areas.length > 0 && (
-              <div className="high-risk-areas-list">
+              <div className="high-risk-areas-list" data-cy="high-risk-areas">
                 <h3>Critical Areas Requiring Attention</h3>
                 <div className="risk-areas-grid">
                   {highRiskData?.high_risk_areas
@@ -787,7 +787,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         )}
 
         {selectedView === 'performance' && (
-          <div className="performance-section">
+          <div className="performance-section" data-cy="performance-section">
             <div className="section-description">
               <h3>Traffic Performance Metrics</h3>
               <p>
@@ -884,7 +884,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         )}
 
         {selectedView === 'weekly' && (
-          <div className="weekly-section">
+          <div className="weekly-section" data-cy="weekly-section">
             <div className="section-description">
               <h3>Weekly Traffic Volume Trends</h3>
               <p>
@@ -921,7 +921,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         )}
       </div>
 
-      <div className="analytics-footer">
+      <div className="analytics-footer" data-cy="analytics-footer">
         <div className="last-update">
           Last Updated:{' '}
           {dashboardData?.timestamp
