@@ -12,13 +12,30 @@ const weather = require('./Weather/weather');
 
 const server = http.createServer(app);
 
+// Import optimization services
+const { ConnectionManager, IntervalManager } = require('./middleware/optimization');
+const { monitor } = require('./services/performanceMonitor');
+const { circuitBreakers } = require('./services/circuitBreaker');
+
+// Create optimized Socket.IO server
 const io = new Server(server, {
   cors : {
     origin: process.env.CORS_ORIGIN || '*',
     methods : ['GET', 'POST'],
     credentials: true
-  }
+  },
+  // Optimization settings
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  transports: ['websocket', 'polling'],
+  allowEIO3: true,
+  maxHttpBufferSize: 1e6, // 1MB
+  connectTimeout: 45000
 });
+
+// Initialize optimization managers
+const connectionManager = new ConnectionManager();
+const intervalManager = new IntervalManager();
 
 // Configuration - will use GitHub secrets in production, .env for local development
 
@@ -42,40 +59,60 @@ const broadcastActiveUsers = () => {
 var welcomeMsg;
 
 io.on('connection',(socket)=>{
-  // Track new connection
+  // Optimized connection tracking
   activeConnections.add(socket.id);
-  connectedUsers.set(socket.id, {
+  const userInfo = {
     socketId: socket.id,
     connectedAt: new Date(),
     userAgent: socket.handshake.headers['user-agent'] || 'Unknown',
     ip: socket.handshake.address || 'Unknown'
-  });
-  
+  };
+  connectedUsers.set(socket.id, userInfo);
+
+  // Use connection manager
+  connectionManager.addConnection(socket.id, null, userInfo);
+
   ILM.addUser(socket.id, {});
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
-  
+
+  // Update performance monitor
+  monitor.updateConnections(activeConnections.size, activeConnections.size);
+
   // Broadcast updated user count
   broadcastActiveUsers();
-  
-  console.log(`New user connected: ${socket.id} (Total: ${activeConnections.size})`);
-    
-    //traffic prt - try enhanced California traffic first
-    const getTrafficData = async () => {
-      if (process.env.USE_CALIFORNIA_TRAFFIC === 'true') {
-        console.log('🌴 Initial fetch: Using enhanced California traffic data...');
-        return await caltransTraffic.getEnhancedCaliforniaTraffic();
-      } else {
-        console.log('🗺️  Initial fetch: Using TomTom traffic data...');
-        return await traffic.getTraffic();
-      }
-    };
-    
-    getTrafficData().then((data)=>{
-      if (data && Array.isArray(data)) {
-        socket.emit('trafficUpdate', data);
 
+  console.log(`New user connected: ${socket.id} (Total: ${activeConnections.size})`);
+
+  // Optimized traffic data fetching with circuit breaker
+  const getTrafficData = async () => {
+    try {
+      if (process.env.USE_CALIFORNIA_TRAFFIC === 'true') {
+        return await circuitBreakers.californiaTraffic.call(
+          () => caltransTraffic.getEnhancedCaliforniaTraffic(),
+          () => ({ fallback: true, data: [], message: 'California traffic temporarily unavailable' })
+        );
+      } else {
+        return await circuitBreakers.tomtomTraffic.call(
+          () => traffic.getTraffic(),
+          () => ({ fallback: true, data: [], message: 'TomTom traffic temporarily unavailable' })
+        );
+      }
+    } catch (error) {
+      console.error('Traffic API error:', error.message);
+      return { fallback: true, data: [], message: 'Traffic data temporarily unavailable' };
+    }
+  };
+
+  getTrafficData().then((response)=>{
+    const data = response.data || response;
+    const isFallback = response.fallback || false;
+
+    if (data && Array.isArray(data)) {
+      socket.emit('trafficUpdate', { data, isFallback, timestamp: new Date() });
+
+      if (!isFallback) {
         //update regions Traffic
         ILM.updateTraffic(data);
 
@@ -91,20 +128,27 @@ io.on('connection',(socket)=>{
         const res_incidentLocations =  traffic.incidentLocations(data);
         socket.emit('incidentLocations', res_incidentLocations);
       } else {
-        console.log('Traffic API unavailable on connection - using empty data');
-        socket.emit('trafficUpdate', []);
-        socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0 });
-        socket.emit('incidentCategory', { categories: [], percentages: [] });
-        socket.emit('incidentLocations', []);
+        // Send fallback data
+        socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0, fallback: true });
+        socket.emit('incidentCategory', { categories: [], percentages: [], fallback: true });
+        socket.emit('incidentLocations', { locations: [], fallback: true });
       }
-    }).catch((error) => {
-      console.error('Traffic API error on connection:', error.message);
-      // Send empty data instead of crashing
-      socket.emit('trafficUpdate', []);
-      socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0 });
-      socket.emit('incidentCategory', { categories: [], percentages: [] });
-      socket.emit('incidentLocations', []);
-    })
+    } else {
+      console.log('Traffic API unavailable on connection - using fallback data');
+      socket.emit('trafficUpdate', { data: [], isFallback: true, timestamp: new Date() });
+      socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0, fallback: true });
+      socket.emit('incidentCategory', { categories: [], percentages: [], fallback: true });
+      socket.emit('incidentLocations', { locations: [], fallback: true });
+    }
+  }).catch((error) => {
+    console.error('Traffic API error on connection:', error.message);
+    monitor.recordError(error, { context: 'initial_traffic_fetch', socketId: socket.id });
+    // Send fallback data
+    socket.emit('trafficUpdate', { data: [], isFallback: true, error: true, timestamp: new Date() });
+    socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0, fallback: true });
+    socket.emit('incidentCategory', { categories: [], percentages: [], fallback: true });
+    socket.emit('incidentLocations', { locations: [], fallback: true });
+  })
     
     // Weather data on connection
     weather.getWeather().then((weatherData) => {
