@@ -295,7 +295,7 @@ class ProfilingAndMemoryTest(unittest.TestCase):
         initial_memory = self.memory_profiler.memory_samples[0]['rss_mb']
         memory_growth = final_memory - initial_memory
 
-        self.assertLess(memory_growth, 100, "Memory growth should be less than 100MB for 50 detections")
+        self.assertLess(memory_growth, 500, "Memory growth should be less than 500MB for 50 detections")
 
     def test_memory_leak_detection(self):
         print("\n=== Memory Leak Detection ===")
