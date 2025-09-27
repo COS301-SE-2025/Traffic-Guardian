@@ -27,7 +27,7 @@
 }
 
 .lane-closure-analytics.light {
-  --bg-primary: #ffffff;
+  --bg-primary: #fff;
   --bg-secondary: #f9fafb;
   --bg-tertiary: #f3f4f6;
   --text-primary: #111827;
@@ -45,13 +45,13 @@
   color: var(--text-primary);
   font-size: 1.875rem;
   font-weight: 700;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.5rem;
 }
 
 .analytics-header p {
   color: var(--text-secondary);
   font-size: 1rem;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1.5rem;
   line-height: 1.5;
 }
 
@@ -104,7 +104,7 @@
 
 .summary-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
 
 .card-icon {
@@ -147,7 +147,7 @@
   color: var(--text-secondary);
   font-size: 0.875rem;
   font-weight: 600;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -156,7 +156,7 @@
   color: var(--text-primary);
   font-size: 2rem;
   font-weight: 700;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.25rem;
   line-height: 1;
 }
 
@@ -188,13 +188,13 @@
   color: var(--text-primary);
   font-size: 1.125rem;
   font-weight: 600;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.5rem;
 }
 
 .chart-container p {
   color: var(--text-tertiary);
   font-size: 0.875rem;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1.5rem;
   line-height: 1.4;
 }
 
@@ -208,11 +208,12 @@
 
 @keyframes fadeIn {
   from {
-    opacity: 0;
+    opacity: 0%;
     transform: translateY(10px);
   }
+
   to {
-    opacity: 1;
+    opacity: 100%;
     transform: translateY(0);
   }
 }
@@ -229,6 +230,7 @@
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
+
   100% { transform: rotate(360deg); }
 }
 
@@ -329,7 +331,7 @@
   background: var(--bg-primary) !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%) !important;
 }
 
 .recharts-tooltip-label {

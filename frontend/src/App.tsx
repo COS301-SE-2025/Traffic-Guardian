@@ -156,7 +156,7 @@ const App: React.FC = () => {
   React.useEffect(() => {
     const apiKey = sessionStorage.getItem('apiKey');
     if (apiKey) {
-      console.log('🔄 App startup: Starting background data prefetching...');
+      // Starting background data prefetching
       dataPrefetchService.startPrefetching();
     }
 

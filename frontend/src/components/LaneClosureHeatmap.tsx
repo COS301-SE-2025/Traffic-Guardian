@@ -19,7 +19,7 @@ interface LaneClosureHeatmapProps {
 
 const LaneClosureHeatmap: React.FC<LaneClosureHeatmapProps> = ({
   className = '',
-  showControls = true
+  showControls = true,
 }) => {
   const { isDarkMode } = useTheme();
   const [laneClosures, setLaneClosures] = useState<LaneClosure[]>([]);
@@ -106,8 +106,8 @@ const LaneClosureHeatmap: React.FC<LaneClosureHeatmapProps> = ({
         const lanesClosed = severity === 'high' ?
           Math.floor(lanesExisting * 0.5) + 1 :
           severity === 'medium' ?
-          Math.floor(lanesExisting * 0.3) + 1 :
-          1;
+            Math.floor(lanesExisting * 0.3) + 1 :
+            1;
 
         historicalClosures.push({
           id: `hist-${d}-${i}`,
@@ -299,7 +299,7 @@ const LaneClosureHeatmap: React.FC<LaneClosureHeatmapProps> = ({
   if (loading) {
     return (
       <div className={`lane-closure-heatmap ${className} loading`}>
-        <div className="loading-spinner"></div>
+        <div className="loading-spinner" />
         <p>Loading lane closure data...</p>
       </div>
     );
@@ -378,23 +378,23 @@ const LaneClosureHeatmap: React.FC<LaneClosureHeatmapProps> = ({
         <div className="legend-title">Lane Closure Impact</div>
         <div className="legend-scale">
           <div className="legend-item">
-            <div className="legend-color" style={{ backgroundColor: getColorIntensity(0) }}></div>
+            <div className="legend-color" style={{ backgroundColor: getColorIntensity(0) }} />
             <span>None</span>
           </div>
           <div className="legend-item">
-            <div className="legend-color" style={{ backgroundColor: getColorIntensity(maxImpact * 0.2) }}></div>
+            <div className="legend-color" style={{ backgroundColor: getColorIntensity(maxImpact * 0.2) }} />
             <span>Low</span>
           </div>
           <div className="legend-item">
-            <div className="legend-color" style={{ backgroundColor: getColorIntensity(maxImpact * 0.5) }}></div>
+            <div className="legend-color" style={{ backgroundColor: getColorIntensity(maxImpact * 0.5) }} />
             <span>Medium</span>
           </div>
           <div className="legend-item">
-            <div className="legend-color" style={{ backgroundColor: getColorIntensity(maxImpact * 0.8) }}></div>
+            <div className="legend-color" style={{ backgroundColor: getColorIntensity(maxImpact * 0.8) }} />
             <span>High</span>
           </div>
           <div className="legend-item">
-            <div className="legend-color" style={{ backgroundColor: getColorIntensity(maxImpact) }}></div>
+            <div className="legend-color" style={{ backgroundColor: getColorIntensity(maxImpact) }} />
             <span>Critical</span>
           </div>
         </div>

@@ -27,6 +27,76 @@ import LoadingSpinner from './LoadingSpinner';
 import WeeklyTrafficTrends from './WeeklyTrafficTrends';
 import './PEMSAnalytics.css';
 
+// Type definitions for PEMS data structures
+interface PEMSOverview {
+  total_detectors: number;
+  avg_speed_mph: number;
+  high_risk_count: number;
+}
+
+interface PEMSRegionalStatus {
+  region: string;
+  detector_count: number;
+  avg_speed: number;
+  high_risk_count: number;
+  alerts_count: number;
+  status: string;
+}
+
+interface PEMSRiskAnalysis {
+  distribution: {
+    critical: number;
+    medium: number;
+    low: number;
+  };
+}
+
+interface PEMSDashboardData {
+  overview: PEMSOverview;
+  regional_status: PEMSRegionalStatus[];
+  risk_analysis: PEMSRiskAnalysis;
+  timestamp: string;
+}
+
+interface PEMSHighRiskArea {
+  location: string;
+  risk: number;
+  flow: number;
+  speed: number;
+  detector_id: string;
+  risk_level: string;
+  freeway: string;
+  direction: string;
+  region_name: string;
+  risk_score: number;
+}
+
+interface PEMSHighRiskData {
+  high_risk_areas: PEMSHighRiskArea[];
+}
+
+interface PEMSAlertData {
+  priority_breakdown: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+}
+
+interface PEMSDistrictSummary {
+  avg_speed: number;
+  total_flow: number;
+  avg_risk_score: number;
+  total_detectors: number;
+  active_detectors: number;
+}
+
+interface PEMSDistrictData {
+  district: string;
+  region_name: string;
+  summary: PEMSDistrictSummary;
+}
+
 // PEMS Color scheme for consistent visualizations
 const PEMS_COLORS = {
   primary: '#F79400',
@@ -118,10 +188,10 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
   const { hasPermission, isAuthenticated, userRole, user } = useUser();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dashboardData, setDashboardData] = useState<any>(null);
-  const [highRiskData, setHighRiskData] = useState<any>(null);
-  const [alertsData, setAlertsData] = useState<any>(null);
-  const [districtData, setDistrictData] = useState<any[]>([]);
+  const [dashboardData, setDashboardData] = useState<PEMSDashboardData | null>(null);
+  const [highRiskData, setHighRiskData] = useState<PEMSHighRiskData | null>(null);
+  const [alertsData, setAlertsData] = useState<PEMSAlertData | null>(null);
+  const [districtData, setDistrictData] = useState<PEMSDistrictData[]>([]);
   const [selectedView, setSelectedView] = useState<
     'overview' | 'districts' | 'alerts' | 'performance' | 'weekly'
   >('overview');
@@ -189,8 +259,8 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
                 critical: 3,
                 high: 12,
                 medium: 28,
-                low: 957
-              }
+                low: 957,
+              },
             },
             publicDemo: true,
           }),
@@ -233,7 +303,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
   const getRegionalPerformanceData = () => {
     if (!dashboardData?.regional_status) {return [];}
 
-    return dashboardData.regional_status.map((region: any) => ({
+    return dashboardData.regional_status.map((region: PEMSRegionalStatus) => ({
       name: region.region.split(' ').slice(0, 2).join(' '), // Shorten names
       detectors: region.detector_count,
       avgSpeed: region.avg_speed,
@@ -253,7 +323,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         value: dist.critical || 0,
         color: RISK_COLORS.CRITICAL,
       },
-      { name: 'High', value: dist.high || 0, color: RISK_COLORS.HIGH },
+      { name: 'High', value: dist.critical || 0, color: RISK_COLORS.HIGH },
       { name: 'Medium', value: dist.medium || 0, color: RISK_COLORS.MEDIUM },
       { name: 'Low', value: dist.low || 0, color: RISK_COLORS.LOW },
     ];
@@ -354,14 +424,14 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
 
   return (
     <div className={`pems-analytics ${className}`}>
-      <div className="analytics-header">
+      <div className="analytics-header" data-cy="analytics-header">
         <h2>
           <ActivityIcon />
           PEMS Traffic Analytics
           {!isAuthenticated && <span className="public-badge">Public View</span>}
           {isAuthenticated && <span className="user-role-badge">{userRole.toUpperCase()}</span>}
         </h2>
-        <div className="analytics-tabs">
+        <div className="analytics-tabs" data-cy="analytics-tabs">
           <button
             className={selectedView === 'overview' ? 'active' : ''}
             onClick={() => setSelectedView('overview')}
@@ -408,8 +478,8 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
 
       <div className="analytics-content">
         {selectedView === 'overview' && (
-          <div className="overview-section">
-            <div className="analytics-summary-cards">
+          <div className="overview-section" data-cy="overview-section">
+            <div className="analytics-summary-cards" data-cy="summary-cards">
               <div className="summary-card">
                 <div className="card-icon primary">
                   <ActivityIcon />
@@ -463,7 +533,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
             </div>
 
             <div className="analytics-charts-grid">
-              <div className="chart-container">
+              <div className="chart-container" data-cy="risk-distribution-chart">
                 <h3>Traffic Risk Distribution</h3>
                 <p className="chart-description">
                   Current distribution of traffic risk levels across all
@@ -493,7 +563,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
                 </ResponsiveContainer>
               </div>
 
-              <div className="chart-container">
+              <div className="chart-container" data-cy="regional-performance-chart">
                 <h3>Regional Performance Comparison</h3>
                 <p className="chart-description">
                   Performance metrics across California districts showing
@@ -527,7 +597,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         )}
 
         {selectedView === 'districts' && (
-          <div className="districts-section">
+          <div className="districts-section" data-cy="districts-section">
             <div className="section-description">
               <h3>Regional Traffic Analysis</h3>
               <p>
@@ -618,7 +688,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         )}
 
         {selectedView === 'alerts' && (
-          <div className="alerts-section">
+          <div className="alerts-section" data-cy="alerts-section">
             <div className="section-description">
               <h3>Alert Analysis & Risk Management</h3>
               <p>
@@ -681,13 +751,13 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
               </div>
             </div>
 
-            {highRiskData?.high_risk_areas?.length > 0 && (
-              <div className="high-risk-areas-list">
+            {highRiskData?.high_risk_areas && highRiskData.high_risk_areas.length > 0 && (
+              <div className="high-risk-areas-list" data-cy="high-risk-areas">
                 <h3>Critical Areas Requiring Attention</h3>
                 <div className="risk-areas-grid">
-                  {highRiskData.high_risk_areas
+                  {highRiskData?.high_risk_areas
                     .slice(0, 6)
-                    .map((area: any, index: number) => (
+                    .map((area: PEMSHighRiskArea, index: number) => (
                       <div key={index} className="risk-area-card">
                         <div className="area-header">
                           <span className="detector-id">
@@ -717,7 +787,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         )}
 
         {selectedView === 'performance' && (
-          <div className="performance-section">
+          <div className="performance-section" data-cy="performance-section">
             <div className="section-description">
               <h3>Traffic Performance Metrics</h3>
               <p>
@@ -814,7 +884,7 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         )}
 
         {selectedView === 'weekly' && (
-          <div className="weekly-section">
+          <div className="weekly-section" data-cy="weekly-section">
             <div className="section-description">
               <h3>Weekly Traffic Volume Trends</h3>
               <p>
@@ -851,27 +921,27 @@ const PEMSAnalytics: React.FC<PEMSAnalyticsProps> = ({ className = '' }) => {
         )}
       </div>
 
-      <div className="analytics-footer">
+      <div className="analytics-footer" data-cy="analytics-footer">
         <div className="last-update">
           Last Updated:{' '}
           {dashboardData?.timestamp
             ? (() => {
-                const date = new Date(dashboardData.timestamp);
-                const dateTimeString = date.toLocaleString('en-US', {
-                  timeZone: 'America/Los_Angeles',
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                });
-                const timeZone = date.toLocaleDateString('en-US', {
-                  timeZone: 'America/Los_Angeles',
-                  timeZoneName: 'short'
-                }).split(', ')[1];
-                return `${dateTimeString} (${timeZone})`;
-              })()
+              const date = new Date(dashboardData.timestamp);
+              const dateTimeString = date.toLocaleString('en-US', {
+                timeZone: 'America/Los_Angeles',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              });
+              const timeZone = date.toLocaleDateString('en-US', {
+                timeZone: 'America/Los_Angeles',
+                timeZoneName: 'short',
+              }).split(', ')[1];
+              return `${dateTimeString} (${timeZone})`;
+            })()
             : 'Unknown'}
         </div>
         <button onClick={fetchPEMSAnalytics} className="refresh-button">

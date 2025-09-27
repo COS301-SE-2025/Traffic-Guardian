@@ -712,17 +712,17 @@ const Incidents: React.FC = () => {
         prev.map(inc =>
           inc.id === editingIncident.id
             ? {
-                ...inc,
-                date: editForm.Incidents_DateTime,
-                location:
+              ...inc,
+              date: editForm.Incidents_DateTime,
+              location:
                   editForm.Incidents_Latitude && editForm.Incidents_Longitude
                     ? `Lat: ${editForm.Incidents_Latitude}, Lng: ${editForm.Incidents_Longitude}`
                     : 'Not Available',
-                severity: editForm.Incident_Severity,
-                status: editForm.Incident_Status,
-                description: editForm.Incident_Description || undefined,
-                updatedAt: new Date().toISOString(),
-              }
+              severity: editForm.Incident_Severity,
+              status: editForm.Incident_Status,
+              description: editForm.Incident_Description || undefined,
+              updatedAt: new Date().toISOString(),
+            }
             : inc,
         ),
       );
@@ -855,7 +855,7 @@ const Incidents: React.FC = () => {
     // Get timezone abbreviation (PST/PDT)
     const timeZone = date.toLocaleDateString('en-US', {
       timeZone: 'America/Los_Angeles',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).split(', ')[1];
 
     return `${dateTimeString} (${timeZone})`;

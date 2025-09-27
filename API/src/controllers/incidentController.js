@@ -13,7 +13,8 @@ const incidentController = {
         Incident_Status, 
         Incident_Reporter,
         Incident_CameraID,
-        Incident_Description
+        Incident_Description,
+        User_Email
       } = req.body;
       
       // Validate required fields
@@ -50,7 +51,8 @@ const incidentController = {
         Incident_Status,
         Incident_Reporter: Incident_Reporter || (req.user ? req.user.User_Email : null),
         Incident_CameraID: Incident_CameraID ? parseInt(Incident_CameraID) : null,
-        Incident_Description: Incident_Description || null
+        Incident_Description: Incident_Description || null,
+        User_Email : User_Email || null
       });
       
       const io = req.app.get('io');

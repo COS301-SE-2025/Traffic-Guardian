@@ -9,6 +9,12 @@
   padding-top: var(--page-content-offset);
 }
 
+/* Light mode map page */
+:root.light-mode .map-page {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
 @media (max-width: 768px) {
   .map-page {
     padding-top: var(--page-content-offset);
@@ -91,6 +97,12 @@
   border-bottom: 1px solid rgb(254 172 52 / 20%);
   padding: 1rem 1.5rem;
   animation: slideDown 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Light mode map controls */
+:root.light-mode .map-controls {
+  background: #fff;
+  border-bottom: 1px solid rgb(254 172 52 / 30%);
 }
 
 @keyframes slideDown {
@@ -675,11 +687,23 @@
   background: #2a2a2a;
   color: white;
   border-radius: 8px;
+}
+
+/* Light mode leaflet popup */
+:root.light-mode .leaflet-popup-content-wrapper {
+  background: #fff;
+  color: #333;
+  border: 1px solid #e5e5e5;
   box-shadow: 0 10px 25px rgb(0 0 0 / 30%);
 }
 
 .leaflet-popup-tip {
   background: #2a2a2a;
+}
+
+/* Light mode leaflet popup tip */
+:root.light-mode .leaflet-popup-tip {
+  background: #fff;
 }
 
 /* Marker Popup */
@@ -745,11 +769,12 @@
   background: #2a2a2a;
   border-radius: 20px;
   max-width: 800px;
-  max-height: 90vh;
-  width: 100%;
-  overflow: hidden;
-  box-shadow: 0 25px 50px rgb(0 0 0 / 50%);
-  border: 1px solid #444;
+}
+
+/* Light mode camera modal */
+:root.light-mode .camera-modal {
+  background: #fff;
+  border: 1px solid #e5e5e5;
 }
 
 .camera-modal-header {
@@ -1174,6 +1199,12 @@
   border: 1px solid rgb(255 255 255 / 5%);
 }
 
+/* Light mode lane closure metrics */
+:root.light-mode .lane-closure-metrics {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+}
+
 .lane-closure-metrics .metric-value {
   color: #dc2626; /* Red theme for lane closures */
 }
@@ -1190,6 +1221,12 @@
   background: rgb(0 0 0 / 10%);
   border-radius: 12px;
   border: 1px solid rgb(255 255 255 / 5%);
+}
+
+/* Light mode lane closure filters */
+:root.light-mode .lane-closure-filters {
+  background: #f8f9fa;
+  border: 1px solid #e5e5e5;
 }
 
 .filter-section {
@@ -1346,11 +1383,13 @@
   border-radius: 16px;
   border: 1px solid rgb(254 172 52 / 30%);
   box-shadow: 0 20px 60px rgb(0 0 0 / 50%);
-  max-width: 800px;
-  width: 100%;
-  max-height: 90vh;
-  overflow: hidden;
-  position: relative;
+}
+
+/* Light mode lane closure modal */
+:root.light-mode .lane-closure-modal {
+  background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+  border: 1px solid rgb(254 172 52 / 40%);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 15%);
 }
 
 .lane-closure-modal-header {
@@ -1438,6 +1477,12 @@
   border: 1px solid rgb(255 255 255 / 5%);
 }
 
+/* Light mode closure detail item */
+:root.light-mode .closure-detail-item {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+}
+
 .closure-detail-label {
   font-size: 0.875rem;
   color: #9ca3af;
@@ -1472,6 +1517,12 @@
   background: rgb(0 0 0 / 20%);
   border-radius: 8px;
   border: 1px solid rgb(255 255 255 / 5%);
+}
+
+/* Light mode status item */
+:root.light-mode .status-item {
+  background: #fff;
+  border: 1px solid #e5e5e5;
 }
 
 .status-label {

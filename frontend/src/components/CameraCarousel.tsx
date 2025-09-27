@@ -203,9 +203,9 @@ const CameraCarousel: React.FC<CameraCarouselProps> = ({ className = '' }) => {
         </div>
 
         <div className="camera-carousel-indicators">
-          {cameras.map((_, cameraIndex) => (
+          {cameras.map((camera, cameraIndex) => (
             <button
-              key={`indicator-${cameraIndex}`}
+              key={`indicator-${camera.Camera_ID}-${cameraIndex}`}
               className={`carousel-indicator ${cameraIndex === currentIndex ? 'active' : ''}`}
               onClick={() => goToSlide(cameraIndex)}
               aria-label={`Go to camera ${cameraIndex + 1}`}

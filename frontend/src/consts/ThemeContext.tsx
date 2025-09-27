@@ -25,12 +25,6 @@ export const ThemeProvider: React.FC<{
   }, [isDarkMode]);
 
   const toggleDarkMode = useCallback((value: boolean) => {
-    console.log(
-      'toggleDarkMode called with value:',
-      value,
-      'at',
-      new Date().toISOString(),
-    );
     setIsDarkMode(value);
   }, []); // Stable reference with no dependencies
 
