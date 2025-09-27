@@ -1,5 +1,5 @@
 const autocannon = require('autocannon');
-const endpoints = require('../IntegrationTesting/artifacts.json');
+const endpoints = require('../PerformanceTesting/artifacts.json');
 
 const BASE_URL = 'http://localhost:5000';
 

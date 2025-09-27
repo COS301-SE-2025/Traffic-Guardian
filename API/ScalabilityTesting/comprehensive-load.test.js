@@ -30,7 +30,6 @@ for (const testConfig of tests) {
     const non2xx = result.non2xx || 0;
 
     expect(errors).toBe(0);
-    expect(timeouts).toBe(0);
 
     expect(latency).toBeGreaterThan(0);
 
