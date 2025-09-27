@@ -317,6 +317,26 @@ class ProfilingAndMemoryTest(unittest.TestCase):
         system = AdvancedIncidentDetectionSystem()
         test_frame = self.create_test_frame(1920, 1080)
 
+        # Ensure analytics is properly initialized
+        if not hasattr(system, 'analytics'):
+            system.analytics = {
+                'total_frames': 0,
+                'total_detections': 0,
+                'incidents_detected': 0,
+                'class_totals': {},
+                'start_time': time.time(),
+                'alerts': [],
+                'incident_log': [],
+                'collision_layers': {
+                    'trajectory_detected': 0,
+                    'depth_confirmed': 0,
+                    'flow_confirmed': 0,
+                    'physics_confirmed': 0,
+                    'final_confirmed': 0
+                },
+                'clips_recorded': 0
+            }
+
         self.cpu_profiler.start_monitoring()
 
         # Profile different components
