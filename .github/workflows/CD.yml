@@ -310,7 +310,7 @@ jobs:
           # Deploy on EC2 instance with zero-downtime strategy
           ssh -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
             ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API }} << 'EOF'
-            # Navigate to the correct API directory (matching associate's setup)
+            # Navigate to the correct API directory
             cd /var/www/api
             
             # Stop any running processes (screen sessions, npm processes)
@@ -326,33 +326,16 @@ jobs:
             cd API
             sudo tar -xzf /tmp/api-deployment.tar.gz
             
-            # Fix ownership of extracted files
+            # Fix ownership of extracted files (including the built .env)
             sudo chown -R $(whoami):$(whoami) .
             
-            # Preserve existing .env file with proper permissions
-            if [ -f "../API_backup/.env" ]; then
-              echo "Preserving existing .env file..."
-              sudo cp ../API_backup/.env .env
-              sudo chown $(whoami):$(whoami) .env
-              chmod 600 .env
-            else
-              echo "Warning: No existing .env file found. Please ensure environment variables are configured."
-            fi
-            
-            # Install dependencies (use --omit=dev instead of --production)
+            # Install dependencies
             npm install --omit=dev
-            
-            # Skip tests since jest is not installed (focus on deployment)
-            echo "Skipping tests in deployment environment"
             
             # Find the correct entry point from package.json
             echo "Detecting API entry point..."
             ENTRY_POINT=$(node -p "require('./package.json').main || 'index.js'" 2>/dev/null || echo "index.js")
             echo "Detected entry point: $ENTRY_POINT"
-            
-            # List files to debug what's actually there
-            echo "Files in API directory:"
-            ls -la
             
             # Verify the entry point exists
             if [ -f "$ENTRY_POINT" ]; then
@@ -378,21 +361,13 @@ jobs:
               fi
             fi
             
-            # Test the entry point with a quick syntax check
+            # Test the entry point syntax
             echo "Testing entry point syntax..."
             node --check "$ENTRY_POINT" || echo "Syntax check completed"
             
-            # Load environment variables properly
-            echo "Loading environment variables..."
-            if [ -f ".env" ]; then
-              export $(grep -v '^#' .env | grep -v '^$' | xargs)
-              echo "Environment variables loaded from .env"
-            else
-              echo "No .env file found, using system environment variables"
-            fi
-            
-            # Start the API in a screen session with the detected entry point
+            # Start the API in a screen session (dotenv will handle .env loading)
             echo "Starting API with entry point: $ENTRY_POINT"
+            echo "Built .env file will be loaded automatically by the API"
             screen -dmS api bash -c "cd /var/www/api/API && node $ENTRY_POINT"
             
             # Wait and verify the screen session
@@ -422,52 +397,6 @@ jobs:
           rm -f ~/.ssh/ec2_key.pem
           
           echo " API deployed to EC2 production instance"
-
-      - name: Post-deployment notifications
-        run: |
-          echo "===== DEPLOYMENT NOTIFICATION ====="
-          echo "Production deployment completed successfully!"
-          echo "Timestamp: $(date)"
-          echo "Version: $(cat dist/version.txt)"
-          echo "Branch: ${{ github.event.workflow_run.head_branch }}"
-          echo "Commit: ${GITHUB_SHA::8}"
-          echo ""
-          echo "Deployment Summary:"
-          echo "   - Frontend: Deployed to S3"
-          echo "   - API: Deployed to EC2"
-          echo "   - Database: Connected and migrated"
-          echo ""
-          echo "Access URLs available in secure environment variables"
-          echo "Deployment completed successfully!"
-          # For deployment, send notifications to Slack, email, etc.
-          
-      # AWS verification using improved health checks
-      - name: Verify AWS Production Deployment
-        run: |
-          echo "===== VERIFYING AWS PRODUCTION DEPLOYMENT ====="
-          echo "Running production health checks..."
-          
-          echo "Checking Frontend (S3 Static Website)..."
-          FRONTEND_URL="https://trafficguardian.co.za"
-          if curl -f -s --head "$FRONTEND_URL" > /dev/null; then
-            echo "  Frontend service: HEALTHY"
-          else
-            echo "  Frontend service: WARNING - Could not verify"
-          fi
-          
-          echo "Checking API (EC2)..."
-          API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
-          if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
-            echo "  API service: HEALTHY"
-          else
-            echo "  API service: WARNING - Could not verify health endpoint"
-            # Try alternative health check
-            if curl -f -s "https://${{ secrets.EC2_PRODUCTION_API }}/" > /dev/null; then
-              echo "  API service: Server responding"
-            fi
-          fi
-          
-          echo "Production verification completed!"
 
   post-deployment-monitoring:
     name: Post-Deployment Monitoring
