@@ -124,10 +124,10 @@ class PerformanceTestRunner:
         }
 
         if test_result.failures:
-            print(f"\n⚠️  {len(test_result.failures)} test(s) failed in {suite_name}")
+            print(f"\n[!] {len(test_result.failures)} test(s) failed in {suite_name}")
 
         if test_result.errors:
-            print(f"\n❌ {len(test_result.errors)} test(s) had errors in {suite_name}")
+            print(f"\n[X] {len(test_result.errors)} test(s) had errors in {suite_name}")
 
         return suite_results
 
@@ -200,7 +200,7 @@ class PerformanceTestRunner:
         with open(text_file, 'w') as f:
             f.write(text_report)
 
-        print(f"\n📊 Reports saved:")
+        print(f"\n[*] Reports saved:")
         print(f"   JSON: {json_file}")
         print(f"   Text: {text_file}")
 
@@ -252,7 +252,7 @@ class PerformanceTestRunner:
         lines.append("")
 
         # Test run information
-        lines.append("📋 TEST RUN INFORMATION")
+        lines.append("TEST RUN INFORMATION")
         lines.append("-" * 40)
         lines.append(f"Timestamp: {report['test_run_info']['timestamp']}")
         lines.append(f"Total Duration: {report['test_run_info']['total_duration']:.1f} seconds")
@@ -260,7 +260,7 @@ class PerformanceTestRunner:
         lines.append("")
 
         # System information
-        lines.append("💻 SYSTEM INFORMATION")
+        lines.append("SYSTEM INFORMATION")
         lines.append("-" * 40)
         cpu_info = report['system_info']['cpu_info']
         mem_info = report['system_info']['memory_info']
@@ -273,7 +273,7 @@ class PerformanceTestRunner:
 
         # Summary
         summary = report['summary']
-        lines.append("📊 SUMMARY")
+        lines.append("SUMMARY")
         lines.append("-" * 40)
         lines.append(f"Total Tests: {summary['total_tests']}")
         lines.append(f"Passed: {summary['total_tests'] - summary['total_failures'] - summary['total_errors']}")
@@ -285,7 +285,7 @@ class PerformanceTestRunner:
         lines.append("")
 
         # Detailed results
-        lines.append("🔍 DETAILED RESULTS")
+        lines.append("DETAILED RESULTS")
         lines.append("-" * 40)
 
         for suite_name, suite_data in report['test_results'].items():
@@ -293,7 +293,7 @@ class PerformanceTestRunner:
             lines.append("  " + "-" * 30)
 
             if 'error' in suite_data:
-                lines.append(f"  ❌ Suite Error: {suite_data['error']}")
+                lines.append(f"  [X] Suite Error: {suite_data['error']}")
                 continue
 
             lines.append(f"  Tests Run: {suite_data['tests_run']}")
@@ -301,11 +301,11 @@ class PerformanceTestRunner:
             lines.append(f"  Duration: {suite_data['total_duration']:.2f} seconds")
 
             if suite_data['failures'] > 0 or suite_data['errors'] > 0:
-                lines.append(f"  ⚠️  Failures: {suite_data['failures']}, Errors: {suite_data['errors']}")
+                lines.append(f"  [!] Failures: {suite_data['failures']}, Errors: {suite_data['errors']}")
 
             # Individual test details
             for test in suite_data.get('test_details', []):
-                status_icon = "✅" if test['status'] == 'passed' else "❌"
+                status_icon = "[PASS]" if test['status'] == 'passed' else "[FAIL]"
                 lines.append(f"    {status_icon} {test['name'].split('.')[-1]}: {test['duration']:.3f}s")
 
         lines.append("")
@@ -334,9 +334,9 @@ class PerformanceTestRunner:
         print(f"Performance Grade: {summary['performance_grade']}")
 
         if summary['total_failures'] == 0 and summary['total_errors'] == 0:
-            print("🎉 All tests passed!")
+            print("[SUCCESS] All tests passed!")
         else:
-            print("⚠️  Some tests failed. Check the detailed report for more information.")
+            print("[WARNING] Some tests failed. Check the detailed report for more information.")
 
 
 def main():
@@ -368,10 +368,10 @@ def main():
         return 0 if runner._generate_summary()['total_failures'] == 0 and runner._generate_summary()['total_errors'] == 0 else 1
 
     except KeyboardInterrupt:
-        print("\n⚠️  Test run interrupted by user.")
+        print("\n[INTERRUPTED] Test run interrupted by user.")
         return 1
     except Exception as e:
-        print(f"❌ Error running tests: {e}")
+        print(f"[ERROR] Error running tests: {e}")
         return 1
 
 
