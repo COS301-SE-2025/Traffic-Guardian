@@ -133,48 +133,19 @@ jobs:
         working-directory: ./frontend
         run: |
           echo "Generating consolidated test report..."
-          
           # Check if any JSON reports exist
           if find cypress/reports/mochawesome-report -name "*.json" 2>/dev/null | grep -q .; then
             echo "Found test report JSON files, merging..."
-            
-            # Merge all JSON reports into one
             npx mochawesome-merge "cypress/reports/mochawesome-report/*.json" > cypress/reports/merged-report.json
-            
-            # Generate HTML report from merged JSON
             npx mochawesome-report-generator cypress/reports/merged-report.json \
               --reportDir cypress/reports \
               --reportFilename index \
               --reportTitle "Traffic Guardian UI Test Report" \
               --reportPageTitle "UI Test Results" \
               --inline
-            
             echo "HTML test report generated successfully"
           else
             echo "No test JSON files found, creating placeholder report..."
-            
-            # Create placeholder merged report
-            cat > cypress/reports/merged-report.json << 'EOF'
-{
-  "stats": {
-    "suites": 0,
-    "tests": 0,
-    "passes": 0,
-    "pending": 0,
-    "failures": 0,
-    "start": "$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")",
-    "end": "$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")",
-    "duration": 0,
-    "testsRegistered": 0,
-    "passPercent": 0,
-    "pendingPercent": 0,
-    "other": 0,
-        if: always()
-        working-directory: ./frontend
-        run: |
-          echo "Generating consolidated test report..."
-          # If no merged-report.json exists, create a valid placeholder
-          if [ ! -f cypress/reports/merged-report.json ]; then
             cat > cypress/reports/merged-report.json << EOF
 {
   "stats": {
@@ -208,15 +179,14 @@ jobs:
   }
 }
 EOF
+            npx mochawesome-report-generator cypress/reports/merged-report.json \
+              --reportDir cypress/reports \
+              --reportFilename index \
+              --reportTitle "Traffic Guardian UI Test Report" \
+              --reportPageTitle "UI Test Results" \
+              --inline
+            echo "Generated placeholder test report"
           fi
-          # Generate HTML from merged or placeholder
-          npx mochawesome-report-generator cypress/reports/merged-report.json \
-            --reportDir cypress/reports \
-            --reportFilename index \
-            --reportTitle "Traffic Guardian UI Test Report" \
-            --reportPageTitle "UI Test Results" \
-            --inline
-          echo "Generated consolidated test report"
     # No longer using local postgres service, now using remote database with secrets
 
     steps:
