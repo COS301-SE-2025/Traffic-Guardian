@@ -180,6 +180,12 @@ svg {
   padding-top: var(--page-content-offset);
 }
 
+/* Light mode incidents page */
+:root.light-mode .incidents-page {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
 @media (max-width: 768px) {
   .incidents-page {
     padding-top: var(--page-content-offset);
@@ -1150,7 +1156,7 @@ svg {
 }
 
 .detail-section-title {
-  margin: 0 0 1rem 0;
+  margin: 0 0 1rem;
   color: var(--title-color);
   font-size: 1.1rem;
   font-weight: 600;
@@ -1240,7 +1246,7 @@ svg {
   background: var(--button-secondary-border);
   color: var(--subtitle-color);
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 60%;
 }
 
 /* Dark mode adjustments for incident details */

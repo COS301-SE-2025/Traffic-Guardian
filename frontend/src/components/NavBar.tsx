@@ -2,7 +2,9 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import './NavBar.css';
-import logo from '../assets/TrafficGuardianLogo1_LightFinal.png';
+import lightLogo from '../assets/TrafficGuardianLogo1_LightFinal.png';
+import darkLogo from '../assets/TrafficGuardianLogo1_DarkFinal.png';
+import { useTheme } from '../consts/ThemeContext';
 import dataPrefetchService from '../services/DataPrefetchService';
 
 const navItems = [
@@ -18,6 +20,8 @@ const navItems = [
 
 const Navbar = () => {
   const location = useLocation();
+  const { isDarkMode } = useTheme();
+  const currentLogo = isDarkMode ? lightLogo : darkLogo;
   return (
     <nav className="navbar" data-testid="navbar">
       <div
@@ -69,7 +73,7 @@ const Navbar = () => {
           ))}
 
           <li className="logo-container">
-            <img src={logo} alt="Logo" className="navbar-logo" />
+            <img src={currentLogo} alt="Logo" className="navbar-logo" />
           </li>
 
           {navItems.slice(4, 7).map(item => (

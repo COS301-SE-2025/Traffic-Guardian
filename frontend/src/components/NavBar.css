@@ -52,6 +52,12 @@
   overflow: visible; /* Allow logo to be visible */
 }
 
+/* Light mode navbar */
+:root.light-mode .navbar {
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+}
+
 .navbar .navbar-content {
   max-width: 2000px;
   margin: 0 auto;
@@ -88,6 +94,11 @@
   position: relative;
   display: inline-block;
   white-space: nowrap;
+}
+
+/* Light mode navbar links */
+:root.light-mode .navbar .nav-item a {
+  color: #333;
 }
 
 .navbar .nav-item:hover a,
@@ -147,6 +158,12 @@
   color: white;
   cursor: pointer;
   transition: color 0.15s ease;
+}
+
+/* Light mode navbar icons */
+:root.light-mode .navbar .search-icon,
+:root.light-mode .navbar .help-icon {
+  color: #333;
 }
 
 .navbar .search-icon:hover,
