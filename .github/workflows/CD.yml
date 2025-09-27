@@ -59,8 +59,8 @@ jobs:
         working-directory: ./frontend
         env:
           # Frontend environment variables for build process
-          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}
-          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api
+          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API }}:${{ secrets.API_PORT }} #api.trafficguardian.co.za
+          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API }} #api.trafficguardian.co.za/api
           REACT_APP_ENVIRONMENT: staging
           # Add other frontend environment variables as needed
         run: |
@@ -207,8 +207,8 @@ jobs:
         working-directory: ./frontend
         env:
           # Frontend environment variables for production build
-          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}
-          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api
+          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API }} #api.trafficguardian.co.za
+          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API }}/api #api.trafficguardian.co.za/api
           REACT_APP_ENVIRONMENT: production
           # Add other frontend environment variables as needed
         run: |
@@ -283,11 +283,11 @@ jobs:
           echo "Copying API files to EC2 production instance..."
           scp -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
             dist/api-deployment.tar.gz \
-            ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API_HOST }}:/tmp/
+            ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API }}:/tmp/
           
           # Deploy on EC2 instance with zero-downtime strategy
           ssh -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
-            ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API_HOST }} << 'EOF'
+            ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API }} << 'EOF'
             # Navigate to the correct API directory (matching associate's setup)
             cd /var/www/api
             
@@ -426,7 +426,7 @@ jobs:
           echo "Running production health checks..."
           
           echo "Checking Frontend (S3 Static Website)..."
-          FRONTEND_URL="https://${{ secrets.AWS_S3_PRODUCTION_BUCKET }}.s3-website-${{ secrets.AWS_REGION }}.amazonaws.com"
+          FRONTEND_URL="http://trafficguardian.co.za"
           if curl -f -s --head "$FRONTEND_URL" > /dev/null; then
             echo "  Frontend service: HEALTHY"
           else
@@ -434,14 +434,14 @@ jobs:
           fi
           
           echo "Checking API (EC2)..."
-          API_URL="https://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api/health"
+          API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"  
           if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
             echo "  API service: HEALTHY"
           else
             echo "  API service: WARNING - Could not verify health endpoint"
             # Try alternative health check
-            if curl -f -s "https://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/" > /dev/null; then
-              echo "  API service: Server responding on port ${{ secrets.API_PORT }}"
+            if curl -f -s "https://${{ secrets.EC2_PRODUCTION_API }}/" > /dev/null; then
+              echo "  API service: Server responding"
             fi
           fi
           
@@ -464,7 +464,7 @@ jobs:
           
           # Test S3 static website hosting
           echo "Checking Frontend (S3 Static Website)..."
-          FRONTEND_URL="https://${{ secrets.AWS_S3_PRODUCTION_BUCKET }}.s3-website-${{ secrets.AWS_REGION }}.amazonaws.com"
+          FRONTEND_URL="http://trafficguardian.co.za"
           if curl -f -s --head "$FRONTEND_URL" > /dev/null; then
             echo "Frontend: HEALTHY"
           else
@@ -473,14 +473,14 @@ jobs:
           
           # Test API health endpoint
           echo "Checking API (EC2)..."
-          API_URL="https://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api/health"
+          API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
           if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
             echo "API: HEALTHY"
           else
             echo "API: Could not verify health endpoint"
             # Try basic connection test
-            if curl -f -s "https://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/" > /dev/null; then
-              echo "API: Server responding on port ${{ secrets.API_PORT }}"
+            if curl -f -s "https://${{ secrets.EC2_PRODUCTION_API }}/" > /dev/null; then
+              echo "API: Server responding"
             fi
           fi
           
@@ -491,7 +491,7 @@ jobs:
           echo "Running basic performance checks..."
           
           # Test API response time
-          API_URL="https://${{ secrets.EC2_PRODUCTION_API_HOST }}:${{ secrets.API_PORT }}/api/health"
+          API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
           RESPONSE_TIME=$(curl -f -s -w "%{time_total}" -o /dev/null "$API_URL" 2>/dev/null || echo "0")
           
           if [ "$RESPONSE_TIME" != "0" ]; then
