@@ -1,11 +1,10 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Socket client</title>
     <script defer src="socketTesting.js"></script>
-    <!--leaflet stuff-->
      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
@@ -27,5 +26,100 @@
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>    
 
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket Client</title>
+  <script defer src="socketTesting.js"></script>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+  <style>
+    /* General page styles */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #4d4c4c; /* light grey */
+      color: #111; /* dark text */
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      color: #ff6600; /* orange headings */
+      margin-bottom: 10px;
+    }
+
+    #map {
+      height: 400px;
+      width: 100%;
+      border: 2px solid #333; /* black border */
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333; /* dark grey */
+    }
+
+    button {
+      background-color: #ff6600; /* orange */
+      color: #fff; /* white text */
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-bottom: 20px;
+    }
+
+    button:hover {
+      background-color: #e65c00; /* darker orange on hover */
+    }
+
+    #event-log {
+      background-color: #fff; /* white log background */
+      border: 1px solid #ccc; /* light grey border */
+      padding: 15px;
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    /* Optional: scroll styling */
+    #event-log::-webkit-scrollbar {
+      width: 8px;
+    }
+    #event-log::-webkit-scrollbar-thumb {
+      background-color: #888; /* grey scrollbar thumb */
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+
+  <h1>Socket Connection Testing</h1>
+
+  <div id="map"></div>
+
+  <label>Report incident here</label>
+  <button onclick="reportIncident()">Report</button>
+
+  <h2>Events</h2>
+  <div id="event-log"></div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </body>
 </html>
