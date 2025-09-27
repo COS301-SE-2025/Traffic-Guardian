@@ -304,16 +304,21 @@ jobs:
             cd API
             sudo tar -xzf /tmp/api-deployment.tar.gz
             
-            # Preserve existing .env file (don't overwrite environment variables)
+            # Fix ownership of extracted files
+            sudo chown -R $(whoami):$(whoami) .
+            
+            # Preserve existing .env file with proper permissions
             if [ -f "../API_backup/.env" ]; then
               echo "Preserving existing .env file..."
               sudo cp ../API_backup/.env .env
+              sudo chown $(whoami):$(whoami) .env
+              chmod 600 .env
             else
               echo "Warning: No existing .env file found. Please ensure environment variables are configured."
             fi
             
             # Install dependencies (use --omit=dev instead of --production)
-            sudo npm install --omit=dev
+            npm install --omit=dev
             
             # Skip tests since jest is not installed (focus on deployment)
             echo "Skipping tests in deployment environment"
@@ -332,7 +337,10 @@ jobs:
               echo "Entry point file exists: $ENTRY_POINT"
             else
               echo "Entry point file not found. Looking for alternatives..."
-              if [ -f "app.js" ]; then
+              if [ -f "src/server.js" ]; then
+                ENTRY_POINT="src/server.js"
+                echo "Using src/server.js"
+              elif [ -f "app.js" ]; then
                 ENTRY_POINT="app.js"
                 echo "Using app.js"
               elif [ -f "server.js" ]; then
@@ -352,10 +360,18 @@ jobs:
             echo "Testing entry point syntax..."
             node --check "$ENTRY_POINT" || echo "Syntax check completed"
             
+            # Load environment variables properly
+            echo "Loading environment variables..."
+            if [ -f ".env" ]; then
+              export $(grep -v '^#' .env | grep -v '^$' | xargs)
+              echo "Environment variables loaded from .env"
+            else
+              echo "No .env file found, using system environment variables"
+            fi
+            
             # Start the API in a screen session with the detected entry point
             echo "Starting API with entry point: $ENTRY_POINT"
-            export $(grep -v '^#' /var/www/api/API/.env | xargs)
-            screen -dmS api bash -c "cd /var/www/api/API && node ./src/server.js"
+            screen -dmS api bash -c "cd /var/www/api/API && node $ENTRY_POINT"
             
             # Wait and verify the screen session
             sleep 10
@@ -373,7 +389,9 @@ jobs:
               sudo rm -rf /var/www/api/API
               sudo mv /var/www/api/API_backup /var/www/api/API 2>/dev/null || true
               cd /var/www/api/API
-              screen -dmS api bash -c 'cd /var/www/api/API && node server.js || node index.js || npm start'
+              # Fix ownership after rollback
+              sudo chown -R $(whoami):$(whoami) .
+              screen -dmS api bash -c 'cd /var/www/api/API && node src/server.js || node server.js || node index.js'
               exit 1
             fi
           EOF
