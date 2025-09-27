@@ -31,14 +31,14 @@
 }
 
 /* Light mode variables - YouTube-inspired */
-[data-theme="light"] {
+:root.light-mode {
   --livefeed-bg: #fff;
   --livefeed-text: #0f0f0f;
   --livefeed-title: #feac34;
   --livefeed-subtitle: #606060;
   --feed-tile-bg: #fff;
-  --feed-tile-border: transparent;
-  --feed-tile-shadow: rgb(0 0 0 / 0%);
+  --feed-tile-border: #e5e5e5;
+  --feed-tile-shadow: rgb(0 0 0 / 8%);
   --feed-tile-hover-bg: #f9f9f9;
   --feed-details-bg: #fff;
   --feed-info-text: #0f0f0f;

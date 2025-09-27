@@ -1157,11 +1157,11 @@ const Dashboard: React.FC = () => {
             <div className="incidents-header" data-cy="incidents-header">
               <h3 data-cy="incidents-title">Live Traffic Incidents</h3>
               <div className="incidents-badge" data-cy="incidents-badge">
-                {trafficData.length} Locations
+                {Array.isArray(trafficData) ? trafficData.length : 0} Locations
               </div>
             </div>
             <div className="incidents-list" data-cy="incidents-list">
-              {trafficData.map((location, index) => (
+              {Array.isArray(trafficData) && trafficData.map((location, index) => (
                 <div
                   key={index}
                   className="incident-item"
@@ -1212,7 +1212,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
               ))}
-              {trafficData.length === 0 && (
+              {(!Array.isArray(trafficData) || trafficData.length === 0) && (
                 <div className="incident-item" data-cy="incident-empty">
                   <div className="incident-header">
                     <div className="incident-type">
