@@ -15,13 +15,11 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
-import 'cypress-mochawesome-reporter/register'; //added import
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
 
 import { mount } from 'cypress/react18'
-import 'cypress-mochawesome-reporter/register';
 
 // Augment the Cypress namespace to include type definitions for
 // your custom command.
