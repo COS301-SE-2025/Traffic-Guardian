@@ -30,6 +30,7 @@ test('block out scalability testing',()=>{
   expect(1+1).toBe(2);
 })
 */
+
 function runAutocannon(path, opts = {}) {
   return new Promise((resolve, reject) => {
     const instance = autocannon(
