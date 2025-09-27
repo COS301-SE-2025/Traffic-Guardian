@@ -33,34 +33,33 @@ const createSmartRateLimitHandler = (type) => (req, res, next) => {
   });
 };
 
-// Different rate limits for different endpoints
+// Production-ready rate limits optimized for 50 concurrent users and 100 incident detections
 const rateLimiters = {
-  // General API rate limit - increased for dashboard usage
+  // General API rate limit - optimized for 50 concurrent users
   general: rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 300, // increased from 100 to 300 requests per windowMs
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    windowMs: 5 * 60 * 1000, // 5 minutes (shorter window for faster recovery)
+    max: 1000, // 1000 requests per 5 minutes (allows ~200 req/min per user for 50 users)
+    standardHeaders: true,
+    legacyHeaders: false,
     handler: createSmartRateLimitHandler('general'),
   }),
 
-  // Camera operations - more restrictive (20 requests per 5 minutes)
+  // Camera operations - optimized for live feeds
   camera: rateLimit({
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 20, // limit each IP to 20 requests per windowMs
+    windowMs: 2 * 60 * 1000, // 2 minutes
+    max: 100, // increased for live camera data
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req, res) => {
-      // Use both IP and user ID for authenticated requests
       return req.user ? `${req.ip}-${req.user.User_ID}` : req.ip;
     },
     handler: createSmartRateLimitHandler('camera'),
   }),
 
-  // Camera bulk operations - less restrictive now that we have background processing
+  // Camera bulk operations - optimized for AI processing
   cameraBulk: rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 15, // increased from 5 to 15 requests per windowMs
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 50, // increased for AI model batch processing
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req, res) => {
@@ -69,23 +68,35 @@ const rateLimiters = {
     handler: createSmartRateLimitHandler('cameraBulk'),
   }),
 
-  // Internal system operations - very lenient for background processing
+  // Internal system operations - very high for AI incident detection
   internal: rateLimit({
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 200, // high limit for internal operations
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 500, // high limit for 100 incident detections per minute
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req, res) => {
-      // Use a fixed key for internal operations to prevent IP-based limiting
       return 'internal-system';
     },
     handler: createSmartRateLimitHandler('internal'),
   }),
 
-  // Camera status updates - moderate (50 requests per 10 minutes)
+  // Incident processing - new limiter for AI detections
+  incidents: rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 150, // allows 100+ incident detections per minute with buffer
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req, res) => {
+      // Use AI model identifier if available, otherwise IP
+      return req.headers['x-ai-model-id'] || req.ip;
+    },
+    handler: createSmartRateLimitHandler('incidents'),
+  }),
+
+  // Camera status updates - optimized for real-time
   cameraStatus: rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 50, // limit each IP to 50 requests per windowMs
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 120, // increased for real-time status updates
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req, res) => {
@@ -94,23 +105,32 @@ const rateLimiters = {
     handler: createSmartRateLimitHandler('cameraStatus'),
   }),
 
-  // Authentication - strict (10 attempts per 15 minutes)
+  // Authentication - still strict but reasonable
   auth: rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // limit each IP to 10 requests per windowMs
+    max: 20, // increased slightly for legitimate retries
     standardHeaders: true,
     legacyHeaders: false,
-    skipSuccessfulRequests: true, // Don't count successful requests
+    skipSuccessfulRequests: true,
     handler: createSmartRateLimitHandler('auth'),
   }),
 
-  // Dashboard/Analytics - increased for heavy usage
+  // Dashboard/Analytics - optimized for 50 concurrent users
   dashboard: rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 100, // increased from 30 to 100
+    windowMs: 2 * 60 * 1000, // 2 minutes
+    max: 300, // increased for dashboard heavy usage (50 users * 6 requests/min)
     standardHeaders: true,
     legacyHeaders: false,
     handler: createSmartRateLimitHandler('dashboard'),
+  }),
+
+  // Health checks - very lenient for monitoring
+  health: rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 1000, // high limit for load balancer health checks
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: createSmartRateLimitHandler('health'),
   }),
 };
 
