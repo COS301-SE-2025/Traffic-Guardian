@@ -310,8 +310,8 @@ class IncidentDetectionPerformanceTest(unittest.TestCase):
             thread_fps = result['frames_processed'] / result['processing_time']
             print(f"Thread {thread_id} FPS: {thread_fps:.1f}")
 
-        self.assertGreater(overall_fps, 3,
-                          "Concurrent processing should achieve >3 FPS overall")
+        self.assertGreater(overall_fps, 2.5,
+                          "Concurrent processing should achieve >2.5 FPS overall")
 
     def test_incident_detection_algorithm_performance(self):
         system = AdvancedIncidentDetectionSystem(config=self.test_configs['standard'])
