@@ -12,7 +12,7 @@ on:
     branches: [main]
 
 jobs:
-# 
+
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
@@ -59,8 +59,8 @@ jobs:
         working-directory: ./frontend
         env:
           # Frontend environment variables for build process
-          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API }}:${{ secrets.API_PORT }} #api.trafficguardian.co.za
-          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API }} #api.trafficguardian.co.za/api
+          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API }}
+          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API }}/api
           REACT_APP_ENVIRONMENT: staging
           # Add other frontend environment variables as needed
         run: |
@@ -162,7 +162,7 @@ jobs:
           
           # API health check - COMMENTED OUT (no staging EC2 cost restrictions)
           # echo "Checking API (EC2)..."
-          # API_URL="https://${{ secrets.EC2_STAGING_API_HOST }}:5000/api/health"
+          # API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
           # if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
           #   echo "  API service: HEALTHY"
           # else
@@ -207,8 +207,8 @@ jobs:
         working-directory: ./frontend
         env:
           # Frontend environment variables for production build
-          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API }} #api.trafficguardian.co.za
-          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API }}/api #api.trafficguardian.co.za/api
+          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API }}
+          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API }}/api
           REACT_APP_ENVIRONMENT: production
           # Add other frontend environment variables as needed
         run: |
@@ -223,6 +223,28 @@ jobs:
           echo "Building API for production..."
           npm install --production --no-fund --no-audit
           echo "API build completed"
+
+      - name: Create production .env file
+        working-directory: ./API
+        run: |
+          echo "Creating production .env file..."
+          cat > .env << EOF
+          DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+          DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+          API_PORT=${{ secrets.API_PORT }}
+          TOMTOMAPI=${{ secrets.TOMTOMAPI }}
+          WEATHERAPI=${{ secrets.WEATHERAPI }}
+          CORS_ORIGIN=http://localhost:3000/
+          USE_CALIFORNIA_TRAFFIC=true
+          PEMS_USERNAME=${{ secrets.PEMS_USERNAME }}
+          PEMS_PASSWORD=${{ secrets.PEMS_PASSWORD }}
+          TRAFFIC_511_API_TOKEN=${{ secrets.TRAFFIC_511_API_TOKEN }}
+          NODE_ENV=production
+          EOF
+          echo "Production .env file created with all required variables"
 
       - name: Create production deployment artifacts
         run: |
@@ -371,7 +393,7 @@ jobs:
             
             # Start the API in a screen session with the detected entry point
             echo "Starting API with entry point: $ENTRY_POINT"
-            screen -dmS api bash -c "cd /var/www/api/API && set -a && source .env && set +a && node $ENTRY_POINT"
+            screen -dmS api bash -c "cd /var/www/api/API && node $ENTRY_POINT"
             
             # Wait and verify the screen session
             sleep 10
@@ -426,7 +448,7 @@ jobs:
           echo "Running production health checks..."
           
           echo "Checking Frontend (S3 Static Website)..."
-          FRONTEND_URL="http://trafficguardian.co.za"
+          FRONTEND_URL="https://trafficguardian.co.za"
           if curl -f -s --head "$FRONTEND_URL" > /dev/null; then
             echo "  Frontend service: HEALTHY"
           else
@@ -434,7 +456,7 @@ jobs:
           fi
           
           echo "Checking API (EC2)..."
-          API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"  
+          API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
           if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
             echo "  API service: HEALTHY"
           else
@@ -464,7 +486,7 @@ jobs:
           
           # Test S3 static website hosting
           echo "Checking Frontend (S3 Static Website)..."
-          FRONTEND_URL="http://trafficguardian.co.za"
+          FRONTEND_URL="https://trafficguardian.co.za"
           if curl -f -s --head "$FRONTEND_URL" > /dev/null; then
             echo "Frontend: HEALTHY"
           else
