@@ -6,7 +6,7 @@ dotenv.config();
 export default defineConfig({
   e2e: {
     baseUrl: process.env.CYPRESS_BASE_URL || 'http://localhost:3000',
-    setupNodeEvents(on) {
+    setupNodeEvents(on, config) {
       // Implement node event listeners here
       require('cypress-mochawesome-reporter/plugin')(on);
     },
