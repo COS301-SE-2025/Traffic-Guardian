@@ -305,11 +305,11 @@ jobs:
           echo "Copying API files to EC2 production instance..."
           scp -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
             dist/api-deployment.tar.gz \
-            ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API }}:/tmp/
+            ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com:/tmp/
           
           # Deploy on EC2 instance with zero-downtime strategy
           ssh -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
-            ${{ secrets.EC2_PRODUCTION_USER }}@${{ secrets.EC2_PRODUCTION_API }} << 'EOF'
+            ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com << 'EOF'
             # Navigate to the correct API directory
             cd /var/www/api
             
