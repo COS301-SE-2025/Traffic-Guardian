@@ -60,7 +60,6 @@ router.get('/audio', (req, res) => {
       return res.status(500).send('Error reading uploads folder');
     }
 
-    // Allowed audio extensions
     const audioExtensions = ['.m4a', '.mp3', '.wav', '.ogg', '.flac', '.aac'];
 
     const audioFiles = files.filter(file =>
@@ -81,11 +80,21 @@ router.get('/audio/:filename', (req, res) => {
       return res.status(404).send('File not found');
     }
 
-    // Range support (so you can seek/skip in the player)
+    const ext = path.extname(filePath).toLowerCase();
+    let contentType = 'audio/mpeg';
+
+    if (ext === '.m4a') contentType = 'audio/mp4';
+    else if (ext === '.wav') contentType = 'audio/wav';
+    else if (ext === '.ogg') contentType = 'audio/ogg';
+    else if (ext === '.flac') contentType = 'audio/flac';
+    else if (ext === '.aac') contentType = 'audio/aac';
+
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
     const range = req.headers.range;
     if (!range) {
       res.writeHead(200, {
-        'Content-Type': 'audio/mpeg',
+        'Content-Type': contentType,
         'Content-Length': stats.size,
       });
       fs.createReadStream(filePath).pipe(res);
@@ -103,11 +112,12 @@ router.get('/audio/:filename', (req, res) => {
       'Content-Range': `bytes ${start}-${end}/${stats.size}`,
       'Accept-Ranges': 'bytes',
       'Content-Length': chunkSize,
-      'Content-Type': 'audio/mpeg', // good default (works for mp3/m4a/aac)
+      'Content-Type': contentType,
     });
 
     fileStream.pipe(res);
   });
 });
+
 
 module.exports = router;
