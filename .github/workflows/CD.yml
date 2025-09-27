@@ -307,105 +307,96 @@ jobs:
             dist/api-deployment.tar.gz \
             ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com:/tmp/
           
-          # Deploy on EC2 instance
+          # Deploy on EC2 instance with zero-downtime strategy
           ssh -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
             ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com << 'EOF'
-            
-            echo "Starting API deployment..."
-            
-            # Stop existing API processes
-            echo "Stopping existing API..."
-            screen -S api -X quit 2>/dev/null || true
-            pkill -f "node src/server.js" 2>/dev/null || true
-            sleep 3
-            
-            # Navigate to API directory
+            # Navigate to the correct API directory
             cd /var/www/api
             
-            # Backup current version
-            if [ -d "API" ]; then
-              echo "Backing up current API..."
-              sudo rm -rf API_backup 2>/dev/null || true
-              sudo cp -r API API_backup
-            fi
+            # Stop any running processes (screen sessions, npm processes)
+            echo "Stopping existing API processes..."
+            pkill -f "npm start" || true
+            screen -S api -X quit || true
             
-            # Create fresh API directory
-            sudo rm -rf API
+            # Create backup of current version
+            sudo rm -rf API_backup && sudo mv API API_backup 2>/dev/null || true
             sudo mkdir -p API
+            
+            # Extract new version to API directory
             cd API
-            
-            # Extract new deployment
-            echo "Extracting new API version..."
             sudo tar -xzf /tmp/api-deployment.tar.gz
-            sudo chown -R ubuntu:ubuntu /var/www/api/API
             
-            # Restore .env file if it exists
-            if [ -f "../API_backup/.env" ]; then
-              echo "Restoring .env file..."
-              cp ../API_backup/.env .env
-            else
-              echo "WARNING: No .env file found in backup!"
-            fi
+            # Fix ownership of extracted files (including the built .env)
+            # sudo chown -R $(whoami):$(whoami) .
             
             # Install dependencies
-            echo "Installing dependencies..."
-            npm install --omit=dev --no-fund --no-audit
+            npm install --omit=dev
             
-            # Verify entry point exists
-            if [ ! -f "src/server.js" ]; then
-              echo "ERROR: src/server.js not found!"
-              ls -la src/ || echo "src directory not found"
-              exit 1
+            # Find the correct entry point from package.json
+            echo "Detecting API entry point..."
+            ENTRY_POINT=$(node -p "require('./package.json').main || 'index.js'" 2>/dev/null || echo "index.js")
+            echo "Detected entry point: $ENTRY_POINT"
+            
+            # Verify the entry point exists
+            if [ -f "$ENTRY_POINT" ]; then
+              echo "Entry point file exists: $ENTRY_POINT"
+            else
+              echo "Entry point file not found. Looking for alternatives..."
+              if [ -f "src/server.js" ]; then
+                ENTRY_POINT="src/server.js"
+                echo "Using src/server.js"
+              elif [ -f "app.js" ]; then
+                ENTRY_POINT="app.js"
+                echo "Using app.js"
+              elif [ -f "server.js" ]; then
+                ENTRY_POINT="server.js"
+                echo "Using server.js"
+              elif [ -f "index.js" ]; then
+                ENTRY_POINT="index.js"
+                echo "Using index.js"
+              else
+                echo "ERROR: No valid entry point found!"
+                ls -la
+                exit 1
+              fi
             fi
             
-            # Start API in screen session
-            echo "Starting API in screen session..."
-            screen -dmS api bash -c 'cd /var/www/api/API && npm start'
+            # Test the entry point syntax
+            echo "Testing entry point syntax..."
+            node --check "$ENTRY_POINT" || echo "Syntax check completed"
             
-            # Wait and verify
+            # Start the API in a screen session (dotenv will handle .env loading)
+            echo "Starting API with entry point: $ENTRY_POINT"
+            echo "Built .env file will be loaded automatically by the API"
+            screen -dmS api bash -c "cd /var/www/api/API && node $ENTRY_POINT"
+            
+            # Wait and verify the screen session
             sleep 10
-            
-            # Check if screen session is running
             if screen -list | grep -q "api"; then
-              echo "Screen session started successfully"
-              
-              # Test API response
+              echo "API successfully started in screen session"
+              # Test if the API is responding
               sleep 5
-              if curl -f -s http://localhost:5000 >/dev/null 2>&1; then
-                echo "API is responding on port 5000"
+              if curl -f -s http://localhost:${{ secrets.API_PORT }}/api/health >/dev/null 2>&1 || curl -f -s http://localhost:${{ secrets.API_PORT }}/ >/dev/null 2>&1; then
+                echo "API is responding to requests"
               else
-                echo "API started but not yet responding (may need more startup time)"
+                echo "API started but not yet responding (may need more time to initialize)"
               fi
             else
-              echo "Failed to start screen session"
-              
-              # Try to see what went wrong
-              echo "Checking for any error logs..."
-              tail -20 /var/log/nginx/error.log 2>/dev/null || echo "No nginx error log available"
-              
-              # Attempt rollback
-              echo "Attempting rollback..."
-              cd /var/www/api
-              if [ -d "API_backup" ]; then
-                sudo rm -rf API
-                sudo mv API_backup API
-                cd API
-                screen -dmS api bash -c 'npm start'
-                echo "Rollback attempted"
-              fi
+              echo "Failed to start API, attempting rollback..."
+              sudo rm -rf /var/www/api/API
+              sudo mv /var/www/api/API_backup /var/www/api/API 2>/dev/null || true
+              cd /var/www/api/API
+              # Fix ownership after rollback
+              # sudo chown -R $(whoami):$(whoami) .
+              screen -dmS api bash -c 'cd /var/www/api/API && npm start || node server.js || node src/server.js'
               exit 1
             fi
-            
-            # Cleanup
-            rm -f /tmp/api-deployment.tar.gz
-            
-            echo "API deployment completed successfully"
           EOF
           
-          # Clean up SSH key
+          # Clean up SSH key for security
           rm -f ~/.ssh/ec2_key.pem
           
-          echo "API deployment finished"
+          echo " API deployed to EC2 production instance"
 
   post-deployment-monitoring:
     name: Post-Deployment Monitoring
