@@ -37,7 +37,6 @@ const Account: React.FC = () => {
 
           if (prefsResponse.ok) {
             const prefsData = await prefsResponse.json();
-            console.log('Account fetched preferences:', prefsData);
             let preferences;
             try {
               preferences =
@@ -64,7 +63,6 @@ const Account: React.FC = () => {
               theme: validTheme,
             };
 
-            console.log('Account processed preferences:', preferences);
             localStorage.setItem('theme', preferences.theme);
             toggleDarkMode(preferences.theme === 'dark');
           } else {
@@ -89,7 +87,6 @@ const Account: React.FC = () => {
       };
       fetchPreferences();
     } else {
-      console.log('Account: No apiKey, showing login form');
       setIsChecking(false);
     }
   }, [navigate, toggleDarkMode]);

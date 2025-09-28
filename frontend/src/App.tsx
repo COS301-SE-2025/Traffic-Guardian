@@ -156,7 +156,7 @@ const App: React.FC = () => {
   React.useEffect(() => {
     const apiKey = sessionStorage.getItem('apiKey');
     if (apiKey) {
-      console.log('🔄 App startup: Starting background data prefetching...');
+      // Starting background data prefetching
       dataPrefetchService.startPrefetching();
     }
 
@@ -176,10 +176,10 @@ const App: React.FC = () => {
                 <AnimatedRoutes />
                 <DataAttribution />
 
-                {/* Global Toast Container for real-time notifications */}
+                {/* Global Toast Container - Professional notifications only */}
                 <ToastContainer
                   position="top-right"
-                  autoClose={8000}
+                  autoClose={4000}
                   hideProgressBar={false}
                   newestOnTop
                   closeOnClick
@@ -189,6 +189,7 @@ const App: React.FC = () => {
                   pauseOnHover
                   theme="dark"
                   style={{ zIndex: 99999 }}
+                  limit={1}
                 />
               </div>
             </LiveFeedProvider>
