@@ -202,6 +202,10 @@ const {
         <TouchableOpacity onPress={() => router.push("/analytics")}>
           <Text style={globalStyles.navText}>Analytics</Text>
         </TouchableOpacity>
+        
+        <TouchableOpacity onPress={() => router.push("/EmergencyContacts")}>
+          <Text style={globalStyles.navText}>Analytics</Text>
+        </TouchableOpacity>
 
       </View>
     </SafeAreaView>
