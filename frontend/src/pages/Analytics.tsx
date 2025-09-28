@@ -13,6 +13,8 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  ScatterChart,
+  Scatter,
 } from 'recharts';
 import ApiService, {
   DatabaseIncident,
@@ -125,6 +127,26 @@ interface LocationHotspot {
   avgSeverity: number;
 }
 
+interface SeverityBreakdown {
+  severity: string;
+  count: number;
+  percentage: number;
+}
+
+interface StatusBreakdown {
+  status: string;
+  count: number;
+  percentage: number;
+}
+
+interface IncidentLocation {
+  latitude: number;
+  longitude: number;
+  severity: string;
+  count: number;
+  location?: string;
+}
+
 const Analytics: React.FC = () => {
   const { isDarkMode } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
@@ -139,6 +161,11 @@ const Analytics: React.FC = () => {
   const [locationHotspots, setLocationHotspots] = useState<LocationHotspot[]>(
     [],
   );
+
+  // New chart data state
+  const [severityBreakdown, setSeverityBreakdown] = useState<SeverityBreakdown[]>([]);
+  const [statusBreakdown, setStatusBreakdown] = useState<StatusBreakdown[]>([]);
+  const [incidentLocations, setIncidentLocations] = useState<IncidentLocation[]>([]);
 
   // Archive analytics state
   const [archiveAnalytics, setArchiveAnalytics] =
@@ -244,8 +271,89 @@ const Analytics: React.FC = () => {
       }
       setCategoryBreakdown(processedCategories);
 
+      // Process severity breakdown from database incidents
+      const severityGroups = dbData.reduce((acc: { [key: string]: number }, incident: DatabaseIncident) => {
+        const severity = incident.Incident_Severity || 'unknown';
+        acc[severity] = (acc[severity] || 0) + 1;
+        return acc;
+      }, {});
+
+      const processedSeverity: SeverityBreakdown[] = Object.entries(severityGroups)
+        .map(([severity, count]) => ({
+          severity: severity.charAt(0).toUpperCase() + severity.slice(1),
+          count: count as number,
+          percentage: Math.round(((count as number) / dbTotal) * 100),
+        }))
+        .filter(item => item.count > 0)
+        .sort((a, b) => b.count - a.count);
+
+      setSeverityBreakdown(processedSeverity);
+
+      // Process status breakdown from database incidents
+      const statusGroups = dbData.reduce((acc: { [key: string]: number }, incident: DatabaseIncident) => {
+        const status = incident.Incident_Status || 'unknown';
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {});
+
+      const processedStatus: StatusBreakdown[] = Object.entries(statusGroups)
+        .map(([status, count]) => ({
+          status: status.charAt(0).toUpperCase() + status.slice(1),
+          count: count as number,
+          percentage: Math.round(((count as number) / dbTotal) * 100),
+        }))
+        .filter(item => item.count > 0)
+        .sort((a, b) => b.count - a.count);
+
+      setStatusBreakdown(processedStatus);
+
+      // Process incident locations using real coordinates from database
+      const locationGroups = dbData.reduce((acc: { [key: string]: { lat: number, lng: number, severities: { [key: string]: number } } }, incident: DatabaseIncident) => {
+        // Ensure coordinates are valid numbers
+        const lat = Number(incident.Incidents_Latitude);
+        const lng = Number(incident.Incidents_Longitude);
+
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+          const key = `${lat},${lng}`;
+          const severity = incident.Incident_Severity || 'unknown';
+
+          if (!acc[key]) {
+            acc[key] = {
+              lat: lat,
+              lng: lng,
+              severities: {},
+            };
+          }
+          acc[key].severities[severity] = (acc[key].severities[severity] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
+      const processedIncidentLocations: IncidentLocation[] = Object.entries(locationGroups)
+        .map(([_key, data]) => {
+          const totalCount = Object.values(data.severities).reduce((sum, count) => sum + count, 0);
+          const dominantSeverity = Object.entries(data.severities).reduce((a, b) =>
+            data.severities[a[0]] > data.severities[b[0]] ? a : b,
+          )[0];
+
+          // Ensure lat and lng are valid numbers
+          const lat = Number(data.lat);
+          const lng = Number(data.lng);
+
+          return {
+            latitude: lat,
+            longitude: lng,
+            severity: dominantSeverity,
+            count: totalCount,
+            location: `${lat.toFixed(4)}, ${lng.toFixed(4)}`, // Use coordinates as location identifier
+          };
+        })
+        .filter(loc => loc.count > 0 && !isNaN(loc.latitude) && !isNaN(loc.longitude));
+
+      setIncidentLocations(processedIncidentLocations);
+
       // Process location hotspots
-      const processedLocations: LocationHotspot[] = locationsData
+      const processedLocationHotspots: LocationHotspot[] = locationsData
         .map((location: LocationData) => ({
           location: location.location,
           incidents: location.amount,
@@ -256,7 +364,7 @@ const Analytics: React.FC = () => {
           (a: LocationHotspot, b: LocationHotspot) => b.incidents - a.incidents,
         );
 
-      setLocationHotspots(processedLocations);
+      setLocationHotspots(processedLocationHotspots);
 
       // Set archive analytics
       if (archiveAnalyticsData) {
@@ -277,7 +385,7 @@ const Analytics: React.FC = () => {
         month: 'short',
       });
       const archivesThisMonth =
-        archiveAnalyticsData?.archivesByMonth.find(m => m.month === thisMonth)
+        archiveAnalyticsData?.archivesByMonth.find((m: any) => m.month === thisMonth)
           ?.count || 0;
 
       // Update summary stats including archives
@@ -316,7 +424,7 @@ const Analytics: React.FC = () => {
           month: 'short',
         });
         const archivesThisMonth =
-          archiveAnalyticsData.archivesByMonth.find(m => m.month === thisMonth)
+          archiveAnalyticsData.archivesByMonth.find((m: any) => m.month === thisMonth)
             ?.count || 0;
 
         setSummaryStats(prev => ({
@@ -334,7 +442,7 @@ const Analytics: React.FC = () => {
 
   useEffect(() => {
     // Initialise socket connection
-    const socketConnection = io(process.env.REACT_APP_SERVER_URL!);
+    const socketConnection = io(process.env.REACT_APP_API_URL!);
     _setSocket(socketConnection);
 
     // Socket event listeners for real-time updates
@@ -553,23 +661,23 @@ const Analytics: React.FC = () => {
 
             {/* Charts Grid */}
             <div className="charts-grid">
-              {/* Incident Categories */}
+              {/* Incident Severity */}
               <div className="chart-container half-width">
-                <h2>Incident Categories</h2>
-                {categoryBreakdown.length > 0 ? (
+                <h2>Incident Severity</h2>
+                {severityBreakdown.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
-                        data={categoryBreakdown}
+                        data={severityBreakdown}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ category, count }) => `${category}: ${count}`}
+                        label={({ severity, count }) => `${severity}: ${count}`}
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="count"
                       >
-                        {categoryBreakdown.map((entry, index) => (
+                        {severityBreakdown.map((entry, index) => (
                           <Cell
                             key={`cell-${index}`}
                             fill={categoryColors[index % categoryColors.length]}
@@ -597,35 +705,34 @@ const Analytics: React.FC = () => {
                       color: isDarkMode ? '#9ca3af' : '#6b7280',
                     }}
                   >
-                    No category data available
+                    No severity data available
                   </div>
                 )}
               </div>
 
-              {/* Top Incident Locations */}
+              {/* Incident Status */}
               <div className="chart-container half-width">
-                <h2>Top Incident Locations</h2>
-                {locationHotspots.length > 0 ? (
+                <h2>Incident Status</h2>
+                {statusBreakdown.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart
-                      data={locationHotspots.slice(0, 6)}
-                      layout="horizontal"
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke={isDarkMode ? '#374151' : '#e5e7eb'}
-                      />
-                      <XAxis
-                        type="number"
-                        stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
-                      />
-                      <YAxis
-                        dataKey="location"
-                        type="category"
-                        stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
-                        width={80}
-                        tick={{ fontSize: 12 }}
-                      />
+                    <PieChart>
+                      <Pie
+                        data={statusBreakdown}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ status, count }) => `${status}: ${count}`}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="count"
+                      >
+                        {statusBreakdown.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={categoryColors[index % categoryColors.length]}
+                          />
+                        ))}
+                      </Pie>
                       <Tooltip
                         contentStyle={{
                           backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
@@ -635,12 +742,7 @@ const Analytics: React.FC = () => {
                           borderRadius: '8px',
                         }}
                       />
-                      <Bar
-                        dataKey="incidents"
-                        fill={chartColors.primary}
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
+                    </PieChart>
                   </ResponsiveContainer>
                 ) : (
                   <div
@@ -652,7 +754,86 @@ const Analytics: React.FC = () => {
                       color: isDarkMode ? '#9ca3af' : '#6b7280',
                     }}
                   >
-                    No location data available
+                    No status data available
+                  </div>
+                )}
+              </div>
+
+
+              {/* Incident Location Scatter Plot */}
+              <div className="chart-container full-width">
+                <h2>Incident Location Distribution</h2>
+                {incidentLocations.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <ScatterChart
+                      data={incidentLocations}
+                      margin={{
+                        top: 20,
+                        right: 20,
+                        bottom: 20,
+                        left: 20,
+                      }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={isDarkMode ? '#374151' : '#e5e7eb'}
+                      />
+                      <XAxis
+                        type="number"
+                        dataKey="longitude"
+                        name="Longitude"
+                        stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis
+                        type="number"
+                        dataKey="latitude"
+                        name="Latitude"
+                        stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip
+                        cursor={{ strokeDasharray: '3 3' }}
+                        contentStyle={{
+                          backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                          border: `1px solid ${
+                            isDarkMode ? '#374151' : '#e5e7eb'
+                          }`,
+                          borderRadius: '8px',
+                        }}
+                        formatter={(value, name, props) => {
+                          if (name === 'count') {
+                            const severity = props.payload?.severity || 'unknown';
+                            return [`${value} incidents (${severity} severity)`, 'Count'];
+                          }
+                          return [value, name];
+                        }}
+                        labelFormatter={(label, payload) => {
+                          if (payload && payload[0]) {
+                            const data = payload[0].payload;
+                            return `Location: ${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`;
+                          }
+                          return label;
+                        }}
+                      />
+                      <Scatter
+                        name="Incidents"
+                        dataKey="count"
+                        fill={chartColors.primary}
+                      />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div
+                    style={{
+                      height: '400px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: isDarkMode ? '#9ca3af' : '#6b7280',
+                    }}
+                  >
+                    No location coordinate data available
                   </div>
                 )}
               </div>
