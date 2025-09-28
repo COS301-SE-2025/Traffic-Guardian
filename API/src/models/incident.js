@@ -1,5 +1,4 @@
 const db = require('../config/db');
-const reportGen = require('../ReportGenerator/reportGenerator');
 
 const incidentModel = {  async createIncident(incidentData) {
     const { 

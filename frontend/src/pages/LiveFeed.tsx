@@ -11,13 +11,18 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './LiveFeed.css';
 import { useLiveFeed, CameraFeed } from '../contexts/LiveFeedContext';
-import LoadingSpinner from '../components/LoadingSpinner';
+<<<<<<< HEAD
+import CarLoadingAnimation from '../components/CarLoadingAnimation';
 import { toast, ToastContainer } from 'react-toastify';
+=======
+import LoadingSpinner from '../components/LoadingSpinner';
+import { toast } from 'react-toastify';
+>>>>>>> Dev
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 
-delete ((L as any).Icon.Default.prototype as any)._getIconUrl;
-(L as any).Icon.Default.mergeOptions({
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
   iconUrl: require('leaflet/dist/images/marker-icon.png'),
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
@@ -230,7 +235,7 @@ const LiveFeed: React.FC = () => {
 
   const cameraIcon = useMemo(
     () =>
-      new (L as any).Icon({
+      new L.Icon({
         iconUrl:
           'data:image/svg+xml;base64,' +
           btoa(`
@@ -251,7 +256,9 @@ const LiveFeed: React.FC = () => {
     async (endpoint: string, options: RequestInit = {}) => {
       const apiKey = sessionStorage.getItem('apiKey');
       if (!apiKey) {
-        throw new Error('No API key found. Please log in.');
+        toast.error('Authentication required. Please log in.');
+        navigate('/account');
+        throw new Error('Authentication required');
       }
 
       const url = `${process.env.REACT_APP_API_URL}${endpoint}`;
@@ -265,7 +272,9 @@ const LiveFeed: React.FC = () => {
         const response = await fetch(url, { ...options, headers });
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error('Unauthorized: Invalid or missing API key');
+            toast.error('Authentication failed. Please log in again.');
+            navigate('/account');
+            throw new Error('Authentication failed');
           }
           throw new Error(
             `API request failed: ${response.status} ${response.statusText}`,
@@ -277,7 +286,9 @@ const LiveFeed: React.FC = () => {
           error.message.includes('Unauthorized') ||
           error.message.includes('API key')
         ) {
+          toast.error('Authentication failed. Please log in again.');
           navigate('/account');
+          throw new Error('Authentication failed');
         }
         throw error;
       }
@@ -288,12 +299,12 @@ const LiveFeed: React.FC = () => {
   // Handle incident reporting
   const handleReportIncident = useCallback(async () => {
     if (!selectedCamera || !userRole || userRole !== 'admin') {
-      toast.error('Only administrators can report incidents');
+      // Access denied - handled by UI state
       return;
     }
 
     if (!incidentForm.description.trim()) {
-      toast.error('Please provide a description of the incident');
+      // Form validation handled by UI state
       return;
     }
 
@@ -311,11 +322,7 @@ const LiveFeed: React.FC = () => {
         const cameraResponse = await apiRequest(
           `/api/cameras/external/${encodeURIComponent(selectedCamera.id)}`,
         );
-        console.log('Full camera response:', cameraResponse);
         databaseCameraID = cameraResponse.Camera_ID;
-        console.log(
-          `Mapped external ID ${selectedCamera.id} to database Camera_ID ${databaseCameraID}`,
-        );
       } catch (cameraError) {
         console.warn(
           'Could not find camera in database:',
@@ -340,7 +347,6 @@ const LiveFeed: React.FC = () => {
           `Image: ${selectedCamera.image}`,
       };
 
-      console.log('Incident API payload:', apiPayload);
 
       await apiRequest('/api/incidents', {
         method: 'POST',
@@ -366,13 +372,16 @@ const LiveFeed: React.FC = () => {
   // Handle showing incident form
   const handleShowIncidentForm = useCallback(() => {
     if (!userRole || userRole !== 'admin') {
-      toast.error('Only administrators can report incidents');
+      // Access denied - handled by UI state
       return;
     }
     setShowIncidentForm(true);
   }, [userRole]);
 
   if (loading && cameraFeeds.length === 0) {
+<<<<<<< HEAD
+    return <CarLoadingAnimation />;
+=======
     return (
       <div className="livefeed-page" data-testid="live-feed-container">
         <LoadingSpinner
@@ -383,10 +392,14 @@ const LiveFeed: React.FC = () => {
         />
       </div>
     );
+>>>>>>> Dev
   }
 
   if (error && cameraFeeds.length === 0) {
     return (
+<<<<<<< HEAD
+      <div className="livefeed-page" data-cy="livefeed-page">
+=======
       <div
         className="livefeed-page"
         data-cy="livefeed-page"
@@ -398,6 +411,7 @@ const LiveFeed: React.FC = () => {
         >
           Incident Carousel Placeholder
         </div>
+>>>>>>> Dev
         <div className="livefeed-header">
           <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
           <div className="livefeed-subtitle" data-cy="livefeed-subtitle">
@@ -415,6 +429,9 @@ const LiveFeed: React.FC = () => {
   }
 
   return (
+<<<<<<< HEAD
+    <div className="livefeed-page" data-cy="livefeed-page">
+=======
     <div
       className="livefeed-page"
       data-cy="livefeed-page"
@@ -426,6 +443,7 @@ const LiveFeed: React.FC = () => {
       >
         Incident Carousel Placeholder
       </div>
+>>>>>>> Dev
       <div className="livefeed-header">
         <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
         <div className="livefeed-controls">
@@ -467,6 +485,9 @@ const LiveFeed: React.FC = () => {
       </div>
 
       <div className="livefeed-grid" data-cy="livefeed-grid">
+<<<<<<< HEAD
+        {memoizedCameraFeeds.map(feed => (
+=======
         {memoizedCameraFeeds.length > 0 ? (
           memoizedCameraFeeds.map(feed => (
             <div
@@ -563,8 +584,95 @@ const LiveFeed: React.FC = () => {
           ))
         ) : (
           // Empty state with test IDs for testing
+>>>>>>> Dev
           <div
             className="feed-tile clickable"
+<<<<<<< HEAD
+            data-cy={`feed-tile-${feed.id}`}
+            onClick={() => handleCameraClick(feed)}
+          >
+            <div className="feed-image-container">
+              {feed.hasLiveStream && feed.videoUrl ? (
+                <HlsPlayer
+                  src={feed.videoUrl}
+                  autoPlay={false}
+                  controls={false}
+                  width="100%"
+                  height="auto"
+                  className="feed-video"
+                  playerRef={getGridPlayerRef(feed.id)}
+                  onError={() => handleVideoError(feed.id)}
+                  onLoad={() => handleImageLoad(feed.id)}
+                  onLoadStart={() => handleVideoLoadStart(feed.id)}
+                  preload="metadata"
+                />
+              ) : (
+                <img
+                  src={feed.image}
+                  alt={`Camera feed from ${feed.location}`}
+                  className="feed-image"
+                  loading="lazy"
+                  onError={() => handleImageError(feed.id)}
+                  onLoad={() => handleImageLoad(feed.id)}
+                  data-cy="feed-image"
+                />
+              )}
+              <div className="live-feed-overlay" data-cy="live-feed-overlay">
+                <div
+                  className={`status-badge ${getStatusClass(feed.status)}`}
+                  data-cy="feed-status"
+                >
+                  {feed.status}
+                </div>
+                {feed.hasLiveStream && (
+                  <div className="video-available-badge">Live Video</div>
+                )}
+              </div>
+              <div className="play-overlay">
+                <div className="play-button">▶</div>
+              </div>
+              <div className="update-frequency">
+                Updates every {feed.updateFrequency || '?'} min
+              </div>
+            </div>
+            <div className="feed-details" data-cy="feed-details">
+              <div className="feed-info">
+                <div>
+                  <h4 data-cy="feed-id">{feed.id}</h4>
+                  <p data-cy="feed-location">{feed.location}</p>
+                  {feed.imageDescription && (
+                    <p className="feed-description">{feed.imageDescription}</p>
+                  )}
+                  <div className="feed-metadata">
+                    <span className="feed-route">{feed.route}</span>
+                    <span className="feed-district">{feed.district}</span>
+                    {feed.direction && (
+                      <span className="feed-direction">{feed.direction}</span>
+                    )}
+                    {feed.county && (
+                      <span className="feed-county">{feed.county}</span>
+                    )}
+                  </div>
+                  {feed.milepost && (
+                    <div className="feed-milepost">
+                      Milepost: {feed.milepost}
+                    </div>
+                  )}
+                  {feed.coordinates && (
+                    <div className="feed-coordinates">
+                      Location: {feed.coordinates.lat.toFixed(4)},{' '}
+                      {feed.coordinates.lng.toFixed(4)}
+                    </div>
+                  )}
+                  <div className="feed-last-update">
+                    Loaded: {feed.lastUpdate}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+=======
             data-testid="feed-item incident-item"
             data-type="accident"
             style={{ opacity: 0.5 }}
@@ -590,6 +698,7 @@ const LiveFeed: React.FC = () => {
             </div>
           </div>
         )}
+>>>>>>> Dev
       </div>
 
       {cameraFeeds.length === 0 && !loading && (
@@ -662,6 +771,48 @@ const LiveFeed: React.FC = () => {
               {viewMode === 'video' &&
               selectedCamera.hasLiveStream &&
               selectedCamera.videoUrl ? (
+<<<<<<< HEAD
+                <div className="video-container">
+                  <HlsPlayer
+                    src={selectedCamera.videoUrl}
+                    autoPlay={true}
+                    controls={true}
+                    width="100%"
+                    height="auto"
+                    className="camera-video"
+                    playerRef={modalPlayerRef}
+                    onError={() => handleVideoError(selectedCamera.id)}
+                    poster={selectedCamera.image} // Show still image while video loads
+                  />
+                </div>
+              ) : viewMode === 'map' && selectedCamera.coordinates ? (
+                <div className="map-container">
+                  <MapContainer
+                    center={[
+                      selectedCamera.coordinates.lat,
+                      selectedCamera.coordinates.lng,
+                    ]}
+                    zoom={15}
+                    style={{ height: '400px', width: '100%' }}
+                    className="camera-map"
+                  >
+                    <MapUpdater
+                      center={[
+                        selectedCamera.coordinates.lat,
+                        selectedCamera.coordinates.lng,
+                      ]}
+                    />
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    <Marker
+                      position={[
+                        selectedCamera.coordinates.lat,
+                        selectedCamera.coordinates.lng,
+                      ]}
+                      icon={cameraIcon}
+=======
                   <div className="video-container">
                     <HlsPlayer
                       src={selectedCamera.videoUrl}
@@ -687,6 +838,7 @@ const LiveFeed: React.FC = () => {
                         style: { width: '100%' },
                         className: 'camera-map',
                       } as any)}
+>>>>>>> Dev
                     >
                       <MapUpdater
                         center={[
@@ -932,18 +1084,6 @@ const LiveFeed: React.FC = () => {
           </div>
         </div>
       )}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
     </div>
   );
 };

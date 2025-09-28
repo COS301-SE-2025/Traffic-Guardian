@@ -10,7 +10,6 @@ import DataAttribution from './components/DataAttribution';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LiveFeed from './pages/LiveFeed';
-import Map from './pages/Map';
 import Incidents from './pages/Incidents';
 import Account from './pages/Account';
 import SignUp from './pages/SignUp';
@@ -32,7 +31,6 @@ import {
 import { AnimatePresence } from 'framer-motion';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import dataPrefetchService from './services/DataPrefetchService';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -63,14 +61,6 @@ const AnimatedRoutes = () => {
             element={
               <PageWrapper>
                 <LiveFeed />
-              </PageWrapper>
-            }
-          />
-          <Route
-            path="/map"
-            element={
-              <PageWrapper>
-                <Map />
               </PageWrapper>
             }
           />
@@ -152,11 +142,13 @@ const App: React.FC = () => {
   const initialTheme = localStorage.getItem('theme');
   const isDarkMode = initialTheme ? initialTheme === 'dark' : true;
 
+<<<<<<< HEAD
+=======
   // Check if user is already logged in and start prefetching
   React.useEffect(() => {
     const apiKey = sessionStorage.getItem('apiKey');
     if (apiKey) {
-      console.log('🔄 App startup: Starting background data prefetching...');
+      // Starting background data prefetching
       dataPrefetchService.startPrefetching();
     }
 
@@ -166,6 +158,7 @@ const App: React.FC = () => {
     };
   }, []);
 
+>>>>>>> Dev
   return (
     <ThemeProvider initialDarkMode={isDarkMode}>
       <UserProvider>
@@ -173,13 +166,15 @@ const App: React.FC = () => {
           <SocketProvider>
             <LiveFeedProvider>
               <div className="App">
-                <AnimatedRoutes />
+                <div className="main-content">
+                  <AnimatedRoutes />
+                </div>
                 <DataAttribution />
 
-                {/* Global Toast Container for real-time notifications */}
+                {/* Global Toast Container - Professional notifications only */}
                 <ToastContainer
                   position="top-right"
-                  autoClose={8000}
+                  autoClose={4000}
                   hideProgressBar={false}
                   newestOnTop
                   closeOnClick
@@ -189,6 +184,7 @@ const App: React.FC = () => {
                   pauseOnHover
                   theme="dark"
                   style={{ zIndex: 99999 }}
+                  limit={1}
                 />
               </div>
             </LiveFeedProvider>

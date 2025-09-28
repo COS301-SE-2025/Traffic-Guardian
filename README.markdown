@@ -8,8 +8,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CICD.yml">
-    <img src="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CICD.yml/badge.svg" alt="CI/CD Pipeline">
+  <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CI.yml">
+    <img src="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CI.yml/badge.svg" alt="CI Pipeline">
+  </a>
+  <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CD.yml">
+    <img src="https://github.com/COS301-SE-2025/Traffic-Guardian/actions/workflows/CD.yml/badge.svg" alt="CD Pipeline">
   </a>
 
   <!--   <a href="https://github.com/COS301-SE-2025/Traffic-Guardian/graphs/commit-activity">

@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import './Account.css';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../consts/ThemeContext';
+<<<<<<< HEAD
+import CarLoadingAnimation from '../components/CarLoadingAnimation';
+=======
 import { useUser } from '../contexts/UserContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import dataPrefetchService from '../services/DataPrefetchService';
 import ApiService from '../services/apiService';
 import aerialTrafficImg from '../assets/aerial_traffic_img.jpg';
+>>>>>>> Dev
 
 const Account: React.FC = () => {
   const navigate = useNavigate();
@@ -37,7 +41,6 @@ const Account: React.FC = () => {
 
           if (prefsResponse.ok) {
             const prefsData = await prefsResponse.json();
-            console.log('Account fetched preferences:', prefsData);
             let preferences;
             try {
               preferences =
@@ -64,7 +67,6 @@ const Account: React.FC = () => {
               theme: validTheme,
             };
 
-            console.log('Account processed preferences:', preferences);
             localStorage.setItem('theme', preferences.theme);
             toggleDarkMode(preferences.theme === 'dark');
           } else {
@@ -76,8 +78,6 @@ const Account: React.FC = () => {
               toggleDarkMode(savedTheme === 'dark');
             }
           }
-          // Start background data prefetching after successful login
-          dataPrefetchService.startPrefetching();
           navigate('/profile');
         } catch (err: any) {
           console.error('Account: Error fetching preferences:', err);
@@ -89,7 +89,6 @@ const Account: React.FC = () => {
       };
       fetchPreferences();
     } else {
-      console.log('Account: No apiKey, showing login form');
       setIsChecking(false);
     }
   }, [navigate, toggleDarkMode]);
@@ -111,12 +110,24 @@ const Account: React.FC = () => {
         // Use the UserContext login method
         login(result.apiKey, result.user);
 
+<<<<<<< HEAD
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        if (response.ok) {
+          setTimeout(() => navigate('/profile'), 2000);
+          return;
+        }
+        throw new Error(text || 'Login failed');
+=======
         // Start background data prefetching after successful login
         dataPrefetchService.startPrefetching();
 
         // Navigate to dashboard for better user experience
         setTimeout(() => navigate('/dashboard'), 1000);
         return;
+>>>>>>> Dev
       }
 
       throw new Error('Login failed. No API key received.');
@@ -139,6 +150,9 @@ const Account: React.FC = () => {
   }, [userLoading, isAuthenticated, navigate]);
 
   if (isChecking) {
+<<<<<<< HEAD
+    return <CarLoadingAnimation />;
+=======
     return (
       <LoadingSpinner
         size="large"
@@ -146,6 +160,7 @@ const Account: React.FC = () => {
         className="fullscreen"
       />
     );
+>>>>>>> Dev
   }
 
   return (
@@ -261,6 +276,29 @@ const Account: React.FC = () => {
               Sign up
             </span>
           </div>
+<<<<<<< HEAD
+
+          <button
+            className="signup-btn"
+            type="submit"
+            disabled={loading}
+            data-testid="submit-button"
+          >
+            {loading ? <CarLoadingAnimation /> : 'Login'}
+          </button>
+        </form>
+
+        <div className="signup-text">
+          Don't have an account?{' '}
+          <span
+            className="signup-link"
+            onClick={() => navigate('/signup')}
+            data-testid="signup-link"
+          >
+            Sign up
+          </span>
+=======
+>>>>>>> Dev
         </div>
       </div>
     </div>

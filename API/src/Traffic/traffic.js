@@ -9,8 +9,8 @@ const url = 'https://api.tomtom.com/traffic/services/5/incidentDetails';
 const iconCategory = ['Unknown', 'Accident', 'Fog' , 'Dangerous Conditions', 'Rain', 'Ice', 'Jam', 'Lane closed', 'Road closed', 'Road works', 'Wind', 'Flooding', 'Broken Down Vehicle'];
 const magnitudeOfDelay = ['Unknown', 'Minor', 'Moderate', 'Major', 'Road Closure'];
 
-var regions = ['37.7749,-122.4194', '37.3382,-121.8863', '34.0522,-118.2437', '32.7157,-117.1611', '38.5816,-121.4944', '37.8044,-122.2711', '37.4419,-122.1430', '34.1478,-118.1445', '33.7701,-118.1937', '34.2001,-118.5393', '33.9425,-118.4081'];
-const regionNames = ['San Francisco', 'San Jose', 'Los Angeles', 'San Diego', 'Sacramento', 'Oakland', 'Palo Alto', 'Pasadena', 'Long Beach', 'Thousand Oaks', 'Torrance'];
+var regions = ['-26.1438,28.0406', '-26.09108017449409,28.08474153621201', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658', '-26.0936,27.9931', '-26.2259,28.1598', '-26.6667,27.9167', '-26.3333,28.1667', '-25.7487,28.2380'];
+const regionNames = ['Rosebank', 'Sandton', 'Midrand', 'Centurion', 'Pretoria', 'Soweto', 'Randburg', 'Boksburg', 'Vereeniging', 'Alberton', 'Hatfield'];
 
 const reqFields = '{incidents{geometry{type,coordinates},properties{iconCategory,magnitudeOfDelay,events{description,code,iconCategory}}}}';
 
@@ -70,7 +70,7 @@ async function getTraffic(){
             console.error('Error message:', error.response?.data);
             
             // Return empty traffic data instead of undefined to prevent crashes
-            console.log('TomTom API failed - returning empty traffic data to prevent system crash');
+            console.log('🔥 TomTom API failed - returning empty traffic data to prevent system crash');
             return regionNames.map(name => ({
                 location: name,
                 incidents: []

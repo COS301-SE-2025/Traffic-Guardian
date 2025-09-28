@@ -202,7 +202,7 @@ const GlobalAlertBadge: React.FC = () => {
   return (
     <>
       {/* Floating Alert Badge */}
-      <div className="global-alert-badge" data-testid="global-alert-badge">
+      <div className="global-alert-badge">
         {/* Alerts Button */}
         <button
           className={`global-alerts-btn ${

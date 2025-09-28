@@ -74,8 +74,19 @@ const CarLoadingAnimation = () => {
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 1000, // Ensure it overlays other content
-          fontFamily:
-            '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
+          fontFamily: [
+            '-apple-system',
+            'BlinkMacSystemFont',
+            '"Segoe UI"',
+            '"Roboto"',
+            '"Oxygen"',
+            '"Ubuntu"',
+            '"Cantarell"',
+            '"Fira Sans"',
+            '"Droid Sans"',
+            '"Helvetica Neue"',
+            'sans-serif',
+          ].join(', '),
         }}
       >
         <div style={{ textAlign: 'center' }}>

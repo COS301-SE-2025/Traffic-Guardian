@@ -5,7 +5,6 @@ const { Server } = require('socket.io');
 const axios = require('axios');
 const FormData = require('form-data');
 const traffic = require('../src/Traffic/traffic');
-const caltransTraffic = require('../src/Traffic/caltransTraffic');
 const archivesModel = require('./models/archives');
 const ILM = require('../src/IncidentLocationMapping/ilmInstance');
 const weather = require('./Weather/weather');
@@ -46,6 +45,16 @@ const HOST = process.env.HOST ;
 let activeConnections = new Set();
 let connectedUsers = new Map(); // socket.id -> user info
 
+// Global traffic data cache
+let globalTrafficData = null;
+let globalWeatherData = null;
+let lastTrafficUpdate = 0;
+let lastWeatherUpdate = 0;
+let isTrafficFetching = false;
+let isWeatherFetching = false;
+const TRAFFIC_UPDATE_INTERVAL = 30 * 60 * 1000; // 30 minutes
+const WEATHER_UPDATE_INTERVAL = 30 * 60 * 1000; // 30 minutes
+
 // Helper function to broadcast active user count
 const broadcastActiveUsers = () => {
   const activeUsersCount = activeConnections.size;
@@ -53,7 +62,106 @@ const broadcastActiveUsers = () => {
     count: activeUsersCount,
     timestamp: new Date()
   });
-  console.log(`Broadcasting active users: ${activeUsersCount}`);
+};
+
+// Global traffic data fetching function
+const fetchAndBroadcastTrafficData = async () => {
+  const now = Date.now();
+
+  // Prevent concurrent fetches
+  if (isTrafficFetching) {
+    // Traffic fetch already in progress
+    return globalTrafficData;
+  }
+
+  // Only fetch if enough time has passed or no data exists
+  if (!globalTrafficData || (now - lastTrafficUpdate) > TRAFFIC_UPDATE_INTERVAL) {
+    isTrafficFetching = true;
+    try {
+      // Fetching global traffic data
+
+      let data;
+      if (process.env.USE_CALIFORNIA_TRAFFIC === 'true') {
+        data = await circuitBreakers.californiaTraffic.call(
+          () => caltransTraffic.getEnhancedCaliforniaTraffic(),
+          () => ({ fallback: true, data: [], message: 'California traffic temporarily unavailable' })
+        );
+      } else {
+        data = await circuitBreakers.tomtomTraffic.call(
+          () => traffic.getTraffic(),
+          () => ({ fallback: true, data: [], message: 'TomTom traffic temporarily unavailable' })
+        );
+      }
+
+      globalTrafficData = data;
+      lastTrafficUpdate = now;
+
+      // Broadcast to all connected clients
+      if (activeConnections.size > 0) {
+        const trafficData = globalTrafficData.data || globalTrafficData;
+        const isFallback = globalTrafficData.fallback || false;
+
+        io.emit('trafficUpdate', { data: trafficData, isFallback, timestamp: new Date() });
+
+        if (!isFallback && Array.isArray(trafficData)) {
+          // Update regions traffic
+          ILM.updateTraffic(trafficData);
+
+          // Broadcast analytics
+          io.emit('criticalIncidents', traffic.criticalIncidents(trafficData));
+          io.emit('incidentCategory', traffic.incidentCategory(trafficData));
+          io.emit('incidentLocations', traffic.incidentLocations(trafficData));
+        } else {
+          // Send fallback data
+          io.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0, fallback: true });
+          io.emit('incidentCategory', { categories: [], percentages: [], fallback: true });
+          io.emit('incidentLocations', { locations: [], fallback: true });
+        }
+      }
+
+    } catch (error) {
+      console.error('Global traffic fetch error:', error.message);
+      monitor.recordError(error, { context: 'global_traffic_fetch' });
+    } finally {
+      isTrafficFetching = false;
+    }
+  }
+
+  return globalTrafficData;
+};
+
+// Global weather data fetching function
+const fetchAndBroadcastWeatherData = async () => {
+  const now = Date.now();
+
+  // Prevent concurrent fetches
+  if (isWeatherFetching) {
+    // Weather fetch already in progress
+    return globalWeatherData;
+  }
+
+  // Only fetch if enough time has passed or no data exists
+  if (!globalWeatherData || (now - lastWeatherUpdate) > WEATHER_UPDATE_INTERVAL) {
+    isWeatherFetching = true;
+    try {
+      // Fetching global weather data
+      const weatherData = await weather.getWeather();
+      globalWeatherData = weatherData;
+      lastWeatherUpdate = now;
+
+      // Broadcast to all connected clients
+      if (activeConnections.size > 0) {
+        io.emit('weatherUpdate', globalWeatherData);
+      }
+
+    } catch (error) {
+      console.error('Global weather fetch error:', error.message);
+    } finally {
+      isWeatherFetching = false;
+    }
+  }
+
+  return globalWeatherData;
 };
 
 var welcomeMsg;
@@ -73,6 +181,7 @@ io.on('connection',(socket)=>{
   connectionManager.addConnection(socket.id, null, userInfo);
 
   ILM.addUser(socket.id, {});
+  console.log(socket.id + " connected");
 
   welcomeMsg = `Welcome this your ID ${socket.id} cherish it`;
   socket.emit('welcome', welcomeMsg);
@@ -83,125 +192,50 @@ io.on('connection',(socket)=>{
   // Broadcast updated user count
   broadcastActiveUsers();
 
-  console.log(`New user connected: ${socket.id} (Total: ${activeConnections.size})`);
 
-  // Optimized traffic data fetching with circuit breaker
-  const getTrafficData = async () => {
+  // Send initial data from global cache or fetch if needed
+  const sendInitialData = async () => {
     try {
-      if (process.env.USE_CALIFORNIA_TRAFFIC === 'true') {
-        return await circuitBreakers.californiaTraffic.call(
-          () => caltransTraffic.getEnhancedCaliforniaTraffic(),
-          () => ({ fallback: true, data: [], message: 'California traffic temporarily unavailable' })
-        );
-      } else {
-        return await circuitBreakers.tomtomTraffic.call(
-          () => traffic.getTraffic(),
-          () => ({ fallback: true, data: [], message: 'TomTom traffic temporarily unavailable' })
-        );
-      }
-    } catch (error) {
-      console.error('Traffic API error:', error.message);
-      return { fallback: true, data: [], message: 'Traffic data temporarily unavailable' };
-    }
-  };
+      // Get or fetch traffic data
+      const trafficData = await fetchAndBroadcastTrafficData();
+      const data = trafficData?.data || trafficData || [];
+      const isFallback = trafficData?.fallback || false;
 
-  getTrafficData().then((response)=>{
-    const data = response.data || response;
-    const isFallback = response.fallback || false;
-
-    if (data && Array.isArray(data)) {
+      // Send initial traffic data to this socket
       socket.emit('trafficUpdate', { data, isFallback, timestamp: new Date() });
 
-      if (!isFallback) {
-        //update regions Traffic
-        ILM.updateTraffic(data);
-
-        //critical incidents
-        const res = traffic.criticalIncidents(data);
-        socket.emit('criticalIncidents', res);
-
-        //incident Category
-        const res_incidentCategory = traffic.incidentCategory(data);
-        socket.emit('incidentCategory', res_incidentCategory);
-
-        //incident Locations
-        const res_incidentLocations =  traffic.incidentLocations(data);
-        socket.emit('incidentLocations', res_incidentLocations);
+      if (!isFallback && Array.isArray(data) && data.length > 0) {
+        // Send analytics to this socket
+        socket.emit('criticalIncidents', traffic.criticalIncidents(data));
+        socket.emit('incidentCategory', traffic.incidentCategory(data));
+        socket.emit('incidentLocations', traffic.incidentLocations(data));
       } else {
         // Send fallback data
         socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0, fallback: true });
         socket.emit('incidentCategory', { categories: [], percentages: [], fallback: true });
         socket.emit('incidentLocations', { locations: [], fallback: true });
       }
-    } else {
-      console.log('Traffic API unavailable on connection - using fallback data');
-      socket.emit('trafficUpdate', { data: [], isFallback: true, timestamp: new Date() });
+
+      // Get or fetch weather data
+      const weatherData = await fetchAndBroadcastWeatherData();
+      if (weatherData) {
+        socket.emit('weatherUpdate', weatherData);
+      }
+
+    } catch (error) {
+      console.error('Error sending initial data to socket:', error.message);
+      monitor.recordError(error, { context: 'initial_data_fetch', socketId: socket.id });
+
+      // Send fallback data on error
+      socket.emit('trafficUpdate', { data: [], isFallback: true, error: true, timestamp: new Date() });
       socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0, fallback: true });
       socket.emit('incidentCategory', { categories: [], percentages: [], fallback: true });
       socket.emit('incidentLocations', { locations: [], fallback: true });
     }
-  }).catch((error) => {
-    console.error('Traffic API error on connection:', error.message);
-    monitor.recordError(error, { context: 'initial_traffic_fetch', socketId: socket.id });
-    // Send fallback data
-    socket.emit('trafficUpdate', { data: [], isFallback: true, error: true, timestamp: new Date() });
-    socket.emit('criticalIncidents', { Data: 'Amount of critical Incidents', Amount: 0, fallback: true });
-    socket.emit('incidentCategory', { categories: [], percentages: [], fallback: true });
-    socket.emit('incidentLocations', { locations: [], fallback: true });
-  })
-    
-    // Weather data on connection
-    weather.getWeather().then((weatherData) => {
-      socket.emit('weatherUpdate', weatherData);
-    }).catch(err => {
-      console.error('Error fetching initial weather data:', err);
-    });
-    
-    setInterval(async()=>{
-      try {
-        let data;
-        
-        if (process.env.USE_CALIFORNIA_TRAFFIC === 'true') {
-          console.log('🌴 Using enhanced California traffic data...');
-          data = await caltransTraffic.getEnhancedCaliforniaTraffic();
-        } else {
-          console.log('🗺️  Using TomTom traffic data...');
-          data = await traffic.getTraffic();
-        }
-        
-        if (data && Array.isArray(data)) {
-          socket.emit('trafficUpdate', data);
-          
-          // Update regions traffic (from Dev branch)
-          ILM.updateTraffic(data);
+  };
 
-          //critical incidents
-          const res = traffic.criticalIncidents(data);
-          socket.emit('criticalIncidents', res);
-
-          //incident Category
-          const res_incidentCategory = traffic.incidentCategory(data);
-          socket.emit('incidentCategory', res_incidentCategory);
-
-          //incident Locations
-          const res_incidentLocations =  traffic.incidentLocations(data);
-          socket.emit('incidentLocations', res_incidentLocations);
-        } else {
-          console.log('Traffic API unavailable in interval update - skipping');
-        }
-      } catch (error) {
-        console.error('Traffic API error in interval update:', error.message);
-        // Continue running - don't let API failures break the interval
-      }
-      
-      // Update weather data periodically
-      try {
-        const weatherData = await weather.getWeather();
-        socket.emit('weatherUpdate', weatherData);
-      } catch (weatherError) {
-        console.error('Error fetching periodic weather data:', weatherError);
-      }
-    }, 30*60*1000); //30 min interval
+  // Send initial data to new connection
+  sendInitialData();
     
     //update users location (from Dev branch)
     socket.on('new-location', async (newLocation)=>{
@@ -349,11 +383,8 @@ io.on('connection',(socket)=>{
       }
     }, 30 * 60 * 1000); // 30 minutes
 
-    // Handle socket disconnection - Add user tracking cleanup
-    socket.on('disconnect', (reason) => {
-      // Remove from tracking
-      activeConnections.delete(socket.id);
-      connectedUsers.delete(socket.id);
+    // Clean up intervals and remove user on disconnect
+    socket.on('disconnect', () => {
       
       // Clean up archive intervals
       clearInterval(archiveStatsInterval);
@@ -365,7 +396,6 @@ io.on('connection',(socket)=>{
       // Broadcast updated user count
       broadcastActiveUsers();
       
-      console.log(`User disconnected: ${socket.id} (Reason: ${reason}) (Total: ${activeConnections.size})`);
     });
     
     // Handle request for current stats
@@ -387,11 +417,20 @@ setInterval(() => {
   }
 }, 30000);
 
+// Global traffic and weather data update interval (every 30 minutes)
+setInterval(async () => {
+  if (activeConnections.size > 0) {
+    // Running scheduled global data update
+    await fetchAndBroadcastTrafficData();
+    await fetchAndBroadcastWeatherData();
+    // Global data update completed
+  }
+}, TRAFFIC_UPDATE_INTERVAL);
+
 // ==================== ARCHIVE EVENT EMITTERS ====================
 
 // Function to emit archive creation events (to be called when new archives are created)
 const emitArchiveCreated = (archiveData) => {
-  console.log('Emitting archiveCreated event:', archiveData);
   io.emit('archiveCreated', {
     archive: archiveData,
     timestamp: new Date(),
@@ -401,7 +440,6 @@ const emitArchiveCreated = (archiveData) => {
 
 // Function to emit archive updates (to be called when archives are modified)
 const emitArchiveUpdated = (archiveData) => {
-  console.log('Emitting archiveUpdated event:', archiveData);
   io.emit('archiveUpdated', {
     archive: archiveData,
     timestamp: new Date(),
@@ -422,7 +460,6 @@ const emitArchiveAnalyticsRefresh = async () => {
       type: 'refresh'
     });
     
-    console.log('Archive analytics refresh emitted to all clients');
   } catch (error) {
     console.error('Error emitting archive analytics refresh:', error);
   }
@@ -439,7 +476,6 @@ app.set('emitArchiveAnalyticsRefresh', emitArchiveAnalyticsRefresh);
 const originalEmitNewAlert = (incidentData) => {
   // Emit the original incident alert
   io.emit('newAlert', incidentData);
-  console.log('Emitting newAlert:', incidentData);
   
   // Potentially trigger archive creation (simulating automatic archiving)
   setTimeout(async () => {
@@ -465,15 +501,14 @@ app.set('emitNewAlert', originalEmitNewAlert);
 db.query('SELECT NOW()')
   .then(() => {
     console.log('Database connection established');
-    
+
     // Start the server
     server.listen(PORT, () => {
-      console.log(`Database connection established`);
       console.log(`Server running on port ${PORT}`);
       console.log(`API available at: http://${HOST}:${PORT}`);
       console.log(`Socket.IO server running with archive analytics support`);
       console.log(`API documentation available at: https://documenter.getpostman.com/view/34423164/2sB2qak34y`);
-      
+
       // Emit initial archive analytics to any early connections
       setTimeout(() => {
         emitArchiveAnalyticsRefresh();

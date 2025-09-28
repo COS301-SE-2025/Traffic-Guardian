@@ -2,13 +2,18 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import './NavBar.css';
+<<<<<<< HEAD
 import logo from '../assets/TrafficGuardianLogo1_LightFinal.png';
+=======
+import lightLogo from '../assets/TrafficGuardianLogo1_LightFinal.png';
+import darkLogo from '../assets/TrafficGuardianLogo1_DarkFinal.png';
+import { useTheme } from '../consts/ThemeContext';
 import dataPrefetchService from '../services/DataPrefetchService';
+>>>>>>> Dev
 
 const navItems = [
   { label: 'Dashboard', path: '/dashboard' },
   { label: 'Live Feed', path: '/live-feed' },
-  { label: 'Map', path: '/map' },
   { label: 'Incidents', path: '/incidents' },
   { label: 'Archives', path: '/archives' },
   { label: 'Analytics', path: '/analytics' },
@@ -18,7 +23,12 @@ const navItems = [
 
 const Navbar = () => {
   const location = useLocation();
+  const { isDarkMode } = useTheme();
+  const currentLogo = isDarkMode ? lightLogo : darkLogo;
   return (
+<<<<<<< HEAD
+    <nav className="navbar">
+=======
     <nav className="navbar" data-testid="navbar">
       <div
         data-testid="mobile-nav"
@@ -34,15 +44,19 @@ const Navbar = () => {
       >
         Menu
       </button>
+>>>>>>> Dev
       <div className="navbar-content">
         <ul className="tg-nav-links">
-          {navItems.slice(0, 4).map(item => (
+          {navItems.slice(0, 3).map(item => (
             <li
               key={item.label}
               className={`nav-item ${
                 location.pathname === item.path ? 'active' : ''
               }`}
             >
+<<<<<<< HEAD
+              <Link to={item.path}>{item.label}</Link>
+=======
               <Link
                 to={item.path}
                 data-testid={`nav-${item.label
@@ -65,20 +79,24 @@ const Navbar = () => {
               >
                 {item.label}
               </Link>
+>>>>>>> Dev
             </li>
           ))}
 
           <li className="logo-container">
-            <img src={logo} alt="Logo" className="navbar-logo" />
+            <img src={currentLogo} alt="Logo" className="navbar-logo" />
           </li>
 
-          {navItems.slice(4, 7).map(item => (
+          {navItems.slice(3, 6).map(item => (
             <li
               key={item.label}
               className={`nav-item ${
                 location.pathname === item.path ? 'active' : ''
               }`}
             >
+<<<<<<< HEAD
+              <Link to={item.path}>{item.label}</Link>
+=======
               <Link
                 to={item.path}
                 data-testid={`nav-${item.label
@@ -101,6 +119,7 @@ const Navbar = () => {
               >
                 {item.label}
               </Link>
+>>>>>>> Dev
             </li>
           ))}
 

@@ -3,7 +3,7 @@
   padding: 1.5rem;
   background: var(--bg-secondary);
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgb(0 0 0 / 10%);
   margin-bottom: 1.5rem;
 }
 
@@ -25,7 +25,7 @@
 }
 
 .lane-closure-heatmap.light {
-  --bg-primary: #ffffff;
+  --bg-primary: #fff;
   --bg-secondary: #f9fafb;
   --text-primary: #111827;
   --text-secondary: #6b7280;
@@ -64,7 +64,7 @@
 .control-group select:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
 }
 
 .heatmap-container {
@@ -132,7 +132,7 @@
 .heatmap-cell:hover {
   transform: scale(1.1);
   z-index: 10;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
 }
 
 .heatmap-legend {
@@ -179,7 +179,7 @@
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
   z-index: 1000;
   pointer-events: none;
   transform: translate(-50%, -100%);
@@ -215,6 +215,7 @@
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
+
   100% { transform: rotate(360deg); }
 }
 

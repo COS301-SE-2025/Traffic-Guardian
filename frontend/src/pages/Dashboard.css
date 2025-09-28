@@ -219,6 +219,13 @@ body {
   padding-top: var(--page-content-offset);
 }
 
+/* Light mode dashboard */
+:root.light-mode .dashboard {
+  background-color: #f8f9fa;
+  color: #333;
+  padding-top: var(--page-content-offset);
+}
+
 /* Responsive adjustments now handled by CSS variables */
 @media (max-width: 768px) {
   .dashboard {
@@ -763,8 +770,9 @@ body {
 
 .incidents-list {
   padding: 1.5rem;
-  max-height: 400px;
+  max-height: 600px;
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .incident-item {
@@ -1776,8 +1784,11 @@ body {
   font-size: 1.1em;
 }
 
+<<<<<<< HEAD
+=======
 /* PEMS Status Indicators - minimal styling to maintain original look */
 
+>>>>>>> Dev
 /* Responsive adjustments for real-time events */
 @media (max-width: 768px) {
   .realtime-header {

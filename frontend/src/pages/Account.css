@@ -13,6 +13,11 @@
   z-index: 1000;
 }
 
+/* Light mode account page */
+:root.light-mode .account-page {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
 .auth-container {
   display: flex;
   max-width: 1100px;
@@ -24,6 +29,12 @@
   border-radius: 20px;
   box-shadow: 0 20px 60px rgb(0 0 0 / 40%);
   overflow: hidden;
+}
+
+/* Light mode auth container */
+:root.light-mode .auth-container {
+  background-color: #fff;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 15%);
 }
 
 .image-container {

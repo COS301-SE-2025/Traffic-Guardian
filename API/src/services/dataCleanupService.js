@@ -16,7 +16,7 @@ class DataCleanupService {
   // Clean up old camera status history
   async cleanupStatusHistory() {
     try {
-      console.log('Starting camera status history cleanup...');
+      // Starting operation
       
       const cutoffDate = new Date(Date.now() - this.cleanupIntervals.statusHistory);
       
@@ -36,7 +36,7 @@ class DataCleanupService {
   // Clean up old archived incidents
   async cleanupArchivedIncidents() {
     try {
-      console.log('Starting archived incidents cleanup...');
+      // Starting operation
       
       const cutoffDate = new Date(Date.now() - this.cleanupIntervals.archivedIncidents);
       
@@ -57,7 +57,7 @@ class DataCleanupService {
   // Clean up old camera analytics
   async cleanupCameraAnalytics() {
     try {
-      console.log('Starting camera analytics cleanup...');
+      // Starting operation
       
       const cutoffDate = new Date(Date.now() - this.cleanupIntervals.cameraAnalytics);
       
@@ -77,7 +77,7 @@ class DataCleanupService {
   // Remove duplicate cameras (keep the most recent)
   async cleanupDuplicateCameras() {
     try {
-      console.log('Starting duplicate camera cleanup...');
+      // Starting operation
       
       const duplicateQuery = `
         WITH RankedCameras AS (
@@ -113,7 +113,7 @@ class DataCleanupService {
   // Clean up orphaned status history (cameras that no longer exist)
   async cleanupOrphanedStatusHistory() {
     try {
-      console.log('Starting orphaned status history cleanup...');
+      // Starting operation
       
       const result = await db.query(`
         DELETE FROM public."CameraStatusHistory" 
@@ -133,7 +133,7 @@ class DataCleanupService {
   // Vacuum and analyze tables for better performance
   async optimizeTables() {
     try {
-      console.log('Starting table optimization...');
+      // Starting operation
       
       const tables = [
         'public."Camera"',
@@ -235,7 +235,7 @@ class DataCleanupService {
   // Run all cleanup operations
   async runFullCleanup() {
     try {
-      console.log('Starting full database cleanup...');
+      // Starting operation
       const startTime = Date.now();
       
       const results = {
