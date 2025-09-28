@@ -170,14 +170,6 @@ const ArchiveSummary: React.FC<ArchiveSummaryProps> = ({ className = '' }) => {
               <p><strong>Access Historical Data</strong></p>
               <p>Sign in to view detailed archive summaries, incident trends, and comprehensive historical analytics.</p>
             </div>
-            <div className="signin-prompt-actions">
-              <a href="/account" className="signin-btn primary">
-                Sign In
-              </a>
-              <a href="/signup" className="signin-btn secondary">
-                Create Account
-              </a>
-            </div>
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ import 'leaflet/dist/leaflet.css';
 import './LiveFeed.css';
 import { useLiveFeed, CameraFeed } from '../contexts/LiveFeedContext';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -251,7 +251,9 @@ const LiveFeed: React.FC = () => {
     async (endpoint: string, options: RequestInit = {}) => {
       const apiKey = sessionStorage.getItem('apiKey');
       if (!apiKey) {
-        throw new Error('No API key found. Please log in.');
+        toast.error('Authentication required. Please log in.');
+        navigate('/account');
+        throw new Error('Authentication required');
       }
 
       const url = `${process.env.REACT_APP_API_URL}${endpoint}`;
@@ -265,7 +267,9 @@ const LiveFeed: React.FC = () => {
         const response = await fetch(url, { ...options, headers });
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error('Unauthorized: Invalid or missing API key');
+            toast.error('Authentication failed. Please log in again.');
+            navigate('/account');
+            throw new Error('Authentication failed');
           }
           throw new Error(
             `API request failed: ${response.status} ${response.statusText}`,
@@ -277,7 +281,9 @@ const LiveFeed: React.FC = () => {
           error.message.includes('Unauthorized') ||
           error.message.includes('API key')
         ) {
+          toast.error('Authentication failed. Please log in again.');
           navigate('/account');
+          throw new Error('Authentication failed');
         }
         throw error;
       }
@@ -288,12 +294,12 @@ const LiveFeed: React.FC = () => {
   // Handle incident reporting
   const handleReportIncident = useCallback(async () => {
     if (!selectedCamera || !userRole || userRole !== 'admin') {
-      toast.error('Only administrators can report incidents');
+      // Access denied - handled by UI state
       return;
     }
 
     if (!incidentForm.description.trim()) {
-      toast.error('Please provide a description of the incident');
+      // Form validation handled by UI state
       return;
     }
 
@@ -311,11 +317,7 @@ const LiveFeed: React.FC = () => {
         const cameraResponse = await apiRequest(
           `/api/cameras/external/${encodeURIComponent(selectedCamera.id)}`,
         );
-        console.log('Full camera response:', cameraResponse);
         databaseCameraID = cameraResponse.Camera_ID;
-        console.log(
-          `Mapped external ID ${selectedCamera.id} to database Camera_ID ${databaseCameraID}`,
-        );
       } catch (cameraError) {
         console.warn(
           'Could not find camera in database:',
@@ -340,7 +342,6 @@ const LiveFeed: React.FC = () => {
           `Image: ${selectedCamera.image}`,
       };
 
-      console.log('Incident API payload:', apiPayload);
 
       await apiRequest('/api/incidents', {
         method: 'POST',
@@ -366,7 +367,7 @@ const LiveFeed: React.FC = () => {
   // Handle showing incident form
   const handleShowIncidentForm = useCallback(() => {
     if (!userRole || userRole !== 'admin') {
-      toast.error('Only administrators can report incidents');
+      // Access denied - handled by UI state
       return;
     }
     setShowIncidentForm(true);
@@ -932,18 +933,6 @@ const LiveFeed: React.FC = () => {
           </div>
         </div>
       )}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
     </div>
   );
 };

@@ -23,12 +23,12 @@ jobs:
       - name: Debug workflow trigger (for troubleshooting)
         run: |
           echo "=== DEBUGGING WORKFLOW TRIGGER ==="
-          echo "Event name: ${{ github.event_name }}"
-          echo "Workflow run conclusion: ${{ github.event.workflow_run.conclusion }}"
-          echo "Workflow run head branch: ${{ github.event.workflow_run.head_branch }}"
-          echo "Triggering workflow name: ${{ github.event.workflow_run.name }}"
-          echo "Triggering workflow ID: ${{ github.event.workflow_run.id }}"
-          echo "Repository: ${{ github.repository }}"
+          echo "Event name: you actually trying to get my CD secrets?"
+          echo "Workflow run conclusion: conclusion try a little harder XD"
+          echo "Workflow run head branch: head or tails?"
+          echo "Triggering workflow name: Im not a pet you can't name me"
+          echo "Triggering workflow ID: you actually reading this is a trigger lol"
+          echo "Repository: ${{ github.repository }} The Best REPOSITORY!!!1"
           echo "================================="
 
       - name: Checkout repository

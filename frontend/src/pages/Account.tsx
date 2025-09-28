@@ -37,7 +37,6 @@ const Account: React.FC = () => {
 
           if (prefsResponse.ok) {
             const prefsData = await prefsResponse.json();
-            console.log('Account fetched preferences:', prefsData);
             let preferences;
             try {
               preferences =
@@ -64,7 +63,6 @@ const Account: React.FC = () => {
               theme: validTheme,
             };
 
-            console.log('Account processed preferences:', preferences);
             localStorage.setItem('theme', preferences.theme);
             toggleDarkMode(preferences.theme === 'dark');
           } else {
@@ -89,7 +87,6 @@ const Account: React.FC = () => {
       };
       fetchPreferences();
     } else {
-      console.log('Account: No apiKey, showing login form');
       setIsChecking(false);
     }
   }, [navigate, toggleDarkMode]);
@@ -210,7 +207,7 @@ const Account: React.FC = () => {
               </span>
               <div className="password-input-container">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
                   value={loginData.password}
@@ -225,7 +222,7 @@ const Account: React.FC = () => {
                   className="password-toggle-btn"
                   onClick={() => setShowPassword(!showPassword)}
                   data-testid="password-toggle"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">

@@ -9,7 +9,6 @@ const traffic = require('../Traffic/traffic'); // Keep for utility functions
 // Get all traffic incidents (main endpoint for analytics) - requires authentication
 router.get('/incidents', authMiddleware.authenticate, async (req, res) => {
   try {
-    console.log('Fetching real California traffic data...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     if (!trafficData || !Array.isArray(trafficData)) {
@@ -17,7 +16,6 @@ router.get('/incidents', authMiddleware.authenticate, async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch traffic data' });
     }
 
-    console.log(`Successfully fetched traffic data for ${trafficData.length} locations`);
     res.status(200).json(trafficData);
   } catch (error) {
     console.error('Traffic incidents error:', error);
@@ -25,9 +23,8 @@ router.get('/incidents', authMiddleware.authenticate, async (req, res) => {
   }
 });
 
-router.get('/criticalIncidents', authMiddleware.authenticate, async (req, res) => {
+router.get('/criticalIncidents', authMiddleware.authenticate, async (_, res) => {
   try {
-    console.log('Fetching real California traffic data for critical incidents...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     if (!trafficData || !Array.isArray(trafficData)) {
@@ -36,7 +33,6 @@ router.get('/criticalIncidents', authMiddleware.authenticate, async (req, res) =
     }
 
     const resp = traffic.criticalIncidents(trafficData);
-    console.log(`Successfully fetched criticalIncidents data for ${trafficData.length} locations`);
     res.status(200).json(resp);
   } catch (error) {
     console.error('Traffic incidents error:', error);
@@ -44,9 +40,8 @@ router.get('/criticalIncidents', authMiddleware.authenticate, async (req, res) =
   }
 });
 
-router.get('/incidentCategory', authMiddleware.authenticate, async (req, res) => {
+router.get('/incidentCategory', authMiddleware.authenticate, async (_, res) => {
   try {
-    console.log('Fetching real California traffic data for incident categories...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     if (!trafficData || !Array.isArray(trafficData)) {
@@ -55,7 +50,6 @@ router.get('/incidentCategory', authMiddleware.authenticate, async (req, res) =>
     }
 
     const resp = traffic.incidentCategory(trafficData);
-    console.log(`Successfully fetched incidentCategory data for ${trafficData.length} locations`);
     res.status(200).json(resp);
   } catch (error) {
     console.error('Traffic incidents error:', error);
@@ -63,9 +57,8 @@ router.get('/incidentCategory', authMiddleware.authenticate, async (req, res) =>
   }
 });
 
-router.get('/incidentLocations', authMiddleware.authenticate, async (req, res) => {
+router.get('/incidentLocations', authMiddleware.authenticate, async (_, res) => {
   try {
-    console.log('Fetching real California traffic data for incident locations...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     if (!trafficData || !Array.isArray(trafficData)) {
@@ -74,7 +67,6 @@ router.get('/incidentLocations', authMiddleware.authenticate, async (req, res) =
     }
 
     const resp = traffic.incidentLocations(trafficData);
-    console.log(`Successfully fetched incidentLocations data for ${trafficData.length} locations`);
     res.status(200).json(resp);
   } catch (error) {
     console.error('Traffic incidents error:', error);
@@ -83,9 +75,8 @@ router.get('/incidentLocations', authMiddleware.authenticate, async (req, res) =
 });
 
 // Real-time 511 Bay Area incidents endpoint (public access)
-router.get('/real-time-incidents', async (req, res) => {
+router.get('/real-time-incidents', async (_, res) => {
   try {
-    console.log('Fetching real-time 511 Bay Area incidents...');
     const incidents511 = await get511TrafficEvents();
 
     const response = {
@@ -95,7 +86,6 @@ router.get('/real-time-incidents', async (req, res) => {
       count: incidents511.length
     };
 
-    console.log(`Successfully fetched ${incidents511.length} 511 incidents`);
     res.status(200).json(response);
   } catch (error) {
     console.error('Real-time incidents error:', error);
@@ -104,9 +94,8 @@ router.get('/real-time-incidents', async (req, res) => {
 });
 
 // Orange County specific traffic data (public access)
-router.get('/orange-county', async (req, res) => {
+router.get('/orange-county', async (_, res) => {
   try {
-    console.log('Fetching Orange County traffic data...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     // Filter for Orange County and nearby areas (LA, San Diego vicinity)
@@ -121,7 +110,6 @@ router.get('/orange-county', async (req, res) => {
       locations: orangeCountyData.length
     };
 
-    console.log(`Successfully fetched Orange County traffic data for ${orangeCountyData.length} locations`);
     res.status(200).json(response);
   } catch (error) {
     console.error('Orange County traffic error:', error);
@@ -129,10 +117,108 @@ router.get('/orange-county', async (req, res) => {
   }
 });
 
-// Public traffic data endpoint (limited data for unauthenticated users)
-router.get('/public', async (req, res) => {
+// Location-based incident retrieval using 511 Bay Area API
+router.get('/incidents/nearby', async (req, res) => {
   try {
-    console.log('Fetching public traffic data...');
+    const { lat, lng, radius = 25 } = req.query; // radius in miles, default 25 miles
+
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+    const searchRadius = parseFloat(radius);
+
+    if (isNaN(latitude) || isNaN(longitude) || isNaN(searchRadius)) {
+      return res.status(400).json({ error: 'Invalid coordinates or radius provided' });
+    }
+
+
+    // Get real-time 511 traffic events
+    const traffic511Events = await get511TrafficEvents();
+
+    // Helper function to calculate distance between two points in miles
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 3959; // Earth's radius in miles
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    // Filter 511 incidents within the specified radius
+    const nearbyIncidents = traffic511Events
+      .filter(incident => {
+        if (!incident.geometry || !incident.geometry.coordinates) return false;
+
+        const coords = incident.geometry.coordinates;
+        let incidentLat, incidentLng;
+
+        // Handle different coordinate formats
+        if (Array.isArray(coords) && coords.length >= 2) {
+          // Standard [lng, lat] format
+          incidentLng = coords[0];
+          incidentLat = coords[1];
+        } else {
+          return false;
+        }
+
+        const distance = calculateDistance(latitude, longitude, incidentLat, incidentLng);
+        return distance <= searchRadius;
+      })
+      .map(incident => {
+        const coords = incident.geometry.coordinates;
+        const incidentLat = coords[1];
+        const incidentLng = coords[0];
+        const distance = calculateDistance(latitude, longitude, incidentLat, incidentLng);
+
+        return {
+          id: incident.properties?.id || 'unknown',
+          title: incident.properties?.headline || incident.properties?.event_type || 'Traffic Incident',
+          description: incident.properties?.description || 'No details available',
+          severity: incident.properties?.severity || 'Unknown',
+          eventType: incident.properties?.event_type || incident.properties?.iconCategory || 'Traffic',
+          status: incident.properties?.status || 'Active',
+          location: incident.properties?.location || 'Location not specified',
+          coordinates: {
+            latitude: incidentLat,
+            longitude: incidentLng
+          },
+          distance: Math.round(distance * 10) / 10, // Round to 1 decimal
+          startTime: incident.properties?.created || incident.properties?.start_time,
+          lastUpdated: incident.properties?.updated || incident.properties?.last_updated,
+          source: '511 Bay Area'
+        };
+      })
+      .sort((a, b) => a.distance - b.distance); // Sort by distance (closest first)
+
+    const response = {
+      incidents: nearbyIncidents,
+      searchLocation: {
+        latitude,
+        longitude,
+        region: 'California'
+      },
+      searchRadius: searchRadius,
+      count: nearbyIncidents.length,
+      timestamp: new Date().toISOString(),
+      source: '511 Bay Area Traffic API'
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Nearby 511 incidents error:', error);
+    res.status(500).json({ error: 'Failed to fetch nearby incidents', details: error.message });
+  }
+});
+
+// Public traffic data endpoint (limited data for unauthenticated users)
+router.get('/public', async (_, res) => {
+  try {
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     // Provide basic traffic data for major California cities
@@ -143,7 +229,6 @@ router.get('/public', async (req, res) => {
       lastUpdate: new Date().toISOString()
     }));
 
-    console.log(`Successfully provided public traffic summary for ${publicData.length} locations`);
     res.status(200).json({
       summary: publicData,
       message: 'Sign in for detailed incident information',

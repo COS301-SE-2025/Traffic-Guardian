@@ -868,7 +868,7 @@ const Map: React.FC = () => {
       const heatmapPoint = currentHeatmapData.find(point => {
         const distance = Math.sqrt(
           Math.pow(point.lat - camera.coordinates!.lat, 2) +
-          Math.pow(point.lng - camera.coordinates!.lng, 2)
+          Math.pow(point.lng - camera.coordinates!.lng, 2),
         );
         // Match points within ~100m (0.001 degrees roughly)
         return distance < 0.001;
@@ -1098,7 +1098,7 @@ const Map: React.FC = () => {
             options={{
               radius: 100,
               blur: 20,
-              intensityMultiplier: 1.0
+              intensityMultiplier: 1.0,
             }}
           />
 

@@ -9,6 +9,9 @@ const cacheService = require('./services/cacheService');
 const dataCleanupService = require('./services/dataCleanupService');
 const backgroundJobService = require('./services/backgroundJobService');
 const rateLimiters = require('./middleware/rateLimiter');
+const { requestPrioritizer, memoryOptimizer } = require('./middleware/optimization');
+const { monitor, errorTrackingMiddleware, createHealthEndpoint } = require('./services/performanceMonitor');
+const { circuitBreakerMiddleware } = require('./services/circuitBreaker');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -29,8 +32,11 @@ const app = express();
 // Middleware
 app.use(helmet()); // Security headers
 
-// Apply general rate limiting
-app.use('/api', rateLimiters.general);
+// Performance monitoring middleware
+app.use(monitor.middleware());
+app.use(requestPrioritizer);
+app.use(memoryOptimizer);
+app.use(circuitBreakerMiddleware);
 
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
@@ -45,39 +51,33 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(cookieParser()); // Parse cookies
 app.use(morgan('dev')); // HTTP request logger
 
-// Define routes
+// Enhanced health check endpoint with comprehensive metrics (no general rate limiting)
+app.get('/api/health', rateLimiters.health, createHealthEndpoint());
+
+// Apply general rate limiting to remaining API routes
+app.use('/api', rateLimiters.general);
+
+// Define routes with optimized rate limiting
 app.use('/api/auth', rateLimiters.auth, authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/incidents', incidentRoutes);
+app.use('/api/incidents', rateLimiters.incidents, incidentRoutes);
 app.use('/api/alerts', alertRoutes);
-app.use('/api/traffic', trafficRoutes); // NEW LINE ADDED
-app.use('/api/pems', pemsRoutes); // PEMS traffic data endpoints
+app.use('/api/traffic', trafficRoutes);
+app.use('/api/pems', pemsRoutes);
 app.use('/api/archives', archivesRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/cameras', cameraRoutes);
-app.use('/api/system', systemRoutes);
+app.use('/api/cameras', rateLimiters.camera, cameraRoutes);
+app.use('/api/system', rateLimiters.internal, systemRoutes);
 app.use('/api/uploads', uploadRoutes);
-
-// Health check endpoint (includes optimization status)
-app.get('/api/health', (req, res) => {
-  const healthData = {
-    status: 'OK',
-    timestamp: new Date(),
-    optimization: {
-      cacheService: 'active',
-      dataCleanup: dataCleanupService.getStatus(),
-      deduplicationService: 'active'
-    }
-  };
-  res.status(200).json(healthData);
-});
+app.use('/api/download', uploadRoutes);
 
 // 404 handler
 app.use((req, res, next) => {
   res.status(404).json({ error: 'Not Found' });
 });
 
-// Error handler
+// Error handler with performance tracking
+app.use(errorTrackingMiddleware);
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal Server Error' });

@@ -88,6 +88,7 @@ interface WeatherData {
 interface SocketContextType {
   socket: SocketType | null;
   isConnected: boolean;
+  connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'reconnecting' | 'failed';
   realtimeAlerts: RealTimeAlert[];
   unreadAlertCount: number;
   acknowledgeAlert: (alertId: string) => void;
@@ -119,6 +120,7 @@ interface SocketProviderProps {
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<SocketType | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting' | 'failed'>('disconnected');
   const [realtimeAlerts, setRealtimeAlerts] = useState<RealTimeAlert[]>([]);
   const [unreadAlertCount, setUnreadAlertCount] = useState(0);
   const socketRef = useRef<SocketType | null>(null);
@@ -207,10 +209,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     if ('Notification' in window && Notification.permission === 'default') {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        toast.success('Browser notifications enabled', {
-          position: 'bottom-right',
-          autoClose: 3000,
-        });
+        // Notification permission granted - no toast needed for professional UI
       }
     }
   };
@@ -222,216 +221,261 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     // Request notification permission when component mounts
     requestNotificationPermission();
 
-    // Create socket connection
-    const API_BASE_URL = process.env.REACT_APP_API_URL!;
-    const newSocket = io(API_BASE_URL, {
-      auth: {
-        token: apiKey,
-      },
-      transports: ['websocket', 'polling'],
-      autoConnect: true,
-    });
+    let retryCount = 0;
+    const maxRetries = 5;
+    const baseDelay = 1000; // 1 second
+    let reconnectTimer: NodeJS.Timeout;
 
-    setSocket(newSocket);
-    socketRef.current = newSocket;
+    const connectSocket = () => {
+      setConnectionStatus('connecting');
 
-    // Connection event handlers
-    newSocket.on('connect', () => {
-      console.log('Socket connected:', newSocket.id);
-      setIsConnected(true);
-      console.log('Connected to real-time alerts');
-    });
+      // Add 2-second delay before attempting connection
+      setTimeout(() => {
+        // Create socket connection
+        const API_BASE_URL = process.env.REACT_APP_API_URL!;
+        const newSocket = io(API_BASE_URL, {
+          auth: {
+            token: apiKey,
+          },
+          transports: ['websocket', 'polling'],
+          autoConnect: true,
+          timeout: 20000,
+          forceNew: true,
+        });
 
-    newSocket.on('disconnect', (reason: string) => {
-      console.log('Socket disconnected:', reason);
-      setIsConnected(false);
-      toast.warn('Disconnected from real-time alerts', {
-        position: 'bottom-right',
-        autoClose: 3000,
-      });
-    });
+        setSocket(newSocket);
+        socketRef.current = newSocket;
 
-    newSocket.on('connect_error', (error: any) => {
-      console.error('Socket connection error:', error);
-      setIsConnected(false);
-      console.log('failed to connect real-time alerts, trying to reconnect...');
-    });
+        // Connection event handlers
+        newSocket.on('connect', () => {
+          setIsConnected(true);
+          setConnectionStatus('connected');
+          retryCount = 0; // Reset retry count on successful connection
+          // Connection notification removed for professional UI
+        });
 
-    // Welcome message handler
-    newSocket.on('welcome', (message: string) => {
-      console.log('Welcome message:', message);
-    });
+        newSocket.on('disconnect', (reason: string) => {
+          setIsConnected(false);
+          setConnectionStatus('disconnected');
 
-    // MAIN REAL-TIME INCIDENT ALERT HANDLER
-    newSocket.on('newAlert', (incidentData: ApiIncident) => {
-      console.log('NEW INCIDENT ALERT RECEIVED:', incidentData);
+          if (reason === 'io client disconnect') {
+          // Don't retry if client initiated disconnect
+            return;
+          }
+          // Disconnection notification removed for professional UI
 
-      // Create alert object
-      const newAlert: RealTimeAlert = {
-        id: `alert-${incidentData.Incidents_ID}-${Date.now()}`,
-        incident: incidentData,
-        timestamp: new Date(),
-        acknowledged: false,
-      };
+          // Attempt reconnection with exponential backoff
+          if (retryCount < maxRetries) {
+            setConnectionStatus('reconnecting');
+            const delay = Math.min(baseDelay * Math.pow(2, retryCount), 30000);
 
-      // Add to alerts list (keep last 20)
-      setRealtimeAlerts(prev => [newAlert, ...prev.slice(0, 19)]);
-      setUnreadAlertCount(prev => prev + 1);
+            reconnectTimer = setTimeout(() => {
+              retryCount++;
+              newSocket.disconnect();
+              connectSocket();
+            }, delay);
+          } else {
+            setConnectionStatus('failed');
+            // Critical connection failure - keep this for admin awareness
+            console.error('WebSocket connection failed after multiple retries');
+          }
+        });
 
-      const location =
+        newSocket.on('connect_error', () => {
+          setIsConnected(false);
+
+          if (retryCount < maxRetries) {
+            setConnectionStatus('reconnecting');
+            const delay = Math.min(baseDelay * Math.pow(2, retryCount), 30000);
+
+            reconnectTimer = setTimeout(() => {
+              retryCount++;
+              connectSocket();
+            }, delay);
+          } else {
+            setConnectionStatus('failed');
+            // Connection error logging - removed toast for professional UI
+            console.error('Unable to establish WebSocket connection after multiple attempts');
+          }
+        });
+
+        // Welcome message handler
+        newSocket.on('welcome', () => {
+        });
+
+        // MAIN REAL-TIME INCIDENT ALERT HANDLER
+        newSocket.on('newAlert', (incidentData: ApiIncident) => {
+
+          // Create alert object
+          const newAlert: RealTimeAlert = {
+            id: `alert-${incidentData.Incidents_ID}-${Date.now()}`,
+            incident: incidentData,
+            timestamp: new Date(),
+            acknowledged: false,
+          };
+
+          // Add to alerts list (keep last 20)
+          setRealtimeAlerts(prev => [newAlert, ...prev.slice(0, 19)]);
+          setUnreadAlertCount(prev => prev + 1);
+
+          const location =
         incidentData.Incidents_Latitude && incidentData.Incidents_Longitude
           ? `Lat: ${incidentData.Incidents_Latitude}, Lng: ${incidentData.Incidents_Longitude}`
           : 'Location not specified';
 
-      const currentPage = window.location.pathname;
-      const severity = incidentData.Incident_Severity.toUpperCase();
+          const currentPage = window.location.pathname;
+          const severity = incidentData.Incident_Severity.toUpperCase();
 
-      // Professional toast notification
-      toast.error(
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <div
-            style={{
-              fontWeight: 'bold',
-              fontSize: '16px',
-              color: 'white',
-            }}
-          >
+          // Professional toast notification
+          toast.error(
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div
+                style={{
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  color: 'white',
+                }}
+              >
             NEW {severity} INCIDENT
-          </div>
-          <div style={{ fontSize: '14px', opacity: 0.9 }}>
+              </div>
+              <div style={{ fontSize: '14px', opacity: 0.9 }}>
             ID: {incidentData.Incidents_ID} | {location}
-          </div>
-          <div style={{ fontSize: '12px', opacity: 0.8 }}>
+              </div>
+              <div style={{ fontSize: '12px', opacity: 0.8 }}>
             Reporter: {incidentData.Incident_Reporter || 'Unknown'}
-          </div>
-          <div style={{ fontSize: '12px', opacity: 0.7 }}>
+              </div>
+              <div style={{ fontSize: '12px', opacity: 0.7 }}>
             Time: {new Date().toLocaleTimeString()}
-          </div>
-          {currentPage !== '/incidents' && (
-            <div
-              style={{
-                fontSize: '11px',
-                opacity: 0.6,
-                fontStyle: 'italic',
-                marginTop: '4px',
-                padding: '4px 8px',
-                backgroundColor: 'rgba(255,255,255,0.1)',
-                borderRadius: '4px',
-              }}
-            >
+              </div>
+              {currentPage !== '/incidents' && (
+                <div
+                  style={{
+                    fontSize: '11px',
+                    opacity: 0.6,
+                    fontStyle: 'italic',
+                    marginTop: '4px',
+                    padding: '4px 8px',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    borderRadius: '4px',
+                  }}
+                >
               Click to view incidents page
-            </div>
-          )}
-        </div>,
-        {
-          position: 'top-right',
-          autoClose: incidentData.Incident_Severity === 'high' ? false : 12000,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          onClick: () => {
-            if (currentPage !== '/incidents') {
-              window.location.href = '/incidents';
-            }
-          },
-          style: {
-            backgroundColor:
+                </div>
+              )}
+            </div>,
+            {
+              position: 'top-right',
+              autoClose: incidentData.Incident_Severity === 'high' ? false : 12000,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              onClick: () => {
+                if (currentPage !== '/incidents') {
+                  window.location.href = '/incidents';
+                }
+              },
+              style: {
+                backgroundColor:
               incidentData.Incident_Severity === 'high'
                 ? '#dc2626'
                 : incidentData.Incident_Severity === 'medium'
                   ? '#ea580c'
                   : '#059669',
-            color: 'white',
-            cursor: currentPage !== '/incidents' ? 'pointer' : 'default',
-            border: '2px solid rgba(255,255,255,0.3)',
-            borderRadius: '8px',
-            fontFamily: 'inherit',
-          },
-        },
-      );
+                color: 'white',
+                cursor: currentPage !== '/incidents' ? 'pointer' : 'default',
+                border: '2px solid rgba(255,255,255,0.3)',
+                borderRadius: '8px',
+                fontFamily: 'inherit',
+              },
+            },
+          );
 
-      // Play notification sound
-      playNotificationSound(incidentData.Incident_Severity);
+          // Play notification sound
+          playNotificationSound(incidentData.Incident_Severity);
 
-      // Show browser notification
-      showBrowserNotification(incidentData);
+          // Show browser notification
+          showBrowserNotification(incidentData);
 
-      // Flash page title for high severity incidents
-      if (incidentData.Incident_Severity === 'high') {
-        const originalTitle = document.title;
-        let flashCount = 0;
-        const flashInterval = setInterval(() => {
-          document.title =
+          // Flash page title for high severity incidents
+          if (incidentData.Incident_Severity === 'high') {
+            const originalTitle = document.title;
+            let flashCount = 0;
+            const flashInterval = setInterval(() => {
+              document.title =
             flashCount % 2 === 0
               ? 'CRITICAL INCIDENT - Traffic Guardian'
               : originalTitle;
-          flashCount++;
-          if (flashCount >= 10) {
-            clearInterval(flashInterval);
-            document.title = originalTitle;
+              flashCount++;
+              if (flashCount >= 10) {
+                clearInterval(flashInterval);
+                document.title = originalTitle;
+              }
+            }, 500);
           }
-        }, 500);
-      }
-    });
+        });
 
-    // WEATHER EVENT HANDLERS - ADDED FOR WEATHER INTEGRATION
-    newSocket.on('weatherUpdate', (data: WeatherData[]) => {
-      console.log('Weather update received:', data);
-      setWeatherData(data);
-      setWeatherLoading(false);
-      setWeatherLastUpdate(new Date());
-    });
+        // WEATHER EVENT HANDLERS - ADDED FOR WEATHER INTEGRATION
+        newSocket.on('weatherUpdate', (data: WeatherData[]) => {
+          setWeatherData(data);
+          setWeatherLoading(false);
+          setWeatherLastUpdate(new Date());
+        });
 
-    newSocket.on('weatherAlert', (weatherAlertData: any) => {
-      console.log('Weather alert received:', weatherAlertData);
+        newSocket.on('weatherAlert', (weatherAlertData: any) => {
 
-      // Show weather alert as toast notification
-      toast.info(
-        `Weather Alert: ${
-          weatherAlertData.message || 'Weather conditions have changed'
-        }`,
-        {
-          position: 'top-right',
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        },
-      );
-    });
+          // Show weather alert as toast notification
+          toast.info(
+            `Weather Alert: ${
+              weatherAlertData.message || 'Weather conditions have changed'
+            }`,
+            {
+              position: 'top-right',
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+            },
+          );
+        });
 
-    // Other socket event handlers (unchanged)
-    newSocket.on('trafficUpdate', (data: any) => {
-      console.log('Traffic update received:', data);
-    });
+        // Other socket event handlers (unchanged)
+        newSocket.on('trafficUpdate', () => {
+        });
 
-    newSocket.on('criticalIncidents', (data: any) => {
-      console.log('Critical incidents update:', data);
-    });
+        newSocket.on('criticalIncidents', () => {
+        });
 
-    newSocket.on('incidentCategory', (data: any) => {
-      console.log('Incident category update:', data);
-    });
+        newSocket.on('incidentCategory', () => {
+        });
 
-    newSocket.on('incidentLocations', (data: any) => {
-      console.log('Incident locations update:', data);
-    });
+        newSocket.on('incidentLocations', () => {
+        });
 
-    // ACTIVE USERS TRACKING EVENT HANDLER
-    newSocket.on(
-      'activeUsersUpdate',
-      (data: { count: number; timestamp: Date }) => {
-        console.log('Active users update:', data);
-        setActiveUsersCount(data.count);
-      },
-    );
+        // ACTIVE USERS TRACKING EVENT HANDLER
+        newSocket.on(
+          'activeUsersUpdate',
+          (data: { count: number; timestamp: Date }) => {
+            setActiveUsersCount(data.count);
+          },
+        );
+
+        return newSocket;
+      }, 2000); // 2 second delay
+    };
+
+    // Start initial connection
+    connectSocket();
 
     // Cleanup on unmount
     return () => {
-      console.log('Cleaning up socket connection');
-      newSocket.disconnect();
-      socketRef.current = null;
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
   }, []);
 
@@ -459,14 +503,14 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     setUnreadAlertCount(0);
   };
 
-  const addNewIncident = (incident: any) => {
-    console.log('New incident added locally:', incident);
+  const addNewIncident = () => {
   };
 
   // Enhanced context value with weather data and active users
   const value: SocketContextType = {
     socket,
     isConnected,
+    connectionStatus,
     realtimeAlerts,
     unreadAlertCount,
     acknowledgeAlert,
