@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './IncidentManagement.css';
 
@@ -27,7 +27,7 @@ const IncidentManagement: React.FC = () => {
       try {
         const apiKey = sessionStorage.getItem('apiKey');
         if (!apiKey) {
-          throw new Error('No API key found. Please log in.');
+          throw new Error('Authentication required. Please log in.');
         }
 
         // Fetch user profile to get role
@@ -70,7 +70,8 @@ const IncidentManagement: React.FC = () => {
         setError(err.message);
         if (
           err.message.includes('unauthorized') ||
-          err.message.includes('API key')
+          err.message.includes('API key') ||
+          err.message.includes('Authentication')
         ) {
           navigate('/account');
         }
@@ -90,7 +91,7 @@ const IncidentManagement: React.FC = () => {
     try {
       const apiKey = sessionStorage.getItem('apiKey');
       if (!apiKey) {
-        throw new Error('No API key found');
+        throw new Error('Authentication required');
       }
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/api/incidents/${incidentId}`,
@@ -117,16 +118,10 @@ const IncidentManagement: React.FC = () => {
         const { [incidentId]: _, ...rest } = prev;
         return rest;
       });
-      toast.success('Incident status updated successfully!', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.success('Incident status updated successfully!', { autoClose: 4000 });
     } catch (err: any) {
       setError(err.message);
-      toast.error(`Error: ${err.message}`, {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.error(`Error: ${err.message}`, { autoClose: 4000 });
     }
   };
 
@@ -142,7 +137,7 @@ const IncidentManagement: React.FC = () => {
     // Get timezone abbreviation (PST/PDT)
     const timeZone = date.toLocaleDateString('en-US', {
       timeZone: 'America/Los_Angeles',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).split(', ')[1];
 
     return `${dateString_ca} (${timeZone})`;
@@ -212,18 +207,6 @@ const IncidentManagement: React.FC = () => {
           ))}
         </tbody>
       </table>
-      <ToastContainer
-        theme="dark"
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
     </div>
   );
 };
