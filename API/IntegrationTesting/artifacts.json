@@ -1,0 +1,71 @@
+[
+    {
+    "User_Username": "testuser",
+    "User_Password": "password123",
+    "User_Email": "testuser@gmail.com",
+    "User_Role": "user",
+    "User_Preferences": "{}"
+    },
+
+    {
+    "User_Email": "lonwabo@example.com",
+    "User_Password": "StrongPa$$20"
+    },
+    {
+    "User_Email": "testuser@gmail.com",
+    "preferences": {
+        "notifications": true,
+        "alertLevel": "high",
+        "theme": "dark"
+    }
+    },
+    {
+    "Incident_Date": "2025-05-21",
+    "Incident_Location": "Highway 101, Mile 45",
+    "Incident_CarID": 1,
+    "Incident_Severity": "high",
+    "Incident_Status": "open"
+    },
+    {
+    "Incident_Severity": "medium",
+    "Incident_Status": "ongoing"
+    },
+    {
+    "Alert_IncidentID": 1,
+    "Alert_Message": "Traffic incident reported",
+    "Alert_Type": "notification",
+    "Alert_Severity": "high",
+    "Alert_Recipients": [1, 2, 3],
+    "Alert_Status": "pending"
+    },
+    {
+    "Alert_Status": "sent"
+    },
+    {
+    "User_Username": "testuser",
+    "User_Password": "password123",
+    "User_Email": ".com",
+    "User_Role": "user",
+    "User_Preferences": "{}"
+    },
+        {
+    "User_Username": "testuser",
+    "User_Password": "password123",
+    "User_Email": "testuser",
+    "User_Role": "user",
+    "User_Preferences": "{}"
+    },
+    {
+    "location": "Hatfield",
+    "incidents": [
+      { "properties": { "magnitudeOfDelay": 4, "iconCategory": "Accident" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 2, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 5, "iconCategory": "Accident" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 1, "iconCategory": "Rain" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 4, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 6, "iconCategory": "Road works" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 2, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 7, "iconCategory": "Accident" }, "geometry": {} }
+    ]
+  }
+]

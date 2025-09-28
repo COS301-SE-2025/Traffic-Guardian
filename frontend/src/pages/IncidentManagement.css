@@ -2,11 +2,23 @@
 
 .incident-management-page {
   padding: 2rem;
+  padding-top: calc(160px + 2rem);
   min-height: 100vh;
-  color: #fff;
+  background-color: #0f0f0f;
+  color: #f1f1f1;
   font-family: "Segoe UI", sans-serif;
+}
 
-  /* background-color: #121212; */
+@media (max-width: 768px) {
+  .incident-management-page {
+    padding-top: calc(140px + 2rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .incident-management-page {
+    padding-top: calc(130px + 2rem);
+  }
 }
 
 .header-container {
@@ -26,17 +38,17 @@
 }
 
 .incident-management-page h2 {
-  color: #000;
+  color: #feac34;
   font-size: 2rem;
   margin-bottom: 2rem;
-  text-align: center;
+  text-align: left;
 }
 
 .back-button {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 10px;
-  background: #ffae36;
+  background: #feac34;
   color: black;
   font-weight: bold;
   font-size: 0.9rem;
@@ -45,7 +57,7 @@
 }
 
 .back-button:hover {
-  background: #e89c2f; /* Matches button hover */
+  background: #f79400; /* Matches button hover */
 }
 
 .incident-table {
@@ -100,7 +112,7 @@
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 10px;
-  background: #ffae36;
+  background: #feac34;
   color: black;
   font-weight: bold;
   font-size: 0.9rem;
@@ -109,7 +121,7 @@
 }
 
 .incident-table button:hover {
-  background: #e89c2f;
+  background: #f79400;
 }
 
 .incident-card {
@@ -147,7 +159,7 @@
   max-width: 500px;
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .incident-table {
     font-size: 0.9rem;
   }

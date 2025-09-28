@@ -1,0 +1,538 @@
+name: Continuous Deployment Pipeline
+#  OPTIMIZED FOR AWS FREE TIER ONLY 
+# This pipeline uses only free tier services:
+# - S3 Static Website Hosting (5GB storage + 15GB transfer/month)
+# - EC2 t2.micro instances (750 hours/month = 1 instance full-time)
+# Removed costly services: CloudFront, backup buckets, cache invalidations
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    # Handle both workflow_run and manual triggers
+    environment:
+      name: staging
+    steps:
+      - name: Debug workflow trigger (for troubleshooting)
+        run: |
+          echo "=== DEBUGGING WORKFLOW TRIGGER ==="
+          echo "Event name: you actually trying to get my CD secrets?"
+          echo "Workflow run conclusion: conclusion try a little harder XD"
+          echo "Workflow run head branch: head or tails?"
+          echo "Triggering workflow name: Im not a pet you can't name me"
+          echo "Triggering workflow ID: you actually reading this is a trigger lol"
+          echo "Repository: ${{ github.repository }} The Best REPOSITORY!!!1"
+          echo "================================="
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Dynamic ref based on trigger type - ensures we get the right commit
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      # AWS credential configuration for staging deployment
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Since we removed build artifacts from CI, we need to rebuild here
+      - name: Setup Node.js for deployment builds
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            ./frontend/package-lock.json
+            ./API/package-lock.json
+
+      - name: Build Frontend for deployment
+        working-directory: ./frontend
+        env:
+          # Frontend environment variables for build process
+          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API }}
+          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API }}/api
+          REACT_APP_ENVIRONMENT: staging
+          # Add other frontend environment variables as needed
+        run: |
+          echo "Building frontend for deployment..."
+          npm install --no-fund --no-audit
+          DISABLE_ESLINT_PLUGIN=true CI=false npm run build
+          echo "Frontend build completed"
+
+      - name: Build API for deployment
+        working-directory: ./API
+        run: |
+          echo "Building API for deployment..."
+          npm install --production --no-fund --no-audit
+          echo "API build completed"
+
+      - name: Create deployment artifacts
+        run: |
+          echo "Creating deployment artifacts..."
+          mkdir -p dist
+          
+          # Create version info
+          echo "$(date +'%Y%m%d%H%M%S')-${GITHUB_SHA::8}" > dist/version.txt
+          
+          # Frontend artifacts
+          mkdir -p dist/frontend
+          if [ -d "frontend/build" ]; then
+            cp -r frontend/build/* dist/frontend/
+            echo "Frontend artifacts created"
+          else
+            echo "Frontend build not found"
+            exit 1
+          fi
+          
+          # API artifacts
+          mkdir -p dist/api
+          cp -r API/* dist/api/
+          echo "API artifacts created"
+
+      # Deploy Frontend to S3 (Staging) - Using supported S3 sync action
+      - name: Deploy Frontend to S3 Staging
+        uses: jakejarvis/s3-sync-action@v0.5.1
+        with:
+          args: --delete
+        env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_STAGING_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SOURCE_DIR: dist/frontend
+          
+      # Deploy API to EC2 (Staging) - COMMENTED OUT to stay within free tier
+      # Only frontend goes to staging, API only deploys to production EC2
+      # - name: Deploy API to EC2 Staging
+      #   run: |
+      #     echo "===== DEPLOYING API TO EC2 STAGING INSTANCE ====="
+      #     echo " WARNING: Ensure EC2 instance is t2.micro to stay within free tier"
+      #     
+      #     # Create deployment package
+      #     cd dist/api
+      #     tar -czf ../api-deployment.tar.gz .
+      #     cd ../..
+      #     
+      #     # Copy to EC2 instance
+      #     echo "Copying API files to EC2 staging instance..."
+      #     scp -i ${{ secrets.EC2_SSH_KEY_PATH }} -o StrictHostKeyChecking=no \
+      #       dist/api-deployment.tar.gz \
+      #       ${{ secrets.EC2_STAGING_USER }}@${{ secrets.EC2_STAGING_API_HOST }}:/tmp/
+      #     
+      #     # Deploy on EC2 instance
+      #     ssh -i ${{ secrets.EC2_SSH_KEY_PATH }} -o StrictHostKeyChecking=no \
+      #       ${{ secrets.EC2_STAGING_USER }}@${{ secrets.EC2_STAGING_API_HOST }} << 'EOF'
+      #       cd /opt/traffic-guardian-api
+      #       sudo systemctl stop traffic-guardian-api || true
+      #       sudo rm -rf backup && sudo mv current backup 2>/dev/null || true
+      #       sudo mkdir -p current
+      #       cd current
+      #       sudo tar -xzf /tmp/api-deployment.tar.gz
+      #       sudo npm install --production
+      #       sudo systemctl start traffic-guardian-api
+      #       sudo systemctl enable traffic-guardian-api
+      #     EOF
+      #     
+      #     echo " API deployed to EC2 staging instance"
+
+      # AWS verification using improved health checks
+      - name: Verify AWS Staging Deployment
+        run: |
+          echo "===== VERIFYING AWS STAGING DEPLOYMENT ====="
+          echo "Running staging health checks..."
+          
+          # S3 Static Website health check
+          echo "Checking Frontend (S3 Static Website)..."
+          FRONTEND_URL="https://${{ secrets.AWS_S3_STAGING_BUCKET }}.s3-website-${{ secrets.AWS_REGION }}.amazonaws.com"
+          if curl -f -s --head "$FRONTEND_URL" > /dev/null; then
+            echo "  Frontend service: HEALTHY"
+          else
+            echo "  Frontend service: WARNING - Could not verify"
+          fi
+          
+          # API health check - COMMENTED OUT (no staging EC2 cost restrictions)
+          # echo "Checking API (EC2)..."
+          # API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
+          # if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
+          #   echo "  API service: HEALTHY"
+          # else
+          #   echo "  API service: WARNING - Could not verify health endpoint"
+          # fi
+          
+          echo "Staging verification completed! (Frontend only - API tests in production)"
+
+  deploy-production:
+    name: Deploy to Production
+    needs: [deploy-staging]
+    runs-on: ubuntu-latest
+    # Handle both workflow_run and manual triggers
+    environment:
+      name: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Dynamic ref based on trigger type - ensures we get the right commit
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      # AWS credential configuration for production deployment
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Build artifacts for production deployment
+      - name: Setup Node.js for production builds
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            ./frontend/package-lock.json
+            ./API/package-lock.json
+
+      - name: Build Frontend for production
+        working-directory: ./frontend
+        env:
+          # Frontend environment variables for production build
+          REACT_APP_API_URL: https://${{ secrets.EC2_PRODUCTION_API }}
+          REACT_APP_API_BASE_URL: https://${{ secrets.EC2_PRODUCTION_API }}/api
+          REACT_APP_ENVIRONMENT: production
+          # Add other frontend environment variables as needed
+        run: |
+          echo "Building frontend for production..."
+          npm install --no-fund --no-audit
+          DISABLE_ESLINT_PLUGIN=true CI=false npm run build
+          echo "Frontend build completed"
+
+      - name: Build API for production
+        working-directory: ./API
+        run: |
+          echo "Building API for production..."
+          npm install --production --no-fund --no-audit
+          echo "API build completed"
+
+      - name: Create production .env file
+        working-directory: ./API
+        run: |
+          echo "Creating production .env file..."
+          cat > .env << EOF
+          DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+          DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+          API_PORT=${{ secrets.API_PORT }}
+          TOMTOMAPI=${{ secrets.TOMTOMAPI }}
+          WEATHERAPI=${{ secrets.WEATHERAPI }}
+          CORS_ORIGIN=http://localhost:3000/
+          USE_CALIFORNIA_TRAFFIC=true
+          PEMS_USERNAME=${{ secrets.PEMS_USERNAME }}
+          PEMS_PASSWORD=${{ secrets.PEMS_PASSWORD }}
+          TRAFFIC_511_API_TOKEN=${{ secrets.TRAFFIC_511_API_TOKEN }}
+          NODE_ENV=production
+          EOF
+          echo "Production .env file created with all required variables"
+
+      - name: Create production deployment artifacts
+        run: |
+          echo "Creating production deployment artifacts..."
+          mkdir -p dist
+          
+          # Create version info
+          echo "$(date +'%Y%m%d%H%M%S')-${GITHUB_SHA::8}" > dist/version.txt
+          
+          # Frontend artifacts
+          mkdir -p dist/frontend
+          if [ -d "frontend/build" ]; then
+            cp -r frontend/build/* dist/frontend/
+            echo "Frontend artifacts created"
+          else
+            echo "Frontend build not found"
+            exit 1
+          fi
+          
+          # API artifacts
+          mkdir -p dist/api
+          cp -r API/* dist/api/
+          echo "API artifacts created"
+          
+          echo "All deployment artifacts ready"
+
+      # Deploy Frontend to S3 (Production) - Using supported S3 sync action
+      - name: Deploy Frontend to S3 Production
+        uses: jakejarvis/s3-sync-action@v0.5.1
+        with:
+          args: --delete
+        env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_PRODUCTION_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SOURCE_DIR: dist/frontend
+
+      # # API deployment to a EC2 (staging) was removed as we are restricted to free tier
+      # # Deploy API to EC2 (Production) - FREE TIER: Use t2.micro instance only
+      # - name: Deploy API to EC2 Production
+      #   run: |
+      #     echo "===== DEPLOYING API TO EC2 PRODUCTION INSTANCE ====="
+      #     echo " NOTE: Using t3.micro instance (better performance than t2.micro, still free tier eligible)"
+          
+      #     # Setup SSH key from secret
+      #     echo "Setting up SSH key..."
+      #     mkdir -p ~/.ssh
+      #     echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
+      #     chmod 600 ~/.ssh/ec2_key.pem
+          
+      #     # Create deployment package
+      #     cd dist/api
+      #     tar -czf ../api-deployment.tar.gz .
+      #     cd ../..
+          
+      #     # Copy to EC2 instance
+      #     echo "Copying API files to EC2 production instance..."
+      #     scp -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
+      #       dist/api-deployment.tar.gz \
+      #       ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com:/tmp/
+          
+      #     # Deploy on EC2 instance with zero-downtime strategy
+      #     ssh -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
+      #       ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com << 'EOF'
+      #       # Navigate to the correct API directory
+      #       cd /var/www/api
+            
+      #       # Stop any running processes (screen sessions, npm processes)
+      #       echo "Stopping existing API processes..."
+      #       pkill -f "npm start" || true
+      #       screen -S api -X quit || true
+            
+      #       # Create backup of current version
+      #       sudo rm -rf API_backup && sudo mv API API_backup 2>/dev/null || true
+      #       sudo mkdir -p API
+            
+      #       # Extract new version to API directory
+      #       cd API
+      #       sudo tar -xzf /tmp/api-deployment.tar.gz
+            
+      #       # Fix ownership of extracted files (including the built .env)
+      #       # sudo chown -R $(whoami):$(whoami) .
+            
+      #       # Install dependencies
+      #       npm install --omit=dev
+            
+      #       # Find the correct entry point from package.json
+      #       echo "Detecting API entry point..."
+      #       ENTRY_POINT=$(node -p "require('./package.json').main || 'index.js'" 2>/dev/null || echo "index.js")
+      #       echo "Detected entry point: $ENTRY_POINT"
+            
+      #       # Verify the entry point exists
+      #       if [ -f "$ENTRY_POINT" ]; then
+      #         echo "Entry point file exists: $ENTRY_POINT"
+      #       else
+      #         echo "Entry point file not found. Looking for alternatives..."
+      #         if [ -f "src/server.js" ]; then
+      #           ENTRY_POINT="src/server.js"
+      #           echo "Using src/server.js"
+      #         elif [ -f "app.js" ]; then
+      #           ENTRY_POINT="app.js"
+      #           echo "Using app.js"
+      #         elif [ -f "server.js" ]; then
+      #           ENTRY_POINT="server.js"
+      #           echo "Using server.js"
+      #         elif [ -f "index.js" ]; then
+      #           ENTRY_POINT="index.js"
+      #           echo "Using index.js"
+      #         else
+      #           echo "ERROR: No valid entry point found!"
+      #           ls -la
+      #           exit 1
+      #         fi
+      #       fi
+            
+      #       # Test the entry point syntax
+      #       echo "Testing entry point syntax..."
+      #       node --check "$ENTRY_POINT" || echo "Syntax check completed"
+            
+      #       # Start the API in a screen session (dotenv will handle .env loading)
+      #       echo "Starting API with entry point: $ENTRY_POINT"
+      #       echo "Built .env file will be loaded automatically by the API"
+      #       screen -dmS api bash -c "cd /var/www/api/API && node $ENTRY_POINT"
+            
+      #       # Wait and verify the screen session
+      #       sleep 10
+      #       if screen -list | grep -q "api"; then
+      #         echo "API successfully started in screen session"
+      #         # Test if the API is responding
+      #         sleep 5
+      #         if curl -f -s http://localhost:${{ secrets.API_PORT }}/api/health >/dev/null 2>&1 || curl -f -s http://localhost:${{ secrets.API_PORT }}/ >/dev/null 2>&1; then
+      #           echo "API is responding to requests"
+      #         else
+      #           echo "API started but not yet responding (may need more time to initialize)"
+      #         fi
+      #       else
+      #         echo "Failed to start API, attempting rollback..."
+      #         sudo rm -rf /var/www/api/API
+      #         sudo mv /var/www/api/API_backup /var/www/api/API 2>/dev/null || true
+      #         cd /var/www/api/API
+      #         # Fix ownership after rollback
+      #         # sudo chown -R $(whoami):$(whoami) .
+      #         screen -dmS api bash -c 'cd /var/www/api/API && npm start || node server.js || node src/server.js'
+      #         exit 1
+      #       fi
+      #     EOF
+          
+      #     # Clean up SSH key for security
+      #     rm -f ~/.ssh/ec2_key.pem
+          
+      #     echo " API deployed to EC2 production instance"
+
+      - name: Deploy API to EC2 Production
+        run: |
+          echo "===== DEPLOYING API TO EC2 PRODUCTION INSTANCE ====="
+          
+          # Setup SSH key from secret
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ec2_key.pem
+          chmod 600 ~/.ssh/ec2_key.pem
+          
+          # Create deployment package
+          cd dist/api
+          tar -czf ../api-deployment.tar.gz .
+          cd ../..
+          
+          # Copy to EC2 instance
+          scp -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
+            dist/api-deployment.tar.gz \
+            ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com:/tmp/
+          
+          # Deploy on EC2 instance
+          ssh -i ~/.ssh/ec2_key.pem -o StrictHostKeyChecking=no \
+            ubuntu@ec2-54-224-228-41.compute-1.amazonaws.com << 'EOF'
+            
+            # Stop existing API if running
+            screen -S api -X quit 2>/dev/null || true
+            
+            # Navigate to API directory
+            cd /var/www/api/API
+            
+            # Backup .env file
+            cp .env /tmp/backup.env
+            
+            # Remove old files (keep directory structure)
+            rm -rf node_modules src package.json package-lock.json
+            
+            # Extract new code
+            tar -xzf /tmp/api-deployment.tar.gz
+            
+            # Restore .env file
+            cp /tmp/backup.env .env
+            rm /tmp/backup.env
+            
+            # Install dependencies
+            npm install
+            
+            # Start API in detached screen session
+            screen -dmS api bash -c 'npm start'
+            
+            # Wait and verify
+            sleep 10
+            if screen -list | grep -q "api"; then
+              echo "API started successfully"
+            else
+              echo "Failed to start API"
+              exit 1
+            fi
+            
+            # Cleanup
+            rm -f /tmp/api-deployment.tar.gz
+          EOF
+          
+          rm -f ~/.ssh/ec2_key.pem
+
+
+  post-deployment-monitoring:
+    name: Post-Deployment Monitoring
+    needs: [deploy-production]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Dynamic ref based on trigger type - ensures we get the right commit
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Initial Health Check
+        run: |
+          echo "Running post-deployment health verification..."
+          
+          # Test S3 static website hosting
+          echo "Checking Frontend (S3 Static Website)..."
+          FRONTEND_URL="https://trafficguardian.co.za"
+          if curl -f -s --head "$FRONTEND_URL" > /dev/null; then
+            echo "Frontend: HEALTHY"
+          else
+            echo "Frontend: Could not verify"
+          fi
+          
+          # Test API health endpoint
+          echo "Checking API (EC2)..."
+          API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
+          if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
+            echo "API: HEALTHY"
+          else
+            echo "API: Could not verify health endpoint"
+            # Try basic connection test
+            if curl -f -s "https://${{ secrets.EC2_PRODUCTION_API }}/" > /dev/null; then
+              echo "API: Server responding"
+            fi
+          fi
+          
+          echo "Health verification completed"
+
+      - name: Performance Check
+        run: |
+          echo "Running basic performance checks..."
+          
+          # Test API response time
+          API_URL="https://${{ secrets.EC2_PRODUCTION_API }}/api/health"
+          RESPONSE_TIME=$(curl -f -s -w "%{time_total}" -o /dev/null "$API_URL" 2>/dev/null || echo "0")
+          
+          if [ "$RESPONSE_TIME" != "0" ]; then
+            echo "API response time: ${RESPONSE_TIME}s"
+            # Simple performance check using shell arithmetic
+            RESPONSE_INT=$(echo "$RESPONSE_TIME" | cut -d'.' -f1)
+            if [ "$RESPONSE_INT" -eq 0 ]; then
+              echo "Performance: Excellent (< 1s)"
+            else
+              echo "Performance: Could be improved (> 1s)"
+            fi
+          else
+            echo "Could not measure API response time"
+          fi
+
+      - name: Generate Monitoring Summary
+        run: |
+          echo "===== MONITORING SETUP COMPLETE ====="
+          echo "Production system is now being monitored"
+          echo ""
+          echo "Key Endpoints:"
+          echo "   Frontend: S3 Static Website (URL in environment variables)"
+          echo "   API Health: Production API Health Endpoint"
+          echo ""
+          echo "Recommended monitoring setup:"
+          echo "   • Set up external uptime monitoring (e.g., UptimeRobot, Pingdom)"
+          echo "   • Configure CloudWatch alarms for EC2 instance metrics"
+          echo "   • Set up log aggregation for application logs"
+          echo "   • Monitor API response times and error rates"

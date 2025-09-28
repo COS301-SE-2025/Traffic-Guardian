@@ -1,16 +1,111 @@
 .account-page {
+  position: fixed;
+  top: 160px;
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - 160px);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding-top: 147px;
-  padding-left: 29px;
-  gap: 2rem;
-  min-height: 100vh;
-
-  /* background-color: #121212; /* dark mode */
+  align-items: center;
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  box-sizing: border-box;
+  overflow: hidden;
+  z-index: 1000;
 }
 
-.login-container,
+/* Light mode account page */
+:root.light-mode .account-page {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.auth-container {
+  display: flex;
+  max-width: 1100px;
+  width: 90vw;
+  height: 80%;
+  min-height: 500px;
+  max-height: 600px;
+  background-color: #1e1e1e;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 40%);
+  overflow: hidden;
+}
+
+/* Light mode auth container */
+:root.light-mode .auth-container {
+  background-color: #fff;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 15%);
+}
+
+.image-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.7);
+  transition: transform 0.3s ease;
+}
+
+.auth-image:hover {
+  transform: scale(1.05);
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    linear-gradient(
+      135deg,
+      rgb(254 172 52 / 20%) 0%,
+      rgb(0 0 0 / 30%) 50%,
+      rgb(0 0 0 / 60%) 100%
+    );
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.image-overlay h3 {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgb(0 0 0 / 70%);
+}
+
+.image-overlay p {
+  color: #f0f0f0;
+  font-size: 1.2rem;
+  font-weight: 300;
+  text-shadow: 1px 1px 2px rgb(0 0 0 / 70%);
+  max-width: 300px;
+  line-height: 1.4;
+}
+
+.login-container {
+  flex: 1;
+  background-color: #1e1e1e;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: none;
+  border-radius: 0;
+  width: auto;
+  height: auto;
+}
+
 .showcase-container {
   background-color: #1e1e1e;
   border-radius: 15px;
@@ -58,7 +153,7 @@ input {
   height: 55px;
   border: none;
   border-radius: 10px;
-  background: #ffae36;
+  background: #feac34;
   color: black;
   font-weight: bold;
   font-size: 1.1rem;
@@ -68,17 +163,7 @@ input {
 }
 
 .signup-btn:hover {
-  background: #e89c2f;
-}
-
-.showcase-container {
-  width: 500px;
-  height: 100%;
-  border-radius: 15px;
-  background-color: #1e1e1e;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background: #f79400;
 }
 
 .password-row {
@@ -89,9 +174,50 @@ input {
   position: absolute;
   right: 0;
   top: 0;
-  color: #ffae36;
+  color: #feac34;
   font-size: 0.9rem;
   cursor: pointer;
+}
+
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-container input {
+  padding-right: 3rem; /* Make space for the toggle button */
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  z-index: 1;
+}
+
+.password-toggle-btn:hover {
+  color: #feac34;
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+  color: #feac34;
+}
+
+.password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 .signup-text {
@@ -102,7 +228,7 @@ input {
 }
 
 .signup-link {
-  color: #ffae36;
+  color: #feac34;
   font-weight: bold;
   cursor: pointer;
 }
@@ -110,7 +236,7 @@ input {
 .divider {
   width: 100%;
   height: 1px;
-  background-color: #ffae36;
+  background-color: #feac34;
   margin: 1rem 0;
 }
 
@@ -152,7 +278,7 @@ input {
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 8px;
-  background-color: #ffae36;
+  background-color: #feac34;
   color: black;
   font-weight: bold;
   cursor: pointer;
@@ -161,5 +287,75 @@ input {
 
 .edit-btn:hover,
 .delete-btn:hover {
-  background-color: #e89c2f;
+  background-color: #f79400;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .account-page {
+    top: 140px;
+    height: calc(100vh - 140px);
+  }
+
+  .auth-container {
+    flex-direction: column;
+    width: 95vw;
+    height: 90%;
+    min-height: 450px;
+    max-height: 550px;
+  }
+
+  .image-container {
+    height: 30%;
+    min-height: 150px;
+  }
+
+  .image-overlay h3 {
+    font-size: 1.8rem;
+  }
+
+  .image-overlay p {
+    font-size: 0.9rem;
+  }
+
+  .login-container {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-page {
+    top: 130px;
+    height: calc(100vh - 130px);
+  }
+
+  .auth-container {
+    border-radius: 15px;
+    width: 98vw;
+    height: 95%;
+    min-height: 400px;
+    max-height: 500px;
+  }
+
+  .image-container {
+    height: 25%;
+    min-height: 120px;
+  }
+
+  .image-overlay h3 {
+    font-size: 1.5rem;
+  }
+
+  .image-overlay p {
+    font-size: 0.8rem;
+    max-width: 200px;
+  }
+
+  .login-container {
+    padding: 1.5rem;
+  }
+
+  .login-container h2 {
+    font-size: 1.6rem;
+  }
 }

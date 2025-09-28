@@ -9,7 +9,8 @@ const incidentModel = {  async createIncident(incidentData) {
       Incident_Status, 
       Incident_Reporter,
       Incident_CameraID,
-      Incident_Description
+      Incident_Description,
+      User_Email
     } = incidentData;
       const query = `
       INSERT INTO "Incidents" (
@@ -36,8 +37,24 @@ const incidentModel = {  async createIncident(incidentData) {
       Incident_CameraID,
       Incident_Description
     ];
+
+   const emailValues = {
+    Incidents_DateTime: Incidents_DateTime || new Date(),
+    Incidents_Longitude : Incidents_Longitude,
+    Incidents_Latitude : Incidents_Latitude,
+    Incident_Severity: Incident_Severity || 'medium',
+    Incident_Status: Incident_Status || 'ongoing',
+    Incident_Reporter : Incident_Reporter,
+    Incident_CameraID : Incident_CameraID,
+    Incident_Description : Incident_Description
+   }
     
     const { rows } = await db.query(query, values);
+<<<<<<< HEAD
+=======
+    const dumb = [emailValues];
+    reportGen.generatePDF(dumb, User_Email);
+>>>>>>> Dev
     return rows[0];
   },  async getIncidentById(Incidents_ID) {
     const query = 'SELECT * FROM "Incidents" WHERE "Incidents_ID" = $1';
