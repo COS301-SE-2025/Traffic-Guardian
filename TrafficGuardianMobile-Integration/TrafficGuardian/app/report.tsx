@@ -234,7 +234,7 @@ const emergencyContacts: EmergencyContact[] = [
       </TouchableOpacity>
 
       {/* Voice Recording */}
-      <View style={{ marginTop: 10 }}>
+      {/* <View style={{ marginTop: 10 }}>
         <TouchableOpacity
           style={{
             backgroundColor: recording ? "#d9534f" : "#5cb85c",
@@ -265,7 +265,7 @@ const emergencyContacts: EmergencyContact[] = [
             </TouchableOpacity>
           </>
         )}
-      </View>
+      </View> */}
     </View>
   </ScrollView>
 
