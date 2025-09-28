@@ -1,3 +1,4 @@
+/// <reference path="../../cypress/support/component.d.ts" />
 import React from 'react';
 import StatsCard from './StatsCard';
 

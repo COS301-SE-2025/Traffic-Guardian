@@ -1,3 +1,4 @@
+/// <reference path="../../cypress/support/component.d.ts" />
 import React from 'react';
 import Button from './Button';
 
@@ -12,7 +13,7 @@ describe('Button Component', () => {
 
     cy.get('.custom-button').click();
     cy.then(() => {
-      expect(onClick).to.have.been.calledOnce;
+      cy.wrap(onClick).should('have.been.calledOnce');
     });
   });
 
@@ -50,7 +51,7 @@ describe('Button Component', () => {
     cy.get('.custom-button').click();
 
     cy.then(() => {
-      expect(onClick).to.have.been.calledThrice;
+      cy.wrap(onClick).should('have.been.calledThrice');
     });
   });
 
@@ -92,7 +93,7 @@ describe('Button Component', () => {
     cy.get('.custom-button').click();
 
     cy.then(() => {
-      expect(onClick).to.have.been.calledTwice;
+      cy.wrap(onClick).should('have.been.calledTwice');
     });
   });
 

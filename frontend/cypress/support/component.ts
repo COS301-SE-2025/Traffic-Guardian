@@ -21,6 +21,7 @@ import './commands'
 
 import { mount } from '@cypress/react'
 import 'cypress-mochawesome-reporter/register';
+import '@cypress/sinon-chai';
 
 // Import test utilities
 // import '../../../src/test-utils/componentTestUtils';

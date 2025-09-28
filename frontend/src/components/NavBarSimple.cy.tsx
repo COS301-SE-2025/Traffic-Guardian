@@ -1,3 +1,4 @@
+/// <reference path="../../cypress/support/component.d.ts" />
 import React from 'react';
 
 // Simple NavBar test without complex dependencies
@@ -6,7 +7,7 @@ describe('NavBar Component (Basic)', () => {
     // Test that we can at least import the component
     cy.wrap(null).then(() => {
       return import('./NavBar').then((module) => {
-        expect(module.default).to.exist;
+        cy.wrap(module.default).should('exist');
       });
     });
   });
