@@ -35,21 +35,12 @@ const createSmartRateLimitHandler = (type) => (req, res, next) => {
 
 // Production-ready rate limits optimized for 50 concurrent users and 100 incident detections
 const rateLimiters = {
-<<<<<<< HEAD
-  // General API rate limit - 100 requests per 15 minutes
-  general: rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 500, // limit each IP to 100 requests per windowMs
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-=======
   // General API rate limit - optimized for 50 concurrent users
   general: rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes (shorter window for faster recovery)
     max: 1000, // 1000 requests per 5 minutes (allows ~200 req/min per user for 50 users)
     standardHeaders: true,
     legacyHeaders: false,
->>>>>>> Dev
     handler: createSmartRateLimitHandler('general'),
   }),
 
@@ -65,17 +56,10 @@ const rateLimiters = {
     handler: createSmartRateLimitHandler('camera'),
   }),
 
-<<<<<<< HEAD
-  // Camera bulk operations - very restrictive (5 requests per 10 minutes)
-  cameraBulk: rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 5, // limit each IP to 5 requests per windowMs
-=======
   // Camera bulk operations - optimized for AI processing
   cameraBulk: rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes
     max: 50, // increased for AI model batch processing
->>>>>>> Dev
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req, res) => {
@@ -84,9 +68,6 @@ const rateLimiters = {
     handler: createSmartRateLimitHandler('cameraBulk'),
   }),
 
-<<<<<<< HEAD
-  // Camera status updates - moderate (50 requests per 10 minutes)
-=======
   // Internal system operations - very high for AI incident detection
   internal: rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
@@ -113,7 +94,6 @@ const rateLimiters = {
   }),
 
   // Camera status updates - optimized for real-time
->>>>>>> Dev
   cameraStatus: rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
     max: 120, // increased for real-time status updates
@@ -135,17 +115,10 @@ const rateLimiters = {
     handler: createSmartRateLimitHandler('auth'),
   }),
 
-<<<<<<< HEAD
-  // Dashboard/Analytics - moderate (30 requests per 10 minutes)
-  dashboard: rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 30,
-=======
   // Dashboard/Analytics - optimized for 50 concurrent users
   dashboard: rateLimit({
     windowMs: 2 * 60 * 1000, // 2 minutes
     max: 300, // increased for dashboard heavy usage (50 users * 6 requests/min)
->>>>>>> Dev
     standardHeaders: true,
     legacyHeaders: false,
     handler: createSmartRateLimitHandler('dashboard'),
