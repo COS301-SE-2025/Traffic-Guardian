@@ -34,13 +34,9 @@
     "node-cache": "^5.1.2",
     "nodemailer": "^7.0.6",
     "pg": "^8.16.0",
-<<<<<<< HEAD
-    "socket.io": "^4.8.1"
-=======
     "puppeteer": "^24.20.0",
     "socket.io": "^4.8.1",
     "xml2js": "^0.6.2"
->>>>>>> Dev
   },
   "devDependencies": {
     "autocannon": "^8.0.0",
