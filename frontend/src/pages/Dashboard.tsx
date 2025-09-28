@@ -416,7 +416,7 @@ const Dashboard: React.FC = () => {
 
       const apiKey = sessionStorage.getItem('apiKey');
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL!}/api/pems/dashboard-summary`,
+        `${process.env.REACT_APP_API_URL!}/api/pems/dashboard-summary`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -491,7 +491,7 @@ const Dashboard: React.FC = () => {
           // Public users get basic traffic data from public endpoint
           try {
             const response = await fetch(
-              `${process.env.REACT_APP_SERVER_URL!}/api/traffic/public`,
+              `${process.env.REACT_APP_API_URL!}/api/traffic/public`,
             );
             if (response.ok) {
               const publicData = await response.json();
@@ -590,7 +590,7 @@ const Dashboard: React.FC = () => {
 
   // Socket.io connection
   useEffect(() => {
-    const SERVER_URL = process.env.REACT_APP_SERVER_URL!;
+    const SERVER_URL = process.env.REACT_APP_API_URL!;
 
     const newSocket = io(SERVER_URL, {
       transports: ['websocket', 'polling'],

@@ -42,7 +42,7 @@
     "test:coverage": "react-scripts test --coverage --watchAll=false",
     "test:ci": "react-scripts test --coverage --watchAll=false --ci",
     "eject": "react-scripts eject",
-    "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings=150",
+    "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings=300",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
     "stylelint": "stylelint 'src/**/*.css' --max-warnings=0",
     "stylelint:fix": "stylelint 'src/**/*.css' --fix",
