@@ -1,3 +1,4 @@
+/// <reference path="../../cypress/support/component.d.ts" />
 import React from 'react';
 import IncidentChart from './IncidentChart';
 import { setupComponentTestMocks } from '../test-utils/componentTestUtils';
