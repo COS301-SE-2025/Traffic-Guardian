@@ -975,6 +975,7 @@ jobs:
           # Check if requirements file exists
           if [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
+            pip install requests
           else
             echo "requirements.txt not found, installing basic testing dependencies..."
             pip install pytest opencv-python numpy requests
