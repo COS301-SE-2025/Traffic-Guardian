@@ -88,110 +88,75 @@ const {
     };
   }, [socket]);
 
-
+  //console.log(traffic);
   return (
-    <SafeAreaView style={{flex : 1, backgroundColor : 'rgb(41, 41, 41)'}}>
-      <Navbar>
+<SafeAreaView style={{ flex: 1, backgroundColor: 'rgb(41, 41, 41)' }}>
+  <Navbar>
+    {/* Header */}
+    <View style={globalStyles.header}>
+      <Text style={globalStyles.headerTitle}>
+        Welcome! {user?.user.User_Username ?? ""}
+      </Text>
+      <Text style={globalStyles.headerSubtitle}>
+        Traffic and Incident Alerts
+      </Text>
+    </View>
 
-      <View style={{flex : 1}}>
-        <View style={globalStyles.header}>
-          <Text style={globalStyles.headerTitle}>Welcome! {user?.user.User_Username ?? ""}</Text>
-          <Text style={globalStyles.headerSubtitle}>Traffic and Incident Alerts</Text>
-        </View>
-        </View>
-
-    <View  style={{flex : 1}}>
-      <View style={{ flex: 3 }}>
+    {/* Map */}
+    <View style={{ flex: 2, marginHorizontal: 20, marginVertical: 10, borderRadius: 7, overflow: 'hidden' }}>
       <EnhancedMap
-          traffic={traffic}
-          onIncidentSelect={(incident) => console.log(incident)}
-          showTrafficFlow={true}
-          filterRadius={50}
-        />
-      </View>
-      </View>
-
-{/* {coords && (
-  <View style={{ height: 300 }}>
-    <MapView
-      style={{ flex: 1 }}
-      initialRegion={{
-        latitude: -26.1278,
-        longitude: 28.082, 
-        latitudeDelta: 0.01 * 100,
-        longitudeDelta: 0.01 * 100,
-      }}
-    >
-      <Marker
-        coordinate={{ latitude: -26.1278244561, longitude: 28.0815629307 }}
-        title={user?.user.User_Username ?? "You"}
+        traffic={traffic}
+        onIncidentSelect={(incident) => console.log(incident)}
+        showTrafficFlow={true}
+        filterRadius={50}
       />
+    </View>
 
-      {traffic &&
-        Object.entries(traffic).map(([key, value]) =>
-          value.incidents?.map((incident, i) => {
-            if (!incident?.geometry?.coordinates) return null;
+    {/* Traffic list */}
+ <View style={{ flex: 2 }}>
+  <ScrollView contentContainerStyle={{ padding: 20 }}>
+    {Array.isArray(traffic?.data) && traffic.data.length > 0 ? (
+  traffic.data.map((area, index) => {
+    //console.log("Area:", area);
+    return (
+      <View key={index} style={[globalStyles.card, globalStyles.darkCard]}>
+        <View style={globalStyles.cardHeader}>
+          <Text style={globalStyles.cardTitle}>{area.location}</Text>
+        </View>
 
-            const coordinates = incident.geometry.coordinates.map(([lon, lat]) => ({
-              latitude: lat,
-              longitude: lon,
-            }));
-
-            let lineColour = 'orange';
-            if(incident.properties.magnitudeOfDelay < 3) lineColour = "yellow";
-            if(incident.properties.magnitudeOfDelay == 3) lineColour = "orange";
-            if(incident.properties.magnitudeOfDelay >= 3) lineColour = "red";
+        {area.incidents && area.incidents.length > 0 ? (
+          area.incidents.map((incident, i) => {
+            //console.log("Incident:", incident);
+            const description = incident?.properties?.iconCategory;
+            const lineString = incident?.geometry?.coordinates;
             return (
-              <Polyline
-                key={`${key}-${i}`}
-                coordinates={coordinates}
-                strokeColor={lineColour}
-                strokeWidth={4}
-              />
+              <Text key={i} style={globalStyles.cardSubtitle}>
+                - {description}{" "}
+                {calculateDistance(
+                  lineString,
+                  [Number(coords?.longitude), Number(coords?.latitude)]
+                )}{" "}
+                km
+              </Text>
             );
           })
+        ) : (
+          <Text style={globalStyles.cardSubtitle}>No incidents</Text>
         )}
-    </MapView>
-  </View>
-)} */}
+      </View>
+    );
+  })
+) : (
+  <Text style={{ color: "white", textAlign: "center", marginTop: 20 }}>
+    No traffic data available
+  </Text>
+)}
 
-
-<View style={{ flex: 2 }}>
-  <ScrollView contentContainerStyle={{ padding: 20 }} style={{ flex: 1 }}>
-    {Array.isArray(traffic) &&
-      traffic.map((area, index) => (
-        <View key={index} style={[globalStyles.card, globalStyles.darkCard]}>
-          <View style={globalStyles.cardHeader}>
-            <Text style={globalStyles.cardTitle}>{area.location}</Text>
-          </View>
-
-          {area.incidents && area.incidents.length > 0 ? (
-            area.incidents.map((incident, i) => {
-              const description = incident?.properties?.iconCategory;
-              const lineString = incident?.geometry?.coordinates;
-              //console.log(lineString);
-              return (
-                <Text key={i} style={globalStyles.cardSubtitle}>
-                  - {description}{" "}
-                  {calculateDistance(
-                    lineString,
-                    [Number(coords?.longitude), Number(coords?.longitude)]
-                  )}{" "}
-                  km
-                </Text>
-              );
-            })
-          ) : (
-            <Text style={globalStyles.cardSubtitle}>No incidents</Text>
-          )}
-        </View>
-      ))}
   </ScrollView>
 </View>
 
-      
-    </Navbar>
+  </Navbar>
+</SafeAreaView>
 
-    </SafeAreaView>
-  );
+  ); 
 }

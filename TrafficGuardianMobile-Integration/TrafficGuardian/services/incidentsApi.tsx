@@ -13,7 +13,7 @@ const getBaseUrl = () => {
   } else {
     return "http://localhost:5000";
   } */
-  return "https://api.traffic.guardian.co.za";
+  return "https://api.trafficguardian.co.za";
 };
 
 export async function createIncident(date : string,location : string, Incident_Severity : string, description : string, coords : any, user : any){

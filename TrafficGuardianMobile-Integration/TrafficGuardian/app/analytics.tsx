@@ -42,14 +42,19 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
   };
 
   // Pie chart for incident categories
-  const pieData =
-    incidentCategory?.categories?.map((cat: string, i: number) => ({
-      name: cat,
-      population: Number((incidentCategory.percentages[i] * 100).toFixed(2)),
+const pieData =
+  incidentCategory?.categories?.map((cat: string, i: number) => {
+    const percentage = (incidentCategory.percentages[i] * 100).toFixed(0);
+    const rawCount = Math.round(incidentCategory.percentages[i] * criticalIncidents.Amount);
+    return {
+      name: `${cat}`, 
+      population: Number(percentage),
       color: `hsl(${i * 30}, 70%, 50%)`,
       legendFontColor: "#fff",
       legendFontSize: 12,
-    })) || [];
+    };
+  }) || [];
+
 
   // Bar chart for locations
   const barData = {
@@ -61,6 +66,8 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
     ],
   };
 
+  const filteredPieData = pieData.filter(item => item.population > 0);
+
     return(
 <SafeAreaView style={{ flex: 1, backgroundColor: "#292929" }}>
   <Navbar>
@@ -70,7 +77,7 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
   >
 
     <View style={globalStyles.header}>
-      <Text style={globalStyles.headerTitle}>Analtyitcs</Text>
+      <Text style={globalStyles.headerTitle}>Analytics</Text>
     </View>
 
     {/* Critical Incidents Card */}
@@ -86,9 +93,10 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
           shadowOpacity: 0.2,
           shadowRadius: 4,
           elevation: 4,
+          borderColor : 'orange', borderWidth : 1 
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: "700", color: "orange", marginBottom: 6 }}>
+        <Text style={{ fontSize: 20, fontWeight: "700", color: "orange", marginBottom: 6}}>
           Critical Incidents
         </Text>
         <Text style={{ fontSize: 16, color: "white" }}>
@@ -98,9 +106,9 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
     )}
 
     {/* Pie Chart */}
-{incidentCategory && (
-  <View style={{ marginVertical: 16, backgroundColor: "#3e3e3e", borderRadius: 16, padding: 5 }}>
-    <Text style={{ textAlign: "center", color: "white", fontWeight: "600", marginBottom: 8 }}>
+{/* {incidentCategory && (
+  <View style={{ marginVertical: 16, backgroundColor: "#3e3e3e", borderRadius: 16, padding: 5, borderColor : 'orange', borderWidth : 1 }}>
+    <Text style={{ textAlign: "center", color: "orange", fontWeight: "600", marginBottom: 8 }}>
       Incident Categories
     </Text>
     <PieChart
@@ -112,15 +120,55 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
       backgroundColor="transparent"
       paddingLeft="0"
       absolute
+      center={[0,0]}
+    />
+  </View>
+)}  */}
+
+
+{incidentCategory && (
+  <View
+    style={{
+      marginVertical: 16,
+      backgroundColor: "#3e3e3e",
+      borderRadius: 16,
+      padding: 5,
+      borderColor: 'orange',
+      borderWidth: 1,
+    }}
+  >
+    <Text
+      style={{
+        textAlign: "center",
+        color: "orange",
+        fontWeight: "600",
+        marginBottom: 8,
+      }}
+    >
+      Incident Categories
+    </Text>
+
+    <PieChart
+      data={filteredPieData} 
+      width={screenWidth - 16}
+      height={220}
+      chartConfig={chartConfig}
+      accessor="population"
+      backgroundColor="transparent"
+      paddingLeft="0"
+      center={[0, 0]}
+      hasLegend={true} // still using custom legend
     />
   </View>
 )}
 
 
+
+
     {/* Bar Chart */}
     {incidentLocations && (
-      <View style={{ marginVertical: 16, backgroundColor: "#3e3e3e", borderRadius: 16, padding: 12 }}>
-        <Text style={{ textAlign: "center", color: "white", fontWeight: "600", marginBottom: 12 }}>
+      <View style={{ marginVertical: 16, backgroundColor: "#3e3e3e", borderRadius: 16, padding: 12 , borderColor : 'orange', borderWidth : 1}}>
+        <Text style={{ textAlign: "center", color: "orange", fontWeight: "600", marginBottom: 12 }}>
           Incident Locations
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
