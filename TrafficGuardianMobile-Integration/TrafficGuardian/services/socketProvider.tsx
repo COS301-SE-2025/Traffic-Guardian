@@ -8,7 +8,7 @@ const getBaseUrl = () => {
   return "http://localhost:5000";
 };
 
-const SOCKET_URL = getBaseUrl();
+const SOCKET_URL = "https://api.trafficguardian.co.za/";
 
 interface SocketContextType {
   socket: Socket | null;
