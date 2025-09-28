@@ -60,7 +60,7 @@ const WeeklyTrafficTrends: React.FC<WeeklyTrafficTrendsProps> = ({
       { day: 'Thursday', dayOfWeek: 4, averageVolume: 2850, peakVolume: 4275, peakHour: 8, avgSpeed: 54, incidents: 2 },
       { day: 'Friday', dayOfWeek: 5, averageVolume: 3100, peakVolume: 4650, peakHour: 7, avgSpeed: 52, incidents: 4 },
       { day: 'Saturday', dayOfWeek: 6, averageVolume: 2200, peakVolume: 3300, peakHour: 11, avgSpeed: 62, incidents: 1 },
-      { day: 'Sunday', dayOfWeek: 7, averageVolume: 1950, peakVolume: 2925, peakHour: 12, avgSpeed: 65, incidents: 1 }
+      { day: 'Sunday', dayOfWeek: 7, averageVolume: 1950, peakVolume: 2925, peakHour: 12, avgSpeed: 65, incidents: 1 },
     ];
 
     return standardizedData.map(data => ({
@@ -104,7 +104,7 @@ const WeeklyTrafficTrends: React.FC<WeeklyTrafficTrendsProps> = ({
         setWeeklyData(generateDemoData(true));
       }
     } catch (err) {
-      console.error('Error fetching weekly trends:', err);
+      // Error fetching weekly trends - using demo data
       setError('Failed to load weekly traffic trends');
       // Show standardized demo data on error
       setWeeklyData(generateDemoData(!isAuthenticated));

@@ -77,12 +77,6 @@ const Profile: React.FC = () => {
       try {
         const apiKey = sessionStorage.getItem('apiKey');
         const savedTheme = localStorage.getItem('theme');
-        console.log(
-          'Profile useEffect: apiKey=',
-          apiKey,
-          'savedTheme=',
-          savedTheme,
-        );
 
         if (!apiKey) {
           throw new Error('No API key found. Please log in.');
@@ -127,7 +121,6 @@ const Profile: React.FC = () => {
 
         if (prefsResponse.ok) {
           const prefsData = await prefsResponse.json();
-          console.log('Profile fetched preferences:', prefsData);
           let fetchedPrefs;
           try {
             fetchedPrefs =
@@ -153,7 +146,6 @@ const Profile: React.FC = () => {
             theme: validTheme,
           };
 
-          console.log('Profile processed preferences:', currentPrefs);
           localStorage.setItem('theme', currentPrefs.theme);
         } else {
           console.warn(
@@ -264,12 +256,10 @@ const Profile: React.FC = () => {
             ? updatedPrefs.theme
             : validatedPrefs.theme;
 
-        console.log('Profile saved preferences:', updatedPrefs);
         setPreferences(updatedPrefs);
         localStorage.setItem('theme', updatedPrefs.theme);
         toggleDarkMode(updatedPrefs.theme === 'dark');
       } else {
-        console.log('Profile: No User_Preferences in response, using temp');
         setPreferences(validatedPrefs);
         localStorage.setItem('theme', validatedPrefs.theme);
         toggleDarkMode(validatedPrefs.theme === 'dark');
@@ -284,7 +274,7 @@ const Profile: React.FC = () => {
   const handleSignOut = () => {
     logout();
     dataPrefetchService.stopPrefetching();
-    navigate('/');
+    navigate('/account');
   };
 
   if (loading) {

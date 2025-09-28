@@ -1,0 +1,282 @@
+/* JSON Event Display Styles */
+
+.event-item-simple {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--header-border);
+  font-family: "Courier New", monospace;
+  font-size: 0.9em;
+  background: var(--background-color);
+  transition: background-color 0.2s ease;
+}
+
+.event-item-simple:hover {
+  background: var(--camera-item-hover-bg);
+}
+
+.event-item-simple .event-timestamp {
+  color: var(--subtitle-color);
+  font-size: 0.8em;
+  margin-bottom: 4px;
+}
+
+.event-item-simple .event-text {
+  color: var(--text-color);
+  word-break: break-word;
+}
+
+.event-item-formatted {
+  padding: 16px;
+  border-bottom: 1px solid var(--header-border);
+  background: var(--background-color);
+  transition: background-color 0.2s ease;
+}
+
+.event-item-formatted:hover {
+  background: var(--camera-item-hover-bg);
+}
+
+.event-item-formatted:last-child {
+  border-bottom: none;
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.event-timestamp {
+  background: var(--stat-card-icon-bg);
+  color: var(--title-color);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: "Courier New", monospace;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.event-location {
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+.location-label {
+  color: var(--text-color);
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.incidents-summary {
+  margin-bottom: 12px;
+}
+
+.incidents-count {
+  background: var(--severity-medium-bg);
+  color: var(--severity-medium-text);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.85em;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.incidents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.incident-card {
+  background: var(--stat-card-bg);
+  border: 1px solid var(--incident-item-border);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.incident-card:hover {
+  border-color: var(--stat-card-border);
+  box-shadow: 0 2px 8px var(--stat-card-hover-shadow);
+}
+
+.incident-type {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.incident-icon {
+  font-size: 1.2em;
+}
+
+.incident-category {
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.incident-severity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.severity-indicator {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.severity-indicator.severity-low {
+  color: #22c55e;
+}
+
+.severity-indicator.severity-medium {
+  color: #f59e0b;
+}
+
+.severity-indicator.severity-high {
+  color: #ef4444;
+}
+
+.severity-indicator.severity-critical {
+  color: #dc2626;
+}
+
+.severity-indicator.severity-unknown {
+  color: #6b7280;
+}
+
+.severity-text {
+  color: var(--text-color);
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+.incident-icon {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+.incident-icon.icon-road-works {
+  color: #f59e0b;
+}
+
+.incident-icon.icon-slow-traffic {
+  color: #eab308;
+}
+
+.incident-icon.icon-heavy-traffic {
+  color: #ef4444;
+}
+
+.incident-icon.icon-accident {
+  color: #dc2626;
+}
+
+.incident-icon.icon-closure {
+  color: #7c2d12;
+}
+
+.incident-icon.icon-default {
+  color: var(--title-color);
+}
+
+.incident-description {
+  color: var(--text-color);
+  font-size: 0.85em;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+.incident-coordinates {
+  color: var(--text-color);
+  font-size: 0.75em;
+  font-family: "Courier New", monospace;
+  font-weight: 500;
+}
+
+/* Removed incidents-more since we show all incidents now */
+
+/* Dark mode adjustments */
+[data-theme="dark"] .event-item-formatted,
+[data-theme="dark"] .event-item-simple {
+  border-bottom-color: var(--header-border);
+}
+
+[data-theme="dark"] .incident-card {
+  background: var(--content-bg);
+  border-color: var(--incident-item-border);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .event-item-formatted {
+    padding: 12px;
+  }
+
+  .event-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .incident-card {
+    padding: 10px;
+  }
+
+  .incident-type,
+  .incident-severity {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .event-timestamp {
+    font-size: 0.8em;
+    padding: 3px 6px;
+  }
+
+  .event-location {
+    font-size: 0.9em;
+  }
+
+  .incidents-count {
+    font-size: 0.8em;
+    padding: 4px 10px;
+  }
+}
+
+/* Accessibility improvements */
+.incident-card:focus-within {
+  outline: 2px solid var(--title-color);
+  outline-offset: 2px;
+}
+
+.event-item-formatted:focus-within,
+.event-item-simple:focus-within {
+  background: var(--camera-item-hover-bg);
+}
+
+/* Animation for new events */
+@keyframes slideInEvent {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.event-item-formatted,
+.event-item-simple {
+  animation: slideInEvent 0.3s ease-out;
+}
