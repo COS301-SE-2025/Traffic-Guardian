@@ -1018,14 +1018,14 @@ test-ai-performance:
                   """Get performance thresholds adjusted for environment"""
                   if self.is_ci or self.is_constrained:
                       return {
-                          'single_frame_processing_ms': 1000,    # 1s vs 500ms local
-                          'hd_frame_processing_ms': 3000,        # 3s vs 1s local (no 4K in CI)
-                          'memory_growth_mb': 300,               # 300MB vs 100MB local
-                          'min_fps': 0.5,                        # 0.5 FPS vs 2.5 local
-                          'max_memory_usage_mb': 1000,           # 1GB vs 2GB local
+                          'single_frame_processing_ms': 1000,
+                          'hd_frame_processing_ms': 3000,
+                          'memory_growth_mb': 300,
+                          'min_fps': 0.5,
+                          'max_memory_usage_mb': 1000,
                           'concurrent_threads': min(2, self.cpu_cores),
-                          'test_frames': 20,                     # 20 vs 200 local
-                          'max_resolution': (1280, 720)         # HD vs 4K local
+                          'test_frames': 20,
+                          'max_resolution': (1280, 720)
                       }
                   else:
                       return {
@@ -1066,13 +1066,11 @@ test-ai-performance:
                   """Test single frame processing performance"""
                   print("\n--- Single Frame Processing Test ---")
                   
-                  # Create test image with CI-appropriate resolution
-                  height, width = 480, 640  # VGA resolution for CI
+                  height, width = 480, 640
                   test_image = np.random.randint(0, 255, (height, width, 3), dtype=np.uint8)
                   
                   start_time = time.time()
                   
-                  # Simulate AI processing pipeline
                   gray = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
                   blurred = cv2.GaussianBlur(gray, (5, 5), 0)
                   edges = cv2.Canny(blurred, 50, 150)
@@ -1088,7 +1086,7 @@ test-ai-performance:
                   }
                   
                   passed = processing_time_ms < self.thresholds['single_frame_processing_ms']
-                  print(f"Processing time: {processing_time_ms:.2f}ms (threshold: {self.thresholds['single_frame_processing_ms']}ms)")
+                  print(f"Processing time: {processing_time_ms:.2f}ms")
                   print(f"Contours detected: {len(contours)}")
                   
                   return passed
@@ -1098,14 +1096,13 @@ test-ai-performance:
                   print("\n--- Concurrent Processing Test ---")
                   
                   num_threads = self.thresholds['concurrent_threads']
-                  frames_per_thread = 5  # Reduced for CI
+                  frames_per_thread = 5
                   
                   def process_frames(thread_id):
                       frames_processed = 0
                       start_time = time.time()
                       
                       for i in range(frames_per_thread):
-                          # Create and process frame
                           frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
                           gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                           blurred = cv2.GaussianBlur(gray, (3, 3), 0)
@@ -1134,7 +1131,7 @@ test-ai-performance:
                   
                   passed = overall_fps >= self.thresholds['min_fps']
                   print(f"Threads: {num_threads}, Frames: {total_frames}")
-                  print(f"Overall FPS: {overall_fps:.2f} (threshold: {self.thresholds['min_fps']})")
+                  print(f"Overall FPS: {overall_fps:.2f}")
                   
                   return passed
 
@@ -1145,16 +1142,13 @@ test-ai-performance:
                   process = psutil.Process(os.getpid())
                   initial_memory_mb = process.memory_info().rss / (1024**2)
                   
-                  # Allocate memory gradually (CI-safe amounts)
                   test_arrays = []
                   max_arrays = 20 if self.is_constrained else 50
                   
                   for i in range(max_arrays):
-                      # Smaller arrays for CI
                       array_size = (100, 100, 3) if self.is_constrained else (200, 200, 3)
                       test_arrays.append(np.random.rand(*array_size))
                       
-                      # Check memory every 10 arrays
                       if i % 10 == 0:
                           current_memory_mb = process.memory_info().rss / (1024**2)
                           memory_growth = current_memory_mb - initial_memory_mb
@@ -1166,7 +1160,6 @@ test-ai-performance:
                   peak_memory_mb = process.memory_info().rss / (1024**2)
                   memory_growth_mb = peak_memory_mb - initial_memory_mb
                   
-                  # Cleanup
                   del test_arrays
                   gc.collect()
                   
@@ -1177,13 +1170,12 @@ test-ai-performance:
                       'peak_memory_mb': round(peak_memory_mb, 2),
                       'memory_growth_mb': round(memory_growth_mb, 2),
                       'final_memory_mb': round(final_memory_mb, 2),
-                      'arrays_created': len(test_arrays) if 'test_arrays' in locals() else max_arrays,
+                      'arrays_created': max_arrays,
                       'growth_threshold_mb': self.thresholds['memory_growth_mb']
                   }
                   
                   passed = memory_growth_mb <= self.thresholds['memory_growth_mb']
-                  print(f"Memory growth: {memory_growth_mb:.2f}MB (threshold: {self.thresholds['memory_growth_mb']}MB)")
-                  print(f"Arrays created: {self.results['memory']['arrays_created']}")
+                  print(f"Memory growth: {memory_growth_mb:.2f}MB")
                   
                   return passed
 
@@ -1201,7 +1193,6 @@ test-ai-performance:
                   for i in range(num_frames):
                       frame_start = time.time()
                       
-                      # Create and process frame
                       frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
                       gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                       edges = cv2.Canny(gray, 50, 150)
@@ -1209,12 +1200,10 @@ test-ai-performance:
                       frame_time = time.time() - frame_start
                       frame_times.append(frame_time)
                       
-                      # Sample memory every 5 frames
                       if i % 5 == 0:
                           memory_mb = process.memory_info().rss / (1024**2)
                           memory_samples.append(memory_mb)
                       
-                      # Progress indicator for CI logs
                       if (i + 1) % 5 == 0:
                           print(f"  Processed {i + 1}/{num_frames} frames")
                   
@@ -1231,7 +1220,7 @@ test-ai-performance:
                   }
                   
                   passed = avg_fps >= self.thresholds['min_fps']
-                  print(f"Average FPS: {avg_fps:.2f} (threshold: {self.thresholds['min_fps']})")
+                  print(f"Average FPS: {avg_fps:.2f}")
                   print(f"Memory growth during test: {memory_growth:.2f}MB")
                   
                   return passed
@@ -1267,7 +1256,6 @@ test-ai-performance:
                           test_results[test_name] = f'ERROR: {str(e)}'
                           print(f"Result: ERROR - {e}")
                   
-                  # Final summary
                   total_time = time.time() - self.start_time
                   success_rate = (passed / total) * 100
                   
@@ -1279,7 +1267,6 @@ test-ai-performance:
                   print(f"Total Runtime: {total_time:.2f}s")
                   print(f"Environment: {'GitHub Actions CI' if self.is_ci else 'Local Development'}")
                   
-                  # Save detailed report
                   self._save_report(test_results, passed, total, total_time, success_rate)
                   
                   return passed == total
@@ -1289,7 +1276,6 @@ test-ai-performance:
                   os.makedirs('test_results', exist_ok=True)
                   timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                   
-                  # Comprehensive report data
                   report_data = {
                       'metadata': {
                           'timestamp': datetime.now().isoformat(),
@@ -1313,12 +1299,10 @@ test-ai-performance:
                       'performance_data': self.results
                   }
                   
-                  # JSON report
                   json_file = f'test_results/ci_performance_report_{timestamp}.json'
                   with open(json_file, 'w') as f:
                       json.dump(report_data, f, indent=2)
                   
-                  # Human-readable text report
                   txt_file = f'test_results/ci_performance_report_{timestamp}.txt'
                   with open(txt_file, 'w') as f:
                       f.write("AI MODEL PERFORMANCE TEST REPORT\n")
@@ -1358,9 +1342,7 @@ test-ai-performance:
               
               print(f"\nTest suite completed: {'SUCCESS' if success else 'PARTIAL FAILURE'}")
               
-              # Exit with appropriate code for CI
-              # Don't fail CI for performance issues, just report them
-              exit(0)  # Always exit 0 to not break CI pipeline
+              exit(0)
           EOF
 
       - name: Run CI-optimized performance tests
@@ -1383,7 +1365,6 @@ test-ai-performance:
         run: |
           echo "## AI Performance Test Results" >> $GITHUB_STEP_SUMMARY
           
-          # Find the most recent report
           if ls test_results/ci_performance_report_*.json 1> /dev/null 2>&1; then
             latest_report=$(ls -t test_results/ci_performance_report_*.json | head -n1)
             
