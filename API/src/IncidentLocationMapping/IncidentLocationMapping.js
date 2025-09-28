@@ -26,7 +26,7 @@ class ILM{
             this.regions.set(this.regionNames[i], regionData);
         }
 
-        console.log('\x1b[32m%s\x1b[0m' ,`${this.regions.size} regions set`);
+        // Regions initialized
     }
 
     addNewIncident(location, incident){
@@ -37,7 +37,7 @@ class ILM{
 
     updateTraffic(trafficData){
         if (!trafficData || !Array.isArray(trafficData)) {
-            console.log('No traffic data provided to updateTraffic - skipping update');
+            // No traffic data provided - skipping update
             return;
         }
         
@@ -50,7 +50,7 @@ class ILM{
             region.incidents = trafficData[i].incidents;
             this.regions.set(trafficData[i].location, region);
         }
-        console.log(`${count} regions updated`);
+        // Regions updated
     }
 
 

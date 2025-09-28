@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Incidents.css';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -329,7 +329,9 @@ const Incidents: React.FC = () => {
     async (endpoint: string, options: RequestInit = {}) => {
       const apiKey = sessionStorage.getItem('apiKey');
       if (!apiKey) {
-        throw new Error('No API key found. Please log in.');
+        toast.error('Authentication required. Please log in.');
+        navigate('/account');
+        throw new Error('Authentication required');
       }
 
       const url = `${API_BASE_URL}${endpoint}`;
@@ -343,7 +345,9 @@ const Incidents: React.FC = () => {
         const response = await fetch(url, { ...options, headers });
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error('Unauthorized: Invalid or missing API key');
+            toast.error('Authentication failed. Please log in again.');
+            navigate('/account');
+            throw new Error('Authentication failed');
           }
           if (response.status === 404) {
             throw new Error(`Endpoint not found: ${url}`);
@@ -357,9 +361,12 @@ const Incidents: React.FC = () => {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (
           errorMessage.includes('Unauthorized') ||
-          errorMessage.includes('API key')
+          errorMessage.includes('API key') ||
+          errorMessage.includes('Authentication failed')
         ) {
+          toast.error('Authentication failed. Please log in again.');
           navigate('/account');
+          throw new Error('Authentication failed');
         }
         throw error;
       }
@@ -404,24 +411,19 @@ const Incidents: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      const apiKey = sessionStorage.getItem('apiKey');
-      if (!apiKey) {
-        toast.error('No API key found. Please log in.');
-        navigate('/account');
-        return;
-      }
-
+      // apiRequest handles authentication checks and toasts centrally
       const userResponse = await apiRequest('/api/auth/profile');
       setUserRole(userResponse.User_Role || 'user');
       await loadIncidents();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(`Error: ${errorMessage}`);
-      if (errorMessage.includes('Unauthorized')) {
-        navigate('/account');
+      // Only show toast for non-authentication errors since apiRequest handles auth
+      if (!errorMessage.includes('Authentication')) {
+        toast.error(`Error: ${errorMessage}`);
       }
+      // Navigation is handled by apiRequest for auth errors
     }
-  }, [navigate, apiRequest, loadIncidents]);
+  }, [apiRequest, loadIncidents]);
 
   useEffect(() => {
     fetchData();
@@ -539,7 +541,7 @@ const Incidents: React.FC = () => {
         return rest;
       });
 
-      toast.success('Status updated successfully');
+      toast.success('Status updated successfully', { autoClose: 4000 });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error(`Error: ${errorMessage}`);
@@ -562,7 +564,7 @@ const Incidents: React.FC = () => {
           break;
         case 'edit':
           if (userRole !== 'admin') {
-            toast.error('Only administrators can edit incidents');
+            // Access denied - handled by UI state
             return;
           }
           const editIncident = incidents.find(inc => inc.id === incidentId);
@@ -682,7 +684,7 @@ const Incidents: React.FC = () => {
     }
 
     if (!validateEditForm()) {
-      toast.error('Please correct the errors in the form');
+      // Form errors are shown inline - no toast needed
       return;
     }
 
@@ -712,24 +714,24 @@ const Incidents: React.FC = () => {
         prev.map(inc =>
           inc.id === editingIncident.id
             ? {
-                ...inc,
-                date: editForm.Incidents_DateTime,
-                location:
+              ...inc,
+              date: editForm.Incidents_DateTime,
+              location:
                   editForm.Incidents_Latitude && editForm.Incidents_Longitude
                     ? `Lat: ${editForm.Incidents_Latitude}, Lng: ${editForm.Incidents_Longitude}`
                     : 'Not Available',
-                severity: editForm.Incident_Severity,
-                status: editForm.Incident_Status,
-                description: editForm.Incident_Description || undefined,
-                updatedAt: new Date().toISOString(),
-              }
+              severity: editForm.Incident_Severity,
+              status: editForm.Incident_Status,
+              description: editForm.Incident_Description || undefined,
+              updatedAt: new Date().toISOString(),
+            }
             : inc,
         ),
       );
 
       setShowEditModal(false);
       setEditingIncident(null);
-      toast.success('Incident updated successfully!');
+      toast.success('Incident updated successfully!', { autoClose: 4000 });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error(`Failed to update incident: ${errorMessage}`);
@@ -742,7 +744,7 @@ const Incidents: React.FC = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Please correct the errors in the form');
+      // Form errors are shown inline - no toast needed
       return;
     }
 
@@ -855,7 +857,7 @@ const Incidents: React.FC = () => {
     // Get timezone abbreviation (PST/PDT)
     const timeZone = date.toLocaleDateString('en-US', {
       timeZone: 'America/Los_Angeles',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).split(', ')[1];
 
     return `${dateTimeString} (${timeZone})`;
@@ -1542,14 +1544,14 @@ const Incidents: React.FC = () => {
                                 Incidents_Longitude:
                                   position.coords.longitude.toString(),
                               }));
-                              toast.success('Current location captured');
+                              toast.success('Current location captured', { autoClose: 3000 });
                             },
                             _error => {
-                              toast.error('Unable to get current location');
+                              // Location error handled by form state
                             },
                           );
                         } else {
-                          toast.error('Geolocation not supported by browser');
+                          // Geolocation error handled by form state
                         }
                       }}
                     >
@@ -1686,7 +1688,7 @@ const Incidents: React.FC = () => {
                             window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
                           }
                         } else {
-                          toast.info('Location coordinates not available for mapping');
+                          toast.info('Location coordinates not available for mapping', { autoClose: 3000 });
                         }
                       }}
                     >
@@ -1697,9 +1699,9 @@ const Incidents: React.FC = () => {
                       onClick={() => {
                         const incidentText = `Incident #${selectedIncident.id} - ${selectedIncident.type} at ${selectedIncident.location} (${getSeverityDisplay(selectedIncident.severity)} severity, ${getStatusDisplay(selectedIncident.status)} status)`;
                         navigator.clipboard.writeText(incidentText).then(() => {
-                          toast.success('Incident details copied to clipboard');
+                          toast.success('Incident details copied to clipboard', { autoClose: 3000 });
                         }).catch(() => {
-                          toast.error('Failed to copy to clipboard');
+                          toast.error('Failed to copy to clipboard', { autoClose: 3000 });
                         });
                       }}
                     >
@@ -1915,14 +1917,14 @@ const Incidents: React.FC = () => {
                                 Incidents_Longitude:
                                   position.coords.longitude.toString(),
                               }));
-                              toast.success('Current location captured');
+                              toast.success('Current location captured', { autoClose: 3000 });
                             },
                             _error => {
-                              toast.error('Unable to get current location');
+                              // Location error handled by form state
                             },
                           );
                         } else {
-                          toast.error('Geolocation not supported by browser');
+                          // Geolocation error handled by form state
                         }
                       }}
                     >
@@ -1964,18 +1966,6 @@ const Incidents: React.FC = () => {
         </div>
       )}
 
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
     </div>
   );
 };

@@ -70,11 +70,11 @@ class CacheService {
     const value = this.caches[cacheType].get(key);
     if (value !== undefined) {
       this.stats.hits++;
-      console.log(`Cache HIT: ${cacheType}:${key}`);
+      // Cache hit
       return value;
     } else {
       this.stats.misses++;
-      console.log(`Cache MISS: ${cacheType}:${key}`);
+      // Cache miss
       return null;
     }
   }
@@ -89,7 +89,7 @@ class CacheService {
       : this.caches[cacheType].set(key, value);
     
     if (success) {
-      console.log(`Cache SET: ${cacheType}:${key} (TTL: ${ttl || 'default'})`);
+      // Cache set
     }
     
     return success;
@@ -110,7 +110,7 @@ class CacheService {
     }
     
     this.caches[cacheType].flushAll();
-    console.log(`Cache FLUSHED: ${cacheType}`);
+    // Cache flushed
   }
 
   // Flush all caches
@@ -118,7 +118,7 @@ class CacheService {
     Object.keys(this.caches).forEach(cacheType => {
       this.caches[cacheType].flushAll();
     });
-    console.log('All caches FLUSHED');
+    // All caches flushed
   }
 
   // Get cache statistics
@@ -191,9 +191,9 @@ class CacheService {
   // Cache warming (preload frequently accessed data)
   async warmCache() {
     try {
-      console.log('Starting cache warming...');
+      // Starting cache warming
       // This could be extended to preload frequently accessed data
-      console.log('Cache warming completed');
+      // Cache warming completed
     } catch (error) {
       console.error('Cache warming failed:', error);
     }

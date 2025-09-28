@@ -69,6 +69,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/cameras', rateLimiters.camera, cameraRoutes);
 app.use('/api/system', rateLimiters.internal, systemRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/download', uploadRoutes);
 
 // 404 handler
 app.use((req, res, next) => {

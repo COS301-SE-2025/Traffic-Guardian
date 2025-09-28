@@ -373,14 +373,9 @@ export class LiveFeedDatabaseIntegration {
   // Safe camera sync - won't break UI if it fails
   async syncCamerasWithDatabase(cameraFeeds: any[]): Promise<void> {
     try {
-      const result = await this.cameraService.smartSyncCameras(cameraFeeds);
+      const _result = await this.cameraService.smartSyncCameras(cameraFeeds);
 
-      // Only log successful syncs to reduce console noise
-      if (result.success && result.synced > 0) {
-        console.log(`✓ Camera sync: ${result.message}`);
-      } else if (!result.success) {
-        console.warn(`⚠ Camera sync: ${result.message}`);
-      }
+      // Sync completed silently
 
       // Never throw errors - UI should continue working
     } catch (error) {

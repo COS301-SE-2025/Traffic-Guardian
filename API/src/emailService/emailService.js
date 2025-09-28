@@ -7,7 +7,7 @@ path: require('path').join(__dirname, '../../.env')
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "aryanmohanlall@gmail.com",
+    user: process.env.EMAIL_ADDRESS,
     pass: process.env.EMAIL_PASSWORD,
   },
 });
@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 async function sendEmail(to, subject, text, html, attachmentPath) {
   try {
     const info = await transporter.sendMail({
-      from: '"Traffic Guardian Report" <aryanmohanlall@gmail.com>',
+      from: `"Traffic Guardian Report" <${process.env.EMAIL_ADDRESS}>`,
       to,
       subject,
       text,
@@ -40,7 +40,7 @@ async function sendEmail(to, subject, text, html, attachmentPath) {
 }
 
 
-//sendEmail("aryanmohanlall@gmail.com", "Traffic Gaurdian Report", "Kindly find below your incident report summary");
+//sendEmail(process.env.EMAIL_ADDRESS, "Traffic Gaurdian Report", "Kindly find below your incident report summary");
 
 module.exports = {
     sendEmail

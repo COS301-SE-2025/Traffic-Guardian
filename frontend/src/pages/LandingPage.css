@@ -56,21 +56,26 @@
 .landing-page {
   width: 100%;
   min-height: 100vh;
-  background-color: #121212;
-  color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  background-color: #121212 !important;
+  color: #fff !important;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Fira Sans",
+    "Droid Sans",
+    "Helvetica Neue",
+    sans-serif;
 }
 
 .landing-page * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-/* Ensure landing page is completely isolated from global light/dark mode styles */
-.landing-page {
-  background-color: #121212 !important;
-  color: #fff !important;
 }
 
 /* Reset any global color inheritance that might be affecting text elements */

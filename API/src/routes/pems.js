@@ -17,14 +17,14 @@ router.get('/district/:districtId', async (req, res) => {
       });
     }
 
-    console.log(`Fetching PEMS data for district ${districtId}...`);
+    // Fetching PEMS data
     const pemsData = await pemsService.getTrafficPerformanceData(districtId);
     
     if (!pemsData) {
       return res.status(500).json({ error: 'Failed to fetch PEMS data' });
     }
 
-    console.log(`Successfully fetched PEMS data for district ${districtId}: ${pemsData.detectors?.length || 0} detectors`);
+    // PEMS data fetched
     res.status(200).json(pemsData);
   } catch (error) {
     console.error('PEMS district data error:', error);
@@ -38,7 +38,7 @@ router.get('/district/:districtId', async (req, res) => {
 // Get high-risk areas across all districts
 router.get('/high-risk-areas', async (req, res) => {
   try {
-    console.log('Fetching high-risk areas from all districts...');
+    // High-risk areas processed
     const allDistrictsData = await pemsService.getAllDistrictsData();
     
     // Aggregate high-risk areas from all districts
@@ -193,7 +193,7 @@ router.get('/dashboard-summary', async (req, res) => {
       recommendations: generateDashboardRecommendations(totalHighRisk, activeAlerts.length)
     };
 
-    console.log(`Dashboard summary generated: ${totalDetectors} detectors, ${totalHighRisk} high-risk areas`);
+    // High-risk areas processed
     res.status(200).json(dashboardSummary);
   } catch (error) {
     console.error('Dashboard summary error:', error);

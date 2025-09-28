@@ -20,8 +20,12 @@ import 'cypress-mochawesome-reporter/register'; //added import
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
 
-import { mount } from 'cypress/react18'
+import { mount } from '@cypress/react'
 import 'cypress-mochawesome-reporter/register';
+import '@cypress/sinon-chai';
+
+// Import test utilities
+// import '../../../src/test-utils/componentTestUtils';
 
 // Augment the Cypress namespace to include type definitions for
 // your custom command.
@@ -36,6 +40,20 @@ declare global {
 }
 
 Cypress.Commands.add('mount', mount)
+
+// Global setup for all component tests
+beforeEach(() => {
+  // Reset any global state before each test
+  cy.window().then((win: any) => {
+    // Clear any existing mocks
+    if (win.ApiService) {
+      delete win.ApiService;
+    }
+    if (win.dataPrefetchService) {
+      delete win.dataPrefetchService;
+    }
+  });
+});
 
 // Example use:
 // cy.mount(<MyComponent />)

@@ -47,7 +47,6 @@ class PEMSService {
   // PEMS authentication - disabled since no public API exists
   async authenticate() {
     // PEMS doesn't offer a public API, so we'll always use enhanced simulation
-    console.log('🚫 PEMS API not publicly available - using enhanced traffic simulation based on real patterns');
     this.isAuthenticated = false;
     return false;
   }
@@ -68,7 +67,6 @@ class PEMSService {
         }
       }
 
-      console.log(`📊 Attempting to fetch real PEMS data for district ${district}...`);
 
       // Access PEMS clearinghouse - try station status page
       const stationResponse = await axios.get(`${this.baseURL}/?dnode=Clearinghouse&type=station_status&district_id=${district}`, {
@@ -83,7 +81,6 @@ class PEMSService {
       if (stationResponse.status === 200 && stationResponse.data) {
         const parsedData = this.parsePEMSStationData(stationResponse.data, district);
         if (parsedData) {
-          console.log(`✅ Successfully parsed real PEMS data for district ${district}`);
           return parsedData;
         }
       }
@@ -98,7 +95,6 @@ class PEMSService {
       });
 
       if (altResponse.status === 200) {
-        console.log('📊 PEMS clearinghouse accessed, but data parsing needs refinement');
         // For now, return enhanced simulation with "real data attempted" flag
         const enhancedData = this.generateSimulatedPEMSData(district);
         enhancedData.source = 'Enhanced PEMS Simulation (Real Login Attempted)';
@@ -109,7 +105,6 @@ class PEMSService {
       return null;
 
     } catch (error) {
-      console.log(`🚫 Real PEMS data fetch failed for district ${district}:`, error.message);
       return null;
     }
   }
@@ -620,7 +615,6 @@ class PEMSService {
   // Clear cache (useful for testing or manual refresh)
   clearCache() {
     this.dataCache.clear();
-    console.log('PEMS data cache cleared');
   }
 }
 

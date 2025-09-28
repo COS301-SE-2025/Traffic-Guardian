@@ -50,7 +50,7 @@ var regions = [
         }
       });
 
-      console.log(`Weather data: ${uniqueWeatherData.length} unique locations`);
+      // Weather data retrieved
       return uniqueWeatherData;
     }
 

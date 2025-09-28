@@ -154,11 +154,9 @@ test('updateUserIncidents should not modify user coordinates', () => {
     expect(user.coordinates).toEqual({ latitude: '-26.1000', longitude: '28.2000' });
 });
 
-test('initRegions logs the correct number of regions', () => {
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+test('initRegions initializes the correct number of regions', () => {
     const tempIlm = new ILM();
-    expect(consoleSpy).toHaveBeenCalledWith('\x1b[32m%s\x1b[0m', `${tempIlm.regions.size} regions set`);
-    consoleSpy.mockRestore();
+    expect(tempIlm.regions.size).toBe(11);
 });
 
 test('removeUser does not throw for unknown users', () => {

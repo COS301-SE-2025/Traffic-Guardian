@@ -140,8 +140,8 @@ const LaneClosureAnalytics: React.FC<AnalyticsProps> = ({ className = '' }) => {
         const maxClosed = severity === 'high' ?
           Math.ceil(lanesExisting * 0.8) :
           severity === 'medium' ?
-          Math.ceil(lanesExisting * 0.5) :
-          Math.ceil(lanesExisting * 0.3);
+            Math.ceil(lanesExisting * 0.5) :
+            Math.ceil(lanesExisting * 0.3);
 
         const lanesClosed = Math.max(1, Math.floor(Math.random() * maxClosed) + 1);
 
@@ -342,7 +342,7 @@ const LaneClosureAnalytics: React.FC<AnalyticsProps> = ({ className = '' }) => {
   if (loading) {
     return (
       <div className={`lane-closure-analytics ${className} loading`}>
-        <div className="loading-spinner"></div>
+        <div className="loading-spinner" />
         <p>Loading lane closure analytics...</p>
       </div>
     );
@@ -543,7 +543,7 @@ const LaneClosureAnalytics: React.FC<AnalyticsProps> = ({ className = '' }) => {
                     }}
                     formatter={(value, name) => [
                       name === 'avgImpact' ? `${typeof value === 'number' ? value.toFixed(1) : value}%` : value,
-                      name === 'avgImpact' ? 'Avg Impact' : 'Count'
+                      name === 'avgImpact' ? 'Avg Impact' : 'Count',
                     ]}
                   />
                   <Bar dataKey="avgImpact" fill={colors.warning} />

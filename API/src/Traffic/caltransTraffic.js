@@ -10,10 +10,10 @@ const API_511_BASE_URL = 'http://api.511.org';
 // Simple in-memory cache to prevent rate limiting
 const apiCache = new Map();
 const CACHE_DURATION = {
-  TRAFFIC_EVENTS: 5 * 60 * 1000, // 5 minutes for traffic events
-  WORK_ZONES: 15 * 60 * 1000,    // 15 minutes for work zones
-  PEMS_DATA: 10 * 60 * 1000,     // 10 minutes for PEMS data
-  OSM_DATA: 30 * 60 * 1000       // 30 minutes for OSM data
+  TRAFFIC_EVENTS: 10 * 60 * 1000, // 10 minutes for traffic events (increased from 5)
+  WORK_ZONES: 30 * 60 * 1000,     // 30 minutes for work zones (increased from 15)
+  PEMS_DATA: 20 * 60 * 1000,      // 20 minutes for PEMS data (increased from 10)
+  OSM_DATA: 60 * 60 * 1000        // 60 minutes for OSM data (increased from 30)
 };
 
 // Cache helper functions
@@ -43,10 +43,10 @@ const failureCount = new Map();
 const circuitBreakers = new Map();
 
 const THROTTLE_CONFIG = {
-  MAX_CONCURRENT: 2,           // Max concurrent requests per API
-  REQUEST_DELAY: 1000,         // Delay between requests (1 second)
-  FAILURE_THRESHOLD: 5,        // Circuit breaker failure threshold
-  CIRCUIT_TIMEOUT: 300000      // Circuit breaker timeout (5 minutes)
+  MAX_CONCURRENT: 1,           // Max concurrent requests per API (reduced from 2)
+  REQUEST_DELAY: 3000,         // Delay between requests (3 seconds, increased from 1)
+  FAILURE_THRESHOLD: 3,        // Circuit breaker failure threshold (reduced from 5)
+  CIRCUIT_TIMEOUT: 600000      // Circuit breaker timeout (10 minutes, increased from 5)
 };
 
 // Request throttling function
@@ -57,7 +57,7 @@ async function throttledRequest(apiName, requestFunction) {
   // Check circuit breaker
   const circuitBreaker = circuitBreakers.get(apiName);
   if (circuitBreaker && Date.now() - circuitBreaker.timestamp < THROTTLE_CONFIG.CIRCUIT_TIMEOUT) {
-    console.log(`⚡ Circuit breaker open for ${apiName}, using fallback`);
+    // Circuit breaker open - using fallback
     throw new Error(`Circuit breaker open for ${apiName}`);
   }
 
@@ -75,7 +75,7 @@ async function throttledRequest(apiName, requestFunction) {
     const executeRequest = async () => {
       try {
         queue.running++;
-        console.log(`🚀 Executing ${apiName} request (${queue.running} running)`);
+        // Executing API request
 
         const result = await requestFunction();
 
@@ -83,7 +83,7 @@ async function throttledRequest(apiName, requestFunction) {
         failureCount.set(failureKey, 0);
         if (circuitBreakers.has(apiName)) {
           circuitBreakers.delete(apiName);
-          console.log(`✅ Circuit breaker reset for ${apiName}`);
+          // Circuit breaker reset
         }
 
         resolve(result);
@@ -117,7 +117,7 @@ async function throttledRequest(apiName, requestFunction) {
       executeRequest();
     } else {
       // Add to queue
-      console.log(`⏳ Queueing ${apiName} request (${queue.queue.length + 1} in queue)`);
+      // Queueing API request
       queue.queue.push(executeRequest);
     }
   });
@@ -151,19 +151,19 @@ async function getPeMSTrafficData() {
       return cached;
     }
 
-    console.log('📊 Generating enhanced PEMS traffic data based on real patterns...');
+    // Generating enhanced PEMS traffic data...
     const trafficData = [];
 
     // Try to get real PEMS-style data from California Open Data
     try {
       const realPemsData = await fetchCaliforniaOpenData();
       if (realPemsData && realPemsData.length > 0) {
-        console.log(`✅ Retrieved ${realPemsData.length} real traffic records from California Open Data`);
+        // Retrieved real traffic records from California Open Data
         setCacheItem(cacheKey, realPemsData, CACHE_DURATION.PEMS_DATA);
         return realPemsData;
       }
     } catch (openDataError) {
-      console.log('California Open Data unavailable, using enhanced simulation...');
+      // California Open Data unavailable, using simulation
     }
 
     // Enhanced simulation based on real PEMS detector patterns
@@ -210,7 +210,7 @@ async function getPeMSTrafficData() {
       }
     });
 
-    console.log(`📊 Generated ${trafficData.length} PEMS-style traffic conditions`);
+    // Generated PEMS-style traffic conditions
     setCacheItem(cacheKey, trafficData, CACHE_DURATION.PEMS_DATA);
     return trafficData;
   } catch (error) {
@@ -371,7 +371,7 @@ async function get511TrafficEvents() {
         }
       }));
 
-      console.log(`✅ 511 API: Found ${incidents.length} Bay Area traffic events`);
+      // 511 API: Found Bay Area traffic events
       setCacheItem(cacheKey, incidents, CACHE_DURATION.TRAFFIC_EVENTS);
       return incidents;
     }
@@ -435,7 +435,7 @@ async function get511WorkZones() {
         }
       }));
 
-      console.log(`✅ 511 WZDx: Found ${workZones.length} work zones`);
+      // 511 WZDx: Found work zones
       setCacheItem(cacheKey, workZones, CACHE_DURATION.WORK_ZONES);
       return workZones;
     }
@@ -573,7 +573,7 @@ async function getOSMTrafficData() {
     // Check cache first to reduce API calls
     const now = Date.now();
     if (osmCache.data && (now - osmCache.timestamp) < OSM_CACHE_DURATION) {
-      console.log('📊 Using cached OSM data to prevent rate limiting...');
+      // Using cached OSM data
       return osmCache.data;
     }
 
@@ -615,7 +615,7 @@ async function getOSMTrafficData() {
 
     // Update cache
     osmCache = { data: incidents, timestamp: now };
-    console.log(`📊 OSM data fetched: ${incidents.length} construction zones`);
+    // OSM data fetched
     return incidents;
 
   } catch (error) {
@@ -623,12 +623,12 @@ async function getOSMTrafficData() {
 
     // Return cached data if available, otherwise generate demo data
     if (osmCache.data) {
-      console.log('📊 OSM API failed, using cached data...');
+      // OSM API failed, using cached data
       return osmCache.data;
     }
 
     // Generate demo OSM-style incidents
-    console.log('📊 Generating demo OSM traffic data...');
+    // Generating demo OSM traffic data
     return generateDemoOSMData();
   }
 }
@@ -683,28 +683,28 @@ async function getEnhancedCaliforniaTraffic() {
     return cached;
   }
 
-  console.log('🚗 Fetching enhanced California traffic data...');
+  // Fetching enhanced California traffic data
 
   const trafficRes = [];
   
   try {
     // Get 511 Bay Area traffic events (real API with token)
     const traffic511Events = await get511TrafficEvents();
-    console.log(`📊 511 Traffic Events: ${traffic511Events.length}`);
+    // 511 Traffic Events loaded
 
     // Get 511 work zones (real API with token)
     const traffic511WorkZones = await get511WorkZones();
-    console.log(`📊 511 Work Zones: ${traffic511WorkZones.length}`);
+    // 511 Work Zones loaded
 
     // CHP incidents removed - API consistently fails and timeouts
 
     // Get PeMS traffic flow data (demo data since no public API)
     const pemsIncidents = await getPeMSTrafficData();
-    console.log(`📊 PeMS traffic data: ${pemsIncidents.length}`);
+    // PeMS traffic data loaded
 
     // Get OSM traffic data (cached with fallback)
     const osmIncidents = await getOSMTrafficData();
-    console.log(`📊 OSM incidents: ${osmIncidents.length}`);
+    // OSM incidents loaded
     
     // Distribute incidents by region, prioritizing 511 data for Bay Area
     for (const region of californiaRegions) {
