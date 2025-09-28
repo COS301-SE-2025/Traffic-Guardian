@@ -50,11 +50,8 @@ const incidentModel = {  async createIncident(incidentData) {
    }
     
     const { rows } = await db.query(query, values);
-<<<<<<< HEAD
-=======
     const dumb = [emailValues];
     reportGen.generatePDF(dumb, User_Email);
->>>>>>> Dev
     return rows[0];
   },  async getIncidentById(Incidents_ID) {
     const query = 'SELECT * FROM "Incidents" WHERE "Incidents_ID" = $1';
