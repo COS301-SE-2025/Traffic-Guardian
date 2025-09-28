@@ -3,27 +3,11 @@ const path = require("path");
 const fs = require("fs");
 const emailSender = require("../emailService/emailService");
 
-async function generateAndSend(){
-  const pdfPATH = await generatePDF(incidents, User_Email);
+async function generateAndSend(incidents, userEmail){
+  const pdfPATH = await generatePDF(incidents, userEmail);
   console.log(pdfPATH);
-  await emailSender.sendEmail("aryanmohanlall@gmail.com", "Traffic Gaurdian Report", "", incidents[0].Incident_Reporter, pdfPATH);
 }
 
-//testing
-const incidents = [
-  {
-    Incidents_DateTime: "2025-09-15 14:00",
-    Incidents_Longitude: 28.0473,
-    Incidents_Latitude: -26.2041,
-    Incident_Severity: "High",
-    Incident_Status: "Open",
-    Incident_Reporter: "John Doe",
-    Incident_CameraID: "CAM123",
-    Incident_Description: "Minor collision"
-  }
-];
-
-//generatePDF(incidents, "aryanmohanlall@gmail.com");
 
 
 //sendEmail(to, subject, text, html, reportName, reportFile)
@@ -93,8 +77,26 @@ async function generatePDF(incidents = [], User_Email) {
   await browser.close();
 
   console.log("Report generated:", pdfPath);
-  //sendEmail(to, subject, text, html, reportName, reportFile)
-  await emailSender.sendEmail(User_Email, "Traffic Gaurdian Report", "", incidents[0].Incident_Reporter, pdfPath);
+  //sendEmail(to, subject, text, html, attachmentPath)
+  const recipientEmail = User_Email || process.env.EMAIL_ADDRESS;
+
+  if (!recipientEmail) {
+    console.error("No recipient email address available");
+    return pdfPath;
+  }
+
+  try {
+    await emailSender.sendEmail(
+      recipientEmail,
+      "Traffic Guardian Report",
+      "Please find your incident report attached.",
+      `<p>Dear ${incidents[0]?.Incident_Reporter || 'User'},</p><p>Please find your Traffic Guardian incident report attached.</p>`,
+      pdfPath
+    );
+    console.log("Email sent successfully to:", recipientEmail);
+  } catch (error) {
+    console.error("Failed to send email:", error.message);
+  }
 
   return pdfPath;
 }
