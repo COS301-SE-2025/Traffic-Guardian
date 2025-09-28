@@ -9,11 +9,16 @@ import { globalStyles }from "../styles/globalStyles"
 import { useTraffic } from "../services/trafficContext";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { calculateDistance } from "../services/distanceCalculator";
+import Navbar from "../components/navbar";
+import { useTheme } from '../services/themeContext';
+import { EnhancedMap } from './EnhancedMap';
+
 
 export default function Index() {
   const router = useRouter();
   const { socket } = useSocket();
   const { user, setUser } = useSession();
+  const { currentColors, isDark } = useTheme();
 
 const { 
   traffic, setTraffic, 
@@ -85,14 +90,15 @@ const {
 
 
   return (
-    <SafeAreaView style={{flex : 1, backgroundColor : 'rgba(41, 41, 41)'}}>
+    <SafeAreaView style={{flex : 1, backgroundColor : 'rgb(41, 41, 41)'}}>
+      <Navbar>
 
       <View style={{flex : 1}}>
         <View style={globalStyles.header}>
           <Text style={globalStyles.headerTitle}>Welcome!{user?.user.User_Username ?? ""}</Text>
           <Text style={globalStyles.headerSubtitle}>Traffic and Incident Alerts</Text>
         </View>
-
+        </View>
 
 {coords && (
   <View style={{ height: 300 }}>
@@ -168,46 +174,13 @@ const {
     })}
 </ScrollView>
 
+        <View style={{ flex: 1 }}>
+        <EnhancedMap traffic={undefined}  />
       </View>
+      
 
-      <View style={globalStyles.navbar}>
-        {!user && (
-        <TouchableOpacity onPress={() => router.push("/login")}>
-          <Text style={globalStyles.navText}>Login</Text>
-        </TouchableOpacity>
-        )}
+    </Navbar>
 
-        {//user && (
-          <TouchableOpacity onPress={() => router.push("/report")}>
-            <Text style={globalStyles.navText}>Report</Text>
-          </TouchableOpacity>
-        /* ) */}
-
-        {user && (
-          <TouchableOpacity
-            onPress={() => {
-              setUser(null);
-              router.push("/");
-            }}
-          >
-            <Text style={globalStyles.navText}>Logout</Text>
-          </TouchableOpacity>
-        )}
-        {!user && (
-        <TouchableOpacity onPress={() => router.push("/register")}>
-          <Text style={globalStyles.navText}>Register</Text>
-        </TouchableOpacity>
-        )}
-
-        <TouchableOpacity onPress={() => router.push("/analytics")}>
-          <Text style={globalStyles.navText}>Analytics</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity onPress={() => router.push("/EmergencyContacts")}>
-          <Text style={globalStyles.navText}>Analytics</Text>
-        </TouchableOpacity>
-
-      </View>
     </SafeAreaView>
   );
 }

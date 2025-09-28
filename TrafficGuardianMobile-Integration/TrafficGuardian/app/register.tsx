@@ -5,7 +5,8 @@ import { registerUser } from "../services/usersApi";
 import React from "react";
 import { globalStyles } from "../styles/globalStyles";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import Navbar from "../components/navbar";
+import { useTheme } from '../services/themeContext';
 
 export default function Register() {
   const router = useRouter();
@@ -37,6 +38,7 @@ export default function Register() {
           resizeMode="cover"
           >
     <SafeAreaView style={{flex : 1, backgroundColor: "rgba(41,41,41,0.6)"}}>
+      <Navbar>
 <SafeAreaView style={{ flex : 1}}>
   <ScrollView
     contentContainerStyle={{
@@ -174,17 +176,7 @@ export default function Register() {
     </View>
   </ScrollView>
 </SafeAreaView>
-
-<View style={globalStyles.navbar}>
-  <TouchableOpacity onPress={() => router.push("/")}>
-    <Text style={globalStyles.navText}>Home</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity onPress={() => router.push("/login")}>
-    <Text style={globalStyles.navText}>Login</Text>
-  </TouchableOpacity>
-</View>
-
+</Navbar>
     </SafeAreaView>
     </ImageBackground>
   );

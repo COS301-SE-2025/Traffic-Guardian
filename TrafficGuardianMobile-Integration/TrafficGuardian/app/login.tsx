@@ -7,6 +7,8 @@ import { useSession } from "../services/sessionContext";
 import { globalStyles } from "../styles/globalStyles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Background } from "@react-navigation/elements";
+import Navbar from "../components/navbar";
+import { useTheme } from '../services/themeContext';
 
 export default function Register() {
   const router = useRouter();
@@ -39,13 +41,7 @@ export default function Register() {
       resizeMode="cover"
       >
     <SafeAreaView style={{flex : 1, backgroundColor: "rgba(41,41,41,0.6)"}}>
-
-              <Text>lonwabo@example.com</Text>
-              <Text>StrongPa$$20</Text>
-
-      {/* <View style={globalStyles.header}>
-        <Text style={globalStyles.headerTitle}>Login</Text>  
-      </View> */}
+      <Navbar>
 
 <View style={{flex : 1, justifyContent : 'center', alignItems : 'center'}}>
 
@@ -147,18 +143,8 @@ export default function Register() {
   </View>
 
 </View>
-
+</Navbar>
     </SafeAreaView>
-
-<View style={globalStyles.navbar}>
-  <TouchableOpacity onPress={() => router.push("/")}>
-    <Text style={globalStyles.navText}>Home</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity onPress={() => router.push("/register")}>
-    <Text style={globalStyles.navText}>Register</Text>
-  </TouchableOpacity>
-</View>
 
     </ImageBackground>
   );
