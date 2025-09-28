@@ -14,6 +14,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [CellPhone, setCellPhone] = useState("");
+  const [userfullname, setuserfullname] = useState("");
 
   const handleRegister = async () => {
     try {
@@ -21,7 +22,7 @@ export default function Register() {
       throw new Error("All fields are required");
     }
 
-      const result = await registerUser(username, password, email, CellPhone);
+      const result = await registerUser(username, email, password, CellPhone, userfullname);
       console.log("Success:", result);
 
       Alert.alert("Success", "Account created!");
@@ -76,6 +77,23 @@ export default function Register() {
       </Text>
 
       {/* Input boxes */}
+      <TextInput
+        style={{
+          width: "100%",
+          marginBottom: 15,
+          backgroundColor: "#f5f5f5",
+          borderRadius: 12,
+          padding: 12,
+          borderWidth: 1,
+          borderColor: "orange",
+          color: "rgba(41,41,41,1)",
+        }}
+        placeholder="Name Surname"
+        placeholderTextColor="rgba(41,41,41,0.6)"
+        value={userfullname}
+        onChangeText={setuserfullname}
+      />
+
       <TextInput
         style={{
           width: "100%",
