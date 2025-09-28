@@ -1,16 +1,18 @@
 // Frontend API Service for Analytics with Caching
 import { cacheService } from './CacheService';
 
-const API_BASE_URL = process.env.REACT_APP_SERVER_URL! + '/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL! + '/api';
 
 export interface DatabaseIncident {
-  Incident_ID: number;
-  Incident_Date: string;
-  Incident_Location: string;
-  Incident_CarID?: number;
+  Incidents_ID: number;
+  Incidents_DateTime: string;
+  Incidents_Longitude: number;
+  Incidents_Latitude: number;
   Incident_Severity: string;
   Incident_Status: string;
-  Incident_Reporter?: number;
+  Incident_Reporter: string;
+  Incident_CameraID: number;
+  Incident_Description: string;
 }
 
 // Archive interfaces
@@ -340,17 +342,17 @@ class ApiService {
       if (archive.Archive_SearchText) {
         const searchText = archive.Archive_SearchText.toLowerCase();
         const locations = [
-          'san francisco',
-          'san jose',
-          'los angeles',
-          'san diego',
-          'sacramento',
-          'oakland',
-          'palo alto',
-          'pasadena',
-          'long beach',
-          'thousand oaks',
-          'torrance',
+          'rosebank',
+          'sandton',
+          'midrand',
+          'centurion',
+          'pretoria',
+          'soweto',
+          'randburg',
+          'boksburg',
+          'vereeniging',
+          'alberton',
+          'hatfield',
         ];
 
         for (const location of locations) {
@@ -471,7 +473,7 @@ class ApiService {
 
   // Get current user info
   static getCurrentUser(): any {
-    const userStr = sessionStorage.getItem('user');
+    const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   }
 
@@ -504,8 +506,8 @@ class ApiService {
 
       // Store authentication data
       if (result.apiKey) {
-        sessionStorage.setItem('apiKey', result.apiKey);
-        sessionStorage.setItem('user', JSON.stringify(result.user));
+        localStorage.setItem('apiKey', result.apiKey);
+        localStorage.setItem('user', JSON.stringify(result.user));
       }
 
       return result;
@@ -517,6 +519,10 @@ class ApiService {
 
   // Logout function
   static logout(): void {
+<<<<<<< HEAD
+    localStorage.removeItem('apiKey');
+    localStorage.removeItem('user');
+=======
     sessionStorage.removeItem('apiKey');
     sessionStorage.removeItem('user');
   }
@@ -599,6 +605,7 @@ class ApiService {
       console.error(`Error fetching PEMS district ${district} data:`, error);
       return null;
     }
+>>>>>>> Dev
   }
 
   // Public API methods (no authentication required)
@@ -747,7 +754,6 @@ class ApiService {
     try {
       // Use the public endpoint for traffic data
       const url = `${API_BASE_URL}/cameras/public/traffic-data`;
-      console.log('🔗 Fetching public traffic data from:', url);
 
       const response = await fetch(url, {
         headers: {
@@ -755,19 +761,12 @@ class ApiService {
         },
       });
 
-      console.log('📡 Response status:', response.status);
-
       if (!response.ok) {
         console.error(`❌ Public API request failed: ${response.status} ${response.statusText}`);
         return null;
       }
 
       const result = await this.handleResponse<{data: any[]}>(response);
-      console.log('📊 Public API response:', {
-        total: result.data?.length || 0,
-        hasData: !!result.data,
-        sampleCamera: result.data?.[0],
-      });
 
       return result.data || [];
     } catch (error) {
@@ -781,7 +780,6 @@ class ApiService {
     try {
       // Use the public endpoint for top cameras by traffic
       const url = `${API_BASE_URL}/cameras/public/top-by-traffic`;
-      console.log('🔗 Fetching top cameras by traffic from:', url);
 
       const response = await fetch(url, {
         headers: {
@@ -789,19 +787,12 @@ class ApiService {
         },
       });
 
-      console.log('📡 Response status:', response.status);
-
       if (!response.ok) {
         console.error(`❌ Public API request failed: ${response.status} ${response.statusText}`);
         return null;
       }
 
       const result = await this.handleResponse<{data: any[]}>(response);
-      console.log('📊 Top cameras API response:', {
-        total: result.data?.length || 0,
-        hasData: !!result.data,
-        sampleCamera: result.data?.[0],
-      });
 
       return result.data || [];
     } catch (error) {

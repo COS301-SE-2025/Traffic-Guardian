@@ -157,7 +157,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
   >('overview');
   const [_lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  const API_BASE_URL = process.env.REACT_APP_SERVER_URL! + '/api';
+  const API_BASE_URL = process.env.REACT_APP_API_URL! + '/api';
 
   const getAuthHeaders = useCallback((): HeadersInit => {
     const apiKey = sessionStorage.getItem('apiKey');
@@ -244,7 +244,7 @@ const PEMSTrafficAnalysis: React.FC<Props> = ({
     // Get timezone abbreviation (PST/PDT)
     const timeZone = date.toLocaleDateString('en-US', {
       timeZone: 'America/Los_Angeles',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).split(', ')[1];
 
     return `${timeString} (${timeZone})`;

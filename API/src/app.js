@@ -7,7 +7,6 @@ const morgan = require('morgan');
 // Import optimization services
 const cacheService = require('./services/cacheService');
 const dataCleanupService = require('./services/dataCleanupService');
-const backgroundJobService = require('./services/backgroundJobService');
 const rateLimiters = require('./middleware/rateLimiter');
 const { requestPrioritizer, memoryOptimizer } = require('./middleware/optimization');
 const { monitor, errorTrackingMiddleware, createHealthEndpoint } = require('./services/performanceMonitor');
@@ -19,11 +18,9 @@ const userRoutes = require('./routes/user');
 const incidentRoutes = require('./routes/incidents');
 const alertRoutes = require('./routes/alerts');
 const trafficRoutes = require('./routes/traffic'); // NEW LINE ADDED
-const pemsRoutes = require('./routes/pems'); // PEMS traffic data routes
 const archivesRoutes = require('./routes/archives');
 const adminRoutes = require('./routes/admin');
 const cameraRoutes = require('./routes/cameras');
-const systemRoutes = require('./routes/system');
 const uploadRoutes = require('./routes/voice');
 
 // Create Express application
@@ -89,16 +86,11 @@ console.log('Initializing optimization services...');
 // Start scheduled database cleanup
 dataCleanupService.startScheduledCleanup();
 
-// Start background job processor
-backgroundJobService.start();
-backgroundJobService.scheduleCameraDataSync();
-
 // Warm up caches if needed
 cacheService.warmCache().catch(err => {
   console.error('Cache warming failed:', err);
 });
 
 console.log('Optimization services initialized');
-
 
 module.exports = app;

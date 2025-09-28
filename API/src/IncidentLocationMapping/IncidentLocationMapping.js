@@ -2,8 +2,8 @@ const util = require('util');
 
 class ILM{
     constructor(){
-        this.regionsCoords = ['37.7749,-122.4194', '37.3382,-121.8863', '34.0522,-118.2437', '32.7157,-117.1611', '38.5816,-121.4944', '37.8044,-122.2711', '37.4419,-122.1430', '34.1478,-118.1445', '33.7701,-118.1937', '34.2001,-118.5393', '33.9425,-118.4081'];
-        this.regionNames =  ['San Francisco', 'San Jose', 'Los Angeles', 'San Diego', 'Sacramento', 'Oakland', 'Palo Alto', 'Pasadena', 'Long Beach', 'Thousand Oaks', 'Torrance'];
+        this.regionsCoords = ['-26.1438,28.0406', '-26.09108017449409,28.08474153621201', '-25.9819,28.1329', '-25.8347,28.1127', '-25.7566,28.1914', '-26.2678,27.8658', '-26.0936,27.9931', '-26.2259,28.1598', '-26.6667,27.9167', '-26.3333,28.1667', '-25.7487,28.2380'];
+        this.regionNames =  ['Rosebank', 'Sandton', 'Midrand', 'Centurion', 'Pretoria', 'Soweto', 'Randburg', 'Boksburg', 'Vereeniging', 'Alberton', 'Hatfield'];
         this.regions = new Map();
         this.users = new Map();
         this.reportedIncidents = new Map();
@@ -26,7 +26,7 @@ class ILM{
             this.regions.set(this.regionNames[i], regionData);
         }
 
-        console.log('\x1b[32m%s\x1b[0m' ,`${this.regions.size} regions set`);
+        // Regions initialized
     }
 
     addNewIncident(location, incident){
@@ -37,7 +37,7 @@ class ILM{
 
     updateTraffic(trafficData){
         if (!trafficData || !Array.isArray(trafficData)) {
-            console.log('No traffic data provided to updateTraffic - skipping update');
+            // No traffic data provided - skipping update
             return;
         }
         
@@ -50,7 +50,7 @@ class ILM{
             region.incidents = trafficData[i].incidents;
             this.regions.set(trafficData[i].location, region);
         }
-        console.log(`${count} regions updated`);
+        // Regions updated
     }
 
 

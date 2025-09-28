@@ -1,17 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
-import { useUser, Permission } from '../contexts/UserContext';
+import { useUser, Permission, UserRole } from '../contexts/UserContext';
 import ApiService, {
   IncidentStats,
   TrafficIncident,
 } from '../services/apiService';
+<<<<<<< HEAD
+import CarLoadingAnimation from '../components/CarLoadingAnimation';
+=======
 import PEMSTrafficAnalysis from '../components/PEMSTrafficAnalysis';
 import WeeklyTrafficTrends from '../components/WeeklyTrafficTrends';
 import CameraCarousel from '../components/CameraCarousel';
 import ArchiveSummary from '../components/ArchiveSummary';
+import JSONEventDisplay from '../components/JSONEventDisplay';
 import '../components/CameraCarousel.css';
 import '../components/ArchiveSummary.css';
+>>>>>>> Dev
 import './Dashboard.css';
 
 interface CriticalIncidentsData {
@@ -111,23 +116,6 @@ const MapPinIcon = () => (
       strokeLinejoin="round"
       strokeWidth={2}
       d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-    />
-  </svg>
-);
-
-const GaugeIcon = () => (
-  <svg
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-    data-cy="gauge-icon"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
     />
   </svg>
 );
@@ -333,7 +321,7 @@ interface TodaysIncidents {
 type NewAlertPayload = { Incident_Location: string; [key: string]: unknown };
 
 const Dashboard: React.FC = () => {
-  const { isAuthenticated, hasPermission } = useUser();
+  const { isAuthenticated, hasPermission, userRole } = useUser();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [_loading, _setLoading] = useState(false);
@@ -368,14 +356,18 @@ const Dashboard: React.FC = () => {
   >('healthy');
 
   const [realtimeEvents, setRealtimeEvents] = useState<string[]>([]);
+  const [usersOnline, setUsersOnline] = useState<number>(0);
   const [activeIncidents, setActiveIncidents] = useState<number>(0);
   const [criticalIncidentsCount, setCriticalIncidentsCount] =
     useState<number>(0);
+<<<<<<< HEAD
+=======
 
   // PEMS dashboard data
   const [pemsDashboardData, setPemsDashboardData] = useState<any>(null);
   const [_pemsLoading, setPemsLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
+>>>>>>> Dev
 
 
   const addEvent = useCallback((eventText: string) => {
@@ -401,6 +393,8 @@ const Dashboard: React.FC = () => {
     };
   }, []);
 
+<<<<<<< HEAD
+=======
   // Fetch PEMS dashboard data
   const fetchPEMSData = useCallback(async () => {
     try {
@@ -415,7 +409,7 @@ const Dashboard: React.FC = () => {
 
       const apiKey = sessionStorage.getItem('apiKey');
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL!}/api/pems/dashboard-summary`,
+        `${process.env.REACT_APP_API_URL!}/api/pems/dashboard-summary`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -458,6 +452,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
+>>>>>>> Dev
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -490,7 +485,7 @@ const Dashboard: React.FC = () => {
           // Public users get basic traffic data from public endpoint
           try {
             const response = await fetch(
-              `${process.env.REACT_APP_SERVER_URL!}/api/traffic/public`,
+              `${process.env.REACT_APP_API_URL!}/api/traffic/public`,
             );
             if (response.ok) {
               const publicData = await response.json();
@@ -575,8 +570,27 @@ const Dashboard: React.FC = () => {
           }
         }
 
+<<<<<<< HEAD
+        const todaysData = await ApiService.fetchTodaysIncidents();
+        if (todaysData) {
+          setTodaysIncidents({
+            count: todaysData.count,
+            date: todaysData.date,
+          });
+        }
+
+        const traffic = await ApiService.fetchTrafficIncidents();
+        setTrafficData(traffic);
+
+        const critical = await ApiService.fetchCriticalIncidents();
+        setCriticalIncidents(critical);
+
+        const locations = await ApiService.fetchIncidentLocations();
+        _setIncidentLocations(locations);
+=======
         // Fetch PEMS dashboard data (handles public/authenticated logic internally)
         await fetchPEMSData();
+>>>>>>> Dev
       } catch (error) {
         console.error('Error loading initial data:', error);
       } finally {
@@ -585,11 +599,15 @@ const Dashboard: React.FC = () => {
     };
 
     loadInitialData();
+<<<<<<< HEAD
+  }, [addNotification]);
+=======
   }, [fetchPEMSData, isAuthenticated, hasPermission]);
+>>>>>>> Dev
 
   // Socket.io connection
   useEffect(() => {
-    const SERVER_URL = process.env.REACT_APP_SERVER_URL!;
+    const SERVER_URL = process.env.REACT_APP_API_URL!;
 
     const newSocket = io(SERVER_URL, {
       transports: ['websocket', 'polling'],
@@ -598,9 +616,15 @@ const Dashboard: React.FC = () => {
 
     newSocket.on('connect', () => {
       // Send authentication info if available
+<<<<<<< HEAD
+      const userToken = localStorage.getItem('token');
+      const userInfo = localStorage.getItem('userInfo');
+      
+=======
       const userToken = sessionStorage.getItem('token');
       const userInfo = sessionStorage.getItem('userInfo');
 
+>>>>>>> Dev
       if (userToken && userInfo) {
         newSocket.emit('authenticate', {
           token: userToken,
@@ -711,7 +735,19 @@ const Dashboard: React.FC = () => {
       addEvent(JSON.stringify(data, null, 2));
     });
 
-    // Traffic-focused event logging (removed user tracking)
+    newSocket.on('amt-users-online', (data: number) => {
+      setUsersOnline(data);
+      addEvent('Users online: ' + data);
+    });
+
+    // Add listeners for connection events
+    newSocket.on('user-connected', (data: any) => {
+      addEvent(`User connected: ${data.userId || 'Unknown'}`);
+    });
+
+    newSocket.on('user-disconnected', (data: any) => {
+      addEvent(`User disconnected: ${data.userId || 'Unknown'}`);
+    });
 
     newSocket.on('amt-active-incidents', (data: number) => {
       setActiveIncidents(data);
@@ -722,8 +758,6 @@ const Dashboard: React.FC = () => {
       setCriticalIncidentsCount(data);
       addEvent('Critical incidents: ' + data);
     });
-
-    // PEMS data updates would go here when implementing real-time PEMS integration
 
     // Set up periodic stats request as fallback
     const statsInterval = setInterval(() => {
@@ -769,8 +803,12 @@ const Dashboard: React.FC = () => {
   }, [weatherLastUpdate]);
 
   const formatTime = (date: Date) => {
+<<<<<<< HEAD
+    return date.toLocaleTimeString('en-ZA', {
+=======
     const timeString = date.toLocaleTimeString('en-US', {
       timeZone: 'America/Los_Angeles',
+>>>>>>> Dev
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
@@ -780,7 +818,7 @@ const Dashboard: React.FC = () => {
     // Get timezone abbreviation (PST/PDT)
     const timeZone = date.toLocaleDateString('en-US', {
       timeZone: 'America/Los_Angeles',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).split(', ')[1];
 
     return `${timeString} (${timeZone})`;
@@ -788,31 +826,27 @@ const Dashboard: React.FC = () => {
 
   // Debug function - can be called from browser console as window.debugDashboard()
   React.useEffect(() => {
+<<<<<<< HEAD
     (window as any).debugDashboard = () => {
       console.log('🐛 Dashboard Debug Info:');
+      console.log('- Users Online:', usersOnline);
       console.log('- Active Incidents:', activeIncidents);
       console.log('- Critical Incidents:', criticalIncidentsCount);
-      console.log('- PEMS Data:', pemsDashboardData);
       console.log('- Realtime Events Count:', realtimeEvents?.length || 0);
-      console.log(
-        '- Auth Token:',
-        sessionStorage.getItem('token') ? 'Present' : 'Missing',
-      );
-      console.log(
-        '- User Info:',
-        sessionStorage.getItem('userInfo') ? 'Present' : 'Missing',
-      );
-      console.log(
-        '- SERVER_URL:',
-        process.env.REACT_APP_SERVER_URL!,
-      );
+      console.log('- Auth Token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+      console.log('- User Info:', localStorage.getItem('userInfo') ? 'Present' : 'Missing');
+      console.log('- SERVER_URL:', process.env.REACT_APP_SERVER_URL || 'http://localhost:5000');
     };
+  }, [usersOnline, activeIncidents, criticalIncidentsCount, realtimeEvents]);
+=======
+    // Debug function removed for production
   }, [
     activeIncidents,
     criticalIncidentsCount,
     pemsDashboardData,
     realtimeEvents,
   ]);
+>>>>>>> Dev
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -852,12 +886,49 @@ const Dashboard: React.FC = () => {
   };
 
   return (
+<<<<<<< HEAD
+    <div className="dashboard" data-cy="dashboard" id="dashboard">
+      <div
+        className="notification-panel"
+        data-cy="notification-panel"
+        role="alert"
+      >
+        {notifications.map(notification => (
+          <div
+            key={notification.id}
+            className={`notification ${notification.type}`}
+            data-cy={`notification-${notification.id}`}
+          >
+            <div className="notification-header" data-cy="notification-header">
+              <div className="notification-title" data-cy="notification-title">
+                {notification.title}
+              </div>
+              <button
+                className="notification-close"
+                onClick={() => removeNotification(notification.id)}
+                data-cy="notification-close"
+                aria-label="Close notification"
+              >
+                ×
+              </button>
+            </div>
+            <div
+              className="notification-content"
+              data-cy="notification-content"
+            >
+              {notification.message}
+            </div>
+          </div>
+        ))}
+      </div>
+=======
     <div
       className="dashboard"
       data-cy="dashboard"
       data-testid="dashboard-container"
       id="dashboard"
     >
+>>>>>>> Dev
 
       <div
         className="dashboard-header"
@@ -936,6 +1007,24 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="dashboard-content" data-cy="dashboard-content">
+<<<<<<< HEAD
+        {loading && <CarLoadingAnimation />}
+
+        <div className="stats-grid" data-cy="stats-grid">
+          {/* User Statistics */}
+          <div className="stat-card" data-cy="stat-card-users-online">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <UsersIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">
+              Users Online
+            </div>
+            <div className="stat-card-value" data-cy="stat-card-value">
+              {userStats.totalOnline}
+            </div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+              Currently connected
+=======
 
         {/* Dashboard Summary Stats - Authentication Required */}
         {isAuthenticated ? (
@@ -1088,10 +1177,139 @@ const Dashboard: React.FC = () => {
                   Sign In to Access Dashboard
                 </a>
               </div>
+>>>>>>> Dev
             </div>
           </div>
         )}
 
+<<<<<<< HEAD
+          {/* Active Incidents */}
+          <div className="stat-card" data-cy="stat-card-active-incidents">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <AlertTriangleIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">
+              Active Incidents
+            </div>
+            <div className="stat-card-value" data-cy="stat-card-value">
+              {incidentStats?.active || 0}
+            </div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+              Requiring attention
+            </div>
+            <div className="progress-bar" data-cy="progress-bar">
+              <div
+                className="progress-fill critical"
+                style={{
+                  width: `${Math.min(
+                    ((incidentStats?.active || 0) / 10) * 100,
+                    100
+                  )}%`,
+                }}
+                data-cy="progress-fill"
+              ></div>
+            </div>
+          </div>
+
+          {/* Critical Incidents */}
+          <div className="stat-card" data-cy="stat-card-critical-incidents">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <TrendingUpIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">
+              Critical Incidents
+            </div>
+            <div className="stat-card-value" data-cy="stat-card-value">
+              {criticalIncidents?.Amount || 0}
+            </div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+              High severity events
+            </div>
+          </div>
+
+          {/* Today's Incidents */}
+          <div className="stat-card" data-cy="stat-card-incidents-today">
+            <div className="stat-card-icon" data-cy="stat-card-icon">
+              <ClockIcon />
+            </div>
+            <div className="stat-card-title" data-cy="stat-card-title">
+              Today's Incidents
+            </div>
+            <div className="stat-card-value" data-cy="stat-card-value">
+              {todaysIncidents.count}
+            </div>
+            <div className="stat-card-subtitle" data-cy="stat-card-subtitle">
+              {todaysIncidents.date}
+            </div>
+          </div>
+        </div>
+
+        {/* User Statistics Section */}
+        <div className="user-section" data-cy="user-section" id="user-section">
+          <div className="user-header" data-cy="user-header">
+            <h3 data-cy="user-title">User Activity</h3>
+            <div className="user-last-update" data-cy="user-last-update">
+              Last updated: {formatTime(lastUpdate)}
+            </div>
+          </div>
+
+          <div className="user-grid" data-cy="user-grid">
+            <div className="user-card" data-cy="user-card-top-region">
+              <div className="user-card-header" data-cy="user-card-header">
+                <div className="user-stat-title" data-cy="user-stat-title">
+                  Top Region
+                </div>
+                <MapPinIcon />
+              </div>
+              <div className="user-main-stat" data-cy="user-main-stat">
+                {userStats.topRegion.region || 'No data'}
+              </div>
+              <div className="user-sub-stat" data-cy="user-sub-stat">
+                {userStats.topRegion.userCount} users
+              </div>
+            </div>
+
+            <div className="user-card" data-cy="user-card-timeline">
+              <div className="user-card-header" data-cy="user-card-header">
+                <div className="user-stat-title" data-cy="user-stat-title">
+                  Recent Activity
+                </div>
+                <ActivityIcon />
+              </div>
+              <div className="user-timeline" data-cy="user-timeline">
+                {userStats.timeline.slice(-5).map((event, index) => (
+                  <div
+                    key={index}
+                    className="timeline-item"
+                    data-cy={`timeline-item-${index}`}
+                  >
+                    <span
+                      className={`timeline-action ${event.action}`}
+                      data-cy="timeline-action"
+                    >
+                      {event.action === 'connect' ? '➕' : '➖'}
+                    </span>
+                    <span className="timeline-text" data-cy="timeline-text">
+                      User {event.action}ed ({event.totalUsers} online)
+                    </span>
+                    <span className="timeline-time" data-cy="timeline-time">
+                      {new Date(event.timestamp).toLocaleTimeString('en-ZA', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                ))}
+                {userStats.timeline.length === 0 && (
+                  <div className="timeline-empty" data-cy="timeline-empty">
+                    No recent activity
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+=======
         {/* High Volume Areas & Archive Summary Section */}
         <div className="dashboard-dual-container">
           <CameraCarousel className="dashboard-camera-carousel" />
@@ -1257,6 +1475,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         )}
+>>>>>>> Dev
 
         {/* Weather Section */}
         <div
@@ -1399,6 +1618,171 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
+<<<<<<< HEAD
+        {/* Traffic Incidents Section */}
+        <div className="dashboard-main-grid" data-cy="dashboard-main-grid">
+          <div
+            className="incidents-section"
+            data-cy="incidents-section"
+            id="incidents-section"
+          >
+            <div className="incidents-header" data-cy="incidents-header">
+              <h3 data-cy="incidents-title">Live Traffic Incidents</h3>
+              <div className="incidents-badge" data-cy="incidents-badge">
+                {trafficData.length} Locations
+              </div>
+            </div>
+            <div className="incidents-list" data-cy="incidents-list">
+              {trafficData.map((location, index) => (
+                <div
+                  key={index}
+                  className="incident-item"
+                  data-cy={`incident-item-${index}`}
+                >
+                  <div className="incident-header" data-cy="incident-header">
+                    <div className="incident-type" data-cy="incident-type">
+                      <MapPinIcon />
+                      {location.location}
+                    </div>
+                    <div
+                      className="severity-badge medium"
+                      data-cy="severity-badge"
+                    >
+                      {location.incidents.length} Incidents
+                    </div>
+                  </div>
+
+                  <div className="incident-details" data-cy="incident-details">
+                    {location.incidents
+                      .slice(0, 3)
+                      .map((incident, incIndex) => (
+                        <div
+                          key={incIndex}
+                          className="incident-detail"
+                          data-cy="incident-detail-item"
+                        >
+                          <AlertTriangleIcon />
+                          <span>{incident.properties.iconCategory}</span>
+                          <span
+                            className="magnitude-badge"
+                            data-cy="magnitude-badge"
+                          >
+                            Severity: {incident.properties.magnitudeOfDelay}
+                          </span>
+                        </div>
+                      ))}
+                    {location.incidents.length > 3 && (
+                      <div
+                        className="incident-detail"
+                        data-cy="incident-detail-more"
+                      >
+                        <span>
+                          +{location.incidents.length - 3} more incidents
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {trafficData.length === 0 && (
+                <div className="incident-item" data-cy="incident-empty">
+                  <div className="incident-header">
+                    <div className="incident-type">
+                      <AlertTriangleIcon />
+                      No Traffic Data
+                    </div>
+                  </div>
+                  <div className="incident-details">
+                    <div className="incident-detail">
+                      Waiting for traffic updates...
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="last-updated" data-cy="last-updated-incidents">
+              <div
+                className="update-indicator"
+                data-cy="update-indicator"
+              ></div>
+              Last updated: {formatTime(lastUpdate)}
+            </div>
+          </div>
+
+          <div
+            className="regional-stats-section"
+            data-cy="regional-stats-section"
+            id="regional-stats-section"
+          >
+            <div className="regional-header" data-cy="regional-header">
+              <h3 data-cy="regional-title">Regional Activity</h3>
+            </div>
+            <div className="regional-list" data-cy="regional-list">
+              {userStats.regionCounts
+                .filter(region => region.userCount > 0)
+                .sort((a, b) => b.userCount - a.userCount)
+                .map((region, index) => (
+                  <div
+                    key={index}
+                    className="regional-item"
+                    data-cy={`regional-item-${region.region}`}
+                  >
+                    <div className="regional-info" data-cy="regional-info">
+                      <div
+                        className="regional-details"
+                        data-cy="regional-details"
+                      >
+                        <h4 data-cy="regional-name">{region.region}</h4>
+                        <p data-cy="regional-users">
+                          {region.userCount} active users
+                        </p>
+                      </div>
+                    </div>
+                    <div className="regional-stats" data-cy="regional-stats">
+                      <div
+                        className="progress-bar small"
+                        data-cy="progress-bar-small"
+                      >
+                        <div
+                          className="progress-fill"
+                          style={{
+                            width: `${Math.min(
+                              (region.userCount /
+                                Math.max(userStats.totalOnline, 1)) *
+                                100,
+                              100
+                            )}%`,
+                          }}
+                          data-cy="progress-fill-regional"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              {userStats.regionCounts.filter(r => r.userCount > 0).length ===
+                0 && (
+                <div className="regional-item" data-cy="regional-empty">
+                  <div className="regional-info">
+                    <div className="regional-details">
+                      <h4>No Regional Data</h4>
+                      <p>Waiting for user location data...</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="last-updated" data-cy="last-updated-regional">
+              <div
+                className="update-indicator"
+                data-cy="update-indicator"
+              ></div>
+              Real-time updates
+            </div>
+          </div>
+        </div>
+
+=======
+>>>>>>> Dev
         <div
           className="realtime-events-section"
           data-cy="realtime-events-section"
@@ -1407,14 +1791,19 @@ const Dashboard: React.FC = () => {
           <div className="realtime-header" data-cy="realtime-header">
             <h3 data-cy="realtime-title">Real-time System Events</h3>
             <div className="realtime-stats" data-cy="realtime-stats">
+              <div className="stat-pill" data-cy="stat-pill-users">
+                👥 {usersOnline} online
+                {usersOnline === 0 && (
+                  <span style={{ fontSize: '10px', color: '#999', marginLeft: '5px' }}>
+                    (no data)
+                  </span>
+                )}
+              </div>
               <div className="stat-pill" data-cy="stat-pill-incidents">
-                {activeIncidents} incidents
+                {activeIncidents} active
               </div>
               <div className="stat-pill critical" data-cy="stat-pill-critical">
                 {criticalIncidentsCount} critical
-              </div>
-              <div className="stat-pill" data-cy="stat-pill-detectors">
-                {pemsDashboardData?.overview?.total_detectors || 0} detectors
               </div>
             </div>
           </div>
@@ -1434,17 +1823,32 @@ const Dashboard: React.FC = () => {
 
             <div className="events-list" data-cy="events-list">
               {realtimeEvents.length > 0 ? (
-                realtimeEvents.map((event, index) => (
-                  <div
-                    key={index}
-                    className="event-item"
-                    data-cy={`event-item-${index}`}
-                  >
-                    <pre className="event-content" data-cy="event-content">
-                      {event}
-                    </pre>
-                  </div>
-                ))
+                realtimeEvents.map((event, index) => {
+                  // Use formatted display for base users (PUBLIC, VIEWER), raw JSON for traffic controllers (ANALYST, ADMIN, SUPER_ADMIN)
+                  const isBaseUser = !isAuthenticated || userRole === UserRole.PUBLIC || userRole === UserRole.VIEWER;
+
+                  if (isBaseUser) {
+                    return (
+                      <JSONEventDisplay
+                        key={index}
+                        event={event}
+                        index={index}
+                      />
+                    );
+                  } else {
+                    return (
+                      <div
+                        key={index}
+                        className="event-item"
+                        data-cy={`event-item-${index}`}
+                      >
+                        <pre className="event-content" data-cy="event-content">
+                          {event}
+                        </pre>
+                      </div>
+                    );
+                  }
+                })
               ) : (
                 <div className="events-empty" data-cy="events-empty">
                   <span> Waiting for real-time events...</span>

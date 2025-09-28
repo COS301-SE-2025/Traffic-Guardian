@@ -15,7 +15,7 @@ describe('Account Page', () => {
   });
 
   it('should display error for invalid credentials', () => {
-    cy.intercept('POST', '**/api/auth/login', {
+    cy.intercept('POST', `${Cypress.env('API_URL')}/auth/login`, {
       statusCode: 401,
       body: { message: 'Invalid email or password' }
     }).as('loginRequest');
@@ -29,6 +29,21 @@ describe('Account Page', () => {
     cy.get('[data-testid="error-message"]').should('be.visible');
   });
 
+<<<<<<< HEAD
+  it('should successfully login with valid credentials', () => {
+    cy.intercept('POST', `${Cypress.env('API_URL')}/auth/login`, {
+      statusCode: 200,
+      body: { apiKey: 'fake-api-key' }
+    }).as('loginRequest');
+
+    cy.get('[data-testid="email-input"]').type('test@example.com');
+    cy.get('[data-testid="password-input"]').type('correctpassword');
+    cy.get('[data-testid="submit-button"]').click();
+
+    cy.wait('@loginRequest');
+    cy.url().should('include', '/profile');
+  });
+=======
   // it('should successfully login with valid credentials', () => {
   //   cy.intercept('POST', '**/api/auth/login', {
   //     statusCode: 200,
@@ -53,6 +68,7 @@ describe('Account Page', () => {
   //   // Just verify the login API was called successfully
   //   cy.get('@loginRequest').should('have.property', 'response.statusCode', 200);
   // });
+>>>>>>> Dev
 
   it('should navigate to signup page', () => {
     cy.get('[data-testid="signup-link"]').click();

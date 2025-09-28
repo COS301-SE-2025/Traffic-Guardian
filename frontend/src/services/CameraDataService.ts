@@ -45,7 +45,8 @@ class RobustCameraDataService {
   }
 
   private getAuthHeaders(): HeadersInit {
-    const apiKey = sessionStorage.getItem('apiKey');
+    const apiKey =
+      sessionStorage.getItem('apiKey') || localStorage.getItem('apiKey');
     return {
       'Content-Type': 'application/json',
       'X-API-Key': apiKey || '',
@@ -164,12 +165,18 @@ class RobustCameraDataService {
       );
 
       const response = await this.safeFetch(
-        `${this.baseUrl}/api/system/internal/cameras/bulk-upsert`,
+        `${this.baseUrl}/api/cameras/bulk-upsert`,
         {
           method: 'POST',
+<<<<<<< HEAD
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify({ cameras }),
+        }
+=======
           headers: { 'Content-Type': 'application/json' }, // No auth required for internal endpoint
           body: JSON.stringify({ cameras, source: 'frontend' }),
         },
+>>>>>>> Dev
       );
 
       if (!response) {
@@ -261,15 +268,21 @@ class RobustCameraDataService {
     this.syncQueue = []; // Clear queue
 
     const response = await this.safeFetch(
-      `${this.baseUrl}/api/system/internal/cameras/bulk-upsert`,
+      `${this.baseUrl}/api/cameras/bulk-upsert`,
       {
         method: 'POST',
+<<<<<<< HEAD
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ cameras: queuedCameras }),
+      }
+=======
         headers: { 'Content-Type': 'application/json' }, // No auth required for internal endpoint
         body: JSON.stringify({
           cameras: queuedCameras,
           source: 'frontend-queue',
         }),
       },
+>>>>>>> Dev
     );
 
     if (!response || !response.ok) {
@@ -309,10 +322,10 @@ class RobustCameraDataService {
     }
 
     const response = await this.safeFetch(
-      `${this.baseUrl}/api/system/internal/cameras/status-batch`,
+      `${this.baseUrl}/api/cameras/status-batch`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, // No auth required for internal endpoint
+        headers: this.getAuthHeaders(),
         body: JSON.stringify({ statusUpdates }),
       },
     );
@@ -373,14 +386,9 @@ export class LiveFeedDatabaseIntegration {
   // Safe camera sync - won't break UI if it fails
   async syncCamerasWithDatabase(cameraFeeds: any[]): Promise<void> {
     try {
-      const result = await this.cameraService.smartSyncCameras(cameraFeeds);
+      const _result = await this.cameraService.smartSyncCameras(cameraFeeds);
 
-      // Only log successful syncs to reduce console noise
-      if (result.success && result.synced > 0) {
-        console.log(`✓ Camera sync: ${result.message}`);
-      } else if (!result.success) {
-        console.warn(`⚠ Camera sync: ${result.message}`);
-      }
+      // Sync completed silently
 
       // Never throw errors - UI should continue working
     } catch (error) {

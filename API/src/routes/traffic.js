@@ -9,7 +9,6 @@ const traffic = require('../Traffic/traffic'); // Keep for utility functions
 // Get all traffic incidents (main endpoint for analytics) - requires authentication
 router.get('/incidents', authMiddleware.authenticate, async (req, res) => {
   try {
-    console.log('Fetching real California traffic data...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     if (!trafficData || !Array.isArray(trafficData)) {
@@ -17,7 +16,6 @@ router.get('/incidents', authMiddleware.authenticate, async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch traffic data' });
     }
 
-    console.log(`Successfully fetched traffic data for ${trafficData.length} locations`);
     res.status(200).json(trafficData);
   } catch (error) {
     console.error('Traffic incidents error:', error);
@@ -25,9 +23,8 @@ router.get('/incidents', authMiddleware.authenticate, async (req, res) => {
   }
 });
 
-router.get('/criticalIncidents', authMiddleware.authenticate, async (req, res) => {
+router.get('/criticalIncidents', authMiddleware.authenticate, async (_, res) => {
   try {
-    console.log('Fetching real California traffic data for critical incidents...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     if (!trafficData || !Array.isArray(trafficData)) {
@@ -36,7 +33,6 @@ router.get('/criticalIncidents', authMiddleware.authenticate, async (req, res) =
     }
 
     const resp = traffic.criticalIncidents(trafficData);
-    console.log(`Successfully fetched criticalIncidents data for ${trafficData.length} locations`);
     res.status(200).json(resp);
   } catch (error) {
     console.error('Traffic incidents error:', error);
@@ -44,9 +40,8 @@ router.get('/criticalIncidents', authMiddleware.authenticate, async (req, res) =
   }
 });
 
-router.get('/incidentCategory', authMiddleware.authenticate, async (req, res) => {
+router.get('/incidentCategory', authMiddleware.authenticate, async (_, res) => {
   try {
-    console.log('Fetching real California traffic data for incident categories...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     if (!trafficData || !Array.isArray(trafficData)) {
@@ -55,7 +50,6 @@ router.get('/incidentCategory', authMiddleware.authenticate, async (req, res) =>
     }
 
     const resp = traffic.incidentCategory(trafficData);
-    console.log(`Successfully fetched incidentCategory data for ${trafficData.length} locations`);
     res.status(200).json(resp);
   } catch (error) {
     console.error('Traffic incidents error:', error);
@@ -63,9 +57,8 @@ router.get('/incidentCategory', authMiddleware.authenticate, async (req, res) =>
   }
 });
 
-router.get('/incidentLocations', authMiddleware.authenticate, async (req, res) => {
+router.get('/incidentLocations', authMiddleware.authenticate, async (_, res) => {
   try {
-    console.log('Fetching real California traffic data for incident locations...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     if (!trafficData || !Array.isArray(trafficData)) {
@@ -74,7 +67,6 @@ router.get('/incidentLocations', authMiddleware.authenticate, async (req, res) =
     }
 
     const resp = traffic.incidentLocations(trafficData);
-    console.log(`Successfully fetched incidentLocations data for ${trafficData.length} locations`);
     res.status(200).json(resp);
   } catch (error) {
     console.error('Traffic incidents error:', error);
@@ -83,9 +75,8 @@ router.get('/incidentLocations', authMiddleware.authenticate, async (req, res) =
 });
 
 // Real-time 511 Bay Area incidents endpoint (public access)
-router.get('/real-time-incidents', async (req, res) => {
+router.get('/real-time-incidents', async (_, res) => {
   try {
-    console.log('Fetching real-time 511 Bay Area incidents...');
     const incidents511 = await get511TrafficEvents();
 
     const response = {
@@ -95,7 +86,6 @@ router.get('/real-time-incidents', async (req, res) => {
       count: incidents511.length
     };
 
-    console.log(`Successfully fetched ${incidents511.length} 511 incidents`);
     res.status(200).json(response);
   } catch (error) {
     console.error('Real-time incidents error:', error);
@@ -104,9 +94,8 @@ router.get('/real-time-incidents', async (req, res) => {
 });
 
 // Orange County specific traffic data (public access)
-router.get('/orange-county', async (req, res) => {
+router.get('/orange-county', async (_, res) => {
   try {
-    console.log('Fetching Orange County traffic data...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     // Filter for Orange County and nearby areas (LA, San Diego vicinity)
@@ -121,7 +110,6 @@ router.get('/orange-county', async (req, res) => {
       locations: orangeCountyData.length
     };
 
-    console.log(`Successfully fetched Orange County traffic data for ${orangeCountyData.length} locations`);
     res.status(200).json(response);
   } catch (error) {
     console.error('Orange County traffic error:', error);
@@ -146,7 +134,6 @@ router.get('/incidents/nearby', async (req, res) => {
       return res.status(400).json({ error: 'Invalid coordinates or radius provided' });
     }
 
-    console.log(`Fetching 511 incidents near ${latitude}, ${longitude} within ${searchRadius} miles...`);
 
     // Get real-time 511 traffic events
     const traffic511Events = await get511TrafficEvents();
@@ -222,7 +209,6 @@ router.get('/incidents/nearby', async (req, res) => {
       source: '511 Bay Area Traffic API'
     };
 
-    console.log(`Found ${nearbyIncidents.length} 511 incidents within ${searchRadius} miles`);
     res.status(200).json(response);
   } catch (error) {
     console.error('Nearby 511 incidents error:', error);
@@ -231,9 +217,8 @@ router.get('/incidents/nearby', async (req, res) => {
 });
 
 // Public traffic data endpoint (limited data for unauthenticated users)
-router.get('/public', async (req, res) => {
+router.get('/public', async (_, res) => {
   try {
-    console.log('Fetching public traffic data...');
     const trafficData = await getEnhancedCaliforniaTraffic();
 
     // Provide basic traffic data for major California cities
@@ -244,7 +229,6 @@ router.get('/public', async (req, res) => {
       lastUpdate: new Date().toISOString()
     }));
 
-    console.log(`Successfully provided public traffic summary for ${publicData.length} locations`);
     res.status(200).json({
       summary: publicData,
       message: 'Sign in for detailed incident information',

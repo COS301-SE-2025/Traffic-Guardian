@@ -105,9 +105,34 @@ const Archives: React.FC = () => {
         setLoading(true);
         setError('');
 
+<<<<<<< HEAD
+      const apiKey =
+        sessionStorage.getItem('apiKey') || localStorage.getItem('apiKey');
+      if (!apiKey) {
+        setError('No API key found. Please log in.');
+        navigate('/account');
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/archives`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey,
+          },
+          signal, // Add abort signal for cleanup
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Unauthorized: Invalid or missing API key');
+=======
         const apiKey = sessionStorage.getItem('apiKey');
         if (!apiKey) {
           setError('No API key found. Please log in.');
+>>>>>>> Dev
           navigate('/account');
           return;
         }
@@ -290,9 +315,13 @@ const Archives: React.FC = () => {
 
   const formatDateTime = (dateString: string): string => {
     try {
+<<<<<<< HEAD
+      return new Date(dateString).toLocaleString('en-ZA', {
+=======
       const date = new Date(dateString);
       const dateTimeString = date.toLocaleString('en-US', {
         timeZone: 'America/Los_Angeles',
+>>>>>>> Dev
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -303,7 +332,7 @@ const Archives: React.FC = () => {
       // Get timezone abbreviation (PST/PDT)
       const timeZone = date.toLocaleDateString('en-US', {
         timeZone: 'America/Los_Angeles',
-        timeZoneName: 'short'
+        timeZoneName: 'short',
       }).split(', ')[1];
 
       return `${dateTimeString} (${timeZone})`;
