@@ -43,7 +43,7 @@ const LandingPage: React.FC = () => {
     }, observerOptions);
 
     const elementsToObserve = document.querySelectorAll(
-      '.problem-card, .feature-card, .team-member, .process-step, .impact-card, .detail-card'
+      '.problem-card, .feature-card, .team-member, .process-step, .impact-card, .detail-card',
     );
 
     elementsToObserve.forEach(el => {
@@ -82,9 +82,9 @@ const LandingPage: React.FC = () => {
             className="hamburger"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            <span></span>
-            <span></span>
-            <span></span>
+            <span />
+            <span />
+            <span />
           </button>
           <ul className={`nav-links ${isMobileMenuOpen ? 'active' : ''}`}>
             <li>
@@ -118,7 +118,13 @@ const LandingPage: React.FC = () => {
 
       <section className="hero" id="home">
         <div className="hero-content">
+<<<<<<< HEAD
           <h1 className="floating">AI-Powered Traffic Safety for Gauteng</h1>
+=======
+          <h1 className="floating" data-testid="hero-title">
+            Traffic Guardian - AI-Powered Traffic Safety for Gauteng
+          </h1>
+>>>>>>> Dev
           <p className="hero-subtitle">
             Transforming highway monitoring with real-time computer vision to
             detect incidents instantly and save lives
@@ -134,10 +140,25 @@ const LandingPage: React.FC = () => {
           <div className="auth-section">
             <h3>Get Started Today</h3>
             <div className="auth-buttons">
+<<<<<<< HEAD
               <button className="btn btn-login" onClick={handleLogin}>
                 Login
               </button>
               <button className="btn btn-signup" onClick={handleSignUp}>
+=======
+              <button
+                className="btn btn-login"
+                onClick={handleLogin}
+                data-testid="get-started-button"
+              >
+                Login
+              </button>
+              <button
+                className="btn btn-signup"
+                onClick={handleSignUp}
+                data-testid="signup-link"
+              >
+>>>>>>> Dev
                 Sign Up
               </button>
             </div>
@@ -153,7 +174,7 @@ const LandingPage: React.FC = () => {
           </h2>
           <div className="problem-grid">
             <div className="problem-card">
-              <div className="problem-icon">⏱️</div>
+              <div className="problem-icon"><i className="fas fa-clock" /></div>
               <h3>Response Delays</h3>
               <p>
                 Every second counts. Manual monitoring creates dangerous delays
@@ -161,7 +182,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="problem-card">
-              <div className="problem-icon">🚗</div>
+              <div className="problem-icon"><i className="fas fa-car" /></div>
               <h3>Cascading Congestion</h3>
               <p>
                 Undetected incidents rapidly escalate into major traffic events,
@@ -169,7 +190,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="problem-card">
-              <div className="problem-icon">👁️</div>
+              <div className="problem-icon"><i className="fas fa-eye" /></div>
               <h3>Human Limitations</h3>
               <p>
                 Operators cannot effectively monitor multiple camera feeds 24/7,
@@ -177,7 +198,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="problem-card">
-              <div className="problem-icon">💰</div>
+              <div className="problem-icon"><i className="fas fa-dollar-sign" /></div>
               <h3>Economic Impact</h3>
               <p>
                 Traffic incidents cost millions in lost productivity, fuel
@@ -216,7 +237,7 @@ const LandingPage: React.FC = () => {
                 <source src="/aidetectionvid.MP4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
-              <div className="video-overlay"></div>
+              <div className="video-overlay" />
             </div>
           </div>
         </div>
@@ -229,7 +250,7 @@ const LandingPage: React.FC = () => {
           </h2>
           <div className="features-grid">
             <div className="feature-card">
-              <div className="feature-icon">🧠</div>
+              <div className="feature-icon"><i className="fas fa-brain" /></div>
               <h3 className="feature-title">Deep Learning AI</h3>
               <p>
                 State-of-the-art TensorFlow models trained on thousands of
@@ -237,7 +258,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">⚡</div>
+              <div className="feature-icon"><i className="fas fa-bolt" /></div>
               <h3 className="feature-title">Real-Time Processing</h3>
               <p>
                 Sub-second detection latency ensures immediate awareness of
@@ -245,7 +266,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🗺️</div>
+              <div className="feature-icon"><i className="fas fa-map" /></div>
               <h3 className="feature-title">3D Traffic Visualisation</h3>
               <p>
                 Interactive digital twin of the highway network with live
@@ -253,7 +274,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">📊</div>
+              <div className="feature-icon"><i className="fas fa-chart-bar" /></div>
               <h3 className="feature-title">Predictive Analytics</h3>
               <p>
                 Historical pattern recognition to identify accident hotspots and
@@ -261,7 +282,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🔔</div>
+              <div className="feature-icon"><i className="fas fa-bell" /></div>
               <h3 className="feature-title">Smart Alert System</h3>
               <p>
                 Intelligent notification routing based on incident severity and
@@ -269,7 +290,7 @@ const LandingPage: React.FC = () => {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🔒</div>
+              <div className="feature-icon"><i className="fas fa-lock" /></div>
               <h3 className="feature-title">Enterprise Security</h3>
               <p>
                 Bank-grade encryption with full POPI Act compliance for all
@@ -302,31 +323,41 @@ const LandingPage: React.FC = () => {
             Meet <span>Quantum Quenchers</span>
           </h2>
           <div className="team-grid">
-            <div className="team-member">
-              <div className="member-avatar">ND</div>
-              <h4>Nicholas Dobson</h4>
-              <p>Full-Stack & DevOps Engineer</p>
-            </div>
-            <div className="team-member">
-              <div className="member-avatar">SG</div>
-              <h4>Shaylin Govender</h4>
-              <p>Team Lead & Full-Stack Engineer</p>
-            </div>
-            <div className="team-member">
-              <div className="member-avatar">LK</div>
-              <h4>Lonwabo Kwitshana</h4>
-              <p>Frontend & UI/UX Engineer</p>
-            </div>
-            <div className="team-member">
-              <div className="member-avatar">MT</div>
-              <h4>Mpho Tsotetsi</h4>
-              <p>Backend & Database Engineer</p>
-            </div>
-            <div className="team-member">
-              <div className="member-avatar">AM</div>
-              <h4>Aryan Mohanlall</h4>
-              <p>Backend & System Integration Engineer</p>
-            </div>
+            <a href="https://www.linkedin.com/in/nicholas-dobson-a64a84355" target="_blank" rel="noopener noreferrer" className="team-member-link">
+              <div className="team-member">
+                <div className="member-avatar">ND</div>
+                <h4>Nicholas Dobson</h4>
+                <p>Full-Stack & DevOps Engineer</p>
+              </div>
+            </a>
+            <a href="https://www.linkedin.com/in/shaylin-govender-827347343" target="_blank" rel="noopener noreferrer" className="team-member-link">
+              <div className="team-member">
+                <div className="member-avatar">SG</div>
+                <h4>Shaylin Govender</h4>
+                <p>Team Lead & Full-Stack Engineer</p>
+              </div>
+            </a>
+            <a href="https://www.linkedin.com/in/lonwabo-kwitshana-b483831a6" target="_blank" rel="noopener noreferrer" className="team-member-link">
+              <div className="team-member">
+                <div className="member-avatar">LK</div>
+                <h4>Lonwabo Kwitshana</h4>
+                <p>Frontend & UI/UX Engineer</p>
+              </div>
+            </a>
+            <a href="https://www.linkedin.com/in/mpho-tsotetsi-256375287/" target="_blank" rel="noopener noreferrer" className="team-member-link">
+              <div className="team-member">
+                <div className="member-avatar">MT</div>
+                <h4>Mpho Tsotetsi</h4>
+                <p>Backend & Database Engineer</p>
+              </div>
+            </a>
+            <a href="https://www.linkedin.com/in/aryan-mohanlall-a45a89355" target="_blank" rel="noopener noreferrer" className="team-member-link">
+              <div className="team-member">
+                <div className="member-avatar">AM</div>
+                <h4>Aryan Mohanlall</h4>
+                <p>Backend & System Integration Engineer</p>
+              </div>
+            </a>
           </div>
         </div>
       </section>

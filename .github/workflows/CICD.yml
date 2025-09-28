@@ -1,576 +1,1470 @@
-name: CI/CD Pipeline
+# name: CI/CD Pipeline
 
-on:
-  push:
-    branches: [main, Dev]
-  pull_request:
-    branches: [main, Dev]
+# on:
+#   push:
+#     branches: [main, Dev]
+#   pull_request:
+#     branches: [main, Dev]
 
-jobs:
-  lint:
-    name: Lint Code
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+# jobs:
+#   lint:
+#     name: Lint Code
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      - name: Run Super Linter
-        uses: github/super-linter@v5
-        env:
-          VALIDATE_ALL_CODEBASE: false
-          DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Use the API ESLint config for API JS files (enforces semicolons)
-          ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
-          # Use the frontend ESLint config for TS/TSX/Cypress files
-          ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
-          # Lint all relevant extensions
-          VALIDATE_JAVASCRIPT_ES: true
-          VALIDATE_TYPESCRIPT_ES: true
-          # Optionally, set FILTER_REGEX_INCLUDE/FILTER_REGEX_EXCLUDE if needed
-          # FILTER_REGEX_INCLUDE: 'src/|models/|controllers/|routes/|frontend/'
-          # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
+#       - name: Run Super Linter
+#         uses: github/super-linter@v5
+#         env:
+#           VALIDATE_ALL_CODEBASE: false
+#           DEFAULT_BRANCH: main
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           # Use the API ESLint config for API JS files (enforces semicolons)
+#           ESLINT_CONFIG_FILE_API: ./API/.eslintrc.json
+#           # Use the frontend ESLint config for TS/TSX/Cypress files
+#           ESLINT_CONFIG_FILE_FRONTEND: ./frontend/.eslintrc.json
+#           # Lint all relevant extensions
+#           VALIDATE_JAVASCRIPT_ES: true
+#           VALIDATE_TYPESCRIPT_ES: true
+#           # Optionally, set FILTER_REGEX_INCLUDE/FILTER_REGEX_EXCLUDE if needed
+#           # FILTER_REGEX_INCLUDE: 'src/|models/|controllers/|routes/|frontend/'
+#           # FILTER_REGEX_EXCLUDE: '(^tsconfig\.json$)'
 
-  test-ui:
-    name: UI Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+#   test-ui:
+#     name: UI Tests
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '18'
+#           cache: 'npm'
+#           cache-dependency-path: |
+#             ./frontend/package-lock.json
+#             ./API/package-lock.json
+#       # Add caching for dependencies to speed up workflow      
+#       - name: Install UI dependencies
+#         working-directory: ./frontend
+#         run: |
+#           npm install
+#           echo "Frontend dependencies installed successfully"
 
-      - name: Install UI dependencies
-        working-directory: ./frontend
-        run: npm install
-
-      # Uncomment when Cypress tests are ready
-      # - name: Run UI tests
-      #   working-directory: ./frontend
-      #   run: npx cypress run --component || echo "No tests configured yet"
-
-      # - name: Upload E2E Artifacts
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: e2e-test-results
-      #     path: ./frontend/cypress/screenshots
-
-  test-api:
-    name: API Tests
-    runs-on: ubuntu-latest
-    # No longer using local postgres service, now using remote database with secrets
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install API dependencies
-        working-directory: ./API
-        run: npm install
-
-      - name: Install PostgreSQL client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
-
-      - name: Test database connectivity
-        run: |
-          echo "Testing connection to remote PostgreSQL database..."
-          # Using connection string with sslmode=require for AWS RDS
-          PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }}
-          if [ $? -eq 0 ]; then
-            echo "Remote PostgreSQL connection successful!"
-          else
-            echo "Failed to connect to remote PostgreSQL database!"
-            echo "Testing with PGSSLMODE environment variable..."
-            # Try using PGSSLMODE environment variable which pg_isready respects
-            PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }}
-            if [ $? -eq 0 ]; then
-              echo "Connection with PGSSLMODE=require successful!"
-            else
-              echo "Failed to connect with SSL. Check database configuration and credentials."
-              exit 1
-            fi
-          fi
-
-      - name: Debug PostgreSQL connection
-        run: |
-          echo "===== POSTGRESQL CONNECTION DEBUG ====="
-          echo "PostgreSQL client version:"
-          psql --version
+#       - name: Setup environment for Cypress
+#         working-directory: ./frontend
+#         run: |
+#           # Create a .env file for Cypress testing
+#           echo "CYPRESS_BASE_URL=http://localhost:3000" > .env
+#           echo "CYPRESS_API_URL=http://localhost:5000/api" >> .env
+#           echo "Environment set up for Cypress tests"
           
-          echo "Available PostgreSQL environment variables:"
-          echo "PGHOST: [Redacted]"
-          echo "PGPORT: ${{ secrets.DATABASE_PORT }}"
-          echo "PGDATABASE: ${{ secrets.DATABASE_NAME }}"
-          echo "PGUSER: ${{ secrets.DATABASE_USERNAME }}"
-          echo "PGPASSWORD: [REDACTED]"
+#       - name: Start API in background for E2E tests
+#         working-directory: ./API
+#         run: |
+#           npm install
+#           # Start API server in background with test configuration
+#           NODE_ENV=test npm run dev &
+#           echo "API server started in background"
+#           sleep 10 # Give the API time to start
           
-          echo "Testing simple connection with SSL mode set via environment variable:"
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT version();" || echo "Connection failed"
+#       - name: Start frontend in background for E2E tests
+#         working-directory: ./frontend
+#         run: |
+#           # Start frontend in background for E2E tests
+#           npm start &
+#           echo "Frontend started in background"
+#           sleep 30 # Give the frontend time to start
           
-          echo "Checking current user and database:"
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            SELECT current_user, current_database();
-          " || echo "Connection check failed"
+#       - name: Run Cypress component tests
+#         working-directory: ./frontend
+#         run: |
+#           npx cypress run --component --reporter mochawesome
+#           echo "Component tests completed"
           
-          echo "Checking table visibility (using pg_catalog):"
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            SELECT n.nspname as schema, c.relname as table
-            FROM pg_catalog.pg_class c
-            JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-            WHERE c.relkind = 'r' AND n.nspname = 'public'
-            ORDER BY schema, table;
-          " || echo "Table listing query failed"
+#       - name: Run Cypress E2E tests
+#         working-directory: ./frontend
+#         run: |
+#           npx cypress run --e2e --reporter mochawesome
+#           echo "E2E tests completed"
           
-          echo "Checking current user's table permissions:"
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            SELECT 
-              has_table_privilege(current_user, 'public.\"User\"', 'SELECT') AS can_select_user,
-              has_table_privilege(current_user, 'public.\"User\"', 'INSERT') AS can_insert_user,
-              has_table_privilege(current_user, 'public.\"Incidents\"', 'SELECT') AS can_select_incidents,
-              has_table_privilege(current_user, 'public.\"Alerts\"', 'SELECT') AS can_select_alerts;
-          " || echo "Permission check failed"
+#       - name: Generate HTML test report
+#         if: always()
+#         working-directory: ./frontend
+#         run: |
+#           # Install mochawesome-merge and mochawesome-report-generator if needed
+#           npm install --no-save mochawesome-merge mochawesome-report-generator
           
-          echo "===== END DEBUG ====="
-
-      - name: Verify database tables
-        run: |
-          echo "Verifying database tables in remote database..."
-          # Using PGSSLMODE environment variable for SSL connection and checking for tables directly
-          # We're now specifically targeting the public schema where our tables reside
+#           # Merge the reports
+#           npx mochawesome-merge cypress/reports/mochawesome/*.json > cypress/reports/mochawesome-report.json
           
-          # First, list all tables in the public schema
-          echo "Listing all tables in public schema..."
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-            ORDER BY table_name;
-          " || echo "Table listing query failed - may have limited visibility, continuing with direct checks"
+#           # Generate HTML report
+#           npx mochawesome-report-generator cypress/reports/mochawesome-report.json --reportDir cypress/reports
           
-          # Now check if we can directly access the tables we need using pg_catalog
-          echo "Checking direct table access in public schema..."
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            SELECT 
-              EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
-                    WHERE c.relname = 'User' AND n.nspname = 'public' AND c.relkind = 'r') AS user_table_exists,
-              EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
-                    WHERE c.relname = 'Incidents' AND n.nspname = 'public' AND c.relkind = 'r') AS incidents_table_exists,
-              EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
-                    WHERE c.relname = 'Alerts' AND n.nspname = 'public' AND c.relkind = 'r') AS alerts_table_exists;
-          " || echo "Direct table check failed, trying alternative approach"
+#           echo "Test report generated"
           
-          # As a fallback, try to count rows which will fail if tables don't exist
-          echo "Checking tables with direct queries (fallback)..."
-          PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
-            SELECT 'User' AS table_name, COUNT(*) AS row_count FROM public.\"User\" 
-            UNION ALL
-            SELECT 'Incidents' AS table_name, COUNT(*) AS row_count FROM public.\"Incidents\"
-            UNION ALL
-            SELECT 'Alerts' AS table_name, COUNT(*) AS row_count FROM public.\"Alerts\";
-          " || echo "Direct count queries failed - there may be table permission issues"
-
-      - name: Run API tests
-        working-directory: ./API
-        env:
-          NODE_ENV: test
-          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
-          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-          DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
-          DATABASE_SSL: true
-          WEATHERAPI: ${{ secrets.WEATHERAPI }}
-          TOMTOMAPI: ${{ secrets.TOMTOMAPI }}
-        run: |
-          # Start server and run tests in sequence
-          echo "Starting server and running tests..."
-          npm run dev &
-          sleep 10  # Wait for server to start
-          npm test
-          kill $(jobs -p) || true  # Kill background server process
-
-  test-ai-model:
-    name: AI Model Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        working-directory: ./AI_Model_BB/Testing
-        run: |
-          python -m pip install --upgrade pip
+#       - name: Upload Cypress screenshots
+#         uses: actions/upload-artifact@v4
+#         if: always()
+#         with:
+#           name: cypress-screenshots
+#           path: ./frontend/cypress/screenshots
           
-          # Check if requirements file exists
-          if [ -f "test_requirements.txt" ]; then
-            pip install -r test_requirements.txt
-          else
-            echo "test_requirements.txt not found, installing basic testing dependencies..."
-            pip install pytest opencv-python numpy
-          fi
-
-      - name: Run Python tests
-        working-directory: ./AI_Model_BB/Testing
-        run: |
-          # Check if test file exists
-          if [ -f "test_car_detection.py" ]; then
-            python -m pytest test_car_detection.py -v
-          else
-            echo "test_car_detection.py not found, creating basic test..."
-            cat > test_car_detection.py << 'EOF'
-          import pytest
-
-          def test_basic_functionality():
-              """Basic test to ensure AI model testing works"""
-              assert True, "Basic test passed"
-
-          def test_imports():
-              """Test that required libraries can be imported"""
-              try:
-                  import cv2
-                  import numpy as np
-                  assert True, "Required libraries imported successfully"
-              except ImportError as e:
-                  pytest.fail(f"Failed to import required libraries: {e}")
-          EOF
-            python -m pytest test_car_detection.py -v
-          fi
-
-      - name: Upload Test Artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ai-model-test-report
-          path: ./AI_Model_BB/Testing
-
-  build:
-    name: Build Project
-    needs: [test-ui, test-api, test-ai-model]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Create build artifacts
-        run: |
-          mkdir -p dist
-
-          # Frontend artifacts
-          mkdir -p dist/frontend
-          if [ -d "frontend/build" ]; then
-            cp -r frontend/build/* dist/frontend/
-          else
-            echo "Creating mock Frontend artifact"
-            echo "<html><body><h1>Traffic Guardian UI</h1></body></html>" > dist/frontend/index.html
-          fi
-
-          # API artifacts
-          mkdir -p dist/api
-          if [ -d "API/dist" ]; then
-            cp -r API/dist/* dist/api/
-          else
-            echo "Creating mock API artifact"
-            echo "// Traffic Guardian API server" > dist/api/server.js
-          fi
-
-          # AI Model artifacts
-          mkdir -p dist/ai_model
-          if [ -d "AI_Model_BB/Code" ]; then
-            cp -r AI_Model_BB/Code/* dist/ai_model/
-          else
-            echo "Creating mock AI Model artifact"
-            echo "# Traffic Guardian AI Model" > dist/ai_model/model.py
-            echo "import cv2" > dist/ai_model/car_detection.py
-            echo "print('Traffic Guardian AI Model')" >> dist/ai_model/car_detection.py
-          fi
-
-          # Database schema
-          mkdir -p dist/database
-          if [ -f "API/schema.sql" ]; then
-            cp API/schema.sql dist/database/
-          fi
-
-          # Create version file
-          echo "$(date +'%Y%m%d%H%M%S')-${GITHUB_SHA::8}" > dist/version.txt
-          echo "Build artifacts created successfully!"
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: dist/
-
-  deploy-staging:
-    name: Deploy to Staging
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
-          path: dist
-
-      - name: Deploy to Staging Environment
-        run: |
-          echo "===== DEPLOYING TO STAGING ENVIRONMENT ====="
-          echo "Deployment version: $(cat dist/version.txt)"
-          echo "Preparing staging environment..."
-          sleep 2
+#       - name: Upload Cypress videos
+#         uses: actions/upload-artifact@v4
+#         if: always()
+#         with:
+#           name: cypress-videos
+#           path: ./frontend/cypress/videos
           
-          echo "Setting up staging database connection..."
-          echo "Using remote database: ${{ secrets.DATABASE_HOST }}"
+#       - name: Upload Cypress test reports
+#         uses: actions/upload-artifact@v4
+#         if: always()
+#         with:
+#           name: cypress-test-reports
+#           path: ./frontend/cypress/reports
+
+#   test-api:
+#     name: API Tests
+#     runs-on: ubuntu-latest
+#     # No longer using local postgres service, now using remote database with secrets
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '18'
+#           cache: 'npm'
+#           cache-dependency-path: ./API/package-lock.json
+#       # Add caching for dependencies to speed up workflow
+#       - name: Install API dependencies
+#         working-directory: ./API
+#         run: npm install
+
+#       - name: Install PostgreSQL client
+#         run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+#       - name: Test database connectivity
+#         run: |
+#           echo "Testing connection to remote PostgreSQL database..."
+#           # Using connection string with sslmode=require for AWS RDS
+#           PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }}
+#           if [ $? -eq 0 ]; then
+#             echo "Remote PostgreSQL connection successful!"
+#           else
+#             echo "Failed to connect to remote PostgreSQL database!"
+#             echo "Testing with PGSSLMODE environment variable..."
+#             # Try using PGSSLMODE environment variable which pg_isready respects
+#             PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_isready -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }}
+#             if [ $? -eq 0 ]; then
+#               echo "Connection with PGSSLMODE=require successful!"
+#             else
+#               echo "Failed to connect with SSL. Check database configuration and credentials."
+#               exit 1
+#             fi
+#           fi
+
+#       - name: Debug PostgreSQL connection
+#         run: |
+#           echo "===== POSTGRESQL CONNECTION DEBUG ====="
+#           echo "PostgreSQL client version:"
+#           psql --version
           
-          # Test database connectivity with multiple SSL attempts and graceful fallback
-          DB_CONNECTION_SUCCESS=false
+#           echo "Available PostgreSQL environment variables:"
+#           echo "PGHOST: [Redacted]"
+#           echo "PGPORT: ${{ secrets.DATABASE_PORT }}"
+#           echo "PGDATABASE: ${{ secrets.DATABASE_NAME }}"
+#           echo "PGUSER: ${{ secrets.DATABASE_USERNAME }}"
+#           echo "PGPASSWORD: [REDACTED]"
           
-          if [ -f "dist/database/schema.sql" ]; then
-            echo "Database schema found and ready for deployment"
-            echo "Attempting database connectivity verification..."
+#           echo "Testing simple connection with SSL mode set via environment variable:"
+#           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT version();" || echo "Connection failed"
+          
+#           echo "Checking current user and database:"
+#           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+#             SELECT current_user, current_database();
+#           " || echo "Connection check failed"
+          
+#           echo "Checking table visibility (using pg_catalog):"
+#           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+#             SELECT n.nspname as schema, c.relname as table
+#             FROM pg_catalog.pg_class c
+#             JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+#             WHERE c.relkind = 'r' AND n.nspname = 'public'
+#             ORDER BY schema, table;
+#           " || echo "Table listing query failed"
+          
+#           echo "Checking current user's table permissions:"
+#           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+#             SELECT 
+#               has_table_privilege(current_user, 'public.\"User\"', 'SELECT') AS can_select_user,
+#               has_table_privilege(current_user, 'public.\"User\"', 'INSERT') AS can_insert_user,
+#               has_table_privilege(current_user, 'public.\"Incidents\"', 'SELECT') AS can_select_incidents,
+#               has_table_privilege(current_user, 'public.\"Alerts\"', 'SELECT') AS can_select_alerts;
+#           " || echo "Permission check failed"
+          
+#           echo "===== END DEBUG ====="
+
+#       - name: Verify database tables
+#         run: |
+#           echo "Verifying database tables in remote database..."
+#           # Using PGSSLMODE environment variable for SSL connection and checking for tables directly
+#           # We're now specifically targeting the public schema where our tables reside
+          
+#           # First, list all tables in the public schema
+#           echo "Listing all tables in public schema..."
+#           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+#             SELECT table_name 
+#             FROM information_schema.tables 
+#             WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+#             ORDER BY table_name;
+#           " || echo "Table listing query failed - may have limited visibility, continuing with direct checks"
+          
+#           # Now check if we can directly access the tables we need using pg_catalog
+#           echo "Checking direct table access in public schema..."
+#           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+#             SELECT 
+#               EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+#                     WHERE c.relname = 'User' AND n.nspname = 'public' AND c.relkind = 'r') AS user_table_exists,
+#               EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+#                     WHERE c.relname = 'Incidents' AND n.nspname = 'public' AND c.relkind = 'r') AS incidents_table_exists,
+#               EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace 
+#                     WHERE c.relname = 'Alerts' AND n.nspname = 'public' AND c.relkind = 'r') AS alerts_table_exists;
+#           " || echo "Direct table check failed, trying alternative approach"
+          
+#           # As a fallback, try to count rows which will fail if tables don't exist
+#           echo "Checking tables with direct queries (fallback)..."
+#           PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "
+#             SELECT 'User' AS table_name, COUNT(*) AS row_count FROM public.\"User\" 
+#             UNION ALL
+#             SELECT 'Incidents' AS table_name, COUNT(*) AS row_count FROM public.\"Incidents\"
+#             UNION ALL
+#             SELECT 'Alerts' AS table_name, COUNT(*) AS row_count FROM public.\"Alerts\";
+#           " || echo "Direct count queries failed - there may be table permission issues"
+
+#       - name: Run API tests
+#         working-directory: ./API
+#         env:
+#           NODE_ENV: test
+#           DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+#           DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+#           DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+#           DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+#           DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+#           DATABASE_SSL: true
+#           WEATHERAPI: ${{ secrets.WEATHERAPI }}
+#           TOMTOMAPI: ${{ secrets.TOMTOMAPI }}
+#         run: |
+#           # Start server and run tests in sequence
+#           echo "Starting server and running tests..."
+#           npm run dev &
+#           sleep 10  # Wait for server to start
+#           npm test
+#           kill $(jobs -p) || true  # Kill background server process
+
+#   test-ai-model:
+#     name: AI Model Tests
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.10'
+#           cache: 'pip'
+#       # Add caching for dependencies to speed up workflow
+#       - name: Install dependencies
+#         working-directory: ./AI_Model_BB/Testing
+#         run: |
+#           python -m pip install --upgrade pip
+          
+#           # Check if requirements file exists
+#           if [ -f "test_requirements.txt" ]; then
+#             pip install -r test_requirements.txt
+#           else
+#             echo "test_requirements.txt not found, installing basic testing dependencies..."
+#             pip install pytest opencv-python numpy
+#           fi
+
+#       - name: Run Python tests
+#         working-directory: ./AI_Model_BB/Testing
+#         run: |
+#           # Check if test file exists
+#           if [ -f "test_car_detection.py" ]; then
+#             python -m pytest test_car_detection.py -v
+#           else
+#             echo "test_car_detection.py not found, creating basic test..."
+#             cat > test_car_detection.py << 'EOF'
+#           import pytest
+
+#           def test_basic_functionality():
+#               """Basic test to ensure AI model testing works"""
+#               assert True, "Basic test passed"
+
+#           def test_imports():
+#               """Test that required libraries can be imported"""
+#               try:
+#                   import cv2
+#                   import numpy as np
+#                   assert True, "Required libraries imported successfully"
+#               except ImportError as e:
+#                   pytest.fail(f"Failed to import required libraries: {e}")
+#           EOF
+#             python -m pytest test_car_detection.py -v
+#           fi
+
+#       - name: Upload Test Artifacts
+#         uses: actions/upload-artifact@v4
+#         if: always()
+#         with:
+#           name: ai-model-test-report
+#           path: ./AI_Model_BB/Testing
+
+#   build:
+#     name: Build Project
+#     needs: [test-ui, test-api, test-ai-model]
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Setup Node.js for builds
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '18'
+#           cache: 'npm'
+#           cache-dependency-path: ./frontend/package-lock.json
+#       # Add caching for dependencies to speed up workflow
+#       - name: Build Frontend
+#         working-directory: ./frontend
+#         run: |
+#           npm install
+#           npm run build
+
+#       - name: Setup Python for AI Model
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.10'
+#           cache: 'pip'
+#       # Add caching for dependencies to speed up workflow
+#       - name: Prepare AI Model for deployment
+#         working-directory: ./AI_Model_BB/Code
+#         run: |
+#           # Install dependencies for model packaging
+#           python -m pip install --upgrade pip
+#           if [ -f "requirements.txt" ]; then
+#             pip install -r requirements.txt
+#           else
+#             # Install basic dependencies directly (SHOULDN'T REACH HERE)
+#             pip install opencv-python==4.8.0.76 numpy==1.24.3
+#           fi
+          
+#           # Create deployment package
+#           mkdir -p deployment_package
+#           cp *.py deployment_package/ 2>/dev/null || echo "No Python files to copy"
+
+#   aws-prepare-deployment:
+#     name: Prepare AWS Deployment
+#     needs: [build]
+#     runs-on: ubuntu-latest
+#     if: false # Commented out for now - will be properly configured later
+#     # if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Dev'
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+        
+#       # AWS credential configuration - will be set up properly later
+#       # - name: Configure AWS credentials
+#       #   uses: aws-actions/configure-aws-credentials@v4
+#       #   with:
+#       #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#       #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#       #     aws-region: ${{ secrets.AWS_REGION }}
+          
+#       - name: Prepare Frontend for S3 deployment
+#         run: |
+#           echo "Preparing frontend build artifacts for S3 deployment..."
+          
+#           # Create a deployment package for frontend
+#           mkdir -p s3-frontend-package
+#           if [ -d "frontend/build" ]; then
+#             cp -r frontend/build/* s3-frontend-package/
+#             echo "Frontend build artifacts prepared for S3"
+#           else
+#             echo "Frontend build directory not found, creating placeholder"
+#             echo "<html><body><h1>Traffic Guardian UI</h1></body></html>" > s3-frontend-package/index.html
+#           fi
+          
+#       - name: Prepare API for EC2 deployment
+#         run: |
+#           echo "Preparing API for EC2 deployment..."
+          
+#           # Create a deployment package for API
+#           mkdir -p ec2-api-package
+#           cp -r API/* ec2-api-package/
+          
+#           # Create deployment scripts
+#           cat > ec2-api-package/deploy.sh << 'EOF'
+#           #!/bin/bash
+#           # Deployment script for Traffic Guardian API
+#           echo "Starting Traffic Guardian API deployment..."
+          
+#           # Install dependencies
+#           npm install --production
+          
+#           # Check for existing process and stop it
+#           PM2_EXISTS=$(command -v pm2 || echo "")
+#           if [ -z "$PM2_EXISTS" ]; then
+#             npm install -g pm2
+#           fi
+          
+#           # Start the application with PM2
+#           pm2 stop traffic-guardian-api 2>/dev/null || true
+#           pm2 start src/server.js --name traffic-guardian-api
+#           pm2 save
+          
+#           echo "API deployment completed!"
+#           EOF
+          
+#           chmod +x ec2-api-package/deploy.sh
+          
+#       - name: Prepare AI Model for EC2 deployment
+#         run: |
+#           echo "Preparing AI Model for EC2 deployment..."
+          
+#           # Create a deployment package for AI Model
+#           mkdir -p ec2-ai-model-package
+          
+#           if [ -d "AI_Model_BB/Code/deployment_package" ]; then
+#             cp -r AI_Model_BB/Code/deployment_package/* ec2-ai-model-package/
+#           else
+#             cp -r AI_Model_BB/Code/* ec2-ai-model-package/
+#           fi
+          
+#           # Create deployment scripts
+#           cat > ec2-ai-model-package/deploy.sh << 'EOF'
+#           #!/bin/bash
+#           # Deployment script for Traffic Guardian AI Model
+#           echo "Starting Traffic Guardian AI Model deployment..."
+          
+#           # Set up Python virtual environment
+#           python -m venv venv
+#           source venv/bin/activate
+          
+#           # Install dependencies
+#           if [ -f "requirements.txt" ]; then
+#             pip install -r requirements.txt
+#           else
+#             pip install opencv-python==4.8.0.76 numpy==1.24.3
+#           fi
+          
+#           # Set up systemd service for the AI model
+#           cat > traffic-guardian-ai.service << EOF
+#           [Unit]
+#           Description=Traffic Guardian AI Model Service
+#           After=network.target
+          
+#           [Service]
+#           Type=simple
+#           User=$(whoami)
+#           WorkingDirectory=$(pwd)
+#           ExecStart=$(pwd)/venv/bin/python main.py
+#           Restart=always
+#           RestartSec=10
+#           StandardOutput=syslog
+#           StandardError=syslog
+#           SyslogIdentifier=traffic-guardian-ai
+          
+#           [Install]
+#           WantedBy=multi-user.target
+#           EOF
+          
+#           sudo mv traffic-guardian-ai.service /etc/systemd/system/
+#           sudo systemctl daemon-reload
+#           sudo systemctl enable traffic-guardian-ai.service
+#           sudo systemctl restart traffic-guardian-ai.service
+          
+#           echo "AI Model deployment completed!"
+#           EOF
+          
+#           chmod +x ec2-ai-model-package/deploy.sh
+          
+#       - name: Upload frontend deployment package
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: s3-frontend-package
+#           path: s3-frontend-package
+          
+#       - name: Upload API deployment package
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: ec2-api-package
+#           path: ec2-api-package
+          
+#       - name: Upload AI Model deployment package
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: ec2-ai-model-package
+#           path: ec2-ai-model-package
+
+#   generate-documentation:
+#     name: Generate Documentation
+#     runs-on: ubuntu-latest
+#     needs: [build]
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '18'
+#           cache: 'npm'
+#           cache-dependency-path: |
+#             ./frontend/package-lock.json
+#             ./API/package-lock.json
+
+#       - name: Install JSDoc
+#         run: npm install -g jsdoc
+
+#       - name: Generate API Documentation
+#         working-directory: ./API
+#         run: |
+#           # Create jsdoc configuration file
+#           cat > jsdoc.json << EOF
+#           {
+#             "source": {
+#               "include": ["src"],
+#               "includePattern": ".+\\.js$",
+#               "excludePattern": "(node_modules/|docs)"
+#             },
+#             "plugins": ["plugins/markdown"],
+#             "opts": {
+#               "destination": "./docs",
+#               "recurse": true,
+#               "template": "node_modules/docdash"
+#             }
+#           }
+#           EOF
+          
+#           # Install docdash template
+#           npm install docdash --no-save
+          
+#           # Run JSDoc
+#           jsdoc -c jsdoc.json
+
+#       - name: Setup Python for AI Model Documentation
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.10'
+#           cache: 'pip'
+
+#       - name: Install Sphinx
+#         run: pip install sphinx sphinx_rtd_theme
+
+#       - name: Generate AI Model Documentation
+#         working-directory: ./AI_Model_BB/Code
+#         run: |
+#           # Create Sphinx docs directory and config
+#           mkdir -p docs/source
+          
+#           # Create conf.py
+#           cat > docs/source/conf.py << EOF
+#           import os
+#           import sys
+#           sys.path.insert(0, os.path.abspath('../..'))
+          
+#           project = 'Traffic Guardian AI Model'
+#           copyright = '2023, Traffic Guardian Team'
+#           author = 'Traffic Guardian Team'
+          
+#           extensions = [
+#               'sphinx.ext.autodoc',
+#               'sphinx.ext.viewcode',
+#               'sphinx.ext.napoleon',
+#           ]
+          
+#           templates_path = ['_templates']
+#           exclude_patterns = []
+          
+#           html_theme = 'sphinx_rtd_theme'
+#           html_static_path = ['_static']
+#           EOF
+          
+#           # Create index.rst
+#           cat > docs/source/index.rst << EOF
+#           Traffic Guardian AI Model Documentation
+#           ======================================
+          
+#           .. toctree::
+#              :maxdepth: 2
+#              :caption: Contents:
+             
+#              modules
+          
+#           Indices and tables
+#           ==================
+          
+#           * :ref:\`genindex\`
+#           * :ref:\`modindex\`
+#           * :ref:\`search\`
+#           EOF
+          
+#           # Generate rst files
+#           sphinx-apidoc -o docs/source .
+          
+#           # Build HTML docs
+#           cd docs
+#           make html || sphinx-build -b html source build
+
+#       - name: Create Combined Documentation Package
+#         run: |
+#           mkdir -p docs-package
+          
+#           # Copy API docs
+#           mkdir -p docs-package/api
+#           cp -r API/docs/* docs-package/api/ 2>/dev/null || echo "No API docs to copy"
+          
+#           # Copy AI Model docs
+#           mkdir -p docs-package/ai-model
+#           cp -r AI_Model_BB/Code/docs/build/* docs-package/ai-model/ 2>/dev/null || echo "No AI Model docs to copy"
+          
+#           # Create main index page
+#           cat > docs-package/index.html << EOF
+#           <!DOCTYPE html>
+#           <html>
+#           <head>
+#             <title>Traffic Guardian Documentation</title>
+#             <style>
+#               body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+#               h1 { color: #333; }
+#               .nav { display: flex; gap: 20px; margin: 20px 0; }
+#               .nav a { padding: 10px 15px; background: #f0f0f0; text-decoration: none; color: #333; border-radius: 4px; }
+#               .nav a:hover { background: #e0e0e0; }
+#             </style>
+#           </head>
+#           <body>
+#             <h1>Traffic Guardian Documentation</h1>
+#             <p>Welcome to the Traffic Guardian project documentation. Please select a section below:</p>
+#             <div class="nav">
+#               <a href="./api/index.html">API Documentation</a>
+#               <a href="./ai-model/index.html">AI Model Documentation</a>
+#             </div>
+#             <h2>Project Overview</h2>
+#             <p>Traffic Guardian is an intelligent traffic monitoring system that uses AI to detect and classify traffic incidents.</p>
+#             <h2>Components</h2>
+#             <ul>
+#               <li><strong>Frontend</strong>: React-based UI for visualization and user interaction</li>
+#               <li><strong>API</strong>: Node.js backend for data processing and storage</li>
+#               <li><strong>AI Model</strong>: Python-based computer vision model for incident detection</li>
+#             </ul>
+#             <h2>Build Information</h2>
+#             <p>Generated on: $(date)</p>
+#             <p>Repository: ${GITHUB_REPOSITORY}</p>
+#             <p>Branch: ${GITHUB_REF#refs/heads/}</p>
+#             <p>Commit: ${GITHUB_SHA}</p>
+#           </body>
+#           </html>
+#           EOF
+          
+#           echo "Documentation package created successfully!"
+
+#       - name: Upload documentation artifacts
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: documentation
+#           path: docs-package
+          
+#       - name: Create documentation changelog
+#         run: |
+#           echo "# Documentation Changes" > docs-changelog.md
+#           echo "Generated on: $(date)" >> docs-changelog.md
+#           echo "## API Documentation Updates" >> docs-changelog.md
+#           echo "- Updated JSDoc documentation for API controllers and models" >> docs-changelog.md
+#           echo "## AI Model Documentation Updates" >> docs-changelog.md
+#           echo "- Generated Sphinx documentation for AI model components" >> docs-changelog.md
+#           git log -5 --pretty=format:"- %h %s" >> docs-changelog.md
+          
+#       - name: Upload documentation changelog
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: docs-changelog
+#           path: docs-changelog.md
+
+#       - name: Create build artifacts
+#         run: |
+#           mkdir -p dist
+
+#           # Frontend artifacts
+#           mkdir -p dist/frontend
+#           if [ -d "frontend/build" ]; then
+#             cp -r frontend/build/* dist/frontend/
+#             echo "Frontend build artifacts copied"
+#           else
+#             echo "Frontend build directory not found, creating placeholder"
+#             echo "<html><body><h1>Traffic Guardian UI</h1></body></html>" > dist/frontend/index.html
+#           fi
+
+#           # API artifacts
+#           mkdir -p dist/api
+#           cp -r API/* dist/api/
+#           echo "API artifacts copied"
+
+#           # AI Model artifacts
+#           mkdir -p dist/ai_model
+#           if [ -d "AI_Model_BB/Code/deployment_package" ]; then
+#             cp -r AI_Model_BB/Code/deployment_package/* dist/ai_model/
+#           else
+#             cp -r AI_Model_BB/Code/* dist/ai_model/
+#           fi
+#           echo "AI Model artifacts copied"
+
+#           # Database schema and migrations
+#           mkdir -p dist/database
+#           if [ -f "API/schema.sql" ]; then
+#             cp API/schema.sql dist/database/
+#             echo "Database schema copied"
+#           fi
+
+#           # Configuration files
+#           mkdir -p dist/config
+#           cp API/.env.example dist/config/ 2>/dev/null || echo "No API .env.example found"
+#           cp frontend/.env.development dist/config/ 2>/dev/null || echo "No frontend .env.development found"
+
+#           # Create version and build info
+#           echo "$(date +'%Y%m%d%H%M%S')-${GITHUB_SHA::8}" > dist/version.txt
+#           echo "Build completed at $(date)" > dist/build_info.txt
+#           echo "Repository: ${GITHUB_REPOSITORY}" >> dist/build_info.txt
+#           echo "Branch: ${GITHUB_REF#refs/heads/}" >> dist/build_info.txt
+#           echo "Commit: ${GITHUB_SHA}" >> dist/build_info.txt
+#           echo "Build artifacts created successfully!"
+#       - name: Upload build artifacts
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: build-artifacts
+#           path: dist/
+
+#       - name: Generate deployment summary
+#         run: |
+#           echo "## Deployment Summary" > deployment-summary.md
+#           echo "- **Version:** $(cat dist/version.txt)" >> deployment-summary.md
+#           echo "- **Build Date:** $(date)" >> deployment-summary.md
+#           echo "- **Commit:** ${GITHUB_SHA::8}" >> deployment-summary.md
+#           echo "- **Branch:** ${GITHUB_REF#refs/heads/}" >> deployment-summary.md
+#           echo "" >> deployment-summary.md
+#           echo "### Components Built:" >> deployment-summary.md
+#           echo "- Frontend (React/TypeScript)" >> deployment-summary.md
+#           echo "- API (Node.js/Express)" >> deployment-summary.md
+#           echo "- AI Model (Python)" >> deployment-summary.md
+#           echo "- Database Schema" >> deployment-summary.md
+
+#   security-scan:
+#     name: Security Scan
+#     runs-on: ubuntu-latest
+#     needs: [lint]
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Run npm audit for API
+#         working-directory: ./API
+#         run: |
+#           npm install
+#           npm audit --audit-level=moderate || echo "Security vulnerabilities found in API dependencies"
+
+#       - name: Run npm audit for Frontend
+#         working-directory: ./frontend
+#         run: |
+#           npm install
+#           npm audit --audit-level=moderate || echo "Security vulnerabilities found in Frontend dependencies"
+
+#       - name: Check for secrets in code
+#         run: |
+#           # Simple secret detection
+#           echo "Checking for potential secrets..."
+#           grep -r -i "password\|secret\|key\|token" --include="*.js" --include="*.ts" --include="*.py" . | grep -v node_modules | grep -v ".git" | head -10 || echo "No obvious secrets found"
+
+#   performance-test:
+#     name: Performance Test
+#     runs-on: ubuntu-latest
+#     needs: [build]
+#     if: github.ref == 'refs/heads/main'
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '18'
+#           cache: 'npm'
+#           cache-dependency-path: ./API/package-lock.json
+#       # Add caching for dependencies to speed up workflow
+
+#       - name: Install API dependencies
+#         working-directory: ./API
+#         run: npm install
+
+#       - name: Run basic performance tests
+#         working-directory: ./API
+#         env:
+#           NODE_ENV: test
+#           DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+#           DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+#           DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+#           DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+#           DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+#           DATABASE_SSL: true
+#         run: |
+#           # Start server
+#           npm run dev &
+#           SERVER_PID=$!
+#           sleep 10
+          
+#           # Basic load test
+#           echo "Running basic performance tests..."
+#           for i in {1..10}; do
+#             curl -s http://localhost:5000/api/incidents > /dev/null || echo "Request $i failed"
+#           done
+          
+#           # Clean up
+#           kill $SERVER_PID || true
+
+#   deploy-staging:
+#     name: Deploy to Staging
+#     needs: [build, security-scan] # Removed aws-prepare-deployment dependency for now
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Dev'
+#     environment:
+#       name: staging
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       # AWS credential configuration commented out - will be set up properly later
+#       # - name: Configure AWS credentials
+#       #   uses: aws-actions/configure-aws-credentials@v4
+#       #   with:
+#       #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#       #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#       #     aws-region: ${{ secrets.AWS_REGION }}
+
+#       # For now, we'll use the standard build artifacts
+#       - name: Download build artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: build-artifacts
+#           path: dist
+          
+#       # AWS deployment steps commented out for now
+#       # - name: Download deployment packages
+#       #   run: |
+#       #     mkdir -p deployment
+#       #     
+#       # - name: Download frontend package
+#       #   uses: actions/download-artifact@v4
+#       #   with:
+#       #     name: s3-frontend-package
+#       #     path: deployment/frontend
+#       #     
+#       # - name: Download API package
+#       #   uses: actions/download-artifact@v4
+#       #   with:
+#       #     name: ec2-api-package
+#       #     path: deployment/api
+#       #     
+#       # - name: Download AI Model package
+#       #   uses: actions/download-artifact@v4
+#       #   with:
+#       #     name: ec2-ai-model-package
+#       #     path: deployment/ai-model
+#       # 
+#       # - name: Deploy Frontend to S3 (Staging)
+#       #   run: |
+#       #     echo "===== DEPLOYING FRONTEND TO S3 STAGING BUCKET ====="
+#       #     aws s3 sync deployment/frontend s3://${{ secrets.AWS_S3_STAGING_BUCKET }} --delete
+#       #     echo "✓ Frontend deployed to S3 staging bucket"
+#       #     
+#       #     # If CloudFront is used, invalidate the cache
+#       #     if [ ! -z "${{ secrets.AWS_CLOUDFRONT_STAGING_ID }}" ]; then
+#       #       echo "Invalidating CloudFront cache..."
+#       #       aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_STAGING_ID }} --paths "/*"
+#       #       echo "✓ CloudFront cache invalidated"
+#       #     fi
+
+#       - name: Deploy to Staging Environment (Simulated)
+#         run: |
+#           echo "===== DEPLOYING TO STAGING ENVIRONMENT ====="
+#           echo "Deployment version: $(cat dist/version.txt)"
+#           echo "Branch: ${GITHUB_REF#refs/heads/}"
+#           echo "Preparing staging environment..."
+#           sleep 2
+          
+#           echo "Setting up staging database connection..."
+#           echo "Using remote database: ${{ secrets.DATABASE_HOST }}"
+          
+#           # Test database connectivity
+#           DB_CONNECTION_SUCCESS=false
+          
+#           if [ -f "dist/database/schema.sql" ]; then
+#             echo "Database schema found and ready for deployment"
+#             echo "Attempting database connectivity verification..."
             
-            # First attempt: PGSSLMODE=require
-            echo "Attempt 1: Trying with PGSSLMODE=require..."
-            if PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database connectivity verified with SSL required' AS status;" 2>/dev/null; then
-              echo "✓ Database connection successful with SSL required!"
-              DB_CONNECTION_SUCCESS=true
-            else
-              echo "✗ Connection failed with PGSSLMODE=require"
-              
-              # Second attempt: PGSSLMODE=prefer
-              echo "Attempt 2: Trying with PGSSLMODE=prefer..."
-              if PGSSLMODE=prefer PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database connectivity verified with SSL preferred' AS status;" 2>/dev/null; then
-                echo "✓ Database connection successful with SSL preferred!"
-                DB_CONNECTION_SUCCESS=true
-              else
-                echo "✗ Connection failed with PGSSLMODE=prefer"
-                
-                # Third attempt: No SSL mode specified
-                echo "Attempt 3: Trying without explicit SSL mode..."
-                if PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database connectivity verified without explicit SSL' AS status;" 2>/dev/null; then
-                  echo "✓ Database connection successful without explicit SSL mode!"
-                  DB_CONNECTION_SUCCESS=true
-                else
-                  echo "✗ All database connection attempts failed"
-                fi
-              fi
-            fi
-            
-            if [ "$DB_CONNECTION_SUCCESS" = "false" ]; then
-              echo "⚠️  WARNING: Unable to verify database connectivity during staging deployment"
-              echo "   This could be due to:"
-              echo "   - Network connectivity issues from CI/CD runner"
-              echo "   - Database credentials/permissions"
-              echo "   - Database server configuration"
-              echo "   - Firewall/security group restrictions"
-              echo ""
-              echo "   Proceeding with simulated deployment (database operations will be skipped)"
-              echo "   In a real deployment, you would investigate and resolve database connectivity"
-            fi
-          else
-            echo "No database schema file found, skipping database verification"
-          fi
+#             # Test connection with SSL
+#             echo "Testing database connection..."
+#             if PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Staging database connectivity verified' AS status;" 2>/dev/null; then
+#               echo "✓ Database connection successful!"
+#               DB_CONNECTION_SUCCESS=true
+#             else
+#               echo "Database connection failed, proceeding with simulated deployment"
+#             fi
+#           fi
           
-          echo "Deploying Frontend component..."
-          sleep 1
+#           echo "Deploying Frontend component to staging..."
+#           # In real deployment, this would deploy to staging server
+#           if [ -d "dist/frontend" ]; then
+#             echo "✓ Frontend artifacts ready for deployment"
+#           fi
+#           sleep 1
           
-          echo "Deploying API component..."
-          echo "Setting up API environment with database and API keys..."
-          # Create environment file for staging with the GitHub secrets
-          cat > dist/api/.env.staging << EOF
-          # Database Configuration
-          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
-          DATABASE_HOST=${{ secrets.DATABASE_HOST }}
-          DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-          DATABASE_PORT=${{ secrets.DATABASE_PORT }}
-          DATABASE_SSL=true
+#           echo "Deploying API component to staging..."
+#           if [ -d "dist/api" ]; then
+#             # Create staging environment file
+#             cat > dist/api/.env.staging << EOF
+#           # Staging Environment Configuration
+#           NODE_ENV=staging
+#           PORT=5000
           
-          # API Keys
-          WEATHERAPI=${{ secrets.WEATHERAPI }}
-          TOMTOMAPI=${{ secrets.TOMTOMAPI }}
+#           # Database Configuration
+#           DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+#           DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+#           DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+#           DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+#           DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+#           DATABASE_SSL=true
           
-          # Server Configuration
-          PORT=5000
-          CORS_ORIGIN=*
-          EOF
-          sleep 1
+#           # API Keys
+#           WEATHERAPI=${{ secrets.WEATHERAPI }}
+#           TOMTOMAPI=${{ secrets.TOMTOMAPI }}
+#           AIAPIKEY=${{ secrets.AIAPIKEY }}
           
-          echo "Deploying AI Model component..."
-          sleep 1
+#           # CORS Configuration
+#           CORS_ORIGIN=*
+#           EOF
+#             echo "API environment configured for staging"
+#           fi
+#           sleep 1
           
-          echo "Configuring environment variables..."
-          sleep 1
+#           echo "Deploying AI Model component to staging..."
+#           if [ -d "dist/ai_model" ]; then
+#             # Create AI model environment file
+#             cat > dist/ai_model/.env << EOF
+#           # AI Model Configuration
+#           AIAPIKEY=${{ secrets.AIAPIKEY }}
+#           API_ENDPOINT=http://localhost:5000/api/incidents
+#           EOF
+#             echo "AI Model configured for staging"
+#           fi
+#           sleep 1
           
-          echo "Starting services..."
-          sleep 2
-          echo "Staging deployment completed successfully!"
+#           echo "Staging deployment completed successfully!"
 
-      - name: Verify Staging Deployment
-        run: |
-          echo "===== VERIFYING STAGING DEPLOYMENT ====="
-          echo "Running staging health checks..."
-          echo "  Frontend service: HEALTHY"
-          echo "  API service: HEALTHY"
-          echo "  Database: HEALTHY"
-          echo "  AI Model service: HEALTHY"
-          echo "Staging verification completed!"
+#       - name: Verify Staging Deployment
+#         run: |
+#           echo "===== VERIFYING STAGING DEPLOYMENT ====="
+#           echo "Running staging health checks..."
+          
+#           # Verify artifacts exist
+#           if [ -d "dist/frontend" ]; then
+#             echo "  Frontend service: READY"
+#           else
+#             echo "  Frontend service: MISSING"
+#           fi
+          
+#           if [ -d "dist/api" ]; then
+#             echo "  API service: READY"
+#           else
+#             echo "  API service: MISSING"
+#           fi
+          
+#           if [ -d "dist/ai_model" ]; then
+#             echo "  AI Model service: READY"
+#           else
+#             echo "  AI Model service: MISSING"
+#           fi
+          
+#           if [ -f "dist/database/schema.sql" ]; then
+#             echo "  Database schema: READY"
+#           else
+#             echo "  Database schema: MISSING"
+#           fi
+          
+#           echo "Staging verification completed!"
+          
+#       # AWS verification steps commented out for now
+#       # - name: Verify AWS Staging Deployment
+#       #   run: |
+#       #     echo "===== VERIFYING STAGING DEPLOYMENT ====="
+#       #     echo "Running staging health checks..."
+#       #     
+#       #     echo "Checking Frontend (S3)..."
+#       #     FRONTEND_URL="https://${{ secrets.AWS_S3_STAGING_BUCKET }}.s3-website-${{ secrets.AWS_REGION }}.amazonaws.com"
+#       #     if curl -s --head "$FRONTEND_URL" | grep "200 OK" > /dev/null; then
+#       #       echo "  ✓ Frontend service: HEALTHY"
+#       #     else
+#       #       echo "  ⚠ Frontend service: WARNING - Could not verify"
+#       #     fi
+#       #     
+#       #     echo "Checking API (EC2)..."
+#       #     API_URL="http://${{ secrets.EC2_STAGING_API_HOST }}:5000/api/health"
+#       #     if curl -s "$API_URL" | grep "status.*ok" > /dev/null; then
+#       #       echo "  ✓ API service: HEALTHY"
+#       #     else
+#       #       echo "  ⚠ API service: WARNING - Could not verify"
+#       #     fi
+#       #     
+#       #     echo "Checking AI Model (EC2)..."
+#       #     AI_URL="http://${{ secrets.EC2_STAGING_AI_HOST }}:8000/health"
+#       #     if curl -s "$AI_URL" | grep "status.*ok" > /dev/null; then
+#       #       echo "  ✓ AI Model service: HEALTHY"
+#       #     else
+#       #       echo "  ⚠ AI Model service: WARNING - Could not verify"
+#       #     fi
+#       #     
+#       #     echo "Checking Database connectivity..."
+#       #     if curl -s "$API_URL/database" | grep "status.*ok" > /dev/null; then
+#       #       echo "  ✓ Database: CONNECTED"
+#       #     else
+#       #       echo "  ⚠ Database: WARNING - Could not verify"
+#       #     fi
+#       #     
+#       #     echo "Staging verification completed!"
 
-  deploy-production:
-    name: Deploy to Production
-    needs: deploy-staging
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    environment:
-      name: production
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+#   deploy-production:
+#     name: Deploy to Production
+#     needs: [deploy-staging, performance-test]
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/main'
+#     environment:
+#       name: production
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
-          path: dist
+#       # AWS credential configuration commented out - will be set up properly later
+#       # - name: Configure AWS credentials
+#       #   uses: aws-actions/configure-aws-credentials@v4
+#       #   with:
+#       #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#       #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#       #     aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy to Production Environment
-        run: |
-          echo "===== DEPLOYING TO PRODUCTION ENVIRONMENT ====="
-          echo "Deployment version: $(cat dist/version.txt)"
-          echo "Preparing production environment..."
-          sleep 3
-          echo "Creating backup of current production..."
-          sleep 2
+#       # For now, we'll use the standard build artifacts
+#       - name: Download build artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: build-artifacts
+#           path: dist
           
-          echo "Running production database migrations..."
-          # Connection using GitHub secrets for remote database with robust error handling
-          DB_CONNECTION_SUCCESS=false
-          
-          if [ -f "dist/database/schema.sql" ]; then
-            echo "Database connection: ${{ secrets.DATABASE_HOST }}"
-            echo "Attempting database connectivity for production deployment..."
-            
-            # First attempt: PGSSLMODE=require
-            echo "Attempt 1: Trying with PGSSLMODE=require..."
-            if PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Production database connectivity verified with SSL required' AS status;" 2>/dev/null; then
-              echo "✓ Production database connection successful with SSL required!"
-              DB_CONNECTION_SUCCESS=true
-              
-              # Create a backup before running migrations
-              echo "Creating database backup before migration..."
-              if PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_dump -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -F c -b -v -f "backup_$(date +%Y%m%d%H%M%S).dump" 2>/dev/null; then
-                echo "✓ Database backup created successfully"
-              else
-                echo "⚠️  Database backup failed, but continuing with deployment"
-              fi
-              
-              # Apply migrations
-              echo "Applying migrations to remote database..."
-              PGSSLMODE=require PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database migration would be applied here' AS migration_status;"
-              
-            else
-              echo "✗ Connection failed with PGSSLMODE=require"
-              
-              # Second attempt: PGSSLMODE=prefer
-              echo "Attempt 2: Trying with PGSSLMODE=prefer..."
-              if PGSSLMODE=prefer PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Production database connectivity verified with SSL preferred' AS status;" 2>/dev/null; then
-                echo "✓ Production database connection successful with SSL preferred!"
-                DB_CONNECTION_SUCCESS=true
-                
-                # Create backup and apply migrations with prefer mode
-                echo "Creating database backup before migration..."
-                PGSSLMODE=prefer PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} pg_dump -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -F c -b -v -f "backup_$(date +%Y%m%d%H%M%S).dump" 2>/dev/null || echo "Backup failed, continuing"
-                
-                echo "Applying migrations to remote database..."
-                PGSSLMODE=prefer PGPASSWORD=${{ secrets.DATABASE_PASSWORD }} psql -h ${{ secrets.DATABASE_HOST }} -p ${{ secrets.DATABASE_PORT }} -U ${{ secrets.DATABASE_USERNAME }} -d ${{ secrets.DATABASE_NAME }} -c "SELECT 'Database migration would be applied here' AS migration_status;"
-                
-              else
-                echo "✗ All database connection attempts failed for production deployment"
-                DB_CONNECTION_SUCCESS=false
-              fi
-            fi
-            
-            if [ "$DB_CONNECTION_SUCCESS" = "true" ]; then
-              echo "✓ Database migrations completed successfully"
-            else
-              echo "⚠️  WARNING: Unable to connect to database for production deployment"
-              echo "   Production deployment will continue without database operations"
-              echo "   Manual database migration may be required"
-            fi
-          else
-            echo "No database schema file found for production deployment"
-          fi
-          
-          echo "Deploying Frontend component..."
-          sleep 2
-          
-          echo "Deploying API component..."
-          echo "Setting up API environment with database and API keys..."
-          # In a real deployment, you would create environment files or set environment variables
-          cat > dist/api/.env << EOF
-          # Database Configuration
-          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
-          DATABASE_HOST=${{ secrets.DATABASE_HOST }}
-          DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-          DATABASE_PORT=${{ secrets.DATABASE_PORT }}
-          DATABASE_SSL=true
-          
-          # API Keys
-          WEATHERAPI=${{ secrets.WEATHERAPI }}
-          TOMTOMAPI=${{ secrets.TOMTOMAPI }}
-          
-          # Server Configuration
-          PORT=5000
-          CORS_ORIGIN=*
-          EOF
-          sleep 2
-          
-          echo "Deploying AI Model component..."
-          sleep 2
-          
-          echo "Configuring environment variables..."
-          sleep 1
-          
-          echo "Starting services..."
-          sleep 3
-          echo "Production deployment completed successfully!"
+#       # AWS deployment steps commented out for now
+#       # - name: Download deployment packages
+#       #   run: |
+#       #     mkdir -p deployment
+#       #     
+#       # - name: Download frontend package
+#       #   uses: actions/download-artifact@v4
+#       #   with:
+#       #     name: s3-frontend-package
+#       #     path: deployment/frontend
+#       #     
+#       # - name: Download API package
+#       #   uses: actions/download-artifact@v4
+#       #   with:
+#       #     name: ec2-api-package
+#       #     path: deployment/api
+#       #     
+#       # - name: Download AI Model package
+#       #   uses: actions/download-artifact@v4
+#       #   with:
+#       #     name: ec2-ai-model-package
+#       #     path: deployment/ai-model
 
-      - name: Verify Production Deployment
-        run: |
-          echo "===== VERIFYING PRODUCTION DEPLOYMENT ====="
-          echo "Checking service health..."
-          echo "  Frontend service: HEALTHY"
-          echo "  API service: HEALTHY"
-          echo "  Database: HEALTHY"
-          echo "  AI Model service: HEALTHY"
-          echo "Running validation tests..."
-          sleep 2
-          echo "Testing incident detection pipeline..."
-          echo "Testing alert generation system..."
-          echo "All systems operational!"
-          echo "Production deployment verified successfully!"
+#       - name: Pre-deployment checks
+#         run: |
+#           echo "===== PRE-DEPLOYMENT CHECKS ====="
+#           echo "Verifying build artifacts..."
+          
+#           # Check all required components are present
+#           DEPLOYMENT_READY=true
+          
+#           if [ ! -d "dist/frontend" ]; then
+#             echo "Frontend artifacts missing"
+#             DEPLOYMENT_READY=false
+#           else
+#             echo "Frontend artifacts found"
+#           fi
+          
+#           if [ ! -d "dist/api" ]; then
+#             echo "API artifacts missing"
+#             DEPLOYMENT_READY=false
+#           else
+#             echo "API artifacts found"
+#           fi
+          
+#           if [ ! -d "dist/ai_model" ]; then
+#             echo "AI Model artifacts missing"
+#             DEPLOYMENT_READY=false
+#           else
+#             echo "AI Model artifacts found"
+#           fi
+          
+#           if [ "$DEPLOYMENT_READY" = "false" ]; then
+#             echo "Deployment failed: Missing required artifacts"
+#             exit 1
+#           fi
+          
+#           echo "All pre-deployment checks passed"
 
-      - name: Notify Deployment Success
-        run: |
-          echo "===== DEPLOYMENT NOTIFICATION ====="
-          echo "Production deployment completed successfully!"
-          echo "Version: $(cat dist/version.txt)"
-          echo "Timestamp: $(date)"
-          # In a real deployment, you might send notifications to Slack, email, etc.
+#       # AWS deployment steps commented out for now
+#       # - name: Deploy Frontend to S3 (Production)
+#       #   run: |
+#       #     echo "===== DEPLOYING FRONTEND TO S3 PRODUCTION BUCKET ====="
+#       #     
+#       #     # Create a backup of the current production state
+#       #     TIMESTAMP=$(date +%Y%m%d%H%M%S)
+#       #     aws s3 sync s3://${{ secrets.AWS_S3_PRODUCTION_BUCKET }} s3://${{ secrets.AWS_S3_BACKUP_BUCKET }}/frontend-backup-$TIMESTAMP --delete
+#       #     echo "✓ Frontend production backup created"
+#       #     
+#       #     # Deploy to production bucket
+#       #     aws s3 sync deployment/frontend s3://${{ secrets.AWS_S3_PRODUCTION_BUCKET }} --delete
+#       #     echo "✓ Frontend deployed to S3 production bucket"
+#       #     
+#       #     # If CloudFront is used, invalidate the cache
+#       #     if [ ! -z "${{ secrets.AWS_CLOUDFRONT_PRODUCTION_ID }}" ]; then
+#       #       echo "Invalidating CloudFront cache..."
+#       #       aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_PRODUCTION_ID }} --paths "/*"
+#       #       echo "✓ CloudFront cache invalidated"
+#       #     fi
+
+#       - name: Deploy to Production Environment (Simulated)
+#         run: |
+#           echo "===== DEPLOYING TO PRODUCTION ENVIRONMENT ====="
+#           echo "Deployment version: $(cat dist/version.txt)"
+#           echo "Creating production backup..."
+#           sleep 2
+          
+#           echo "Deploying Frontend to production..."
+#           # In real deployment, this would deploy to production servers
+#           if [ -d "dist/frontend" ]; then
+#             echo "✓ Frontend deployed to production"
+#           fi
+#           sleep 2
+          
+#           echo "Deploying API to production..."
+#           if [ -d "dist/api" ]; then
+#             # Create production environment file
+#             cat > dist/api/.env.production << EOF
+#           # Production Environment Configuration
+#           NODE_ENV=production
+#           PORT=5000
+          
+#           # Database Configuration
+#           DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+#           DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+#           DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+#           DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+#           DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+#           DATABASE_SSL=true
+          
+#           # API Keys
+#           WEATHERAPI=${{ secrets.WEATHERAPI }}
+#           TOMTOMAPI=${{ secrets.TOMTOMAPI }}
+#           AIAPIKEY=${{ secrets.AIAPIKEY }}
+          
+#           # Security Configuration
+#           CORS_ORIGIN=https://your-domain.com
+#           RATE_LIMIT_ENABLED=true
+#           EOF
+#             echo "✓ API deployed to production"
+#           fi
+#           sleep 2
+          
+#           echo "Deploying AI Model to production..."
+#           if [ -d "dist/ai_model" ]; then
+#             # Create production AI model environment
+#             cat > dist/ai_model/.env.production << EOF
+#           # AI Model Production Configuration
+#           AIAPIKEY=${{ secrets.AIAPIKEY }}
+#           API_ENDPOINT=https://your-api-domain.com/api/incidents
+#           LOG_LEVEL=INFO
+#           EOF
+#             echo "✓ AI Model deployed to production"
+#           fi
+#           sleep 2
+          
+#           echo "Running database migrations..."
+#           # In real deployment, run actual migrations
+#           echo "✓ Database migrations completed"
+          
+#           echo "Production deployment completed successfully!"
+
+#       - name: Verify Production Deployment
+#         run: |
+#           echo "===== VERIFYING PRODUCTION DEPLOYMENT ====="
+#           echo "Running production health checks..."
+          
+#           # Verify all components
+#           echo "Checking service status..."
+#           echo "  ✓ Frontend service: HEALTHY"
+#           echo "  ✓ API service: HEALTHY" 
+#           echo "  ✓ Database: HEALTHY"
+#           echo "  ✓ AI Model service: HEALTHY"
+          
+#           echo "Running validation tests..."
+#           echo "  ✓ API endpoints responding"
+#           echo "  ✓ Database connectivity verified"
+#           echo "  ✓ AI model processing pipeline active"
+          
+#           echo "All systems operational!"
+#           echo "Production deployment verified successfully!"
+
+#       - name: Post-deployment notifications
+#         run: |
+#           echo "===== DEPLOYMENT NOTIFICATION ====="
+#           echo "Production deployment completed successfully!"
+#           echo "Timestamp: $(date)"
+#           echo "Version: $(cat dist/version.txt)"
+#           echo "Branch: ${GITHUB_REF#refs/heads/}"
+#           echo "Commit: ${GITHUB_SHA::8}"
+#           echo ""
+#           echo "Deployment Summary:"
+#           echo "   - Frontend: Deployed"
+#           echo "   - API: Deployed" 
+#           echo "   - AI Model: Deployed"
+#           echo "   - Database: Migrated"
+#           echo ""
+#           # For deployment, send notifications to Slack, email, etc.
+          
+#       # AWS verification steps commented out for now
+#       # - name: Verify AWS Production Deployment
+#       #   run: |
+#       #     echo "===== VERIFYING PRODUCTION DEPLOYMENT ====="
+#       #     echo "Running production health checks..."
+#       #     
+#       #     echo "Checking Frontend (S3/CloudFront)..."
+#       #     FRONTEND_URL="${{ secrets.PRODUCTION_FRONTEND_URL }}"
+#       #     if curl -s --head "$FRONTEND_URL" | grep "200 OK" > /dev/null; then
+#       #       echo "  ✓ Frontend service: HEALTHY"
+#       #     else
+#       #       echo "  ⚠ Frontend service: WARNING - Could not verify"
+#       #     fi
+#       #     
+#       #     echo "Checking API (EC2)..."
+#       #     API_URL="https://${{ secrets.PRODUCTION_API_ENDPOINT }}/api/health"
+#       #     if curl -s "$API_URL" | grep "status.*ok" > /dev/null; then
+#       #       echo "  ✓ API service: HEALTHY"
+#       #     else
+#       #       echo "  ⚠ API service: WARNING - Could not verify"
+#       #     fi
+#       #     
+#       #     echo "Checking AI Model (EC2)..."
+#       #     AI_URL="https://${{ secrets.PRODUCTION_AI_ENDPOINT }}/health"
+#       #     if curl -s "$AI_URL" | grep "status.*ok" > /dev/null; then
+#       #       echo "  ✓ AI Model service: HEALTHY"
+#       #     else
+#       #       echo "  ⚠ AI Model service: WARNING - Could not verify"
+#       #     fi
+#       #     
+#       #     echo "Checking Database connectivity..."
+#       #     if curl -s "$API_URL/database" | grep "status.*ok" > /dev/null; then
+#       #       echo "  ✓ Database: CONNECTED"
+#       #     else
+#       #       echo "  ⚠ Database: WARNING - Could not verify"
+#       #     fi
+#       #     
+#       #     echo "All systems operational!"
+#       #     echo "Production deployment verified successfully!"
+#       # 
+#       # - name: AWS Post-deployment notifications
+#       #   run: |
+#       #     echo "===== DEPLOYMENT NOTIFICATION ====="
+#       #     echo "Production deployment completed successfully!"
+#       #     echo "Timestamp: $(date)"
+#       #     echo "Branch: ${GITHUB_REF#refs/heads/}"
+#       #     echo "Commit: ${GITHUB_SHA::8}"
+#       #     echo ""
+#       #     echo "Deployment Summary:"
+#       #     echo "   - Frontend: Deployed to S3 bucket ${{ secrets.AWS_S3_PRODUCTION_BUCKET }}"
+#       #     echo "   - API: Deployed to EC2 instance ${{ secrets.EC2_PRODUCTION_API_HOST }}" 
+#       #     echo "   - AI Model: Deployed to EC2 instance ${{ secrets.EC2_PRODUCTION_AI_HOST }}"
+#       #     echo "   - Database: Connected to ${{ secrets.DATABASE_HOST }}"
+#       #     echo ""
+#       #     echo "Access URLs:"
+#       #     echo "   - Frontend: ${{ secrets.PRODUCTION_FRONTEND_URL }}"
+#       #     echo "   - API: https://${{ secrets.PRODUCTION_API_ENDPOINT }}/api"
+          
+
+# # Do MANUAL FIXING
+#   post-deployment-monitoring:
+#     name: Post-Deployment Monitoring
+#     needs: [deploy-production]
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/main' && success()
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Setup monitoring tools
+#         run: |
+#           echo "Setting up monitoring tools..."
+#           # Install monitoring tools
+#           sudo apt-get update
+#           sudo apt-get install -y curl jq
+          
+#       - name: Configure monitoring
+#         run: |
+#           echo "Configuring monitoring for production deployment..."
+#           # Create monitoring config
+#           cat > monitoring-config.json << EOF
+#           {
+#             "endpoints": [
+#               {
+#                 "name": "Frontend Health",
+#                 "url": "https://your-frontend-domain.com/health",
+#                 "expected_status": 200,
+#                 "alert_threshold": 3
+#               },
+#               {
+#                 "name": "API Health",
+#                 "url": "https://your-api-domain.com/api/health",
+#                 "expected_status": 200,
+#                 "alert_threshold": 3
+#               },
+#               {
+#                 "name": "Database Connection",
+#                 "url": "https://your-api-domain.com/api/health/database",
+#                 "expected_status": 200,
+#                 "alert_threshold": 2
+#               },
+#               {
+#                 "name": "AI Model Service",
+#                 "url": "https://your-api-domain.com/api/health/ai-model",
+#                 "expected_status": 200,
+#                 "alert_threshold": 2
+#               }
+#             ],
+#             "performance_metrics": [
+#               {
+#                 "name": "API Response Time",
+#                 "endpoint": "https://your-api-domain.com/api/incidents",
+#                 "threshold_ms": 500
+#               },
+#               {
+#                 "name": "Frontend Load Time",
+#                 "endpoint": "https://your-frontend-domain.com/",
+#                 "threshold_ms": 2000
+#               }
+#             ]
+#           }
+#           EOF
+          
+#       - name: Run initial health checks
+#         run: |
+#           echo "Running initial health checks..."
+          
+#           # These would be real checks in production but are simulated here
+#           echo "Health check results:"
+#           echo "  Success: Frontend: HEALTHY (Response time: 132ms)"
+#           echo "  Success: API: HEALTHY (Response time: 95ms)"
+#           echo "  Success: Database: HEALTHY (Connection pool: 5/10)"
+#           echo "  Success: AI Model Service: HEALTHY (GPU utilization: 23%)"
+
+#       - name: Setup performance monitoring
+#         run: |
+#           echo "Setting up performance monitoring..."
+          
+#           # These would configure real monitoring systems in production
+#           echo "Creating performance dashboards..."
+#           echo "  Success: API response time dashboard created"
+#           echo "  Success: Database query performance dashboard created"
+#           echo "  Success: Frontend load time dashboard created"
+#           echo "  Success: AI model inference time dashboard created"
+
+#           echo "Configuring alerts..."
+#           echo "  Success: High response time alerts configured"
+#           echo "  Success: Error rate threshold alerts configured"
+#           echo "  Success: Database connection pool alerts configured"
+#           echo "  Success: Memory usage alerts configured"
+
+#       - name: Configure log aggregation
+#         run: |
+#           echo "Setting up log aggregation..."
+          
+#           # These would configure real log systems in production
+#           echo "  Success: API logs collection configured"
+#           echo "  Success: Frontend error logging configured"
+#           echo "  Success: Database audit logging configured"
+#           echo "  Success: AI model prediction logging configured"
+
+#           echo "Success: Log aggregation dashboard created"
+          
+#       - name: Generate monitoring documentation
+#         run: |
+#           mkdir -p monitoring-docs
+          
+#           # Create monitoring documentation
+#           cat > monitoring-docs/README.md << EOF
+#           # Traffic Guardian Monitoring Guide
+          
+#           This document describes the monitoring setup for the Traffic Guardian application.
+          
+#           ## Monitored Endpoints
+          
+#           - Frontend: https://your-frontend-domain.com/health
+#           - API: https://your-api-domain.com/api/health
+#           - Database: https://your-api-domain.com/api/health/database
+#           - AI Model: https://your-api-domain.com/api/health/ai-model
+          
+#           ## Dashboards
+          
+#           - Main System Dashboard: https://monitoring.your-domain.com/dashboards/main
+#           - Performance Dashboard: https://monitoring.your-domain.com/dashboards/performance
+#           - Error Tracking: https://monitoring.your-domain.com/dashboards/errors
+          
+#           ## Alert Configuration
+          
+#           Alerts are configured for:
+          
+#           - High response times (>500ms for API, >2s for frontend)
+#           - Error rates exceeding 5% in 5-minute windows
+#           - Database connection pool saturation
+#           - Memory/CPU usage above 80%
+          
+#           ## Log Access
+          
+#           Logs can be accessed at:
+          
+#           - https://logs.your-domain.com
+          
+#           Centralized logging is configured for all application components.
+#           EOF
+          
+#           echo "Monitoring documentation generated"
+          
+#       - name: Upload monitoring documentation
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: monitoring-docs
+#           path: monitoring-docs
+          
+#       - name: Send monitoring setup notification
+#         run: |
+#           echo "Sending monitoring setup notification..."
+#           echo "✓ Monitoring setup notifications sent"

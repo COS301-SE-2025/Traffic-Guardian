@@ -14,6 +14,7 @@ const BellIcon = () => (
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
+      // eslint-disable-next-line max-len
       d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
     />
   </svg>
@@ -116,6 +117,7 @@ const ActivityIcon = () => (
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
+      // eslint-disable-next-line max-len
       d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
     />
   </svg>
@@ -167,9 +169,15 @@ const GlobalAlertBadge: React.FC = () => {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffMins < 1) {
+      return 'Just now';
+    }
+    if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    }
+    if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    }
     return `${diffDays}d ago`;
   };
 
@@ -282,10 +290,10 @@ const GlobalAlertBadge: React.FC = () => {
                               className={`global-alert-severity ${alert.incident.Incident_Severity}`}
                             >
                               {getSeverityIcon(
-                                alert.incident.Incident_Severity
+                                alert.incident.Incident_Severity,
                               )}{' '}
                               {getSeverityDisplay(
-                                alert.incident.Incident_Severity
+                                alert.incident.Incident_Severity,
                               )}
                             </span>
                             <span className="global-alert-time">
@@ -300,17 +308,17 @@ const GlobalAlertBadge: React.FC = () => {
                             <div className="global-alert-location">
                               {alert.incident.Incidents_Latitude &&
                               alert.incident.Incidents_Longitude ? (
-                                <>
-                                  <LocationIcon />
+                                  <>
+                                    <LocationIcon />
                                   Lat: {alert.incident.Incidents_Latitude}, Lng:{' '}
-                                  {alert.incident.Incidents_Longitude}
-                                </>
-                              ) : (
-                                <>
-                                  <LocationIcon />
+                                    {alert.incident.Incidents_Longitude}
+                                  </>
+                                ) : (
+                                  <>
+                                    <LocationIcon />
                                   Location not specified
-                                </>
-                              )}
+                                  </>
+                                )}
                             </div>
                             <div className="global-alert-reporter">
                               <UserIcon />

@@ -7,7 +7,7 @@ if (!process.env.DATABASE_HOST) {
     path: require('path').join(__dirname, '../../.env')
   });
 }
-
+// 
 // Validate required database credentials
 const requiredSecrets = [
   'DATABASE_USERNAME',
@@ -49,7 +49,9 @@ const pool = new Pool({
 
 // Test the database connection on startup
 pool.query('SELECT NOW()')
-  .then(() => console.log('Database connection established successfully'))
+  .then(() => {
+    // Connection test successful - server.js will handle the startup message
+  })
   .catch(err => console.error('Database connection error:', err));
 
 // Handle pool errors

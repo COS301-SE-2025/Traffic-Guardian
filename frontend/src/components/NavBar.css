@@ -2,11 +2,60 @@
   box-sizing: border-box;
 }
 
+/* CSS Custom Properties for consistent navbar spacing */
+:root {
+  /* Calculate actual navbar height: padding + logo + padding */
+  --navbar-padding-y: 0.75rem;
+  --navbar-logo-height: 70px;
+  --navbar-total-height: calc(var(--navbar-padding-y) * 2 + var(--navbar-logo-height));
+  --page-content-offset: calc(var(--navbar-total-height) + 0.5rem);
+}
+
+/* Responsive navbar height adjustments */
+@media (max-width: 1366px) {
+  :root {
+    --navbar-logo-height: 70px;
+  }
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --navbar-logo-height: 50px;
+    --navbar-padding-y: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --navbar-logo-height: 60px;
+    --navbar-padding-y: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --navbar-logo-height: 50px;
+    --navbar-padding-y: 0.75rem;
+  }
+}
+
 .navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   background: #1e1e1e;
-  padding: 1rem 2rem;
+  padding: var(--navbar-padding-y) 2rem;
   z-index: 2000;
+  box-sizing: border-box;
+  height: var(--navbar-total-height);
+  overflow: visible; /* Allow logo to be visible */
+}
+
+/* Light mode navbar */
+:root.light-mode .navbar {
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
 }
 
 .navbar .navbar-content {
@@ -16,13 +65,14 @@
   justify-content: center;
   align-items: center;
   flex: 1;
+  height: 100%; /* Ensure full height */
 }
 
 .navbar .tg-nav-links {
   list-style: none;
   display: flex;
   align-items: center;
-  gap: clamp(1.5rem, 3vw, 4.5rem);
+  gap: 2.5rem;
   padding: 0;
   margin: 0;
   flex-wrap: wrap;
@@ -40,14 +90,20 @@
 .navbar .nav-item a {
   text-decoration: none;
   color: white;
-  transition: color 0.2s ease-in;
+  transition: color 0.15s ease;
   position: relative;
   display: inline-block;
+  white-space: nowrap;
+}
+
+/* Light mode navbar links */
+:root.light-mode .navbar .nav-item a {
+  color: #333;
 }
 
 .navbar .nav-item:hover a,
 .navbar .nav-item.active a {
-  color: #ffae36;
+  color: #feac34;
 }
 
 .navbar .nav-item a::after {
@@ -58,8 +114,8 @@
   transform: translateX(-50%);
   width: 0;
   height: 0.5px;
-  background-color: #ffae36;
-  transition: width 0.3s ease-in-out;
+  background-color: #feac34;
+  transition: width 0.2s ease;
 }
 
 .navbar .nav-item:hover a::after,
@@ -68,13 +124,18 @@
 }
 
 .navbar .logo-container {
-  padding: clamp(1rem, 3vw, 2rem);
+  padding: 0; /* Remove padding to prevent overflow */
+  display: flex;
+  align-items: center;
+  height: 100%; /* Match parent height */
 }
 
 .navbar .navbar-logo {
-  height: 80px;
+  height: var(--navbar-logo-height);
   width: auto;
   max-width: 100%;
+  display: block;
+  object-fit: contain; /* Ensure logo maintains aspect ratio */
 }
 
 .navbar .icon-group {
@@ -97,32 +158,30 @@
   font-size: 20px;
   color: white;
   cursor: pointer;
-  transition: color 0.2s ease-in;
+  transition: color 0.15s ease;
+}
+
+/* Light mode navbar icons */
+:root.light-mode .navbar .search-icon,
+:root.light-mode .navbar .help-icon {
+  color: #333;
 }
 
 .navbar .search-icon:hover,
 .navbar .help-icon:hover {
-  color: #ffae36;
+  color: #feac34;
 }
 
 .navbar .help-link.active .help-icon {
-  color: #ffae36;
+  color: #feac34;
 }
 
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .navbar .tg-nav-links {
     gap: 1rem;
     justify-content: center;
     flex-direction: row;
     position: relative;
-  }
-
-  .navbar .logo-container {
-    padding: 1rem;
-  }
-
-  .navbar .navbar-logo {
-    height: 60px;
   }
 
   .navbar .nav-item a {
@@ -136,5 +195,42 @@
 
   .navbar .icon-group {
     gap: 0.8rem;
+  }
+}
+
+/* Responsive adjustments for different screen sizes */
+@media screen and (max-width: 1366px) {
+  .navbar {
+    padding: var(--navbar-padding-y) 1rem;
+  }
+
+  .navbar .tg-nav-links {
+    gap: 1.5rem;
+  }
+
+  .navbar .nav-item a {
+    font-size: 0.9rem;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .navbar {
+    padding: var(--navbar-padding-y) 0.5rem;
+  }
+
+  .navbar .tg-nav-links {
+    gap: 1rem;
+  }
+
+  .navbar .logo-container {
+    padding: 0.75rem;
+  }
+
+  .navbar .nav-item a {
+    font-size: 0.85rem;
+  }
+
+  .navbar .help-icon {
+    font-size: 18px;
   }
 }

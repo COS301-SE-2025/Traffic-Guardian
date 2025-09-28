@@ -10,23 +10,23 @@ import ApiService, {
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// Mock localStorage
-const mockLocalStorage = {
+// Mock sessionStorage
+const mockSessionStorage = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
 };
-Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
+Object.defineProperty(window, 'sessionStorage', { value: mockSessionStorage });
 
 describe('ApiService', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockLocalStorage.getItem.mockReturnValue('test-api-key');
+    mockSessionStorage.getItem.mockReturnValue('test-api-key');
     jest.resetModules();
     process.env = { ...originalEnv };
-    process.env.REACT_APP_SERVER_URL = 'http://test-server.com/api';
+    process.env.REACT_APP_API_URL = 'http://test-server.com/api';
     console.log = jest.fn();
     console.error = jest.fn();
   });
@@ -36,8 +36,8 @@ describe('ApiService', () => {
   });
 
   describe('Authentication Headers', () => {
-    test('includes API key from localStorage in headers', async () => {
-      mockLocalStorage.getItem.mockReturnValue('my-test-key');
+    test('includes API key from sessionStorage in headers', async () => {
+      mockSessionStorage.getItem.mockReturnValue('my-test-key');
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [],
@@ -52,12 +52,12 @@ describe('ApiService', () => {
             'Content-Type': 'application/json',
             'X-API-Key': 'my-test-key',
           },
-        }
+        },
       );
     });
 
     test('uses empty string when no API key in localStorage', async () => {
-      mockLocalStorage.getItem.mockReturnValue(null);
+      mockSessionStorage.getItem.mockReturnValue(null);
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [],
@@ -72,7 +72,7 @@ describe('ApiService', () => {
             'Content-Type': 'application/json',
             'X-API-Key': '',
           },
-        }
+        },
       );
     });
   });
@@ -87,7 +87,7 @@ describe('ApiService', () => {
       expect(result).toEqual([]);
       expect(console.error).toHaveBeenCalledWith(
         'Error fetching incidents:',
-        expect.any(Error)
+        expect.any(Error),
       );
     });
 
@@ -125,11 +125,15 @@ describe('ApiService', () => {
     test('fetches incidents successfully', async () => {
       const mockIncidents: DatabaseIncident[] = [
         {
-          Incident_ID: 1,
-          Incident_Date: '2024-01-01',
-          Incident_Location: 'Test Location',
-          Incident_Severity: 'High',
-          Incident_Status: 'Active',
+          Incidents_ID: 1,
+          Incidents_DateTime: '2024-01-01T12:00:00.000Z',
+          Incidents_Longitude: -122.4194,
+          Incidents_Latitude: 37.7749,
+          Incident_Severity: 'high',
+          Incident_Status: 'open',
+          Incident_Reporter: 'TestUser',
+          Incident_CameraID: 1,
+          Incident_Description: 'Test incident description',
         },
       ];
 
@@ -147,7 +151,7 @@ describe('ApiService', () => {
           headers: expect.objectContaining({
             'X-API-Key': 'test-api-key',
           }),
-        })
+        }),
       );
     });
 
@@ -179,7 +183,7 @@ describe('ApiService', () => {
       expect(result).toEqual(mockTodaysData);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/incidents/today'),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -247,7 +251,7 @@ describe('ApiService', () => {
       expect(result).toEqual(mockArchives);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/archives'),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -266,9 +270,9 @@ describe('ApiService', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining(
-          '/archives?type=incident&severity=High&limit=10&offset=0'
+          '/archives?type=incident&severity=High&limit=10&offset=0',
         ),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -295,16 +299,16 @@ describe('ApiService', () => {
 
   describe('Authentication Methods', () => {
     test('isAuthenticated returns true when API key exists', () => {
-      mockLocalStorage.getItem.mockReturnValue('valid-key');
+      mockSessionStorage.getItem.mockReturnValue('valid-key');
 
       const result = ApiService.isAuthenticated();
 
       expect(result).toBe(true);
-      expect(mockLocalStorage.getItem).toHaveBeenCalledWith('apiKey');
+      expect(mockSessionStorage.getItem).toHaveBeenCalledWith('apiKey');
     });
 
     test('isAuthenticated returns false when API key is empty', () => {
-      mockLocalStorage.getItem.mockReturnValue('');
+      mockSessionStorage.getItem.mockReturnValue('');
 
       const result = ApiService.isAuthenticated();
 
@@ -312,7 +316,7 @@ describe('ApiService', () => {
     });
 
     test('isAuthenticated returns false when API key is null', () => {
-      mockLocalStorage.getItem.mockReturnValue(null);
+      mockSessionStorage.getItem.mockReturnValue(null);
 
       const result = ApiService.isAuthenticated();
 
@@ -321,16 +325,16 @@ describe('ApiService', () => {
 
     test('getCurrentUser returns parsed user data', () => {
       const mockUser = { id: 1, name: 'Test User' };
-      mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockUser));
+      mockSessionStorage.getItem.mockReturnValue(JSON.stringify(mockUser));
 
       const result = ApiService.getCurrentUser();
 
       expect(result).toEqual(mockUser);
-      expect(mockLocalStorage.getItem).toHaveBeenCalledWith('user');
+      expect(mockSessionStorage.getItem).toHaveBeenCalledWith('user');
     });
 
     test('getCurrentUser returns null when no user data', () => {
-      mockLocalStorage.getItem.mockReturnValue(null);
+      mockSessionStorage.getItem.mockReturnValue(null);
 
       const result = ApiService.getCurrentUser();
 
@@ -340,8 +344,8 @@ describe('ApiService', () => {
     test('logout removes stored data', () => {
       ApiService.logout();
 
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('apiKey');
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('user');
+      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith('apiKey');
+      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith('user');
     });
   });
 
@@ -360,13 +364,13 @@ describe('ApiService', () => {
       const result = await ApiService.login('test@example.com', 'password');
 
       expect(result).toEqual(mockResponse);
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
         'apiKey',
-        'new-api-key'
+        'new-api-key',
       );
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
         'user',
-        JSON.stringify(mockResponse.user)
+        JSON.stringify(mockResponse.user),
       );
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/auth/login'),
@@ -377,7 +381,7 @@ describe('ApiService', () => {
             User_Email: 'test@example.com',
             User_Password: 'password',
           }),
-        }
+        },
       );
     });
 
@@ -389,7 +393,7 @@ describe('ApiService', () => {
       });
 
       await expect(
-        ApiService.login('test@example.com', 'wrong-password')
+        ApiService.login('test@example.com', 'wrong-password'),
       ).rejects.toThrow('Invalid credentials');
     });
   });
@@ -402,7 +406,7 @@ describe('ApiService', () => {
 
       expect(result).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/health')
+        expect.stringContaining('/health'),
       );
     });
 
@@ -418,7 +422,7 @@ describe('ApiService', () => {
 
   describe('URL Configuration', () => {
     test('uses environment variable for API base URL', async () => {
-      process.env.REACT_APP_SERVER_URL = 'https://custom-server.com/api';
+      process.env.REACT_APP_API_URL = 'https://custom-server.com/api';
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [],
@@ -428,12 +432,12 @@ describe('ApiService', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/incidents'),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
     test('uses default URL when environment variable not set', async () => {
-      delete process.env.REACT_APP_SERVER_URL;
+      delete process.env.REACT_APP_API_URL;
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [],
@@ -443,7 +447,7 @@ describe('ApiService', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/incidents'),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });

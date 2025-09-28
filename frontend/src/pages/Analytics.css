@@ -2,7 +2,28 @@
   min-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
+  background-color: #0f0f0f;
+  color: #f1f1f1;
   transition: background-color 0.3s ease;
+  padding-top: var(--page-content-offset);
+}
+
+/* Light mode analytics */
+:root.light-mode .analytics-container {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .analytics-container {
+    padding-top: var(--page-content-offset);
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-container {
+    padding-top: var(--page-content-offset);
+  }
 }
 
 .analytics-content {
@@ -245,7 +266,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 /* Archive-specific card icons */
 .card-icon.archive {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, #feac34 0%, #f79400 100%);
 }
 
 .card-icon.archive-time {
@@ -271,7 +292,17 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 .card-value {
   font-size: 2rem;
   font-weight: 700;
+<<<<<<< HEAD
   margin-bottom: 0.5rem;
+=======
+  margin-bottom: 0.15rem;
+  line-height: 1;
+  color: #1f2937;
+}
+
+.dark-mode .card-value {
+  color: #f1f5f9;
+>>>>>>> Dev
 }
 
 .card-trend {
@@ -335,27 +366,29 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 /* Archive-specific chart containers */
 .chart-container.archive-trends {
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid #feac34;
 }
 
 .dark-mode .chart-container.archive-trends {
-  border-left-color: #fbbf24;
+  border-left-color: #ff8a5b;
 }
 
 .chart-container.archive-analytics {
-  background: linear-gradient(
-    145deg,
-    rgb(255 255 255 / 95%) 0%,
-    rgb(249 250 251 / 90%) 100%
-  );
+  background:
+    linear-gradient(
+      145deg,
+      rgb(255 255 255 / 95%) 0%,
+      rgb(249 250 251 / 90%) 100%
+    );
 }
 
 .dark-mode .chart-container.archive-analytics {
-  background: linear-gradient(
-    145deg,
-    rgb(31 41 55 / 85%) 0%,
-    rgb(17 24 39 / 90%) 100%
-  );
+  background:
+    linear-gradient(
+      145deg,
+      rgb(31 41 55 / 85%) 0%,
+      rgb(17 24 39 / 90%) 100%
+    );
 }
 
 .radar-chart-wrapper {
@@ -429,8 +462,8 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .severity-indicator.severity-medium {
-  background: rgb(245 158 11 / 10%);
-  color: #f59e0b;
+  background: rgb(254 172 52 / 10%);
+  color: #feac34;
 }
 
 .severity-indicator.severity-low {
@@ -453,16 +486,16 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   background: rgb(0 0 0 / 2%);
   border-radius: 8px;
   transition: all 0.3s ease;
-  border-left: 3px solid #f59e0b;
+  border-left: 3px solid #feac34;
 }
 
 .dark-mode .archive-item {
   background: rgb(255 255 255 / 2%);
-  border-left-color: #fbbf24;
+  border-left-color: #ff8a5b;
 }
 
 .archive-item:hover {
-  background: rgb(245 158 11 / 5%);
+  background: rgb(254 172 52 / 5%);
   transform: translateX(4px);
 }
 
@@ -474,15 +507,15 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 .archive-id {
   font-weight: 700;
-  color: #f59e0b;
+  color: #feac34;
   font-size: 0.875rem;
 }
 
 .archive-type {
   font-weight: 500;
   text-transform: capitalize;
-  background: rgb(245 158 11 / 10%);
-  color: #f59e0b;
+  background: rgb(254 172 52 / 10%);
+  color: #feac34;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -513,8 +546,8 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .status-indicator.status-ongoing {
-  background: rgb(245 158 11 / 10%);
-  color: #f59e0b;
+  background: rgb(254 172 52 / 10%);
+  color: #feac34;
 }
 
 .status-indicator.status-resolved {
@@ -531,7 +564,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  color: #f59e0b;
+  color: #feac34;
 }
 
 .archive-indicator svg {
@@ -548,28 +581,28 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 .archive-metric-card {
-  background: rgb(245 158 11 / 5%);
+  background: rgb(254 172 52 / 5%);
   border-radius: 12px;
   padding: 1.25rem;
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid #feac34;
   transition: all 0.3s ease;
 }
 
 .dark-mode .archive-metric-card {
-  background: rgb(245 158 11 / 10%);
-  border-left-color: #fbbf24;
+  background: rgb(254 172 52 / 10%);
+  border-left-color: #ff8a5b;
 }
 
 .archive-metric-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgb(245 158 11 / 20%);
+  box-shadow: 0 4px 12px rgb(254 172 52 / 20%);
 }
 
 .archive-metric-card h4 {
   font-size: 0.875rem;
   font-weight: 600;
   margin: 0 0 0.5rem;
-  color: #f59e0b;
+  color: #feac34;
 }
 
 .archive-metric-card .metric-value {
@@ -594,9 +627,9 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 .archive-filter-button {
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  border: 1px solid #f59e0b;
+  border: 1px solid #feac34;
   background: transparent;
-  color: #f59e0b;
+  color: #feac34;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -605,18 +638,18 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 .archive-filter-button:hover,
 .archive-filter-button.active {
-  background: #f59e0b;
+  background: #feac34;
   color: white;
 }
 
 .dark-mode .archive-filter-button {
-  border-color: #fbbf24;
-  color: #fbbf24;
+  border-color: #ff8a5b;
+  color: #ff8a5b;
 }
 
 .dark-mode .archive-filter-button:hover,
 .dark-mode .archive-filter-button.active {
-  background: #fbbf24;
+  background: #ff8a5b;
   color: #111827;
 }
 
@@ -743,23 +776,25 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 }
 
 /* Archive-specific animations */
-@keyframes archive-pulse {
+@keyframes archivePulse {
   0% {
     transform: scale(1);
-    opacity: 1;
+    opacity: 100%;
   }
+
   50% {
     transform: scale(1.05);
-    opacity: 0.8;
+    opacity: 80%;
   }
+
   100% {
     transform: scale(1);
-    opacity: 1;
+    opacity: 100%;
   }
 }
 
 .archive-new-indicator {
-  animation: archive-pulse 2s ease-in-out infinite;
+  animation: archivePulse 2s ease-in-out infinite;
 }
 
 /* Archive loading states */
@@ -768,7 +803,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: #f59e0b;
+  color: #feac34;
   font-size: 0.875rem;
 }
 
@@ -794,7 +829,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   width: 48px;
   height: 48px;
   margin-bottom: 1rem;
-  opacity: 0.5;
+  opacity: 50%;
 }
 
 .archive-empty h3 {
@@ -941,13 +976,7 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   font-size: 11px !important;
 }
 
-.chart-container.half-width {
-  overflow: visible;
-}
-
-.chart-container.half-width .recharts-wrapper {
-  margin: 0 auto;
-}
+/* Duplicate selector removed - exists earlier in file */
 
 @media screen and (min-device-pixel-ratio: 0) {
   input[type="date"]::-webkit-calendar-picker-indicator {

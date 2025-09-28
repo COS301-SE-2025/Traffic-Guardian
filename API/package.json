@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest"
+    "test": "jest",
+    "test:unit" : "jest --testPathPattern=UnitTesting",
+    "test:integration" : "jest --testPathPattern=IntegrationTesting",
+    "test:performance": "jest --testPathPattern=PerformanceTesting",
+    "test:scalability" : "jest --testPathPattern=ScalabilityTesting"
   },
   "keywords": [
     "traffic",
@@ -17,7 +21,7 @@
   "author": "Quantum Quenchers",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.1.0",
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -28,12 +32,20 @@
     "jsonwebtoken": "^9.0.0",
     "morgan": "^1.10.0",
     "node-cache": "^5.1.2",
+    "nodemailer": "^7.0.6",
     "pg": "^8.16.0",
+<<<<<<< HEAD
     "socket.io": "^4.8.1"
+=======
+    "puppeteer": "^24.20.0",
+    "socket.io": "^4.8.1",
+    "xml2js": "^0.6.2"
+>>>>>>> Dev
   },
   "devDependencies": {
     "autocannon": "^8.0.0",
     "axios": "^1.9.0",
+    "eslint": "^9.35.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.10",
     "socket.io-client": "^4.8.1"

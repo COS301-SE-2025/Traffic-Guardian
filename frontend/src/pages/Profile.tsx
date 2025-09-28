@@ -3,7 +3,13 @@ import './Profile.css';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../consts/ThemeContext';
+<<<<<<< HEAD
 import CarLoadingAnimation from '../components/CarLoadingAnimation';
+=======
+import { useUser } from '../contexts/UserContext';
+import LoadingSpinner from '../components/LoadingSpinner';
+import dataPrefetchService from '../services/DataPrefetchService';
+>>>>>>> Dev
 
 interface User {
   name: string;
@@ -20,6 +26,7 @@ interface Preferences {
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { toggleDarkMode } = useTheme();
+  const { logout } = useUser();
   const hasInitialized = useRef(false);
   const [user, setUser] = useState<User>({ name: '', email: '' });
   const [preferences, setPreferences] = useState<Preferences>({
@@ -45,7 +52,7 @@ const Profile: React.FC = () => {
             'X-API-Key': apiKey,
             'Content-Type': 'application/json',
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -74,12 +81,6 @@ const Profile: React.FC = () => {
       try {
         const apiKey = sessionStorage.getItem('apiKey');
         const savedTheme = localStorage.getItem('theme');
-        console.log(
-          'Profile useEffect: apiKey=',
-          apiKey,
-          'savedTheme=',
-          savedTheme
-        );
 
         if (!apiKey) {
           throw new Error('No API key found. Please log in.');
@@ -92,7 +93,7 @@ const Profile: React.FC = () => {
               'X-API-Key': apiKey,
               'Content-Type': 'application/json',
             },
-          }
+          },
         );
 
         if (!userResponse.ok) {
@@ -113,7 +114,7 @@ const Profile: React.FC = () => {
               'X-API-Key': apiKey,
               'Content-Type': 'application/json',
             },
-          }
+          },
         );
 
         let currentPrefs = {
@@ -124,7 +125,6 @@ const Profile: React.FC = () => {
 
         if (prefsResponse.ok) {
           const prefsData = await prefsResponse.json();
-          console.log('Profile fetched preferences:', prefsData);
           let fetchedPrefs;
           try {
             fetchedPrefs =
@@ -135,7 +135,7 @@ const Profile: React.FC = () => {
           } catch (err) {
             console.warn(
               'Profile: Failed to parse preferences, using fallback',
-              err
+              err,
             );
             fetchedPrefs = {};
           }
@@ -150,12 +150,11 @@ const Profile: React.FC = () => {
             theme: validTheme,
           };
 
-          console.log('Profile processed preferences:', currentPrefs);
           localStorage.setItem('theme', currentPrefs.theme);
         } else {
           console.warn(
             'Profile: Failed to fetch preferences, using saved theme:',
-            savedTheme
+            savedTheme,
           );
           if (savedTheme) {
             currentPrefs = {
@@ -231,7 +230,7 @@ const Profile: React.FC = () => {
             User_Email: user.email,
             preferences: validatedPrefs,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -251,7 +250,7 @@ const Profile: React.FC = () => {
         } catch (err) {
           console.warn(
             'Profile: Failed to parse updated preferences, using temp',
-            err
+            err,
           );
           updatedPrefs = validatedPrefs;
         }
@@ -261,12 +260,10 @@ const Profile: React.FC = () => {
             ? updatedPrefs.theme
             : validatedPrefs.theme;
 
-        console.log('Profile saved preferences:', updatedPrefs);
         setPreferences(updatedPrefs);
         localStorage.setItem('theme', updatedPrefs.theme);
         toggleDarkMode(updatedPrefs.theme === 'dark');
       } else {
-        console.log('Profile: No User_Preferences in response, using temp');
         setPreferences(validatedPrefs);
         localStorage.setItem('theme', validatedPrefs.theme);
         toggleDarkMode(validatedPrefs.theme === 'dark');
@@ -279,13 +276,23 @@ const Profile: React.FC = () => {
   };
 
   const handleSignOut = () => {
-    sessionStorage.removeItem('apiKey');
-    sessionStorage.removeItem('userEmail');
+    logout();
+    dataPrefetchService.stopPrefetching();
     navigate('/account');
   };
 
   if (loading) {
+<<<<<<< HEAD
     return <CarLoadingAnimation />;
+=======
+    return (
+      <LoadingSpinner
+        size="large"
+        text="Loading profile..."
+        className="content"
+      />
+    );
+>>>>>>> Dev
   }
   if (error) {
     return (

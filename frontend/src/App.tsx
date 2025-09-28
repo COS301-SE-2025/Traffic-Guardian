@@ -3,8 +3,10 @@ import './App.css';
 import { ThemeProvider } from './consts/ThemeContext';
 import { SocketProvider } from './consts/SocketContext';
 import { LiveFeedProvider } from './contexts/LiveFeedContext';
+import { UserProvider } from './contexts/UserContext';
 import NavBar from './components/NavBar';
 import GlobalAlertBadge from './components/GlobalAlertBadge';
+import DataAttribution from './components/DataAttribution';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LiveFeed from './pages/LiveFeed';
@@ -140,32 +142,55 @@ const App: React.FC = () => {
   const initialTheme = localStorage.getItem('theme');
   const isDarkMode = initialTheme ? initialTheme === 'dark' : true;
 
+<<<<<<< HEAD
+=======
+  // Check if user is already logged in and start prefetching
+  React.useEffect(() => {
+    const apiKey = sessionStorage.getItem('apiKey');
+    if (apiKey) {
+      // Starting background data prefetching
+      dataPrefetchService.startPrefetching();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      dataPrefetchService.stopPrefetching();
+    };
+  }, []);
+
+>>>>>>> Dev
   return (
     <ThemeProvider initialDarkMode={isDarkMode}>
-      <Router>
-        <SocketProvider>
-          <LiveFeedProvider>
-            <div className="App">
-              <AnimatedRoutes />
+      <UserProvider>
+        <Router>
+          <SocketProvider>
+            <LiveFeedProvider>
+              <div className="App">
+                <div className="main-content">
+                  <AnimatedRoutes />
+                </div>
+                <DataAttribution />
 
-              {/* Global Toast Container for real-time notifications */}
-              <ToastContainer
-                position="top-right"
-                autoClose={8000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-                style={{ zIndex: 99999 }}
-              />
-            </div>
-          </LiveFeedProvider>
-        </SocketProvider>
-      </Router>
+                {/* Global Toast Container - Professional notifications only */}
+                <ToastContainer
+                  position="top-right"
+                  autoClose={4000}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="dark"
+                  style={{ zIndex: 99999 }}
+                  limit={1}
+                />
+              </div>
+            </LiveFeedProvider>
+          </SocketProvider>
+        </Router>
+      </UserProvider>
     </ThemeProvider>
   );
 };

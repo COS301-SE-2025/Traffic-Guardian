@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import './Account.css';
+import './SignUp.css';
 import { useNavigate } from 'react-router-dom';
+import drivingCarsHighwayImg from '../assets/driving_cars_highway.jpg';
 
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const SignUp: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    if (!validateForm()) return;
+    if (!validateForm()) {return;}
 
     setLoading(true);
 
@@ -65,17 +66,17 @@ const SignUp: React.FC = () => {
             User_Role: 'user',
             User_Preferences: '{}',
           }),
-        }
+        },
       );
 
       const contentType = response.headers.get('content-type');
       if (contentType?.includes('application/json')) {
         const data = await response.json();
         if (!response.ok)
-          throw new Error(data.message || 'Registration failed');
+        {throw new Error(data.message || 'Registration failed');}
       } else {
         const text = await response.text();
-        if (!response.ok) throw new Error(text || 'Registration failed');
+        if (!response.ok) {throw new Error(text || 'Registration failed');}
       }
 
       setSuccess(true);
@@ -89,120 +90,149 @@ const SignUp: React.FC = () => {
 
   if (success) {
     return (
-      <div className="account-page">
-        <div className="login-container success-message">
-          <h2>Registration Successful!</h2>
-          <p>You will be redirected to your profile shortly.</p>
+      <div className="signup-page">
+        <div className="signup-auth-container">
+          <div className="signup-image-container">
+            <img
+              src={drivingCarsHighwayImg}
+              alt="Cars driving on highway"
+              className="signup-auth-image"
+            />
+            <div className="signup-image-overlay">
+              <h3>Welcome Aboard</h3>
+              <p>Your journey with Traffic Guardian begins now</p>
+            </div>
+          </div>
+          <div className="signup-form-container success-message">
+            <h2>Registration Successful!</h2>
+            <p>You will be redirected to your profile shortly.</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="account-page">
-      <div className="login-container">
-        <h2>Create Account</h2>
-        <p>Welcome to Traffic Guardian - Let's create your account</p>
-        <div className="divider" />
+    <div className="signup-page">
+      <div className="signup-auth-container">
+        <div className="signup-image-container">
+          <img
+            src={drivingCarsHighwayImg}
+            alt="Cars driving on highway"
+            className="signup-auth-image"
+          />
+          <div className="signup-image-overlay">
+            <h3>Join Traffic Guardian</h3>
+            <p>Start your journey towards smarter traffic monitoring</p>
+          </div>
+        </div>
 
-        {error && (
-          <div className="alert alert-error" data-testid="error-message">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="stroke-current shrink-0 h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+        <div className="signup-form-container">
+          <h2>Create Account</h2>
+          <p>Welcome to Traffic Guardian - Let's create your account</p>
+          <div className="signup-divider" />
+
+          {error && (
+            <div className="alert alert-error" data-testid="error-message">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="stroke-current shrink-0 h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} data-testid="signup-form" noValidate>
+            <div className="signup-form-group">
+              <label htmlFor="username">Username</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                data-testid="username-input"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                minLength={3}
+                maxLength={30}
               />
-            </svg>
-            <span>{error}</span>
+            </div>
+
+            <div className="signup-form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                data-testid="email-input"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="signup-form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                data-testid="password-input"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
+
+            <div className="signup-form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                data-testid="confirm-password-input"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="signup-btn"
+              data-testid="submit-button"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="loading loading-spinner" />
+                  Processing...
+                </>
+              ) : (
+                'Create Account'
+              )}
+            </button>
+          </form>
+
+          <div className="signup-text">
+            Already have an account?{' '}
+            <span className="signup-link" onClick={() => navigate('/account')}>
+              Sign In
+            </span>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} data-testid="signup-form" noValidate>
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              data-testid="username-input"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              minLength={3}
-              maxLength={30}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              data-testid="email-input"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              data-testid="password-input"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              minLength={6}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              data-testid="confirm-password-input"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              minLength={6}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="signup-btn"
-            data-testid="submit-button"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="loading loading-spinner"></span>
-                Processing...
-              </>
-            ) : (
-              'Create Account'
-            )}
-          </button>
-        </form>
-
-        <div className="signup-text">
-          Already have an account?{' '}
-          <span className="signup-link" onClick={() => navigate('/account')}>
-            Sign In
-          </span>
         </div>
       </div>
     </div>

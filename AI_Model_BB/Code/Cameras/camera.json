@@ -2,12 +2,7 @@
     "cameras":
     [
        
-         {
-            "camera_id": "1",
-            "url":"Videos/Demo2.mp4",
-            "camera_longitude":"25.7543",
-            "camera_latitude": "28.2316"
-        },
+        
         {
             "camera_id": "4",
             "url":"https://wzmedia.dot.ca.gov/D12/WB91BEACH.stream/playlist.m3u8",
