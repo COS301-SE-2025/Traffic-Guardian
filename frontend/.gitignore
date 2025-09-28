@@ -11,6 +11,11 @@
 # testing
 /coverage
 
+# cypress
+/cypress/videos
+/cypress/screenshots
+/cypress/reports
+
 # production
 /build
 

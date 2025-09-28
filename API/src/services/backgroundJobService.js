@@ -18,17 +18,14 @@ class BackgroundJobService {
   // Start the background job processor
   start() {
     if (this.processingInterval) {
-      console.log('Background job processor already running');
       return;
     }
 
-    console.log('🚀 Starting background job processor');
     this.processingInterval = setInterval(async () => {
       await this.processQueue();
     }, 60000); // Process every 60 seconds - cost optimized
 
-    // Also process immediately
-    setImmediate(() => this.processQueue());
+    // Don't process immediately on startup to avoid duplicate calls
   }
 
   // Stop the background job processor
@@ -36,7 +33,6 @@ class BackgroundJobService {
     if (this.processingInterval) {
       clearInterval(this.processingInterval);
       this.processingInterval = null;
-      console.log('⏹ Background job processor stopped');
     }
   }
 
@@ -66,7 +62,6 @@ class BackgroundJobService {
       return priorities[b.options.priority] - priorities[a.options.priority];
     });
 
-    console.log(`📋 Job queued: ${job.type} (${job.id})`);
     return job.id;
   }
 
@@ -84,7 +79,6 @@ class BackgroundJobService {
         return;
       }
 
-      console.log(`⚙️ Processing job: ${job.type} (${job.id})`);
       job.status = 'processing';
       job.attempts++;
 
@@ -93,7 +87,6 @@ class BackgroundJobService {
         job.status = 'completed';
         this.stats.completedJobs++;
         this.stats.lastProcessed = new Date();
-        console.log(`✅ Job completed: ${job.type} (${job.id})`);
       } catch (error) {
         console.error(`❌ Job failed: ${job.type} (${job.id})`, error.message);
 
@@ -102,7 +95,6 @@ class BackgroundJobService {
           // Re-queue with delay
           setTimeout(() => {
             this.jobQueue.unshift(job);
-            console.log(`🔄 Job retrying (${job.attempts}/${job.options.maxRetries}): ${job.type}`);
           }, job.options.retryDelay);
         } else {
           job.status = 'failed';
@@ -151,10 +143,8 @@ class BackgroundJobService {
       // Return cached result if available
       const cachedResult = cacheService.getBulkOperationResult(duplicateCheck.hash);
       if (cachedResult) {
-        console.log(`⚡ Using cached result for duplicate operation: ${duplicateCheck.hash}`);
         return cachedResult;
       }
-      console.log(`⚠️ Duplicate operation detected but no cached result: ${duplicateCheck.hash}`);
     }
 
     // Filter changed cameras to reduce database load
@@ -259,7 +249,6 @@ class BackgroundJobService {
   clearQueue() {
     const clearedCount = this.jobQueue.length;
     this.jobQueue = [];
-    console.log(`🧹 Cleared ${clearedCount} jobs from queue`);
     return clearedCount;
   }
 
