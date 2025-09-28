@@ -173,7 +173,9 @@ const App: React.FC = () => {
           <SocketProvider>
             <LiveFeedProvider>
               <div className="App">
-                <AnimatedRoutes />
+                <div className="main-content">
+                  <AnimatedRoutes />
+                </div>
                 <DataAttribution />
 
                 {/* Global Toast Container - Professional notifications only */}

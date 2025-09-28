@@ -367,6 +367,11 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   font-weight: 700;
   margin-bottom: 0.15rem;
   line-height: 1;
+  color: #1f2937;
+}
+
+.dark-mode .card-value {
+  color: #f1f5f9;
 }
 
 .card-trend {

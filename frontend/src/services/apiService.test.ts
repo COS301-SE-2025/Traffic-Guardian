@@ -125,11 +125,15 @@ describe('ApiService', () => {
     test('fetches incidents successfully', async () => {
       const mockIncidents: DatabaseIncident[] = [
         {
-          Incident_ID: 1,
-          Incident_Date: '2024-01-01',
-          Incident_Location: 'Test Location',
-          Incident_Severity: 'High',
-          Incident_Status: 'Active',
+          Incidents_ID: 1,
+          Incidents_DateTime: '2024-01-01T12:00:00.000Z',
+          Incidents_Longitude: -122.4194,
+          Incidents_Latitude: 37.7749,
+          Incident_Severity: 'high',
+          Incident_Status: 'open',
+          Incident_Reporter: 'TestUser',
+          Incident_CameraID: 1,
+          Incident_Description: 'Test incident description',
         },
       ];
 
