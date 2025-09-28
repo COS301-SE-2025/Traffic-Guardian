@@ -1,5 +1,7 @@
 /// <reference path="../../cypress/support/component.d.ts" />
-import React from 'react';
+// import React from 'react';
+
+export {}; // Make this a module
 
 // Simple NavBar test without complex dependencies
 describe('NavBar Component (Basic)', () => {

@@ -28,7 +28,7 @@ export const mockUsers = {
     isAuthenticated: false,
     userRole: 'public',
     permissions: [],
-    districts: []
+    districts: [],
   },
   trafficController: {
     user: {
@@ -38,12 +38,12 @@ export const mockUsers = {
       lastName: 'Controller',
       role: 'traffic_controller',
       districts: [4],
-      permissions: ['VIEW_PEMS_DATA']
+      permissions: ['VIEW_PEMS_DATA'],
     },
     isAuthenticated: true,
     userRole: 'traffic_controller',
     permissions: ['VIEW_PEMS_DATA'],
-    districts: [4]
+    districts: [4],
   },
   admin: {
     user: {
@@ -59,8 +59,8 @@ export const mockUsers = {
         'VIEW_DISTRICT_SPECIFIC',
         'EXPORT_DATA',
         'MANAGE_INCIDENTS',
-        'VIEW_LIVE_FEEDS'
-      ]
+        'VIEW_LIVE_FEEDS',
+      ],
     },
     isAuthenticated: true,
     userRole: 'admin',
@@ -70,10 +70,10 @@ export const mockUsers = {
       'VIEW_DISTRICT_SPECIFIC',
       'EXPORT_DATA',
       'MANAGE_INCIDENTS',
-      'VIEW_LIVE_FEEDS'
+      'VIEW_LIVE_FEEDS',
     ],
-    districts: [4, 7, 11]
-  }
+    districts: [4, 7, 11],
+  },
 };
 
 // Mock API responses
@@ -92,7 +92,7 @@ export const mockApiResponses = {
         avg_speed: 58.2,
         high_risk_count: 8,
         alerts_count: 3,
-        status: 'HEALTHY'
+        status: 'HEALTHY',
       },
       {
         region: 'San Francisco Bay Area',
@@ -100,7 +100,7 @@ export const mockApiResponses = {
         avg_speed: 61.5,
         high_risk_count: 4,
         alerts_count: 2,
-        status: 'HEALTHY'
+        status: 'HEALTHY',
       },
       {
         region: 'Orange County',
@@ -108,8 +108,8 @@ export const mockApiResponses = {
         avg_speed: 64.1,
         high_risk_count: 2,
         alerts_count: 1,
-        status: 'HEALTHY'
-      }
+        status: 'HEALTHY',
+      },
     ],
     risk_analysis: {
       distribution: {
@@ -132,7 +132,7 @@ export const mockApiResponses = {
         freeway: 'I-405',
         direction: 'North',
         region_name: 'Los Angeles',
-        risk_score: 8.5
+        risk_score: 8.5,
       },
       {
         location: 'I-101 South',
@@ -144,9 +144,9 @@ export const mockApiResponses = {
         freeway: 'I-101',
         direction: 'South',
         region_name: 'San Francisco',
-        risk_score: 7.2
-      }
-    ]
+        risk_score: 7.2,
+      },
+    ],
   },
 
   alerts: {
@@ -177,7 +177,7 @@ export const mockApiResponses = {
       severity: 'high',
       status: 'active',
       timestamp: new Date().toISOString(),
-      description: 'Multi-vehicle collision blocking two lanes'
+      description: 'Multi-vehicle collision blocking two lanes',
     },
     {
       id: '2',
@@ -186,9 +186,9 @@ export const mockApiResponses = {
       severity: 'medium',
       status: 'scheduled',
       timestamp: new Date().toISOString(),
-      description: 'Lane closure for maintenance work'
-    }
-  ]
+      description: 'Lane closure for maintenance work',
+    },
+  ],
 };
 
 // Helper function to create mock API service
@@ -202,7 +202,7 @@ export const createMockApiService = (overrides: Record<string, any> = {}) => {
     fetchIncidents: cy.stub().resolves(overrides.incidents || mockApiResponses.incidents),
     fetchLiveFeeds: cy.stub().resolves(overrides.liveFeeds || []),
     fetchWeeklyTrafficData: cy.stub().resolves(overrides.weeklyTraffic || []),
-    ...overrides
+    ...overrides,
   };
 };
 
@@ -256,7 +256,7 @@ export const commonAssertions = {
 
   shouldBeClickable: (selector: string) => {
     cy.get(selector).should('be.visible').and('not.be.disabled');
-  }
+  },
 };
 
 // Test data generators
@@ -269,7 +269,7 @@ export const generateTestData = {
     status: 'active',
     timestamp: new Date().toISOString(),
     description: 'Test incident',
-    ...overrides
+    ...overrides,
   }),
 
   user: (overrides: Partial<MockUser> = {}) => ({
@@ -279,6 +279,6 @@ export const generateTestData = {
     lastName: 'User',
     role: 'traffic_controller',
     permissions: ['VIEW_PEMS_DATA'],
-    ...overrides
-  })
+    ...overrides,
+  }),
 };

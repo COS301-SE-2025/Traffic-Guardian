@@ -73,7 +73,7 @@ describe('LoadingSpinner Component', () => {
         text="Processing your request..."
         className="test-class"
         data-testid="combo-spinner"
-      />
+      />,
     );
 
     cy.get('[data-testid="combo-spinner"]').should('be.visible');

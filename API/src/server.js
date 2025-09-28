@@ -455,15 +455,14 @@ app.set('emitNewAlert', originalEmitNewAlert);
 db.query('SELECT NOW()')
   .then(() => {
     console.log('Database connection established');
-    
+
     // Start the server
     server.listen(PORT, () => {
-      console.log(`Database connection established`);
       console.log(`Server running on port ${PORT}`);
       console.log(`API available at: http://${HOST}:${PORT}`);
       console.log(`Socket.IO server running with archive analytics support`);
       console.log(`API documentation available at: https://documenter.getpostman.com/view/34423164/2sB2qak34y`);
-      
+
       // Emit initial archive analytics to any early connections
       setTimeout(() => {
         emitArchiveAnalyticsRefresh();
