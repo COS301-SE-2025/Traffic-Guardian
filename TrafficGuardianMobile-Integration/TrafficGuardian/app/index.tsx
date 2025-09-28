@@ -11,7 +11,7 @@ import MapView, { Marker, Polyline } from "react-native-maps";
 import { calculateDistance } from "../services/distanceCalculator";
 import Navbar from "../components/navbar";
 import { useTheme } from '../services/themeContext';
-import { EnhancedMap } from './EnhancedMap';
+import  EnhancedMap  from './EnhancedMap';
 
 
 export default function Index() {
@@ -100,7 +100,18 @@ const {
         </View>
         </View>
 
-{coords && (
+    <View  style={{flex : 1}}>
+      <View style={{ flex: 3 }}>
+      <EnhancedMap
+          traffic={traffic}
+          onIncidentSelect={(incident) => console.log(incident)}
+          showTrafficFlow={true}
+          filterRadius={50}
+        />
+      </View>
+      </View>
+
+{/* {coords && (
   <View style={{ height: 300 }}>
     <MapView
       style={{ flex: 1 }}
@@ -142,43 +153,63 @@ const {
         )}
     </MapView>
   </View>
-)}
+)} */}
 
 
 
-
-<ScrollView contentContainerStyle={{ padding: 20 }} style={{flex : 1}}>
-  {traffic &&
-    Object.entries(traffic).map(([key, value], index) => {
-      const location = value.location;
-
-      return (
-        <View key={index} style={[globalStyles.card, globalStyles.darkCard]}>
-          {/* Card Header */}
-          <View style={globalStyles.cardHeader}>
-            <Text style={globalStyles.cardTitle}>{location}</Text>
-          </View>
-
-          {/* Incidents */}
-          {value.incidents?.map((incident, i) => {
-            const description = incident?.properties?.iconCategory;
-            const lineString = incident?.geometry?.coordinates;
-            return (
-              <Text key={i} style={globalStyles.cardSubtitle}>
-                - {description} {calculateDistance(lineString[0], [-26.1278244561, 28.0815629307])}
-              </Text>
-            );
-          })}
-        </View>
-      );
-    })}
-</ScrollView>
-
-        <View style={{ flex: 1 }}>
-        <EnhancedMap traffic={undefined}  />
-      </View>
+<View style={{flex: 2}}>
+  <ScrollView contentContainerStyle={{ padding: 20 }} style={{flex: 1}}>
+    {traffic && (() => {
+      // Handle single traffic object
+      console.log(JSON.stringify(traffic));
       
-
+      if (traffic.location && traffic.incidents) {
+        return (
+          <View style={[globalStyles.card, globalStyles.darkCard]}>
+            <View style={globalStyles.cardHeader}>
+              <Text style={globalStyles.cardTitle}>{traffic.location}</Text>
+            </View>
+            {traffic.incidents.map((incident, i) => {
+              const description = incident?.properties?.iconCategory;
+              const lineString = incident?.geometry?.coordinates;
+              return (
+                <Text key={i} style={globalStyles.cardSubtitle}>
+                  - {description} {calculateDistance(lineString[0], [-26.1278244561, 28.0815629307])} km
+                </Text>
+              );
+            })}
+          </View>
+        );
+      }
+      
+      // Handle multiple areas (original logic)
+      else if (typeof traffic === 'object') {
+        return Object.entries(traffic).map(([key, value], index) => {
+          const location = value.location || `Area ${key}`;
+          return (
+            <View key={index} style={[globalStyles.card, globalStyles.darkCard]}>
+              <View style={globalStyles.cardHeader}>
+                <Text style={globalStyles.cardTitle}>{location}</Text>
+              </View>
+              {value.incidents?.map((incident, i) => {
+                const description = incident?.properties?.iconCategory;
+                const lineString = incident?.geometry?.coordinates;
+                return (
+                  <Text key={i} style={globalStyles.cardSubtitle}>
+                    - {description} {calculateDistance(lineString[0], [-26.1278244561, 28.0815629307])} km
+                  </Text>
+                );
+              })}
+            </View>
+          );
+        });
+      }
+      
+      return null;
+    })()}
+  </ScrollView>
+</View>
+      
     </Navbar>
 
     </SafeAreaView>

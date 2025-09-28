@@ -23,7 +23,6 @@ export const TrafficProvider = ({ children }: { children: ReactNode }) => {
   const [incidentCategory, setIncidentCategory] = useState<any | null>(null);
   const [incidentLocations, setIncidentLocations] = useState<any | null>(null);
 
-  // 🔥 attach socket listeners ONCE at provider level
   useEffect(() => {
     if (!socket) return;
 
