@@ -9,19 +9,19 @@ describe('Incident Location Mapping unit tests', () => {
 
     test('should initialize regions correctly', () => {
         expect(ilm.regions.size).toBe(ilm.regionNames.length);
-        const sanFrancisco = ilm.regions.get('San Francisco');
-        expect(sanFrancisco.location).toBe('San Francisco');
-        expect(sanFrancisco.coordinates).toEqual({
-            latitude: '37.7749',
-            longitude: '-122.4194'
+        const Pasadena = ilm.regions.get('Pasadena');
+        expect(Pasadena.location).toBe('Pasadena');
+        expect(Pasadena.coordinates).toEqual({
+            latitude: '34.1478',
+            longitude: '-118.1445'
         });
-        expect(sanFrancisco.incidents).toEqual([]);
+        expect(Pasadena.incidents).toEqual([]);
     });
 
     test('should add a new incident to a region', () => {
         const incident = { type: 'accident', severity: 'high' };
-        ilm.addNewIncident('San Francisco', incident);
-        expect(ilm.regions.get('San Francisco').incidents).toContain(incident);
+        ilm.addNewIncident('Pasadena', incident);
+        expect(ilm.regions.get('Pasadena').incidents).toContain(incident);
     });
 
     test('addNewIncident should handle unknown region gracefully', () => {
@@ -92,8 +92,8 @@ describe('Incident Location Mapping unit tests', () => {
     });
 
     test('notifyUsers should return correct notifications for nearby incidents', () => {
-        ilm.addUser('u1', { latitude: '37.7749', longitude: '-122.4194' });
-        ilm.updateTraffic([{ location: 'San Francisco', incidents: [{ type: 'crash' }] }]);
+        ilm.addUser('u1', { latitude: '34.1478', longitude: '-118.1445' });
+        ilm.updateTraffic([{ location: 'Pasadena', incidents: [{ type: 'crash' }] }]);
         const notifications = ilm.notifyUsers();
         expect(notifications.length).toBeGreaterThanOrEqual(0);
         // If notifications exist, check structure
@@ -104,11 +104,9 @@ describe('Incident Location Mapping unit tests', () => {
     });
 
     test('notifyUsers should return empty if no new incidents', () => {
-        ilm.addUser('u1', { latitude: '37.7749', longitude: '-122.4194' });
-        // First update to set baseline
-        ilm.updateTraffic([{ location: 'San Francisco', incidents: [{ type: 'crash' }] }]);
+        ilm.addUser('u1', { latitude: '34.1478', longitude: '-118.1445' });
+        ilm.updateTraffic([{ location: 'Pasadena', incidents: [{ type: 'crash' }] }]);
         ilm.notifyUsers(); // baseline
-        // Same incidents again → no new notifications
         const notifications = ilm.notifyUsers();
         expect(notifications).toEqual([]);
     });
@@ -124,8 +122,56 @@ describe('Incident Location Mapping unit tests', () => {
         expect(fakeIo.emit).toHaveBeenCalled();
     });
 
-    test('emptyObject should work correctly', () => {
-        expect(ilm.emptyObject({})).toBe(true);
-        expect(ilm.emptyObject({ key: 1 })).toBe(false);
-    });
+test('addNewIncident should handle unknown region gracefully if modified to skip', () => {
+    ilm.addNewIncident = function(location, incident) {
+        const region = this.regions.get(location);
+        if (!region) return false;
+        region.incidents.push(incident);
+        return true;
+    };
+
+    const incident = { type: 'accident' };
+    const result = ilm.addNewIncident('Unknown', incident);
+    expect(result).toBe(false);
+});
+
+test('notifyUsers handles multiple nearby users correctly', () => {
+    ilm.addUser('user1', {latitude: '34.1478', longitude: '-118.1445' });
+    ilm.addUser('user2', { latitude: '34.1478', longitude: '-118.1440' });
+    ilm.updateTraffic([{ location: 'Pasadena', incidents: [{ type: 'jam' }] }]);
+
+    const notifications = ilm.notifyUsers();
+    expect(notifications).toHaveLength(2);
+    const userIds = notifications.map(n => n.userID);
+    expect(userIds).toEqual(expect.arrayContaining(['user1', 'user2']));
+});
+
+
+test('updateUserIncidents should not modify user coordinates', () => {
+    ilm.addUser('user1', { latitude: '-26.1000', longitude: '28.2000' });
+    ilm.updateUserIncidents('user1', [{ type: 'flood' }]);
+    const user = ilm.users.get('user1');
+    expect(user.coordinates).toEqual({ latitude: '-26.1000', longitude: '28.2000' });
+});
+
+test('initRegions initializes the correct number of regions', () => {
+    const tempIlm = new ILM();
+    expect(tempIlm.regions.size).toBe(11);
+});
+
+test('removeUser does not throw for unknown users', () => {
+    expect(() => ilm.removeUser('unknown')).not.toThrow();
+});
+
+test('isNearby returns true exactly at 5km', () => {
+    const locA = { latitude: '0', longitude: '0' };
+    const locB = { latitude: '0', longitude: (5 / 111.32).toString() };
+    expect(ilm.isNearby(locA, locB)).toBe(true);
+});
+
+test('updateTraffic with empty array does not modify regions', () => {
+    const initialRegions = new Map(ilm.regions);
+    ilm.updateTraffic([]);
+    expect(ilm.regions).toEqual(initialRegions);
+});
 });

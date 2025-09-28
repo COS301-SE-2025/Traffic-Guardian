@@ -52,23 +52,19 @@ const WeeklyTrafficTrends: React.FC<WeeklyTrafficTrendsProps> = ({
   const showDistrictData = district && (canAccessDistrict(district) || userRole === 'admin' || userRole === 'super_admin');
 
   const generateDemoData = (isPublic: boolean): WeeklyTrendData[] => {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    return days.map((day, index) => ({
-      day,
-      dayOfWeek: index + 1,
-      averageVolume: isPublic ?
-        Math.floor(2000 + Math.random() * 1000) :
-        Math.floor(3000 + Math.random() * 2000),
-      peakVolume: isPublic ?
-        Math.floor(3000 + Math.random() * 1500) :
-        Math.floor(4500 + Math.random() * 2500),
-      peakHour: 8 + Math.floor(Math.random() * 2),
-      avgSpeed: isPublic ?
-        Math.floor(55 + Math.random() * 10) :
-        Math.floor(50 + Math.random() * 20),
-      incidents: isPublic ?
-        Math.floor(Math.random() * 3) :
-        Math.floor(Math.random() * 8),
+    // Standardized data patterns - same for all users
+    const standardizedData = [
+      { day: 'Monday', dayOfWeek: 1, averageVolume: 2450, peakVolume: 3675, peakHour: 8, avgSpeed: 58, incidents: 2 },
+      { day: 'Tuesday', dayOfWeek: 2, averageVolume: 2680, peakVolume: 4020, peakHour: 8, avgSpeed: 56, incidents: 1 },
+      { day: 'Wednesday', dayOfWeek: 3, averageVolume: 2720, peakVolume: 4080, peakHour: 8, avgSpeed: 55, incidents: 3 },
+      { day: 'Thursday', dayOfWeek: 4, averageVolume: 2850, peakVolume: 4275, peakHour: 8, avgSpeed: 54, incidents: 2 },
+      { day: 'Friday', dayOfWeek: 5, averageVolume: 3100, peakVolume: 4650, peakHour: 7, avgSpeed: 52, incidents: 4 },
+      { day: 'Saturday', dayOfWeek: 6, averageVolume: 2200, peakVolume: 3300, peakHour: 11, avgSpeed: 62, incidents: 1 },
+      { day: 'Sunday', dayOfWeek: 7, averageVolume: 1950, peakVolume: 2925, peakHour: 12, avgSpeed: 65, incidents: 1 },
+    ];
+
+    return standardizedData.map(data => ({
+      ...data,
       publicData: isPublic,
     }));
   };
@@ -100,17 +96,17 @@ const WeeklyTrafficTrends: React.FC<WeeklyTrafficTrendsProps> = ({
           }));
           setWeeklyData(formattedData);
         } else {
-          // Fallback demo data for authenticated users
+          // Standardized fallback demo data for authenticated users
           setWeeklyData(generateDemoData(false));
         }
       } else {
-        // Public users get demo data directly (no API call)
+        // Public users get standardized demo data directly (no API call)
         setWeeklyData(generateDemoData(true));
       }
     } catch (err) {
-      console.error('Error fetching weekly trends:', err);
+      // Error fetching weekly trends - using demo data
       setError('Failed to load weekly traffic trends');
-      // Show demo data on error
+      // Show standardized demo data on error
       setWeeklyData(generateDemoData(!isAuthenticated));
     } finally {
       setLoading(false);
@@ -324,7 +320,7 @@ const WeeklyTrafficTrends: React.FC<WeeklyTrafficTrendsProps> = ({
       {!isAuthenticated && (
         <div className="upgrade-notice">
           <p>
-            <i className="fas fa-chart-bar"></i> <strong>Want more detailed insights?</strong>
+            <i className="fas fa-chart-bar" /> <strong>Want more detailed insights?</strong>
             <a href="/account">Sign in</a> to access advanced analytics,
             historical trends, and district-specific data.
           </p>

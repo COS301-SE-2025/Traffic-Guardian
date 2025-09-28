@@ -100,7 +100,7 @@
   font-family: "Segoe UI", Arial, sans-serif;
   line-height: 1.6;
   padding: 2rem;
-  padding-top: calc(160px + 2rem);
+  padding-top: calc(var(--page-content-offset) + 1.5rem);
   transition: all 0.3s ease;
 
   /* Typography & Spacing */
@@ -1027,5 +1027,223 @@
 
   .table-container {
     overflow-x: auto;
+  }
+}
+
+/* Archives Page Sign-in Prompt Styles */
+.archives-signin-container {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+}
+
+.archives-signin-content {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: var(--space-8) var(--space-6);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 12%);
+  border: 1px solid var(--border-color);
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  animation: fadeInArchives 0.6s ease-out;
+}
+
+.archives-signin-content:hover {
+  box-shadow: 0 12px 48px rgb(0 0 0 / 15%);
+  transform: translateY(-2px);
+}
+
+.signin-header {
+  margin-bottom: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.signin-header svg {
+  color: var(--primary-color);
+  opacity: 80%;
+}
+
+.signin-header h2 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1.2;
+}
+
+.signin-header p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.signin-description {
+  margin-bottom: var(--space-8);
+  text-align: left;
+}
+
+.signin-description > p {
+  margin: 0 0 var(--space-4) 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.signin-description ul {
+  margin: 0;
+  padding-left: var(--space-6);
+  color: var(--text-secondary);
+}
+
+.signin-description li {
+  margin-bottom: var(--space-3);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.signin-actions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+
+.archives-signin-content .signin-btn {
+  padding: var(--space-3) var(--space-6);
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 180px;
+  justify-content: center;
+  border: 2px solid transparent;
+}
+
+.archives-signin-content .signin-btn.primary {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.archives-signin-content .signin-btn.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgb(217 119 0 / 30%);
+}
+
+.archives-signin-content .signin-btn.secondary {
+  background: transparent;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.archives-signin-content .signin-btn.secondary:hover {
+  background: rgb(217 119 0 / 10%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgb(217 119 0 / 15%);
+}
+
+.signin-footer {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-color);
+}
+
+.signin-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Responsive Design for Archives Sign-in */
+@media (max-width: 768px) {
+  .archives-signin-container {
+    padding: var(--space-6) var(--space-4);
+    min-height: calc(100vh - 160px);
+  }
+
+  .archives-signin-content {
+    padding: var(--space-6) var(--space-4);
+    transform: none;
+  }
+
+  .archives-signin-content:hover {
+    transform: none;
+  }
+
+  .signin-header h2 {
+    font-size: 1.75rem;
+  }
+
+  .signin-header svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .signin-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .archives-signin-content .signin-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .signin-description {
+    text-align: center;
+  }
+
+  .signin-description ul {
+    text-align: left;
+    padding-left: var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .archives-signin-content {
+    padding: var(--space-4) var(--space-3);
+    border-radius: 16px;
+  }
+
+  .signin-header {
+    margin-bottom: var(--space-6);
+  }
+
+  .signin-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .signin-description {
+    margin-bottom: var(--space-6);
+  }
+}
+
+/* Animation for archives signin */
+@keyframes fadeInArchives {
+  from {
+    opacity: 0%;
+    transform: translateY(30px) scale(0.95);
+  }
+
+  to {
+    opacity: 100%;
+    transform: translateY(0) scale(1);
   }
 }

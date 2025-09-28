@@ -188,3 +188,28 @@ socket.on('new-incident', (data)=>{
     console.log(data);
     addEvent(JSON.stringify(data, null, 2));
 })
+
+//audio
+    const API_URL = "http://localhost:5000/api/download/audio";
+    const AUDIO_BASE = "http://localhost:5000/api/download/audio/";
+
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(files => {
+        const list = document.getElementById("playlist");
+        const player = document.getElementById("player");
+
+        files.forEach(file => {
+          const li = document.createElement("li");
+          li.textContent = file;
+          li.style.cursor = "pointer";
+
+          li.onclick = () => {
+            player.src = AUDIO_BASE + encodeURIComponent(file);
+            player.play();
+          };
+
+          list.appendChild(li);
+        });
+      })
+      .catch(err => console.error("Error fetching audio files:", err));

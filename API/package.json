@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest"
+    "test": "jest",
+    "test:unit" : "jest --testPathPattern=UnitTesting",
+    "test:integration" : "jest --testPathPattern=IntegrationTesting",
+    "test:performance": "jest --testPathPattern=PerformanceTesting",
+    "test:scalability" : "jest --testPathPattern=ScalabilityTesting"
   },
   "keywords": [
     "traffic",
@@ -29,6 +33,7 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
     "node-cache": "^5.1.2",
+    "nodemailer": "^7.0.6",
     "pg": "^8.16.0",
     "puppeteer": "^24.20.0",
     "socket.io": "^4.8.1",

@@ -205,7 +205,7 @@ class TrafficDensityService {
 
       const cameras = await ApiService.fetchCamerasWithTrafficCounts();
       if (!cameras || cameras.length === 0) {
-        console.log('⚠️ No cameras found in database - no heatmap data to display');
+        // No cameras found in database - no heatmap data to display
         // Clear any existing heatmap data
         this.heatmapData = [];
         this.updateCallbacks.forEach(callback => callback(this.heatmapData));
@@ -252,7 +252,7 @@ class TrafficDensityService {
         this.updateCallbacks.forEach(callback => callback(this.heatmapData));
       }
     } catch (error) {
-      console.error('❌ Error fetching real traffic data:', error);
+      // Error fetching real traffic data - using fallback
       // Clear heatmap on error instead of showing fallback data
       this.heatmapData = [];
       this.updateCallbacks.forEach(callback => callback(this.heatmapData));

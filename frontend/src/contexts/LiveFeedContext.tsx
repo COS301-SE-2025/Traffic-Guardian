@@ -124,7 +124,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (!dbIntegrationRef.current) {
       dbIntegrationRef.current = new LiveFeedDatabaseIntegration(
-        process.env.REACT_APP_SERVER_URL!,
+        process.env.REACT_APP_API_URL!,
       );
     }
 
@@ -275,7 +275,6 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
     async (force = false) => {
       // Don't fetch if we already have data and it's not forced
       if (!force && cameraFeeds.length > 0 && isInitialized) {
-        console.log('Camera feeds already loaded, skipping fetch');
         return;
       }
 
@@ -294,7 +293,6 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
               await dbIntegrationRef.current.syncCamerasWithDatabase(
                 orangeCountyCameras,
               );
-              console.log('Camera metadata synced with database');
             } catch (dbError) {
               console.error('Failed to sync camera data:', dbError);
             }
@@ -328,7 +326,6 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Refresh every 15 minutes in background
     refreshIntervalRef.current = setInterval(() => {
-      console.log('Background refresh of camera feeds');
       fetchCameraData(true);
     }, 15 * 60 * 1000);
 
