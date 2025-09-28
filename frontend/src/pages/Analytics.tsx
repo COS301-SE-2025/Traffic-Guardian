@@ -334,7 +334,7 @@ const Analytics: React.FC = () => {
 
   useEffect(() => {
     // Initialise socket connection
-    const socketConnection = io(process.env.REACT_APP_SERVER_URL!);
+    const socketConnection = io(process.env.REACT_APP_API_URL!);
     _setSocket(socketConnection);
 
     // Socket event listeners for real-time updates

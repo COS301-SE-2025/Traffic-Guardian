@@ -1,7 +1,7 @@
 // Frontend API Service for Analytics with Caching
 import { cacheService } from './CacheService';
 
-const API_BASE_URL = process.env.REACT_APP_SERVER_URL! + '/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL! + '/api';
 
 export interface DatabaseIncident {
   Incident_ID: number;

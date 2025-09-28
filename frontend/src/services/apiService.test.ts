@@ -26,7 +26,7 @@ describe('ApiService', () => {
     mockSessionStorage.getItem.mockReturnValue('test-api-key');
     jest.resetModules();
     process.env = { ...originalEnv };
-    process.env.REACT_APP_SERVER_URL = 'http://test-server.com/api';
+    process.env.REACT_APP_API_URL = 'http://test-server.com/api';
     console.log = jest.fn();
     console.error = jest.fn();
   });
@@ -418,7 +418,7 @@ describe('ApiService', () => {
 
   describe('URL Configuration', () => {
     test('uses environment variable for API base URL', async () => {
-      process.env.REACT_APP_SERVER_URL = 'https://custom-server.com/api';
+      process.env.REACT_APP_API_URL = 'https://custom-server.com/api';
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [],
@@ -433,7 +433,7 @@ describe('ApiService', () => {
     });
 
     test('uses default URL when environment variable not set', async () => {
-      delete process.env.REACT_APP_SERVER_URL;
+      delete process.env.REACT_APP_API_URL;
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [],
