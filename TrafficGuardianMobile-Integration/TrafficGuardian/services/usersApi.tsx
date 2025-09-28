@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 const API_URL = "http://localhost:5000/api";
 
 const getBaseUrl = () => {
-  if (Platform.OS === "android") {
+  /* if (Platform.OS === "android") {
     return "http://10.0.2.2:5000";
 
   } else if (Platform.OS === "ios") {
@@ -11,7 +11,8 @@ const getBaseUrl = () => {
 
   } else {
     return "http://localhost:5000";
-  }
+  } */
+ return "https://api.trafficguardian.co.za";
 };
 
 export async function registerUser(username: string, email: string, password: string ,cellphone : string, userfullname : string) {

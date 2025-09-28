@@ -95,7 +95,7 @@ const {
 
       <View style={{flex : 1}}>
         <View style={globalStyles.header}>
-          <Text style={globalStyles.headerTitle}>Welcome!{user?.user.User_Username ?? ""}</Text>
+          <Text style={globalStyles.headerTitle}>Welcome! {user?.user.User_Username ?? ""}</Text>
           <Text style={globalStyles.headerSubtitle}>Traffic and Incident Alerts</Text>
         </View>
         </View>
@@ -156,58 +156,39 @@ const {
 )} */}
 
 
+<View style={{ flex: 2 }}>
+  <ScrollView contentContainerStyle={{ padding: 20 }} style={{ flex: 1 }}>
+    {Array.isArray(traffic) &&
+      traffic.map((area, index) => (
+        <View key={index} style={[globalStyles.card, globalStyles.darkCard]}>
+          <View style={globalStyles.cardHeader}>
+            <Text style={globalStyles.cardTitle}>{area.location}</Text>
+          </View>
 
-<View style={{flex: 2}}>
-  <ScrollView contentContainerStyle={{ padding: 20 }} style={{flex: 1}}>
-    {traffic && (() => {
-      // Handle single traffic object
-      //console.log(JSON.stringify(tr))
-      if (traffic.location && traffic.incidents) {
-        return (
-          <View style={[globalStyles.card, globalStyles.darkCard]}>
-            <View style={globalStyles.cardHeader}>
-              <Text style={globalStyles.cardTitle}>{traffic.location}</Text>
-            </View>
-            {traffic.incidents.map((incident, i) => {
+          {area.incidents && area.incidents.length > 0 ? (
+            area.incidents.map((incident, i) => {
               const description = incident?.properties?.iconCategory;
               const lineString = incident?.geometry?.coordinates;
+              //console.log(lineString);
               return (
                 <Text key={i} style={globalStyles.cardSubtitle}>
-                  - {description} {calculateDistance(lineString[0], [-26.1278244561, 28.0815629307])} km
+                  - {description}{" "}
+                  {calculateDistance(
+                    lineString,
+                    [Number(coords?.longitude), Number(coords?.longitude)]
+                  )}{" "}
+                  km
                 </Text>
               );
-            })}
-          </View>
-        );
-      }
-      
-      // Handle multiple areas (original logic)
-      else if (typeof traffic === 'object') {
-        return Object.entries(traffic).map(([key, value], index) => {
-          const location = value.location || `Area ${key}`;
-          return (
-            <View key={index} style={[globalStyles.card, globalStyles.darkCard]}>
-              <View style={globalStyles.cardHeader}>
-                <Text style={globalStyles.cardTitle}>{location}</Text>
-              </View>
-              {value.incidents?.map((incident, i) => {
-                const description = incident?.properties?.iconCategory;
-                const lineString = incident?.geometry?.coordinates;
-                return (
-                  <Text key={i} style={globalStyles.cardSubtitle}>
-                    - {description} {calculateDistance(lineString[0], [-26.1278244561, 28.0815629307])} km
-                  </Text>
-                );
-              })}
-            </View>
-          );
-        });
-      }
-      
-      return null;
-    })()}
+            })
+          ) : (
+            <Text style={globalStyles.cardSubtitle}>No incidents</Text>
+          )}
+        </View>
+      ))}
   </ScrollView>
 </View>
+
       
     </Navbar>
 

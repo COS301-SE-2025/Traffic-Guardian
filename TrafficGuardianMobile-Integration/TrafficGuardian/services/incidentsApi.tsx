@@ -4,7 +4,7 @@ import * as FileSystem from "expo-file-system";
 const API_URL = "http://localhost:5000/api";
 
 const getBaseUrl = () => {
-  if (Platform.OS === "android") {
+/*   if (Platform.OS === "android") {
     return "http://10.0.2.2:5000";
 
   } else if (Platform.OS === "ios") {
@@ -12,7 +12,8 @@ const getBaseUrl = () => {
 
   } else {
     return "http://localhost:5000";
-  }
+  } */
+  return "https://api.traffic.guardian.co.za";
 };
 
 export async function createIncident(date : string,location : string, Incident_Severity : string, description : string, coords : any, user : any){

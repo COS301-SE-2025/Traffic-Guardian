@@ -1,7 +1,7 @@
 export function calculateDistance(pointA: number[], pointB: number[]): string {
   if (pointA.length !== 2 || pointB.length !== 2) {
     console.log(`Invalid coordinates, pointA: ${pointA}, pointB: ${pointB}`);
-    return "";
+    return "N/A";
   }
 
   const toRadians = (deg: number) => (deg * Math.PI) / 180;
