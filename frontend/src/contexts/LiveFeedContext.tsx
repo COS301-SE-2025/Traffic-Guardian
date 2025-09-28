@@ -124,7 +124,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (!dbIntegrationRef.current) {
       dbIntegrationRef.current = new LiveFeedDatabaseIntegration(
-        process.env.REACT_APP_SERVER_URL!,
+        process.env.REACT_APP_API_URL!,
       );
     }
 
