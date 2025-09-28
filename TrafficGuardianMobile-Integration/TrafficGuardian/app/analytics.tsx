@@ -8,6 +8,8 @@ import { useSession } from "../services/sessionContext";
 import { globalStyles }from "../styles/globalStyles"
 import { useTraffic } from "../services/trafficContext";
 import { PieChart, BarChart } from "react-native-chart-kit";
+import Navbar from "../components/navbar";
+import { useTheme } from '../services/themeContext';
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -61,6 +63,7 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
 
     return(
 <SafeAreaView style={{ flex: 1, backgroundColor: "#292929" }}>
+  <Navbar>
   <ScrollView
     contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 12 }}
     style={{ flex: 1 }}
@@ -136,39 +139,8 @@ incidentLocations = [{"amount": 3, "location": "Rosebank"}, {"amount": 3, "locat
     )}
   </ScrollView>
 
-  {/* Navbar */}
-  <View style={globalStyles.navbar}>
-
-    <TouchableOpacity onPress={() => router.push("/")}>
-        <Text style={globalStyles.navText}>Home</Text>
-    </TouchableOpacity>
-
-    {!user && (
-      <TouchableOpacity onPress={() => router.push("/login")}>
-        <Text style={globalStyles.navText}>Login</Text>
-      </TouchableOpacity>
-    )}
-
-    <TouchableOpacity onPress={() => router.push("/report")}>
-      <Text style={globalStyles.navText}>Report</Text>
-    </TouchableOpacity>
-
-    {user && (
-      <TouchableOpacity
-        onPress={() => {
-          setUser(null);
-          router.push("/");
-        }}
-      >
-        <Text style={globalStyles.navText}>Logout</Text>
-      </TouchableOpacity>
-    )}
-    {!user && (
-      <TouchableOpacity onPress={() => router.push("/register")}>
-        <Text style={globalStyles.navText}>Register</Text>
-      </TouchableOpacity>
-    )}
-  </View>
+  
+  </Navbar>
 </SafeAreaView>
 
 );

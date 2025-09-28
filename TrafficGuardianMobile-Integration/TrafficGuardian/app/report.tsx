@@ -10,6 +10,7 @@ import { Audio } from "expo-av";
 import { globalStyles } from "../styles/globalStyles";
 import { Ionicons } from '@expo/vector-icons'; 
 import { useTheme } from '../services/themeContext';
+import Navbar from "../components/navbar";
 
 
 export default function Report() {
@@ -164,6 +165,7 @@ const emergencyContacts: EmergencyContact[] = [
   return(
 
       <SafeAreaView style={{ flex: 1, backgroundColor: "rgb(41,41,41)" }}>
+        <Navbar>
   <ScrollView
     contentContainerStyle={{
       flexGrow: 1,               
@@ -367,35 +369,7 @@ const emergencyContacts: EmergencyContact[] = [
         </View>
       </Modal>
   
-  {/* Navbar at bottom */}
-  <View style={globalStyles.navbar}>
-    <TouchableOpacity onPress={() => router.push("/")}>
-      <Text style={globalStyles.navText}>Home</Text>
-    </TouchableOpacity>
-
-    {!user && (
-      <TouchableOpacity onPress={() => router.push("/login")}>
-        <Text style={globalStyles.navText}>Login</Text>
-      </TouchableOpacity>
-    )}
-
-    {user && (
-      <TouchableOpacity
-        onPress={() => {
-          setUser(null);
-          router.push("/");
-        }}
-      >
-        <Text style={globalStyles.navText}>Logout</Text>
-      </TouchableOpacity>
-    )}
-
-    {!user && (
-      <TouchableOpacity onPress={() => router.push("/register")}>
-        <Text style={globalStyles.navText}>Register</Text>
-      </TouchableOpacity>
-    )}
-  </View>
+  </Navbar>
 </SafeAreaView>
 
   );
