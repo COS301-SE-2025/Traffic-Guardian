@@ -1,4 +1,101 @@
+// services/incidentsApi.tsx
 import { Platform } from "react-native";
+import Constants from "expo-constants";
+
+type FetchOpts = {
+  method?: "GET" | "POST" | "PUT" | "DELETE";
+  headers?: Record<string, string>;
+  body?: any;
+};
+
+const envBase =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  (Constants?.expoConfig?.extra as any)?.apiBaseUrl ||
+  (Constants?.manifest2 as any)?.extra?.apiBaseUrl ||
+  "";
+
+const fallbackBase = Platform.select({
+  android: "http://10.0.2.2:5000",
+  ios: "http://localhost:5000",
+  default: "http://localhost:5000",
+});
+
+const BASE_URL = (envBase || fallbackBase) + "/api";
+
+async function doFetch<T = any>(path: string, opts: FetchOpts = {}): Promise<T> {
+  const { method = "GET", headers = {}, body } = opts;
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = (data && (data.message || data.error)) || `HTTP ${res.status}`;
+    throw new Error(message);
+  }
+  return data as T;
+}
+
+/** Incidents API */
+
+export type NewIncidentPayload = {
+  title?: string;
+  description?: string;
+  type?: string;
+  severity?: string;
+  latitude: number;
+  longitude: number;
+  userId?: string | number;
+  [key: string]: any;
+};
+
+export const incidentsApi = {
+  baseUrl: BASE_URL,
+
+  getAll: (headers?: Record<string, string>) => doFetch("/incidents", { headers }),
+
+  getById: (id: string | number, headers?: Record<string, string>) =>
+    doFetch(`/incidents/${id}`, { headers }),
+
+  create: (payload: NewIncidentPayload, headers?: Record<string, string>) =>
+    doFetch("/incidents", { method: "POST", body: payload, headers }),
+
+  /** Upload voice note for an incident */
+  uploadVoice: async (incidentId: string | number, fileUri: string, headers?: Record<string, string>) => {
+    const url = `${BASE_URL}/incidents/${incidentId}/voice`;
+    const form = new FormData();
+    form.append("voice", {
+      // @ts-ignore – RN file shape
+      uri: fileUri,
+      name: "voice.m4a",
+      type: "audio/m4a",
+    });
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...(headers ?? {}),
+        // NOTE: Let RN set correct multipart boundary automatically
+      } as any,
+      body: form as any,
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.message || `Upload failed: ${res.status}`);
+    return data;
+  },
+
+  remove: (id: string | number, headers?: Record<string, string>) =>
+    doFetch(`/incidents/${id}`, { method: "DELETE", headers }),
+};
+
+
+/*import { Platform } from "react-native";
 import * as FileSystem from "expo-file-system";
 
 const API_URL = "http://localhost:5000/api";
@@ -72,3 +169,4 @@ export async function sendVoice(voiceURI: string, user : any){
 
   return await response.json();
 }
+*/
