@@ -274,7 +274,7 @@ const Profile: React.FC = () => {
   const handleSignOut = () => {
     logout();
     dataPrefetchService.stopPrefetching();
-    navigate('/');
+    navigate('/account');
   };
 
   if (loading) {

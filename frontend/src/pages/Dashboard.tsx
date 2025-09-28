@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
-import { useUser, Permission } from '../contexts/UserContext';
+import { useUser, Permission, UserRole } from '../contexts/UserContext';
 import ApiService, {
   IncidentStats,
   TrafficIncident,
@@ -10,6 +10,7 @@ import PEMSTrafficAnalysis from '../components/PEMSTrafficAnalysis';
 import WeeklyTrafficTrends from '../components/WeeklyTrafficTrends';
 import CameraCarousel from '../components/CameraCarousel';
 import ArchiveSummary from '../components/ArchiveSummary';
+import JSONEventDisplay from '../components/JSONEventDisplay';
 import '../components/CameraCarousel.css';
 import '../components/ArchiveSummary.css';
 import './Dashboard.css';
@@ -333,7 +334,7 @@ interface TodaysIncidents {
 type NewAlertPayload = { Incident_Location: string; [key: string]: unknown };
 
 const Dashboard: React.FC = () => {
-  const { isAuthenticated, hasPermission } = useUser();
+  const { isAuthenticated, hasPermission, userRole } = useUser();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [_loading, _setLoading] = useState(false);
@@ -1416,17 +1417,32 @@ const Dashboard: React.FC = () => {
 
             <div className="events-list" data-cy="events-list">
               {realtimeEvents.length > 0 ? (
-                realtimeEvents.map((event, index) => (
-                  <div
-                    key={index}
-                    className="event-item"
-                    data-cy={`event-item-${index}`}
-                  >
-                    <pre className="event-content" data-cy="event-content">
-                      {event}
-                    </pre>
-                  </div>
-                ))
+                realtimeEvents.map((event, index) => {
+                  // Use formatted display for base users (PUBLIC, VIEWER), raw JSON for traffic controllers (ANALYST, ADMIN, SUPER_ADMIN)
+                  const isBaseUser = !isAuthenticated || userRole === UserRole.PUBLIC || userRole === UserRole.VIEWER;
+
+                  if (isBaseUser) {
+                    return (
+                      <JSONEventDisplay
+                        key={index}
+                        event={event}
+                        index={index}
+                      />
+                    );
+                  } else {
+                    return (
+                      <div
+                        key={index}
+                        className="event-item"
+                        data-cy={`event-item-${index}`}
+                      >
+                        <pre className="event-content" data-cy="event-content">
+                          {event}
+                        </pre>
+                      </div>
+                    );
+                  }
+                })
               ) : (
                 <div className="events-empty" data-cy="events-empty">
                   <span> Waiting for real-time events...</span>
