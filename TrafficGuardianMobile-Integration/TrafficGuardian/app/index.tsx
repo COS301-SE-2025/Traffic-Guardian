@@ -161,8 +161,7 @@ const {
   <ScrollView contentContainerStyle={{ padding: 20 }} style={{flex: 1}}>
     {traffic && (() => {
       // Handle single traffic object
-      console.log(JSON.stringify(traffic));
-      
+      //console.log(JSON.stringify(tr))
       if (traffic.location && traffic.incidents) {
         return (
           <View style={[globalStyles.card, globalStyles.darkCard]}>

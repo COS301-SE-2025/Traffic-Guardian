@@ -19,7 +19,6 @@ const navItems: NavItem[] = [
   { path: '/', icon: 'home', label: 'Home' },
   { path: '/analytics', icon: 'analytics', label: 'Analytics' },
   { path: '/report', icon: 'add-circle', label: 'Report' },
-  { path: '/profile', icon: 'person', label: 'Profile', requiresAuth: true },
   { path: '/login', icon: 'log-in', label: 'Login', authOnlyHidden: true },
 ];
 

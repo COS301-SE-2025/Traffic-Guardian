@@ -84,7 +84,7 @@ export default function Register() {
           color: "rgba(41,41,41,1)",
         },
       ]}
-      placeholder="lonwabo@example.com"
+      placeholder="email"
       placeholderTextColor="rgba(41,41,41,0.6)"
       value={email}
       onChangeText={setEmail}
@@ -104,7 +104,7 @@ export default function Register() {
           color: "rgba(41,41,41,1)",
         },
       ]}
-      placeholder="StrongPa$$20"
+      placeholder="Password"
       placeholderTextColor="rgba(41,41,41,0.6)"
       value={password}
       onChangeText={setPassword}

@@ -14,7 +14,7 @@ const getBaseUrl = () => {
   }
 };
 
-export async function registerUser(username: string, email: string, password: string ,cellphone : string) {
+export async function registerUser(username: string, email: string, password: string ,cellphone : string, userfullname : string) {
   try{
     const response = await fetch(`${getBaseUrl()}/api/auth/register`, {
       method: "POST",
@@ -23,7 +23,8 @@ export async function registerUser(username: string, email: string, password: st
         User_Username: username,
         User_Password: password,
         User_Email: email,
-        User_CellPhone : cellphone
+        User_Cellphone : cellphone,
+        User_Fullname : userfullname
       }),
     });
 
