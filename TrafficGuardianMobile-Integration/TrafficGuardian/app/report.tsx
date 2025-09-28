@@ -1,6 +1,6 @@
 import { router, useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Button } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Button, Linking, Pressable, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { createIncident, sendVoice } from "../services/incidentsApi";
 import { useLocation } from "../services/location";
@@ -8,11 +8,16 @@ import { Picker } from "@react-native-picker/picker";
 import { useSession } from "../services/sessionContext";
 import { Audio } from "expo-av";
 import { globalStyles } from "../styles/globalStyles";
+import { Ionicons } from '@expo/vector-icons'; 
+import { useTheme } from '../services/themeContext';
+
 
 export default function Report() {
     const router = useRouter();
     const { coords } = useLocation();
     const { user, setUser } = useSession();
+    const { currentColors } = useTheme();
+    const [modalVisible, setModalVisible] = useState(false);
   
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -107,6 +112,53 @@ async function playSound() {
       Alert.alert("Error", error.message || "Something went wrong");
     }
   };
+
+
+    const handleCall = (phone: string, name: string) => {
+      Alert.alert(
+        'Emergency Call',
+        `Are you sure you want to call ${name}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Call',
+            onPress: () => Linking.openURL(`tel:${phone}`),
+          },
+        ]
+      );
+    };
+
+    const contactTypeIcons = {
+  police: 'shield-checkmark',
+  medical: 'medical',
+  fire: 'flame',
+  family: 'people',
+  friend: 'person',
+  other: 'call',
+};
+
+const contactTypeColors = {
+  police: '#3b82f6',
+  medical: '#ef4444',
+  fire: '#dc2626',
+  family: '#10b981',
+  friend: '#f59e0bff',
+  other: '#6b7280',
+};
+interface EmergencyContact {
+  id: string;
+  name: string;
+  phone: string;
+  type: 'police' | 'medical' | 'fire' | 'family' | 'friend' | 'other';
+  isPrimary: boolean;
+}
+
+const emergencyContacts: EmergencyContact[] = [
+  { id: '1', name: 'Police Emergency', phone: '10111', type: 'police', isPrimary: true },
+  { id: '2', name: 'Ambulance/Medical', phone: '10177', type: 'medical', isPrimary: true },
+  { id: '3', name: 'Fire Department', phone: '10177', type: 'fire', isPrimary: true },
+  { id: '4', name: 'Traffic Police', phone: '0861 400 800', type: 'police', isPrimary: true },
+];
 
   /////////////////////////////
   return(
@@ -215,6 +267,106 @@ async function playSound() {
     </View>
   </ScrollView>
 
+{/* Button to open modal */}
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        style={{
+          padding: 16,
+          backgroundColor: currentColors.surface.dark,
+          borderRadius: 12,
+          alignItems : 'center',
+          justifyContent : 'center',
+        }}
+      >
+        <Text style={{ color: '#f59e0bff', fontSize: 18 }}>
+          Show Emergency Contacts
+        </Text>
+      </TouchableOpacity>
+  {/* Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: currentColors.background.dark,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 16,
+              maxHeight: '80%',
+            }}
+          >
+            <Text style={{ 
+              color: '#f59e0bff', 
+              fontSize: 24, 
+              fontWeight: 'bold', 
+              marginBottom: 16 
+            }}>
+              Emergency Contacts
+            </Text>
+
+            <ScrollView>
+              {emergencyContacts.map((contact) => (
+                <TouchableOpacity
+                  key={contact.id}
+                  onPress={() => handleCall(contact.phone, contact.name)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 16,
+                    marginBottom: 12,
+                    backgroundColor: currentColors.surface.light,
+                    borderRadius: 12,
+                    borderColor: contactTypeColors[contact.type],
+                    borderWidth: 2,
+                  }}
+                >
+                  <Ionicons
+                    name={contactTypeIcons[contact.type] as any}
+                    size={28}
+                    color={contactTypeColors[contact.type]}
+                    style={{ marginRight: 12 }}
+                  />
+                  <View>
+                    <Text style={{ color: currentColors.text.primary, fontSize: 18 }}>
+                      {contact.name}
+                    </Text>
+                    <Text style={{ color: currentColors.text.secondary, fontSize: 14 }}>
+                      {contact.phone}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Close button */}
+            <Pressable
+              onPress={() => setModalVisible(false)}
+              style={{
+                marginTop: 12,
+                padding: 12,
+                backgroundColor: currentColors.surface.dark,
+                borderRadius: 12,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#f59e0bff', fontSize: 16 }}>
+                Close
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+  
   {/* Navbar at bottom */}
   <View style={globalStyles.navbar}>
     <TouchableOpacity onPress={() => router.push("/")}>
