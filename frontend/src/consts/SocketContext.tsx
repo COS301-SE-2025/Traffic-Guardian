@@ -209,10 +209,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     if ('Notification' in window && Notification.permission === 'default') {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        toast.success('Browser notifications enabled', {
-          position: 'bottom-right',
-          autoClose: 3000,
-        });
+        // Notification permission granted - no toast needed for professional UI
       }
     }
   };
@@ -254,10 +251,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           setIsConnected(true);
           setConnectionStatus('connected');
           retryCount = 0; // Reset retry count on successful connection
-          toast.success('Connected to real-time alerts', {
-            position: 'bottom-right',
-            autoClose: 2000,
-          });
+          // Connection notification removed for professional UI
         });
 
         newSocket.on('disconnect', (reason: string) => {
@@ -268,10 +262,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           // Don't retry if client initiated disconnect
             return;
           }
-          toast.warn('Disconnected from real-time alerts', {
-            position: 'bottom-right',
-            autoClose: 3000,
-          });
+          // Disconnection notification removed for professional UI
 
           // Attempt reconnection with exponential backoff
           if (retryCount < maxRetries) {
@@ -285,10 +276,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             }, delay);
           } else {
             setConnectionStatus('failed');
-            toast.error('Failed to maintain connection to real-time alerts. Please refresh the page.', {
-              position: 'top-center',
-              autoClose: false,
-            });
+            // Critical connection failure - keep this for admin awareness
+            console.error('WebSocket connection failed after multiple retries');
           }
         });
 
@@ -305,10 +294,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             }, delay);
           } else {
             setConnectionStatus('failed');
-            toast.error('Unable to connect to real-time alerts. Please check your connection and refresh the page.', {
-              position: 'top-center',
-              autoClose: false,
-            });
+            // Connection error logging - removed toast for professional UI
+            console.error('Unable to establish WebSocket connection after multiple attempts');
           }
         });
 

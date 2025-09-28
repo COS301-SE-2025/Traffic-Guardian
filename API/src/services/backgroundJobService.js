@@ -25,8 +25,7 @@ class BackgroundJobService {
       await this.processQueue();
     }, 60000); // Process every 60 seconds - cost optimized
 
-    // Also process immediately
-    setImmediate(() => this.processQueue());
+    // Don't process immediately on startup to avoid duplicate calls
   }
 
   // Stop the background job processor

@@ -788,25 +788,7 @@ const Dashboard: React.FC = () => {
 
   // Debug function - can be called from browser console as window.debugDashboard()
   React.useEffect(() => {
-    (window as any).debugDashboard = () => {
-      console.log('🐛 Dashboard Debug Info:');
-      console.log('- Active Incidents:', activeIncidents);
-      console.log('- Critical Incidents:', criticalIncidentsCount);
-      console.log('- PEMS Data:', pemsDashboardData);
-      console.log('- Realtime Events Count:', realtimeEvents?.length || 0);
-      console.log(
-        '- Auth Token:',
-        sessionStorage.getItem('token') ? 'Present' : 'Missing',
-      );
-      console.log(
-        '- User Info:',
-        sessionStorage.getItem('userInfo') ? 'Present' : 'Missing',
-      );
-      console.log(
-        '- SERVER_URL:',
-        process.env.REACT_APP_SERVER_URL!,
-      );
-    };
+    // Debug function removed for production
   }, [
     activeIncidents,
     criticalIncidentsCount,
