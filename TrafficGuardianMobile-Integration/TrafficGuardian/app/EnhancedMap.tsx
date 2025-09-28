@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, Alert, Animated } from 'react-native';
+import { View, TouchableOpacity, Alert, Animated, Text } from 'react-native';
 import MapView, { Marker, Polyline, Circle, Callout } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocation } from '../services/location';
@@ -91,13 +91,13 @@ const getClusterColor = (incidents: any[]): string => {
   return '#dc2626';
 };
 
-export const EnhancedMap = ({
+export function EnhancedMap({
   traffic,
   onIncidentSelect,
   showWeatherOverlay = false,
   showTrafficFlow = true,
   filterRadius = 50,
-}: EnhancedMapProps) => {
+}: EnhancedMapProps){
   const { coords } = useLocation();
   const { currentColors, isDark } = useTheme();
   const mapRef = useRef<MapView>(null);
