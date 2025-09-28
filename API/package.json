@@ -10,7 +10,9 @@
     "test:unit" : "jest --testPathPattern=UnitTesting",
     "test:integration" : "jest --testPathPattern=IntegrationTesting",
     "test:performance": "jest --testPathPattern=PerformanceTesting",
-    "test:scalability" : "jest --testPathPattern=ScalabilityTesting"
+    "test:scalability" : "jest --testPathPattern=ScalabilityTesting",
+    "install:chrome": "npx puppeteer browsers install chrome",
+    "postinstall": "npx puppeteer browsers install chrome"
   },
   "keywords": [
     "traffic",

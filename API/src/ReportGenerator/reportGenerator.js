@@ -13,7 +13,50 @@ async function generateAndSend(incidents, userEmail){
 //sendEmail(to, subject, text, html, reportName, reportFile)
 
 async function generatePDF(incidents = [], User_Email) {
-  const browser = await puppeteer.launch();
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--disable-extensions'
+      ],
+      executablePath: process.env.CHROME_PATH || undefined
+    });
+  } catch (error) {
+    console.error('Failed to launch browser with default settings, trying with system Chrome:', error.message);
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        executablePath: '/usr/bin/google-chrome-stable',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ]
+      });
+    } catch (fallbackError) {
+      console.error('Failed to launch browser with system Chrome, trying with chromium:', fallbackError.message);
+      browser = await puppeteer.launch({
+        headless: true,
+        executablePath: '/usr/bin/chromium-browser',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ]
+      });
+    }
+  }
+
   const page = await browser.newPage();
 
   const logoPath = path.join(__dirname, "TrafficGuardianLogo1_LightFinal.PNG");
