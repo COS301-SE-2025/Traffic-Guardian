@@ -325,7 +325,7 @@ jobs:
             pip install -r test_requirements.txt
           else
             echo "test_requirements.txt not found, installing basic testing dependencies..."
-            pip install pytest opencv-python numpy requests
+            pip install pytest opencv-python numpy
           fi
 
       - name: Run Python tests
@@ -977,7 +977,7 @@ jobs:
             pip install -r requirements.txt
           else
             echo "requirements.txt not found, installing basic testing dependencies..."
-            pip install pytest opencv-python numpy
+            pip install pytest opencv-python numpy requests
           fi
 
       - name: Run Python Performance tests
