@@ -66,7 +66,7 @@
   <img src="assets/projectoverview.PNG" alt="Project Overview" width="250"/>
 </p>
 
-Traffic Guardian is an innovative solution designed to enhance road safety and efficiency across Gauteng's busy highways. As a COS301 Capstone Project at the University of Pretoria, our goal is to develop a real-time traffic incident detection system that leverages existing traffic camera feeds to identify accidents, congestion, and road hazards. By automating incident detection and enabling rapid response, Traffic Guardian aims to reduce human monitoring load, shorten response times, and improve overall road safety.
+Traffic Guardian is an innovative solution designed to enhance road safety and efficiency across California's busy highways. As a COS301 Capstone Project at the University of Pretoria, our goal is to develop a real-time traffic incident detection system that leverages existing traffic camera feeds to identify accidents, congestion, and road hazards. By automating incident detection and enabling rapid response, Traffic Guardian aims to reduce human monitoring load, shorten response times, and improve overall road safety.
 
 ---
 
