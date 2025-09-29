@@ -110,6 +110,15 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           SOURCE_DIR: dist/frontend
+
+      # Configure S3 website hosting for client-side routing (Staging)
+      - name: Configure S3 Website Hosting for Staging
+        run: |
+          echo "Configuring S3 website hosting with error document for client-side routing..."
+          aws s3 website s3://${{ secrets.AWS_S3_STAGING_BUCKET }} \
+            --index-document index.html \
+            --error-document error.html
+          echo "S3 website hosting configured for staging"
           
       # Deploy API to EC2 (Staging) - COMMENTED OUT to stay within free tier
       # Only frontend goes to staging, API only deploys to production EC2
@@ -282,6 +291,15 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           SOURCE_DIR: dist/frontend
+
+      # Configure S3 website hosting for client-side routing (Production)
+      - name: Configure S3 Website Hosting for Production
+        run: |
+          echo "Configuring S3 website hosting with error document for client-side routing..."
+          aws s3 website s3://${{ secrets.AWS_S3_PRODUCTION_BUCKET }} \
+            --index-document index.html \
+            --error-document error.html
+          echo "S3 website hosting configured for production"
 
       # # API deployment to a EC2 (staging) was removed as we are restricted to free tier
       # # Deploy API to EC2 (Production) - FREE TIER: Use t2.micro instance only
