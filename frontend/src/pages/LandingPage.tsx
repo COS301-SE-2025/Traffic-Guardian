@@ -119,7 +119,7 @@ const LandingPage: React.FC = () => {
       <section className="hero" id="home">
         <div className="hero-content">
           <h1 className="floating" data-testid="hero-title">
-            Traffic Guardian - AI-Powered Traffic Safety for Gauteng
+            Traffic Guardian - AI-Powered Traffic Safety for California
           </h1>
           <p className="hero-subtitle">
             Transforming highway monitoring with real-time computer vision to
