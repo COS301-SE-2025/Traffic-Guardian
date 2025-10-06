@@ -144,6 +144,7 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
   <img src="assets/postgresql-svgrepo-com.svg" alt="PostgreSQL" width="60">
   <img src="assets/opencv-svgrepo-com.svg" alt="OpenCV" width="60">
   <img src="assets/google-tensorflow-icon.png" alt="TensorFlow" width="60">
+  <img src="assets/Node.js.png" alt="TensorFlow" width="60">
 </p>
 
 #### DevOps & Cloud
@@ -151,7 +152,8 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
 <p align="center" style="display: flex; justify-content: center; align-items: center; gap: 30px; flex-wrap: wrap;">
   <img src="assets/GitHub_Actions.svg" alt="GitHub Actions" width="80">
   <img src="assets/aws-rds.svg" alt="AWS RDS" width="80">
-  <img src="assets/aws-sns.svg" alt="AWS SNS" width="80">
+  <img src="assets/aws-ec2.svg" alt="AWS SNS" width="80">
+  <img src="assets/s3-logo.png" alt="AWS SNS" width="80">
 </p>
 
 <p align="right">
