@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/TrafficGuardianLogo1_LightFinal.PNG" alt="Traffic Guardian Logo" width="300"/>
+  <img src="assets/TrafficGuardianLogo1_Light.PNG" alt="Traffic Guardian Logo" width="300"/>
 </p>
 
 <p align="center">
