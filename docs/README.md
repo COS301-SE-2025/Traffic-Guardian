@@ -7,7 +7,7 @@ Single-page landing website for the Traffic Guardian AI-powered traffic incident
 Visit: Link
 
 ## Project Description
-Traffic Guardian is an intelligent traffic monitoring system that uses computer vision and deep learning to automatically detect incidents on Gauteng's highway network, reducing response times and saving lives.
+Traffic Guardian is an intelligent traffic monitoring system that uses computer vision and deep learning to automatically detect incidents on California's highway network, reducing response times and saving lives.
 
 ## Key Features
 - **Single Page Design**: All content on one scrollable page - no separate pages or tabs

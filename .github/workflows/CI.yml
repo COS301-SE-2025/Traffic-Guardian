@@ -41,7 +41,7 @@ jobs:
           DISABLE_ERRORS: true
 
   test-ui:
-    name: UI Tests
+    name: UI Tests (Component & E2E)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -106,37 +106,37 @@ jobs:
         working-directory: ./frontend
         continue-on-error: true
         run: |
-          npx cypress run --component --reporter cypress-mochawesome-reporter
+          npx cypress run --component
           echo "Component tests completed"
           
       - name: Run Cypress E2E tests
         working-directory: ./frontend
         run: |
-          npx cypress run --e2e --reporter cypress-mochawesome-reporter
+          npx cypress run --e2e
           echo "E2E tests completed"
           
-      - name: Generate HTML test report
-        if: always()
-        working-directory: ./frontend
-        run: |
-          # Create required directories if they don't exist
-          mkdir -p cypress/reports/mochawesome
-          mkdir -p cypress/reports/mochawesome/.jsons
+      # - name: Generate HTML test report
+      #   if: always()
+      #   working-directory: ./frontend
+      #   run: |
+      #     # Create required directories if they don't exist
+      #     mkdir -p cypress/reports/mochawesome
+      #     mkdir -p cypress/reports/mochawesome/.jsons
           
-          # Check if any JSON reports exist in the .jsons directory
-          if [ "$(find cypress/reports/mochawesome/.jsons -name "*.json" 2>/dev/null | wc -l)" -gt 0 ]; then
-            # Merge the reports
-            npx mochawesome-merge cypress/reports/mochawesome/.jsons/*.json > cypress/reports/mochawesome-report.json
+      #     # Check if any JSON reports exist in the .jsons directory
+      #     if [ "$(find cypress/reports/mochawesome/.jsons -name "*.json" 2>/dev/null | wc -l)" -gt 0 ]; then
+      #       # Merge the reports
+      #       npx mochawesome-merge cypress/reports/mochawesome/.jsons/*.json > cypress/reports/mochawesome-report.json
             
-            # Generate HTML report
-            npx mochawesome-report-generator cypress/reports/mochawesome-report.json --reportDir cypress/reports
-            echo "Test report generated"
-          else
-            # Create a placeholder report if no tests were run
-            echo '{"stats":{"suites":0,"tests":0,"passes":0,"pending":0,"failures":0,"start":"'"$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"'","end":"'"$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"'","duration":0},"results":[]}' > cypress/reports/mochawesome-report.json
-            npx mochawesome-report-generator cypress/reports/mochawesome-report.json --reportDir cypress/reports
-            echo "Generated placeholder test report (no tests were run)"
-          fi
+      #       # Generate HTML report
+      #       npx mochawesome-report-generator cypress/reports/mochawesome-report.json --reportDir cypress/reports
+      #       echo "Test report generated"
+      #     else
+      #       # Create a placeholder report if no tests were run
+      #       echo '{"stats":{"suites":0,"tests":0,"passes":0,"pending":0,"failures":0,"start":"'"$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"'","end":"'"$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"'","duration":0},"results":[]}' > cypress/reports/mochawesome-report.json
+      #       npx mochawesome-report-generator cypress/reports/mochawesome-report.json --reportDir cypress/reports
+      #       echo "Generated placeholder test report (no tests were run)"
+      #     fi
           
   # Check to see in the .json lock for plugin dependencies for mochawesome-merge and mochawesome-report-generator
           
@@ -162,7 +162,7 @@ jobs:
           path: ./frontend/cypress/reports
 
   test-api:
-    name: API Tests
+    name: API Tests (Unit, Integration, NonFunctional)
     runs-on: ubuntu-latest
     # No longer using local postgres service, now using remote database with secrets
 
@@ -303,7 +303,7 @@ jobs:
           kill $(jobs -p) || true  # Kill background server process
 
   test-ai-model:
-    name: AI Model Tests
+    name: AI Model Tests (Unit, Integration)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -364,7 +364,7 @@ jobs:
 
   build:
     name: Build Project
-    needs: [test-api, test-ai-model] #test-ui, add later
+    needs: [test-ui, test-api, test-ai-model]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -812,7 +812,7 @@ jobs:
   #         echo "- Database Schema" >> deployment-summary.md
 
   security-scan:
-    name: Security Scan
+    name: Security Scan (API keys, Audits,...)
     runs-on: ubuntu-latest
     needs: [lint]
     steps:
