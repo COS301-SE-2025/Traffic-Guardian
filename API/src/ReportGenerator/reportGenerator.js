@@ -3,33 +3,60 @@ const path = require("path");
 const fs = require("fs");
 const emailSender = require("../emailService/emailService");
 
-async function generateAndSend(){
-  const pdfPATH = await generatePDF(incidents, User_Email);
+async function generateAndSend(incidents, userEmail){
+  const pdfPATH = await generatePDF(incidents, userEmail);
   console.log(pdfPATH);
-  await emailSender.sendEmail("aryanmohanlall@gmail.com", "Traffic Gaurdian Report", "", incidents[0].Incident_Reporter, pdfPATH);
 }
 
-//testing
-const incidents = [
-  {
-    Incidents_DateTime: "2025-09-15 14:00",
-    Incidents_Longitude: 28.0473,
-    Incidents_Latitude: -26.2041,
-    Incident_Severity: "High",
-    Incident_Status: "Open",
-    Incident_Reporter: "John Doe",
-    Incident_CameraID: "CAM123",
-    Incident_Description: "Minor collision"
-  }
-];
-
-//generatePDF(incidents, "aryanmohanlall@gmail.com");
 
 
 //sendEmail(to, subject, text, html, reportName, reportFile)
 
 async function generatePDF(incidents = [], User_Email) {
-  const browser = await puppeteer.launch();
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--disable-extensions'
+      ],
+      executablePath: process.env.CHROME_PATH || undefined
+    });
+  } catch (error) {
+    console.error('Failed to launch browser with default settings, trying with system Chrome:', error.message);
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        executablePath: '/usr/bin/google-chrome-stable',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ]
+      });
+    } catch (fallbackError) {
+      console.error('Failed to launch browser with system Chrome, trying with chromium:', fallbackError.message);
+      browser = await puppeteer.launch({
+        headless: true,
+        executablePath: '/usr/bin/chromium-browser',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ]
+      });
+    }
+  }
+
   const page = await browser.newPage();
 
   const logoPath = path.join(__dirname, "TrafficGuardianLogo1_LightFinal.PNG");
@@ -93,8 +120,26 @@ async function generatePDF(incidents = [], User_Email) {
   await browser.close();
 
   console.log("Report generated:", pdfPath);
-  //sendEmail(to, subject, text, html, reportName, reportFile)
-  await emailSender.sendEmail(User_Email, "Traffic Gaurdian Report", "", incidents[0].Incident_Reporter, pdfPath);
+  //sendEmail(to, subject, text, html, attachmentPath)
+  const recipientEmail = User_Email || process.env.EMAIL_ADDRESS;
+
+  if (!recipientEmail) {
+    console.error("No recipient email address available");
+    return pdfPath;
+  }
+
+  try {
+    await emailSender.sendEmail(
+      recipientEmail,
+      "Traffic Guardian Report",
+      "Please find your incident report attached.",
+      `<p>Dear ${incidents[0]?.Incident_Reporter || 'User'},</p><p>Please find your Traffic Guardian incident report attached.</p>`,
+      pdfPath
+    );
+    console.log("Email sent successfully to:", recipientEmail);
+  } catch (error) {
+    console.error("Failed to send email:", error.message);
+  }
 
   return pdfPath;
 }

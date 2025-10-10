@@ -972,7 +972,7 @@ const Incidents: React.FC = () => {
           <div>
             <h2>Incident Management</h2>
             <div className="incidents-subtitle">
-              Monitor and manage traffic incidents across Gauteng
+              Monitor and manage traffic incidents across California
               <div className="connection-status">
                 {isConnected ? (
                   <span className="status-connected">

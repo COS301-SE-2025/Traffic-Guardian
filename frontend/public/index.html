@@ -53,5 +53,16 @@
       </div>
     </noscript>
     <div id="root"></div>
+
+    <script>
+      // Handle redirects from S3 error page for client-side routing
+      (function() {
+        const redirect = new URLSearchParams(window.location.search).get('redirect');
+        if (redirect) {
+          // Remove the redirect parameter and navigate to the original path
+          history.replaceState(null, null, redirect);
+        }
+      })();
+    </script>
   </body>
 </html>

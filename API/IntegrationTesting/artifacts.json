@@ -1,116 +1,71 @@
-{
-  "admin": [
+[
     {
-      "path": "/api/auth/cache/stats",
-      "expect": {
-        "latency": 250,
-        "requests": 80
-      },
-      "rateLimit": 10
+    "User_Username": "testuser",
+    "User_Password": "password123",
+    "User_Email": "testuser@gmail.com",
+    "User_Role": "user",
+    "User_Preferences": "{}"
+    },
+
+    {
+    "User_Email": "lonwabo@example.com",
+    "User_Password": "StrongPa$$20"
     },
     {
-      "path": "/api/auth/database/stats",
-      "expect": {
-        "latency": 300,
-        "requests": 70
-      },
-      "rateLimit": 8
-    },
-    {
-      "path": "/api/auth/deduplication/stats",
-      "expect": {
-        "latency": 250,
-        "requests": 90
-      },
-      "rateLimit": 10
+    "User_Email": "testuser@gmail.com",
+    "preferences": {
+        "notifications": true,
+        "alertLevel": "high",
+        "theme": "dark"
     }
-  ],
-  "archives": [
-    {
-      "path": "/api/archives",
-      "expect": {
-        "latency": 250,
-        "requests": 150
-      },
-      "rateLimit": 20
     },
     {
-      "path": "/api/archives/stats",
-      "expect": {
-        "latency": 200,
-        "requests": 100
-      },
-      "rateLimit": 15
+    "Incident_Date": "2025-05-21",
+    "Incident_Location": "Highway 101, Mile 45",
+    "Incident_CarID": 1,
+    "Incident_Severity": "high",
+    "Incident_Status": "open"
     },
     {
-      "path": "/api/archives/profile",
-      "expect": {
-        "latency": 300,
-        "requests": 50
-      },
-      "rateLimit": 8
+    "Incident_Severity": "medium",
+    "Incident_Status": "ongoing"
     },
     {
-      "path": "/api/archives/:id",
-      "expect": {
-        "latency": 350,
-        "requests": 40
-      },
-      "rateLimit": 5
-    }
-  ],
-  "pems": [
-    {
-      "path": "/api/pems/high-risk-areas",
-      "expect": {
-        "latency": 300,
-        "requests": 60
-      },
-      "rateLimit": 8
+    "Alert_IncidentID": 1,
+    "Alert_Message": "Traffic incident reported",
+    "Alert_Type": "notification",
+    "Alert_Severity": "high",
+    "Alert_Recipients": [1, 2, 3],
+    "Alert_Status": "pending"
     },
     {
-      "path": "/api/pems/dashboard-summary",
-      "expect": {
-        "latency": 250,
-        "requests": 70
-      },
-      "rateLimit": 10
+    "Alert_Status": "sent"
     },
     {
-      "path": "/api/pems/alerts",
-      "expect": {
-        "latency": 250,
-        "requests": 70
-      },
-      "rateLimit": 10
-    }
-  ],
-  "health": [
-    {
-      "path": "/api/health",
-      "expect": {
-        "latency": 150,
-        "requests": 200
-      },
-      "rateLimit": 20
+    "User_Username": "testuser",
+    "User_Password": "password123",
+    "User_Email": ".com",
+    "User_Role": "user",
+    "User_Preferences": "{}"
+    },
+        {
+    "User_Username": "testuser",
+    "User_Password": "password123",
+    "User_Email": "testuser",
+    "User_Role": "user",
+    "User_Preferences": "{}"
     },
     {
-      "path": "/api/jobs/stats",
-      "expect": {
-        "latency": 250,
-        "requests": 100
-      },
-      "rateLimit": 15
-    }
-  ],
-  "users": [
-    {
-      "path": "/api/user/preferences",
-      "expect": {
-        "latency": 250,
-        "requests": 50
-      },
-      "rateLimit": 8
-    }
-  ]
-}
+    "location": "Hatfield",
+    "incidents": [
+      { "properties": { "magnitudeOfDelay": 4, "iconCategory": "Accident" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 2, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 5, "iconCategory": "Accident" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 1, "iconCategory": "Rain" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 4, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 6, "iconCategory": "Road works" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 2, "iconCategory": "Jam" }, "geometry": {} },
+      { "properties": { "magnitudeOfDelay": 7, "iconCategory": "Accident" }, "geometry": {} }
+    ]
+  }
+]
