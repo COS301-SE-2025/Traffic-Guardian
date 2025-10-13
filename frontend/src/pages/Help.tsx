@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ChevronDown,
   ChevronRight,
@@ -33,6 +34,7 @@ interface OpenSections {
 }
 
 const Help: React.FC = () => {
+  const navigate = useNavigate();
   const [openSections, setOpenSections] = useState<OpenSections>({});
   const [searchTerm, setSearchTerm] = useState<string>('');
 
@@ -403,19 +405,43 @@ const Help: React.FC = () => {
         <div className="help-quick-access">
           <h3 className="help-quick-access-title">Quick Access</h3>
           <div className="help-quick-access-grid">
-            <div className="help-quick-access-item">
+            <div
+              className="help-quick-access-item"
+              onClick={() => navigate('/dashboard')}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => e.key === 'Enter' && navigate('/dashboard')}
+            >
               <BarChart3 className="help-quick-access-icon" />
               <span className="help-quick-access-label">Dashboard</span>
             </div>
-            <div className="help-quick-access-item">
+            <div
+              className="help-quick-access-item"
+              onClick={() => navigate('/live-feed')}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => e.key === 'Enter' && navigate('/live-feed')}
+            >
               <Video className="help-quick-access-icon" />
               <span className="help-quick-access-label">Live Feed</span>
             </div>
-            <div className="help-quick-access-item">
+            <div
+              className="help-quick-access-item"
+              onClick={() => navigate('/incidents')}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => e.key === 'Enter' && navigate('/incidents')}
+            >
               <AlertTriangle className="help-quick-access-icon" />
               <span className="help-quick-access-label">Incidents</span>
             </div>
-            <div className="help-quick-access-item">
+            <div
+              className="help-quick-access-item"
+              onClick={() => navigate('/archives')}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => e.key === 'Enter' && navigate('/archives')}
+            >
               <Archive className="help-quick-access-icon" />
               <span className="help-quick-access-label">Archives</span>
             </div>

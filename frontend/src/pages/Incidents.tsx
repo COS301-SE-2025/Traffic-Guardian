@@ -414,6 +414,17 @@ const Incidents: React.FC = () => {
       // apiRequest handles authentication checks and toasts centrally
       const userResponse = await apiRequest('/api/auth/profile');
       setUserRole(userResponse.User_Role || 'user');
+
+      // Auto-populate reporter name from user profile
+      const reporterName = userResponse.User_FirstName
+        ? `${userResponse.User_FirstName} ${userResponse.User_LastName || ''}`.trim()
+        : userResponse.User_Email || userResponse.Username || '';
+
+      setManualIncident(prev => ({
+        ...prev,
+        Incident_Reporter: reporterName
+      }));
+
       await loadIncidents();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -1362,15 +1373,11 @@ const Incidents: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        className="form-input"
-                        placeholder="Enter your name or identification"
+                        className="form-input form-input-disabled"
+                        placeholder="Auto-populated from your account"
                         value={manualIncident.Incident_Reporter}
-                        onChange={e =>
-                          handleManualIncidentChange(
-                            'Incident_Reporter',
-                            e.target.value,
-                          )
-                        }
+                        readOnly
+                        disabled
                         required
                       />
                       {formErrors.Incident_Reporter && (

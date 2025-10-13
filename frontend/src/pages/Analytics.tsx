@@ -13,9 +13,10 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  ScatterChart,
-  Scatter,
 } from 'recharts';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import ApiService, {
   DatabaseIncident,
   LocationData,
@@ -26,6 +27,14 @@ import './Analytics.css';
 import io from 'socket.io-client';
 import PEMSAnalytics from '../components/PEMSAnalytics';
 import LaneClosureAnalytics from '../components/LaneClosureAnalytics';
+
+// Fix Leaflet default icon issue
+delete ((L as any).Icon.Default.prototype as any)._getIconUrl;
+(L as any).Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
 
 const ChartIcon = () => (
   <svg
@@ -760,69 +769,61 @@ const Analytics: React.FC = () => {
               </div>
 
 
-              {/* Incident Location Scatter Plot */}
+              {/* Incident Location Map */}
               <div className="chart-container full-width">
                 <h2>Incident Location Distribution</h2>
                 {incidentLocations.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={400}>
-                    <ScatterChart
-                      data={incidentLocations}
-                      margin={{
-                        top: 20,
-                        right: 20,
-                        bottom: 20,
-                        left: 20,
-                      }}
+                  <div style={{ height: '500px', borderRadius: '8px', overflow: 'hidden' }}>
+                    <MapContainer
+                      center={[incidentLocations[0].latitude, incidentLocations[0].longitude]}
+                      zoom={10}
+                      style={{ height: '100%', width: '100%' }}
                     >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke={isDarkMode ? '#374151' : '#e5e7eb'}
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       />
-                      <XAxis
-                        type="number"
-                        dataKey="longitude"
-                        name="Longitude"
-                        stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis
-                        type="number"
-                        dataKey="latitude"
-                        name="Latitude"
-                        stroke={isDarkMode ? '#9ca3af' : '#6b7280'}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <Tooltip
-                        cursor={{ strokeDasharray: '3 3' }}
-                        contentStyle={{
-                          backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-                          border: `1px solid ${
-                            isDarkMode ? '#374151' : '#e5e7eb'
-                          }`,
-                          borderRadius: '8px',
-                        }}
-                        formatter={(value, name, props) => {
-                          if (name === 'count') {
-                            const severity = props.payload?.severity || 'unknown';
-                            return [`${value} incidents (${severity} severity)`, 'Count'];
-                          }
-                          return [value, name];
-                        }}
-                        labelFormatter={(label, payload) => {
-                          if (payload && payload[0]) {
-                            const data = payload[0].payload;
-                            return `Location: ${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`;
-                          }
-                          return label;
-                        }}
-                      />
-                      <Scatter
-                        name="Incidents"
-                        dataKey="count"
-                        fill={chartColors.primary}
-                      />
-                    </ScatterChart>
-                  </ResponsiveContainer>
+                      {incidentLocations.map((location, index) => {
+                        const severityColor =
+                          location.severity === 'high' ? '#ef4444' :
+                          location.severity === 'medium' ? '#feac34' :
+                          '#10b981';
+
+                        const icon = new (L as any).Icon({
+                          iconUrl: `data:image/svg+xml;base64,${btoa(`
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+                              <path d="M12 0C7.58 0 4 3.58 4 8c0 5.5 8 13 8 13s8-7.5 8-13c0-4.42-3.58-8-8-8z" fill="${severityColor}" stroke="#fff" stroke-width="1.5"/>
+                              <circle cx="12" cy="8" r="3" fill="#fff"/>
+                            </svg>
+                          `)}`,
+                          iconSize: [32, 32],
+                          iconAnchor: [16, 32],
+                          popupAnchor: [0, -32],
+                        });
+
+                        return (
+                          <Marker
+                            key={index}
+                            position={[location.latitude, location.longitude]}
+                            icon={icon}
+                          >
+                            <Popup>
+                              <div style={{ padding: '8px' }}>
+                                <strong>Incident Location</strong><br/>
+                                <strong>Coordinates:</strong> {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}<br/>
+                                <strong>Incidents:</strong> {location.count}<br/>
+                                <strong>Severity:</strong> <span style={{
+                                  color: severityColor,
+                                  fontWeight: 'bold',
+                                  textTransform: 'capitalize'
+                                }}>{location.severity}</span>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        );
+                      })}
+                    </MapContainer>
+                  </div>
                 ) : (
                   <div
                     style={{
@@ -836,6 +837,29 @@ const Analytics: React.FC = () => {
                     No location coordinate data available
                   </div>
                 )}
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  backgroundColor: isDarkMode ? '#1f2937' : '#f3f4f6',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ef4444' }}></div>
+                    <span style={{ fontSize: '14px' }}>High Severity</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#feac34' }}></div>
+                    <span style={{ fontSize: '14px' }}>Medium Severity</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#10b981' }}></div>
+                    <span style={{ fontSize: '14px' }}>Low Severity</span>
+                  </div>
+                </div>
               </div>
 
               {/* Archive Analytics Section */}
