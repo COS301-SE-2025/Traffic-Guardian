@@ -9,29 +9,30 @@ navbar: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    backgroundColor: "rgba(41,41,41,1)",
-    paddingVertical: 25,
-    borderBottomWidth: 2,
-    borderBottomColor: "grey",
+    backgroundColor: colors.surface.elevated,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.light,
   },
   navText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
+    color: colors.text.secondary,
+    fontSize: 12,
+    fontWeight: "500",
+    marginTop: 4,
   },
   navTextActive: {
-    color: "orange", // active page highlight
-    fontWeight: "700",
+    color: colors.primary.main,
+    fontWeight: "600",
   },
 
-  //
+  // Premium Containers
   container: {
     flex: 1,
-    backgroundColor: colors.background.light,
+    backgroundColor: colors.background.pure,
   },
   darkContainer: {
     flex: 1,
-    backgroundColor: colors.background.dark,
+    backgroundColor: colors.background.pure,
   },
   loadingContainer: {
     flex: 1,
@@ -48,21 +49,20 @@ navbar: {
   },
   
   header: {
-    backgroundColor: colors.primary.main,
-    paddingVertical: 16,
+    backgroundColor: colors.surface.dark,
+    paddingVertical: 20,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
   },
   headerTitle: {
     ...typography.h2,
-    color: colors.text.light,
-    fontWeight: '600',
+    color: colors.text.primary,
+    fontWeight: '700',
   },
   headerSubtitle: {
     ...typography.body,
     color: colors.text.secondary,
-    color : 'white',
     marginTop: 4,
   },
 
@@ -91,24 +91,28 @@ navbar: {
     marginVertical: 10,
   },
 
+  // Clean Sharp Cards
   card: {
-    backgroundColor: colors.surface.light,
+    backgroundColor: colors.surface.dark,
     borderRadius: 12,
-    padding: 16,
+    padding: 20,
     marginVertical: 8,
     marginHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  glassCard: {
+    backgroundColor: colors.surface.dark,
+    borderRadius: 16,
+    padding: 24,
+    marginVertical: 12,
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.border.light,
   },
   darkCard: {
-    backgroundColor: colors.surface.dark,
-    borderColor: colors.border.dark,
+    backgroundColor: colors.surface.elevated,
+    borderColor: colors.border.primary,
     borderWidth: 1,
   },
   cardHeader: {
@@ -120,45 +124,60 @@ navbar: {
   cardTitle: {
     ...typography.h3,
     color: colors.text.primary,
-    color : 'orange',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   cardSubtitle: {
     ...typography.caption,
     color: colors.text.secondary,
-    color : 'white',
     marginTop: 4,
   },
+  cardAccent: {
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary.main,
+  },
 
+  // Clean Sharp Buttons
   primaryButton: {
     backgroundColor: colors.primary.main,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 8,
   },
   primaryButtonText: {
     ...typography.button,
-    color: colors.text.light,
-    fontWeight: '600',
+    color: colors.text.dark,
+    fontWeight: '700',
+    fontSize: 16,
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: colors.primary.main,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    backgroundColor: colors.surface.elevated,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 8,
   },
   secondaryButtonText: {
     ...typography.button,
-    color: colors.primary.main,
+    color: colors.text.primary,
     fontWeight: '600',
+  },
+  floatingButton: {
+    backgroundColor: colors.primary.main,
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
   },
   disabledButton: {
     backgroundColor: colors.surface.disabled,
@@ -171,21 +190,22 @@ navbar: {
     backgroundColor: colors.warning,
   },
 
+  // Clean Sharp Inputs
   input: {
     borderWidth: 1,
     borderColor: colors.border.light,
-    backgroundColor: colors.surface.light,
-    borderRadius: 8,
-    paddingVertical: 12,
+    backgroundColor: colors.surface.elevated,
+    borderRadius: 10,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     ...typography.body,
     color: colors.text.primary,
     marginVertical: 8,
   },
   darkInput: {
-    borderColor: colors.border.dark,
+    borderColor: colors.border.light,
     backgroundColor: colors.surface.dark,
-    color: colors.text.light,
+    color: colors.text.primary,
   },
   inputFocused: {
     borderColor: colors.primary.main,
