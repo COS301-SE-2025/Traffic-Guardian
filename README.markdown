@@ -162,6 +162,11 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
 
 ---
 
+[![Website](https://img.shields.io/badge/Visit_Traffic_Guardian-F29202?style=for-the-badge&logo=google-chrome&logoColor=white)](https://trafficguardian.co.za/)  
+[![App](https://img.shields.io/badge/Download_Mobile_App-F29202?style=for-the-badge&logo=android&logoColor=white)](https://github.com/COS301-SE-2025/Traffic-Guardian/releases/download/v1.0.0/application-aa8f7bce-e6f1-4f29-bebb-9e687a3268cd.apk)
+
+---
+
 <a id="more-information"></a>
 
 <p align="left">

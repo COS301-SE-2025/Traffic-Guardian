@@ -1,16 +1,17 @@
 .account-page {
   position: fixed;
-  top: 160px;
+  top: var(--navbar-total-height, 160px);
   left: 0;
   width: 100vw;
-  height: calc(100vh - 160px);
+  height: calc(100vh - var(--navbar-total-height, 160px));
   display: flex;
   justify-content: center;
   align-items: center;
   background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: auto;
   z-index: 1000;
+  padding: 1rem;
 }
 
 /* Light mode account page */
@@ -22,13 +23,14 @@
   display: flex;
   max-width: 1100px;
   width: 90vw;
-  height: 80%;
+  height: auto;
   min-height: 500px;
-  max-height: 600px;
+  max-height: 90vh;
   background-color: #1e1e1e;
   border-radius: 20px;
   box-shadow: 0 20px 60px rgb(0 0 0 / 40%);
   overflow: hidden;
+  margin: auto;
 }
 
 /* Light mode auth container */
@@ -41,6 +43,7 @@
   flex: 1;
   position: relative;
   overflow: hidden;
+  min-height: 200px;
 }
 
 .auth-image {
@@ -104,6 +107,8 @@
   border-radius: 0;
   width: auto;
   height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .showcase-container {
@@ -123,7 +128,7 @@
 
 .login-container p {
   color: #aaa;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-group {
@@ -144,12 +149,12 @@ input {
   background-color: #2a2a2a;
   color: white;
   font-size: 1rem;
-  width: 100%; /* Ensure inputs take full container width minus padding */
-  box-sizing: border-box; /* Prevent padding from affecting width */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .signup-btn {
-  width: 100%; /* Match input width */
+  width: 100%;
   height: 55px;
   border: none;
   border-radius: 10px;
@@ -186,7 +191,7 @@ input {
 }
 
 .password-input-container input {
-  padding-right: 3rem; /* Make space for the toggle button */
+  padding-right: 3rem;
 }
 
 .password-toggle-btn {
@@ -290,72 +295,206 @@ input {
   background-color: #f79400;
 }
 
+/* Alert styles */
+.alert {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.alert-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.alert svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .auth-container {
+    width: 95vw;
+  }
+
+  .login-container {
+    padding: 2.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .account-page {
-    top: 140px;
-    height: calc(100vh - 140px);
+    padding: 0.5rem;
+    overflow-y: auto;
   }
 
   .auth-container {
     flex-direction: column;
-    width: 95vw;
-    height: 90%;
-    min-height: 450px;
-    max-height: 550px;
+    width: 100%;
+    max-width: 100%;
+    min-height: auto;
+    max-height: none;
+    height: auto;
+    border-radius: 15px;
   }
 
   .image-container {
-    height: 30%;
     min-height: 150px;
+    max-height: 200px;
+    flex: 0 0 auto;
   }
 
   .image-overlay h3 {
     font-size: 1.8rem;
+    margin-bottom: 0.5rem;
   }
 
   .image-overlay p {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
 
   .login-container {
-    padding: 2rem;
+    padding: 1.5rem;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .login-container h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .login-container p {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+
+  .signup-btn {
+    margin-top: 1rem;
+    height: 50px;
+    font-size: 1rem;
+  }
+
+  .divider {
+    margin: 0.75rem 0;
   }
 }
 
 @media (max-width: 480px) {
   .account-page {
-    top: 130px;
-    height: calc(100vh - 130px);
+    padding: 0.25rem;
   }
 
   .auth-container {
-    border-radius: 15px;
-    width: 98vw;
-    height: 95%;
-    min-height: 400px;
-    max-height: 500px;
+    border-radius: 12px;
+    width: 100%;
   }
 
   .image-container {
-    height: 25%;
     min-height: 120px;
+    max-height: 150px;
+  }
+
+  .image-overlay {
+    padding: 1rem;
   }
 
   .image-overlay h3 {
     font-size: 1.5rem;
+    margin-bottom: 0.25rem;
   }
 
   .image-overlay p {
-    font-size: 0.8rem;
-    max-width: 200px;
+    font-size: 0.85rem;
+    max-width: 250px;
   }
 
   .login-container {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 
   .login-container h2 {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
+  }
+
+  .login-container p {
+    font-size: 0.85rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  label {
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+  }
+
+  input {
+    padding: 0.65rem;
+    font-size: 0.95rem;
+  }
+
+  .forgot-link {
+    font-size: 0.8rem;
+  }
+
+  .signup-btn {
+    height: 48px;
+    font-size: 0.95rem;
+    margin-top: 0.75rem;
+  }
+
+  .signup-text {
+    font-size: 0.85rem;
+    margin-top: 1rem;
+  }
+
+  .alert {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .alert svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .login-container {
+    padding: 1rem;
+  }
+
+  .login-container h2 {
+    font-size: 1.35rem;
+  }
+
+  .image-overlay h3 {
+    font-size: 1.3rem;
+  }
+
+  .image-overlay p {
+    font-size: 0.75rem;
+  }
+
+  input {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .signup-btn {
+    height: 45px;
+    font-size: 0.9rem;
   }
 }
