@@ -336,6 +336,7 @@ const LiveFeed: React.FC = () => {
         Incident_Severity: incidentForm.severity,
         Incident_Status: 'open',
         Incident_Reporter: reporterName,
+        User_Email: currentUser.User_Email || null,
         Incident_CameraID: databaseCameraID,
         Incident_Description: `${incidentForm.description}\n\n` +
           `Camera: ${selectedCamera.location} (${selectedCamera.id})\n` +

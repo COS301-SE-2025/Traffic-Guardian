@@ -237,7 +237,7 @@ const CameraModal: React.FC<CameraModalProps> = ({
 };
 
 // Weather layer types
-type WeatherLayer = 'satellite';
+type WeatherLayer = 'satellite' | 'clouds' | 'precipitation' | 'temperature' | 'wind' | 'pressure';
 
 interface MapControlsProps {
   onRefresh: () => void;
@@ -371,7 +371,9 @@ const MapControls: React.FC<MapControlsProps> = ({
       {/* Weather Panel */}
       <div className="control-panel weather-panel">
         <div className="panel-header">
-          <h3>Weather Layer</h3>
+          <h3>Weather Layers</h3>
+        </div>
+        <div className="filter-buttons-grid weather-grid">
           <button
             className={`toggle-button satellite ${
               activeWeatherLayer === 'satellite' ? 'active' : ''
@@ -394,6 +396,123 @@ const MapControls: React.FC<MapControlsProps> = ({
               <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" />
             </svg>
             Satellite
+          </button>
+          <button
+            className={`toggle-button clouds ${
+              activeWeatherLayer === 'clouds' ? 'active' : ''
+            }`}
+            onClick={() =>
+              onWeatherToggle(
+                activeWeatherLayer === 'clouds' ? null : 'clouds',
+              )
+            }
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+            </svg>
+            Clouds
+          </button>
+          <button
+            className={`toggle-button precipitation ${
+              activeWeatherLayer === 'precipitation' ? 'active' : ''
+            }`}
+            onClick={() =>
+              onWeatherToggle(
+                activeWeatherLayer === 'precipitation' ? null : 'precipitation',
+              )
+            }
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="8" y1="19" x2="8" y2="21" />
+              <line x1="8" y1="13" x2="8" y2="15" />
+              <line x1="16" y1="19" x2="16" y2="21" />
+              <line x1="16" y1="13" x2="16" y2="15" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="12" y1="15" x2="12" y2="17" />
+              <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
+            </svg>
+            Rain
+          </button>
+          <button
+            className={`toggle-button temperature ${
+              activeWeatherLayer === 'temperature' ? 'active' : ''
+            }`}
+            onClick={() =>
+              onWeatherToggle(
+                activeWeatherLayer === 'temperature' ? null : 'temperature',
+              )
+            }
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
+            </svg>
+            Temp
+          </button>
+          <button
+            className={`toggle-button wind ${
+              activeWeatherLayer === 'wind' ? 'active' : ''
+            }`}
+            onClick={() =>
+              onWeatherToggle(
+                activeWeatherLayer === 'wind' ? null : 'wind',
+              )
+            }
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
+            </svg>
+            Wind
+          </button>
+          <button
+            className={`toggle-button pressure ${
+              activeWeatherLayer === 'pressure' ? 'active' : ''
+            }`}
+            onClick={() =>
+              onWeatherToggle(
+                activeWeatherLayer === 'pressure' ? null : 'pressure',
+              )
+            }
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+            Pressure
           </button>
         </div>
 
@@ -594,7 +713,9 @@ const MapControls: React.FC<MapControlsProps> = ({
               stroke="currentColor"
               strokeWidth="2"
             >
-              <path d="M2 20h20v2H2zm1.64-6.36c.9.9 2.15.9 3.05 0l2.83-2.83c.9-.9.9-2.15 0-3.05-.9-.9-2.15-.9-3.05 0l-2.83 2.83c-.9.9-.9 2.15 0 3.05z" />
+              <path
+                d="M2 20h20v2H2zm1.64-6.36c.9.9 2.15.9 3.05 0l2.83-2.83c.9-.9.9-2.15 0-3.05-.9-.9-2.15-.9-3.05 0l-2.83 2.83c-.9.9-.9 2.15 0 3.05z"
+              />
               <path d="m6.5 17.5-5-5c-.9-.9-.9-2.15 0-3.05L6.34 4.6c.9-.9 2.15-.9 3.05 0 .9.9.9 2.15 0 3.05l-4.84 4.85c-.9.9-2.15.9-3.05 0z" />
             </svg>
             Heatmap
@@ -690,18 +811,77 @@ const MapControls: React.FC<MapControlsProps> = ({
   </div>
 );
 
-// Weather overlay component
+// Weather overlay component with RainViewer and free APIs
 const WeatherOverlay: React.FC<{
   layer: WeatherLayer | null;
   opacity: number;
-}> = ({ layer, opacity: _opacity }) => {
+}> = ({ layer, opacity }) => {
+  const OPENWEATHER_API_KEY = 'REDACTED_API_KEY';
+  const [radarTimestamp, setRadarTimestamp] = React.useState<number | null>(
+    null,
+  );
+
+  // Fetch latest RainViewer radar timestamp
+  React.useEffect(() => {
+    const fetchRadarTimestamp = async () => {
+      try {
+        const response = await fetch(
+          'https://api.rainviewer.com/public/weather-maps.json',
+        );
+        const data = await response.json();
+        // Get the most recent radar timestamp
+        if (data.radar && data.radar.past && data.radar.past.length > 0) {
+          const latestFrame = data.radar.past[data.radar.past.length - 1];
+          setRadarTimestamp(latestFrame.time);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch RainViewer data:', error);
+        // Fallback to approximate current time
+        setRadarTimestamp(Math.floor(Date.now() / 1000) - 600);
+      }
+    };
+
+    fetchRadarTimestamp();
+    // Update every 10 minutes
+    const interval = setInterval(fetchRadarTimestamp, 600000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const getWeatherTileUrl = (layer: WeatherLayer): string => {
     const layerMap: Record<WeatherLayer, string> = {
       satellite:
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      // RainViewer for precipitation - shows actual radar data
+      precipitation:
+        radarTimestamp
+          ? `https://tilecache.rainviewer.com/v2/radar/${radarTimestamp}/256/{z}/{x}/{y}/6/1_1.png`
+          : '',
+      // RainViewer satellite infrared for clouds
+      clouds:
+        radarTimestamp
+          ? `https://tilecache.rainviewer.com/v2/satellite/${radarTimestamp}/256/{z}/{x}/{y}/0/0_0.png`
+          : '',
+      // OpenWeatherMap for temperature
+      temperature: `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`,
+      // OpenWeatherMap for wind
+      wind: `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`,
+      // OpenWeatherMap for pressure
+      pressure: `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`,
     };
 
     return layerMap[layer];
+  };
+
+  const getAttribution = (layer: WeatherLayer): string => {
+    if (layer === 'satellite') {
+      return '© Esri, World Imagery';
+    }
+    if (layer === 'precipitation' || layer === 'clouds') {
+      return '© RainViewer';
+    }
+    return '© OpenWeatherMap';
   };
 
   const [tileUrl, setTileUrl] = React.useState<string>('');
@@ -712,16 +892,26 @@ const WeatherOverlay: React.FC<{
       return;
     }
 
-    setTileUrl(getWeatherTileUrl(layer));
-  }, [layer]);
+    const url = getWeatherTileUrl(layer);
+    setTileUrl(url);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layer, radarTimestamp]);
 
+  // Don't render if no URL or waiting for RainViewer timestamp
   if (!layer || !tileUrl) {return null;}
+  if (
+    (layer === 'precipitation' || layer === 'clouds') &&
+    !radarTimestamp
+  ) {
+    return null;
+  }
 
   return (
     <TileLayer
       {...({
         url: tileUrl,
-        attribution: '© Esri, World Imagery',
+        attribution: getAttribution(layer),
+        opacity: opacity,
       } as any)}
     />
   );
