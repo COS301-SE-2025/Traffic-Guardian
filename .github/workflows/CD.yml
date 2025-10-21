@@ -510,9 +510,9 @@ jobs:
           if curl -f -s "$API_URL" | grep -q '"status":"OK"' 2>/dev/null; then
             echo "API: HEALTHY"
           else
-            echo "API: Could not verify health endpoint"
+            echo "API: Trying another health endpoint"
             # Try basic connection test
-            if curl -f -s "https://${{ secrets.EC2_PRODUCTION_API }}/" > /dev/null; then
+            if curl -f -s "https://${{ secrets.EC2_PRODUCTION_API }}/api" > /dev/null; then
               echo "API: Server responding"
             fi
           fi
