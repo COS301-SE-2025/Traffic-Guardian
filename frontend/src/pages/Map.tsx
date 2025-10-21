@@ -816,7 +816,7 @@ const WeatherOverlay: React.FC<{
   layer: WeatherLayer | null;
   opacity: number;
 }> = ({ layer, opacity }) => {
-  const OPENWEATHER_API_KEY = 'REDACTED_API_KEY';
+  const OPENWEATHER_API_KEY = process.env.REACT_APP_WEATHER_API_KEY || '';
   const [radarTimestamp, setRadarTimestamp] = React.useState<number | null>(
     null,
   );
