@@ -826,12 +826,6 @@ const Incidents: React.FC = () => {
       });
 
       setShowManualForm(false);
-      toast.success(
-        'Incident reported successfully! All users have been alerted in real-time.',
-        {
-          autoClose: 5000,
-        },
-      );
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error(`Failed to submit incident: ${errorMessage}`);
