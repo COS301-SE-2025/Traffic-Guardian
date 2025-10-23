@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useTheme } from '../consts/ThemeContext';
 import {
   PieChart,
@@ -158,6 +161,7 @@ interface IncidentLocation {
 
 const Analytics: React.FC = () => {
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [_socket, _setSocket] = useState<any>(null);
@@ -227,7 +231,8 @@ const Analytics: React.FC = () => {
     try {
       // Check authentication
       if (!ApiService.isAuthenticated()) {
-        setError('Please log in to view analytics data');
+        toast.error('Authentication required. Please log in.');
+        navigate('/account');
         return;
       }
       const [
@@ -418,7 +423,7 @@ const Analytics: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   const loadArchiveAnalytics = useCallback(async () => {
     try {
