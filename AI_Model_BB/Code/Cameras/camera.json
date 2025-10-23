@@ -1,18 +1,23 @@
 {
     "cameras":
     [
-       
-         {
-            "camera_id": "1",
-            "url":"Videos/Demo2.mp4",
-            "camera_longitude":"25.7543",
-            "camera_latitude": "28.2316"
+        {
+            "camera_id": "2577",
+            "url":"https://wzmedia.dot.ca.gov/D5/101atMainSt-Route183.stream/playlist.m3u8",
+            "camera_longitude":"-120.6596",
+            "camera_latitude": "35.2828"
         },
         {
-            "camera_id": "4",
-            "url":"https://wzmedia.dot.ca.gov/D12/WB91BEACH.stream/playlist.m3u8",
-            "camera_longitude":"-117.99698",
-            "camera_latitude": "33.85631"
+            "camera_id": "2579",
+            "url":"https://wzmedia.dot.ca.gov/D5/101atLosOsosValleyRd.stream/playlist.m3u8",
+            "camera_longitude":"-120.6596",
+            "camera_latitude": "35.2828"
+        },
+        {
+            "camera_id": "2582",
+            "url":"https://wzmedia.dot.ca.gov/D5/101atMontereySt.stream/playlist.m3u8",
+            "camera_longitude":"-120.6596",
+            "camera_latitude": "35.2828"
         }
 
     ]
