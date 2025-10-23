@@ -61,6 +61,9 @@ svg {
   --form-input-bg: #f5f5f5;
   --form-input-border: #ccc;
   --form-input-text: #333;
+  --form-input-disabled-bg: #e8e8e8;
+  --form-input-disabled-text: #666;
+  --form-input-disabled-border: #d1d1d1;
   --form-error-text: #f44;
   --form-help-text: #666;
   --file-upload-border: #ccc;
@@ -144,6 +147,9 @@ svg {
   --form-input-bg: #2a2a2a;
   --form-input-border: #666;
   --form-input-text: #fff;
+  --form-input-disabled-bg: #1a1a1a;
+  --form-input-disabled-text: #999;
+  --form-input-disabled-border: #555;
   --form-error-text: #f44;
   --form-help-text: #999;
   --file-upload-border: #666;
@@ -690,6 +696,23 @@ svg {
 .form-input::placeholder,
 .form-textarea::placeholder {
   color: var(--filter-placeholder);
+}
+
+.form-input-disabled,
+.form-input:disabled,
+.form-input[readonly] {
+  background-color: var(--form-input-disabled-bg) !important;
+  color: var(--form-input-disabled-text) !important;
+  border-color: var(--form-input-disabled-border) !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+}
+
+.form-input-disabled::placeholder,
+.form-input:disabled::placeholder,
+.form-input[readonly]::placeholder {
+  color: var(--form-input-disabled-text) !important;
+  opacity: 0.7;
 }
 
 .form-select option {

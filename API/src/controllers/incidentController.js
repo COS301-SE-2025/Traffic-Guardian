@@ -21,13 +21,40 @@ const incidentController = {
       if (!Incidents_DateTime || !Incident_Status) {
         return res.status(400).json({ error: 'Date and time, and status are required' });
       }
-      
-      // Validate coordinates if provided
-      if (Incidents_Latitude && isNaN(parseFloat(Incidents_Latitude))) {
-        return res.status(400).json({ error: 'Invalid latitude format' });
+
+      // Validate that incident date is not in the future
+      const incidentDate = new Date(Incidents_DateTime);
+      const now = new Date();
+      if (incidentDate > now) {
+        return res.status(400).json({ error: 'Incident date cannot be in the future' });
       }
-      if (Incidents_Longitude && isNaN(parseFloat(Incidents_Longitude))) {
-        return res.status(400).json({ error: 'Invalid longitude format' });
+
+      // Validate coordinates if provided
+      if (Incidents_Latitude) {
+        const lat = parseFloat(Incidents_Latitude);
+        if (isNaN(lat)) {
+          return res.status(400).json({ error: 'Invalid latitude format' });
+        }
+        if (lat < -90 || lat > 90) {
+          return res.status(400).json({ error: 'Latitude must be between -90 and 90' });
+        }
+      }
+      if (Incidents_Longitude) {
+        const lng = parseFloat(Incidents_Longitude);
+        if (isNaN(lng)) {
+          return res.status(400).json({ error: 'Invalid longitude format' });
+        }
+        if (lng < -180 || lng > 180) {
+          return res.status(400).json({ error: 'Longitude must be between -180 and 180' });
+        }
+      }
+
+      // Validate email format if provided
+      if (User_Email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(User_Email)) {
+          return res.status(400).json({ error: 'Invalid email format' });
+        }
       }
       
       // Validate Incident_Severity

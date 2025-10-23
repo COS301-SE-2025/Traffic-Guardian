@@ -51,27 +51,47 @@
 }
 
 /* Light Mode Override - Professional and Clean */
-@media (prefers-color-scheme: light) {
-  :root {
-    --primary-color: #d97700;
-    --primary-hover: #c06800;
-    --primary-muted: rgb(217 119 0 / 10%);
-    --background-color: #fff;
-    --surface-color: #f8f9fa;
-    --surface-elevated: #fff;
-    --surface-hover: rgb(0 0 0 / 3%);
-    --text-primary: #1a1a1a;
-    --text-secondary: #6b7280;
-    --text-tertiary: #9ca3af;
-    --text-accent: #d97700;
-    --border-subtle: rgb(0 0 0 / 8%);
-    --border-default: rgb(0 0 0 / 12%);
-    --border-strong: rgb(0 0 0 / 16%);
-    --border-accent: #d97700;
-    --shadow-subtle: 0 1px 3px rgb(0 0 0 / 10%);
-    --shadow-medium: 0 4px 12px rgb(0 0 0 / 15%);
-    --shadow-strong: 0 8px 24px rgb(0 0 0 / 20%);
-  }
+:root.light-mode {
+  --primary-color: #d97700;
+  --primary-hover: #c06800;
+  --primary-muted: rgb(217 119 0 / 10%);
+  --background-color: #fff;
+  --surface-color: #f8f9fa;
+  --surface-elevated: #fff;
+  --surface-hover: rgb(0 0 0 / 3%);
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --text-accent: #d97700;
+  --border-subtle: rgb(0 0 0 / 8%);
+  --border-default: rgb(0 0 0 / 12%);
+  --border-strong: rgb(0 0 0 / 16%);
+  --border-accent: #d97700;
+  --shadow-subtle: 0 1px 3px rgb(0 0 0 / 10%);
+  --shadow-medium: 0 4px 12px rgb(0 0 0 / 15%);
+  --shadow-strong: 0 8px 24px rgb(0 0 0 / 20%);
+}
+
+/* Dark Mode (default) */
+:root.dark-mode {
+  --primary-color: #fa3;
+  --primary-hover: #f79400;
+  --primary-muted: rgb(255 170 51 / 10%);
+  --background-color: #1b1b1b;
+  --surface-color: #2a2a2a;
+  --surface-elevated: #333;
+  --surface-hover: rgb(255 255 255 / 5%);
+  --text-primary: #fff;
+  --text-secondary: #b3b3b3;
+  --text-tertiary: #808080;
+  --text-accent: #fa3;
+  --border-subtle: rgb(255 255 255 / 10%);
+  --border-default: rgb(255 255 255 / 15%);
+  --border-strong: rgb(255 255 255 / 20%);
+  --border-accent: #fa3;
+  --shadow-subtle: 0 1px 3px rgb(0 0 0 / 20%);
+  --shadow-medium: 0 4px 12px rgb(0 0 0 / 30%);
+  --shadow-strong: 0 8px 24px rgb(0 0 0 / 40%);
 }
 
 /* Reset and Foundation */
@@ -82,7 +102,7 @@
 /* Main Container - Minimal and Spacious */
 .help-page {
   min-height: 100vh;
-  background-color: #0f0f0f;
+  background-color: var(--background-color);
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -92,7 +112,7 @@
     sans-serif;
   font-size: 16px;
   line-height: 1.5;
-  color: #f1f1f1;
+  color: var(--text-primary);
   font-weight: 400;
   letter-spacing: -0.01em;
   padding-top: var(--page-content-offset);

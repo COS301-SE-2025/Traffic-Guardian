@@ -1,39 +1,49 @@
 export const colors = {
   primary: {
-    main: '#d97700',
-    light: '#fa3',
-    dark: '#c06800',
-    background: 'rgba(217, 119, 0, 0.1)',
+    main: '#ff9500',      // Vibrant orange - Telegram-style
+    light: '#ffaa33',
+    dark: '#e68500',
+    background: 'rgba(255, 149, 0, 0.1)',
+    gradient: ['#ff9500', '#ffaa33'],
   },
 
   secondary: {
-    main: '#3b82f6',
-    light: '#60a5fa',
-    dark: '#1d4ed8',
-    background: 'rgba(59, 130, 246, 0.1)',
+    main: '#0088cc',      // Telegram blue
+    light: '#00a8e8',
+    dark: '#006699',
+    background: 'rgba(0, 136, 204, 0.1)',
   },
 
   background: {
+    pure: '#000000',      // Pure black for OLED
+    dark: '#0a0a0a',      // Near-black
+    card: '#1a1a1a',      // Card background
+    elevated: '#1f1f1f',  // Elevated surfaces
     light: '#fff',
-    dark: '#1e1e1e',
     grey: '#f8fafc',
-    overlay: 'rgba(0, 0, 0, 0.5)',
+    overlay: 'rgba(0, 0, 0, 0.85)',
+    glass: 'rgba(26, 26, 26, 0.7)',  // Glassmorphism
   },
 
   surface: {
-    light: '#fff',
-    dark: '#3a3a3a',
-    grey: '#f9f9f9',
-    disabled: '#e5e5e5',
+    pure: '#000000',
+    dark: '#1a1a1a',
+    elevated: '#1f1f1f',
+    light: '#ffffff',
+    grey: '#2a2a2a',
+    disabled: '#3a3a3a',
+    glass: 'rgba(30, 30, 30, 0.6)',
   },
 
   text: {
-    primary: '#333',
-    secondary: '#666',
-    light: '#fff',
-    dark: '#000',
-    disabled: '#999',
-    link: '#3b82f6',
+    primary: '#ffffff',
+    secondary: '#999999',
+    tertiary: '#666666',
+    light: '#ffffff',
+    dark: '#000000',
+    disabled: '#444444',
+    link: '#0088cc',
+    muted: '#6b7280',
   },
 
   success: '#10b981',

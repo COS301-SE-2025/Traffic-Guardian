@@ -27,14 +27,16 @@
 
 @media (max-width: 768px) {
   :root {
-    --navbar-logo-height: 60px;
-    --navbar-padding-y: 1rem;
+    --navbar-logo-height: 50px;
+    --navbar-padding-y: 0.75rem;
+    /* CHANGED: Allow auto height for multi-row layout */
+    --navbar-total-height: auto;
   }
 }
 
 @media (max-width: 480px) {
   :root {
-    --navbar-logo-height: 50px;
+    --navbar-logo-height: 45px;
     --navbar-padding-y: 0.75rem;
   }
 }
@@ -175,16 +177,55 @@
   color: #feac34;
 }
 
+/* CHANGED: Mobile styles - Multi-row layout with CSS flexbox order */
 @media (max-width: 768px) {
+  .navbar {
+    /* CHANGED: Allow navbar to expand vertically */
+    height: auto;
+    min-height: auto;
+    padding: var(--navbar-padding-y) 0.5rem;
+  }
+
+  .navbar .navbar-content {
+    /* CHANGED: Stack items vertically */
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+  }
+
   .navbar .tg-nav-links {
-    gap: 1rem;
+    /* CHANGED: Tighter gaps for mobile */
+    gap: 0.75rem 1rem;
+    row-gap: 0.5rem;
+    width: 100%;
     justify-content: center;
-    flex-direction: row;
-    position: relative;
+    padding: 0 0.5rem;
+  }
+
+  /* NEW: Use flexbox order to move logo to top */
+  .navbar .logo-container {
+    order: -1; /* Move logo before all nav items */
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 0.25rem;
+  }
+
+  /* NEW: Ensure nav items come after logo */
+  .navbar .nav-item {
+    order: 1;
+    flex: 0 0 auto;
+  }
+
+  /* NEW: Help icon stays at the end */
+  .navbar .icon-group {
+    order: 2;
+    gap: 0.75rem;
+    flex: 0 0 auto;
   }
 
   .navbar .nav-item a {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
   }
 
   .navbar .search-icon,
@@ -192,8 +233,8 @@
     font-size: 18px;
   }
 
-  .navbar .icon-group {
-    gap: 0.8rem;
+  .navbar .nav-item a::after {
+    bottom: -2px;
   }
 }
 
@@ -231,5 +272,42 @@
 
   .navbar .help-icon {
     font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: var(--navbar-padding-y) 0.35rem;
+  }
+
+  .navbar .tg-nav-links {
+    gap: 0.5rem 0.75rem;
+    row-gap: 0.4rem;
+  }
+
+  .navbar .nav-item a {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .navbar .icon-group {
+    gap: 0.6rem;
+  }
+
+  .navbar .search-icon,
+  .navbar .help-icon {
+    font-size: 16px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 380px) {
+  .navbar .nav-item a {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.3rem;
+  }
+
+  .navbar .tg-nav-links {
+    gap: 0.4rem 0.6rem;
   }
 }

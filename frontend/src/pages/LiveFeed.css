@@ -131,6 +131,46 @@
   flex-wrap: wrap;
 }
 
+.region-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.region-selector label {
+  font-size: 0.9rem;
+  color: var(--livefeed-text);
+  font-weight: 500;
+}
+
+.district-dropdown {
+  background-color: var(--feed-tile-bg);
+  color: var(--livefeed-text);
+  border: 1px solid var(--metadata-bg);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-width: 300px;
+  transition: all 0.2s ease;
+}
+
+.district-dropdown:hover:not(:disabled) {
+  border-color: var(--button-bg);
+  box-shadow: 0 0 0 2px rgba(254, 172, 52, 0.1);
+}
+
+.district-dropdown:focus {
+  outline: none;
+  border-color: var(--button-bg);
+  box-shadow: 0 0 0 3px rgba(254, 172, 52, 0.2);
+}
+
+.district-dropdown:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .refresh-button,
 .retry-button {
   background-color: var(--button-bg);

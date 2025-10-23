@@ -93,6 +93,9 @@ interface LiveFeedContextType {
     status: 'Online' | 'Offline' | 'Loading'
   ) => void;
   isInitialized: boolean;
+  selectedDistrict: number;
+  setSelectedDistrict: (district: number) => void;
+  availableDistricts: Array<{ id: number; name: string; region: string }>;
 }
 
 const LiveFeedContext = createContext<LiveFeedContextType | undefined>(
@@ -107,6 +110,16 @@ export const useLiveFeed = () => {
   return context;
 };
 
+// Available districts with verified working camera streams
+const AVAILABLE_DISTRICTS = [
+  { id: 4, name: 'District 4', region: 'Bay Area (San Francisco, Oakland)' },
+  { id: 5, name: 'District 5', region: 'Central Coast (Santa Barbara, San Luis Obispo)' },
+  { id: 7, name: 'District 7', region: 'Los Angeles County' },
+  { id: 8, name: 'District 8', region: 'San Bernardino County (Inland Empire)' },
+  { id: 11, name: 'District 11', region: 'San Diego County' },
+  { id: 12, name: 'District 12', region: 'Orange County' },
+];
+
 export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -116,6 +129,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [selectedDistrict, setSelectedDistrict] = useState<number>(5); // Default to District 5 (Santa Barbara area)
 
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const dbIntegrationRef = useRef<LiveFeedDatabaseIntegration | null>(null);
@@ -283,15 +297,15 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(true);
         setLoadingProgress(0);
 
-        const orangeCountyCameras = await fetchDistrictData(12);
-        if (orangeCountyCameras.length > 0) {
-          setCameraFeeds(orangeCountyCameras);
+        const districtCameras = await fetchDistrictData(selectedDistrict);
+        if (districtCameras.length > 0) {
+          setCameraFeeds(districtCameras);
 
           // Sync with database in background
           if (dbIntegrationRef.current) {
             try {
               await dbIntegrationRef.current.syncCamerasWithDatabase(
-                orangeCountyCameras,
+                districtCameras,
               );
             } catch (dbError) {
               console.error('Failed to sync camera data:', dbError);
@@ -308,7 +322,7 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
       }
     },
-    [fetchDistrictData, cameraFeeds.length, isInitialized],
+    [fetchDistrictData, cameraFeeds.length, isInitialized, selectedDistrict],
   );
 
   // Initialize data on first mount
@@ -317,6 +331,13 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
       fetchCameraData();
     }
   }, [fetchCameraData, isInitialized]);
+
+  // Reload data when district changes
+  useEffect(() => {
+    if (isInitialized) {
+      fetchCameraData(true);
+    }
+  }, [selectedDistrict]); // Only depend on selectedDistrict to avoid infinite loop
 
   // Set up background refresh
   useEffect(() => {
@@ -366,6 +387,9 @@ export const LiveFeedProvider: React.FC<{ children: React.ReactNode }> = ({
     refreshFeeds,
     setCameraStatus,
     isInitialized,
+    selectedDistrict,
+    setSelectedDistrict,
+    availableDistricts: AVAILABLE_DISTRICTS,
   };
 
   return (

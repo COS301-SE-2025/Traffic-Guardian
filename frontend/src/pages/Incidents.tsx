@@ -235,6 +235,7 @@ interface ManualIncidentForm {
   Incident_Severity: 'high' | 'medium' | 'low';
   Incident_Status: 'open' | 'ongoing' | 'resolved' | 'closed';
   Incident_Reporter: string;
+  User_Email: string;
   Incident_CameraID?: string;
   Incident_Description?: string;
 }
@@ -304,6 +305,7 @@ const Incidents: React.FC = () => {
     Incident_Severity: 'medium',
     Incident_Status: 'open',
     Incident_Reporter: '',
+    User_Email: '',
     Incident_CameraID: '',
     Incident_Description: '',
   });
@@ -414,6 +416,18 @@ const Incidents: React.FC = () => {
       // apiRequest handles authentication checks and toasts centrally
       const userResponse = await apiRequest('/api/auth/profile');
       setUserRole(userResponse.User_Role || 'user');
+
+      // Auto-populate reporter name and email from user profile
+      const reporterName = userResponse.User_FirstName
+        ? `${userResponse.User_FirstName} ${userResponse.User_LastName || ''}`.trim()
+        : userResponse.User_Email || userResponse.Username || '';
+
+      setManualIncident(prev => ({
+        ...prev,
+        Incident_Reporter: reporterName,
+        User_Email: userResponse.User_Email || ''
+      }));
+
       await loadIncidents();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -615,24 +629,45 @@ const Incidents: React.FC = () => {
 
     if (!manualIncident.Incidents_DateTime.trim()) {
       errors.Incidents_DateTime = 'Date and time is required';
+    } else {
+      // Validate that the date is not in the future
+      const selectedDate = new Date(manualIncident.Incidents_DateTime);
+      const now = new Date();
+      if (selectedDate > now) {
+        errors.Incidents_DateTime = 'Incident date cannot be in the future';
+      }
     }
 
     if (!manualIncident.Incident_Reporter.trim()) {
       errors.Incident_Reporter = 'Reporter name is required';
     }
 
-    if (
-      manualIncident.Incidents_Latitude &&
-      isNaN(parseFloat(manualIncident.Incidents_Latitude))
-    ) {
-      errors.Incidents_Latitude = 'Invalid latitude format';
+    if (!manualIncident.User_Email.trim()) {
+      errors.User_Email = 'Email is required';
+    } else {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(manualIncident.User_Email)) {
+        errors.User_Email = 'Invalid email format';
+      }
     }
 
-    if (
-      manualIncident.Incidents_Longitude &&
-      isNaN(parseFloat(manualIncident.Incidents_Longitude))
-    ) {
-      errors.Incidents_Longitude = 'Invalid longitude format';
+    if (manualIncident.Incidents_Latitude) {
+      const lat = parseFloat(manualIncident.Incidents_Latitude);
+      if (isNaN(lat)) {
+        errors.Incidents_Latitude = 'Invalid latitude format';
+      } else if (lat < -90 || lat > 90) {
+        errors.Incidents_Latitude = 'Latitude must be between -90 and 90';
+      }
+    }
+
+    if (manualIncident.Incidents_Longitude) {
+      const lng = parseFloat(manualIncident.Incidents_Longitude);
+      if (isNaN(lng)) {
+        errors.Incidents_Longitude = 'Invalid longitude format';
+      } else if (lng < -180 || lng > 180) {
+        errors.Incidents_Longitude = 'Longitude must be between -180 and 180';
+      }
     }
 
     setFormErrors(errors);
@@ -762,13 +797,14 @@ const Incidents: React.FC = () => {
         Incident_Severity: manualIncident.Incident_Severity,
         Incident_Status: manualIncident.Incident_Status,
         Incident_Reporter: manualIncident.Incident_Reporter,
+        User_Email: manualIncident.User_Email,
         Incident_CameraID: manualIncident.Incident_CameraID
           ? parseInt(manualIncident.Incident_CameraID)
           : null,
         Incident_Description: manualIncident.Incident_Description || null,
       };
 
-      const _response = await apiRequest('/api/incidents', {
+      await apiRequest('/api/incidents', {
         method: 'POST',
         body: JSON.stringify(apiPayload),
       });
@@ -784,6 +820,7 @@ const Incidents: React.FC = () => {
         Incident_Severity: 'medium',
         Incident_Status: 'open',
         Incident_Reporter: '',
+        User_Email: '',
         Incident_CameraID: '',
         Incident_Description: '',
       });
@@ -1341,6 +1378,7 @@ const Incidents: React.FC = () => {
                         type="datetime-local"
                         className="form-input"
                         value={manualIncident.Incidents_DateTime}
+                        max={new Date().toISOString().slice(0, 16)}
                         onChange={e =>
                           handleManualIncidentChange(
                             'Incidents_DateTime',
@@ -1362,15 +1400,11 @@ const Incidents: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        className="form-input"
-                        placeholder="Enter your name or identification"
+                        className="form-input form-input-disabled"
+                        placeholder="Auto-populated from your account"
                         value={manualIncident.Incident_Reporter}
-                        onChange={e =>
-                          handleManualIncidentChange(
-                            'Incident_Reporter',
-                            e.target.value,
-                          )
-                        }
+                        readOnly
+                        disabled
                         required
                       />
                       {formErrors.Incident_Reporter && (
@@ -1378,6 +1412,29 @@ const Incidents: React.FC = () => {
                           {formErrors.Incident_Reporter}
                         </div>
                       )}
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label required">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        className="form-input form-input-disabled"
+                        placeholder="Auto-populated from your account"
+                        value={manualIncident.User_Email}
+                        readOnly
+                        disabled
+                        required
+                      />
+                      {formErrors.User_Email && (
+                        <div className="form-error">
+                          {formErrors.User_Email}
+                        </div>
+                      )}
+                      <div className="form-help">
+                        Email notifications about this incident will be sent here
+                      </div>
                     </div>
 
                     <div className="form-group">

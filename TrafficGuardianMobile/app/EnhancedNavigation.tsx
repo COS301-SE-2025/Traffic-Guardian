@@ -72,16 +72,11 @@ export default function EnhancedNavigation ()  {
       <View
         style={{
           flexDirection: 'row',
-          backgroundColor: isDark ? currentColors.dark.surface : currentColors.surface.dark,
+          backgroundColor: currentColors.surface.dark,
           borderTopWidth: 1,
-          borderTopColor:'#f59e0bff', //isDark ? currentColors.dark.border : currentColors.border.light,
+          borderTopColor: currentColors.border.light,
           paddingBottom: 20,
-          paddingTop: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 10,
+          paddingTop: 10,
         }}
       >
         {filteredNavItems.map((item, index) => {
@@ -104,43 +99,32 @@ export default function EnhancedNavigation ()  {
                 style={{
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: isReportButton ? 50 : 40,
-                  height: isReportButton ? 50 : 40,
-                  borderRadius: isReportButton ? 25 : 20,
-                  backgroundColor: isActive 
-                    ? currentColors.primary.main 
-                    : isReportButton 
-                      ? currentColors.primary.main 
-                      : 'transparent',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  backgroundColor: isActive
+                    ? currentColors.primary.main
+                    : 'transparent',
                   marginBottom: 4,
-                  shadowColor: isReportButton ? currentColors.primary.main : 'transparent',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 4,
-                  elevation: isReportButton ? 5 : 0,
                 }}
               >
                 <Ionicons
                   name={item.icon as any}
-                  size={isReportButton ? 24 : 20}
+                  size={20}
                   color={
-                    isActive || isReportButton
-                      ? /* currentColors.text.light */ 'white'
-                      : isDark
-                        ? currentColors.dark.textSecondary
-                        : 'white'
+                    isActive
+                      ? currentColors.text.dark
+                      : currentColors.text.secondary
                   }
                 />
               </View>
               <Text
                 style={{
                   fontSize: 11,
-                  fontWeight: isActive ? '600' : '400',
+                  fontWeight: isActive ? '700' : '500',
                   color: isActive
                     ? currentColors.primary.main
-                    : isDark
-                      ? currentColors.dark.textSecondary
-                      : 'white',
+                    : currentColors.text.secondary,
                   textAlign: 'center',
                 }}
               >

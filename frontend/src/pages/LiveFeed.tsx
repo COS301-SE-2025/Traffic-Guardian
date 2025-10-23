@@ -45,6 +45,9 @@ const LiveFeed: React.FC = () => {
     lastRefresh,
     refreshFeeds,
     setCameraStatus,
+    selectedDistrict,
+    setSelectedDistrict,
+    availableDistricts,
   } = useLiveFeed();
 
   const [selectedCamera, setSelectedCamera] = useState<CameraFeed | null>(null);
@@ -336,6 +339,7 @@ const LiveFeed: React.FC = () => {
         Incident_Severity: incidentForm.severity,
         Incident_Status: 'open',
         Incident_Reporter: reporterName,
+        User_Email: currentUser.User_Email || null,
         Incident_CameraID: databaseCameraID,
         Incident_Description: `${incidentForm.description}\n\n` +
           `Camera: ${selectedCamera.location} (${selectedCamera.id})\n` +
@@ -430,6 +434,22 @@ const LiveFeed: React.FC = () => {
       <div className="livefeed-header">
         <h2 data-cy="livefeed-title">Live Camera Feeds</h2>
         <div className="livefeed-controls">
+          <div className="region-selector">
+            <label htmlFor="district-select">Select Region:</label>
+            <select
+              id="district-select"
+              value={selectedDistrict}
+              onChange={(e) => setSelectedDistrict(Number(e.target.value))}
+              className="district-dropdown"
+              disabled={loading}
+            >
+              {availableDistricts.map((district) => (
+                <option key={district.id} value={district.id}>
+                  {district.name} - {district.region}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             onClick={handleRefresh}
             className="refresh-button"
@@ -438,7 +458,7 @@ const LiveFeed: React.FC = () => {
             {loading ? 'Refreshing...' : 'Refresh Feeds'}
           </button>
           <div className="feed-info">
-            Showing {cameraFeeds.length} cameras from District 12
+            Showing {cameraFeeds.length} cameras
           </div>
           <div className="last-refresh">
             Last refreshed: {lastRefresh.toLocaleTimeString()}
@@ -455,7 +475,10 @@ const LiveFeed: React.FC = () => {
       <div className="status-info">
         <div className="status-item">
           <span className="status-label">Location:</span>
-          <span className="status-value">Orange County, CA (District 12)</span>
+          <span className="status-value">
+            {availableDistricts.find(d => d.id === selectedDistrict)?.region || 'Unknown'}
+            {' '}(District {selectedDistrict})
+          </span>
         </div>
         <div className="status-item">
           <span className="status-label">Update Frequency:</span>
