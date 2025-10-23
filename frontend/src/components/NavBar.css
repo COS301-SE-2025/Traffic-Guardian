@@ -29,8 +29,8 @@
   :root {
     --navbar-logo-height: 50px;
     --navbar-padding-y: 0.75rem;
-    /* CHANGED: Allow auto height for multi-row layout */
-    --navbar-total-height: auto;
+    /* CHANGED: Estimate multi-row navbar height (logo + 2 rows of nav items) */
+    --navbar-total-height: 140px;
   }
 }
 
@@ -38,7 +38,16 @@
   :root {
     --navbar-logo-height: 45px;
     --navbar-padding-y: 0.75rem;
+    /* CHANGED: Adjust for smaller screens with tighter wrapping */
+    --navbar-total-height: 150px;
   }
+}
+
+/* Navbar spacer - pushes content below the fixed navbar */
+.navbar-spacer {
+  height: var(--navbar-total-height);
+  width: 100%;
+  display: block;
 }
 
 .navbar {
