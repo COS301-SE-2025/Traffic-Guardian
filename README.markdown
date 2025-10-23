@@ -1,6 +1,5 @@
 <p align="center">
   <img src="assets/TrafficGuardianLogo1_Light.PNG" alt="Traffic Guardian Logo" width="300"/>
-  <img src="assets/TrafficGuardianLogo1_Light.PNG" alt="Traffic Guardian Logo" width="300"/>
 </p>
 
 <p align="center">
@@ -70,9 +69,6 @@
 Traffic Guardian is an innovative solution designed to enhance road safety and efficiency across California's busy highways. As a COS301 Capstone Project at the University of Pretoria, our goal is to develop a real-time traffic incident detection system that leverages existing traffic camera feeds to identify accidents, congestion, and road hazards. By automating incident detection and enabling rapid response, Traffic Guardian aims to reduce human monitoring load, shorten response times, and improve overall road safety.
 
 [Project Board](https://github.com/orgs/COS301-SE-2025/projects/169)
-Traffic Guardian is an innovative solution designed to enhance road safety and efficiency across California's busy highways. As a COS301 Capstone Project at the University of Pretoria, our goal is to develop a real-time traffic incident detection system that leverages existing traffic camera feeds to identify accidents, congestion, and road hazards. By automating incident detection and enabling rapid response, Traffic Guardian aims to reduce human monitoring load, shorten response times, and improve overall road safety.
-
-[Project Board](https://github.com/orgs/COS301-SE-2025/projects/169)
 
 ---
 
@@ -86,10 +82,8 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
 * [Architectural Requirement Documentation](docs/Demo4/Architectural%20requirements%20and%20design%20documentation.pdf)
 * [Coding Standard Documentation](docs/Demo4/Coding%20Standards%20Document%20Traffic%20Guardian_%20Version%203.pdf)
 * [User Manual](docs/Demo4/User%20Manual%20Traffic%20Guardian%20Version%204%20.pdf)
-* [User Manual](docs/Demo4/User%20Manual%20Traffic%20Guardian%20Version%204%20.pdf)
 * [Technical Installation Manual](docs/Demo4/Traffic%20Guardian%20Technical%20Installation%20Manual.pdf)
 * [Testing Policy Document](docs/Demo4/Testing%20Policy%20Documnet.pdf)
-* [Capstone Presentation](https://docs.google.com/presentation/d/1ud67NWf3WWYC-TmEqwPo6Xmpq3E9YRNPvQelCLiGj9g/edit?usp=sharing)
 * [Capstone Presentation](https://docs.google.com/presentation/d/1ud67NWf3WWYC-TmEqwPo6Xmpq3E9YRNPvQelCLiGj9g/edit?usp=sharing)
 
 <a id="demo--presentation"></a>
@@ -151,7 +145,6 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
   <img src="assets/opencv-svgrepo-com.svg" alt="OpenCV" width="60">
   <img src="assets/google-tensorflow-icon.png" alt="TensorFlow" width="60">
   <img src="assets/Node.js.png" alt="TensorFlow" width="60">
-  <img src="assets/Node.js.png" alt="TensorFlow" width="60">
 </p>
 
 #### DevOps & Cloud
@@ -159,10 +152,8 @@ Traffic Guardian is an innovative solution designed to enhance road safety and e
 <p align="center" style="display: flex; justify-content: center; align-items: center; gap: 30px; flex-wrap: wrap;">
   <img src="assets/GitHub_Actions.svg" alt="GitHub Actions" width="80">
   <img src="assets/aws-rds.svg" alt="AWS RDS" width="80">
-  <img src="assets/aws-ec2.svg" alt="AWS SNS" width="80">
   <img src="assets/s3-logo.png" alt="AWS SNS" width="80">
   <img src="assets/aws-ec2.svg" alt="AWS SNS" width="80">
-  <img src="assets/s3-logo.png" alt="AWS SNS" width="80">
 </p>
 
 <p align="right">
