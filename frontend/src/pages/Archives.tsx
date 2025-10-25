@@ -16,6 +16,8 @@ import {
 import { useTheme } from '../consts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './Archives.css';
 
 // TypeScript interfaces to match ArchivesV2 table structure
@@ -107,7 +109,7 @@ const Archives: React.FC = () => {
 
         const apiKey = sessionStorage.getItem('apiKey');
         if (!apiKey) {
-          setError('No API key found. Please log in.');
+          toast.error('Authentication required. Please log in.');
           navigate('/account');
           return;
         }
@@ -125,7 +127,7 @@ const Archives: React.FC = () => {
 
         if (!response.ok) {
           if (response.status === 401) {
-            setError('Unauthorized: Invalid or missing API key');
+            toast.error('Authentication required. Please log in.');
             navigate('/account');
             return;
           }
